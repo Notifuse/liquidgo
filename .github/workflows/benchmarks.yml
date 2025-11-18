@@ -17,6 +17,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Fetch all history for comparison
+        submodules: true  # Checkout reference-liquid submodule for benchmark tests
 
     - name: Set up Go
       uses: actions/setup-go@v5

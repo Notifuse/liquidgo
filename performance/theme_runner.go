@@ -69,6 +69,13 @@ func NewThemeRunner() (*ThemeRunner, error) {
 	testsDir := filepath.Join("..", "reference-liquid", "performance", "tests")
 	testDirs, err := os.ReadDir(testsDir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, &os.PathError{
+				Op:   "initialize ThemeRunner",
+				Path: testsDir,
+				Err:  os.ErrNotExist,
+			}
+		}
 		return nil, err
 	}
 
