@@ -24,4 +24,3 @@ func RegisterAll(env *liquid.Environment) {
 	_ = env.RegisterFilter(&ShopFilter{})
 	_ = env.RegisterFilter(&TagFilter{})
 }
-

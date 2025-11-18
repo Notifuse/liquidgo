@@ -7,24 +7,24 @@ import (
 // Environment is the container for all configuration options of Liquid, such as
 // the registered tags, filters, and the default error mode.
 type Environment struct {
-	errorMode            string
-	tags                 map[string]interface{} // Tag name -> Tag class
-	strainerTemplate     *StrainerTemplateClass
-	exceptionRenderer    func(error) interface{}
-	fileSystem           FileSystem
-	defaultResourceLimits map[string]interface{}
+	errorMode                  string
+	tags                       map[string]interface{} // Tag name -> Tag class
+	strainerTemplate           *StrainerTemplateClass
+	exceptionRenderer          func(error) interface{}
+	fileSystem                 FileSystem
+	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
 }
 
 // NewEnvironment creates a new environment instance.
 func NewEnvironment() *Environment {
 	env := &Environment{
-		errorMode:            "lax",
-		tags:                 make(map[string]interface{}),
-		strainerTemplate:     NewStrainerTemplateClass(),
-		exceptionRenderer:    func(err error) interface{} { return err },
-		fileSystem:           &BlankFileSystem{},
-		defaultResourceLimits: EMPTY_HASH,
+		errorMode:                  "lax",
+		tags:                       make(map[string]interface{}),
+		strainerTemplate:           NewStrainerTemplateClass(),
+		exceptionRenderer:          func(err error) interface{} { return err },
+		fileSystem:                 &BlankFileSystem{},
+		defaultResourceLimits:      EMPTY_HASH,
 		strainerTemplateClassCache: make(map[string]*StrainerTemplateClass),
 	}
 
@@ -89,12 +89,12 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 
 	// Create a key for caching based on filters
 	cacheKey := e.createStrainerCacheKey(filters)
-	
+
 	// Check cache first
 	if cached, ok := e.strainerTemplateClassCache[cacheKey]; ok {
 		return NewStrainerTemplate(cached, context, strictFilters)
 	}
-	
+
 	// Create new class and cache it
 	class := NewStrainerTemplateClass()
 	// Copy base methods
@@ -105,10 +105,10 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	for _, filter := range filters {
 		_ = class.AddFilter(filter)
 	}
-	
+
 	// Cache the class
 	e.strainerTemplateClassCache[cacheKey] = class
-	
+
 	return NewStrainerTemplateWithFilters(class, context, strictFilters, filters)
 }
 
@@ -153,7 +153,7 @@ func (e *Environment) createStrainerCacheKey(filters []interface{}) string {
 	if len(filters) == 0 {
 		return ""
 	}
-	
+
 	// Create a key based on filter types
 	key := ""
 	for _, filter := range filters {
@@ -162,4 +162,3 @@ func (e *Environment) createStrainerCacheKey(filters []interface{}) string {
 	}
 	return key
 }
-

@@ -105,10 +105,10 @@ func TestStrainerTemplateReflectionInvocation(t *testing.T) {
 	stc := NewStrainerTemplateClass()
 	filter := &StandardFilters{}
 	_ = stc.AddFilter(filter)
-	
+
 	ctx := &mockContext{}
 	st := NewStrainerTemplate(stc, ctx, false)
-	
+
 	// Test that reflection-based invocation works
 	result, err := st.Invoke("Downcase", "HELLO")
 	if err != nil {
@@ -117,7 +117,7 @@ func TestStrainerTemplateReflectionInvocation(t *testing.T) {
 	if result != "hello" {
 		t.Errorf("Expected 'hello', got %v", result)
 	}
-	
+
 	// Test with multiple arguments
 	result, err = st.Invoke("Slice", "hello", 1, 3)
 	if err != nil {
@@ -127,4 +127,3 @@ func TestStrainerTemplateReflectionInvocation(t *testing.T) {
 		t.Errorf("Expected 'ell', got %v", result)
 	}
 }
-

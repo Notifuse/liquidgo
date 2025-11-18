@@ -2,11 +2,16 @@ package liquid
 
 import (
 	"strings"
+	"sync"
 )
 
 var (
 	variableLookupCommandMethods = []string{"size", "first", "last"}
 )
+
+// globalVariableLookupCache provides thread-safe caching of parsed variable lookups.
+// Optimization: Avoids re-parsing the same variable lookups repeatedly.
+var globalVariableLookupCache sync.Map // map[string]*VariableLookup
 
 // VariableLookup represents a variable lookup expression.
 type VariableLookup struct {
@@ -16,12 +21,27 @@ type VariableLookup struct {
 }
 
 // VariableLookupParse parses a markup string into a VariableLookup.
+// Optimization: Uses global cache for better performance across templates.
 func VariableLookupParse(markup string, ss *StringScanner, cache map[string]interface{}) *VariableLookup {
+	// Try global cache first for simple variable lookups (no dynamic parts)
+	// We can only cache if the markup doesn't contain dynamic expressions in brackets
+	canCache := !strings.Contains(markup, "[")
+	
+	if canCache {
+		if cached, ok := globalVariableLookupCache.Load(markup); ok {
+			return cached.(*VariableLookup)
+		}
+	}
+	
 	// Scan for variable parts using VariableParser pattern
 	// This matches [brackets] or identifier? patterns
 	matches := VariableParser.FindAllString(markup, -1)
 	if len(matches) == 0 {
-		return &VariableLookup{name: markup, lookups: []interface{}{}}
+		vl := &VariableLookup{name: markup, lookups: []interface{}{}}
+		if canCache {
+			globalVariableLookupCache.Store(markup, vl)
+		}
+		return vl
 	}
 
 	lookups := make([]interface{}, len(matches))
@@ -36,6 +56,7 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 	if nameStr, ok := name.(string); ok {
 		if strings.HasPrefix(nameStr, "[") && strings.HasSuffix(nameStr, "]") {
 			name = Parse(nameStr[1:len(nameStr)-1], ss, cache)
+			canCache = false // Can't cache variable lookups with dynamic names
 		}
 	}
 
@@ -51,11 +72,17 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 			if strings.HasPrefix(lookupStr, "[") && strings.HasSuffix(lookupStr, "]") {
 				// Parse bracket expression
 				vl.lookups[i] = Parse(lookupStr[1:len(lookupStr)-1], ss, cache)
+				canCache = false // Can't cache variable lookups with dynamic expressions
 			} else if isCommandMethod(lookupStr) {
 				// Mark as command method
 				vl.commandFlags |= 1 << i
 			}
 		}
+	}
+
+	// Cache the result if it's cacheable (no dynamic parts)
+	if canCache {
+		globalVariableLookupCache.Store(markup, vl)
 	}
 
 	return vl

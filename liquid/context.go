@@ -6,12 +6,12 @@ import (
 
 // ContextConfig configures a Context.
 type ContextConfig struct {
-	Environment       *Environment
-	Environments      []map[string]interface{}
-	OuterScope        map[string]interface{}
-	Registers         interface{} // *Registers or map[string]interface{}
-	RethrowErrors     bool
-	ResourceLimits    *ResourceLimits
+	Environment        *Environment
+	Environments       []map[string]interface{}
+	OuterScope         map[string]interface{}
+	Registers          interface{} // *Registers or map[string]interface{}
+	RethrowErrors      bool
+	ResourceLimits     *ResourceLimits
 	StaticEnvironments []map[string]interface{}
 }
 
@@ -87,17 +87,17 @@ func BuildContext(config ContextConfig) *Context {
 		staticEnvironments: staticEnvironments,
 		scopes:             []map[string]interface{}{outerScope},
 		registers:          registers,
-		errors:             []error{},
-		warnings:           []error{},
+		errors:             make([]error, 0, 4), // Pre-allocate for common error count
+		warnings:           make([]error, 0, 4), // Pre-allocate for common warning count
 		partial:            false,
 		strictVariables:    false,
 		strictFilters:      false,
 		resourceLimits:     resourceLimits,
 		baseScopeDepth:     0,
-		interrupts:         []interface{}{},
-		filters:            []interface{}{},
+		interrupts:         make([]interface{}, 0, 4), // Pre-allocate for interrupts
+		filters:            make([]interface{}, 0, 4), // Pre-allocate for filters
 		globalFilter:       nil,
-		disabledTags:       make(map[string]int),
+		disabledTags:       make(map[string]int, 4), // Pre-allocate map
 		strainer:           nil,
 		stringScanner:      NewStringScanner(""),
 		templateName:       "",
@@ -278,7 +278,7 @@ func (c *Context) PopInterrupt() interface{} {
 // HandleError handles an error and returns the rendered error message.
 func (c *Context) HandleError(err error, lineNumber *int) string {
 	var liquidErr error = err
-	
+
 	// Ensure it's a Liquid error
 	if _, ok := err.(*Error); !ok {
 		if _, ok := err.(*InternalError); !ok {
@@ -425,12 +425,12 @@ func (c *Context) Evaluate(object interface{}) interface{} {
 	if object == nil {
 		return nil
 	}
-	
+
 	// Check if it's a VariableLookup
 	if vl, ok := object.(*VariableLookup); ok {
 		return vl.Evaluate(c)
 	}
-	
+
 	// Check if it's a RangeLookup
 	if rl, ok := object.(*RangeLookup); ok {
 		startVal := c.Evaluate(rl.StartObj())
@@ -439,14 +439,14 @@ func (c *Context) Evaluate(object interface{}) interface{} {
 		endInt, _ := ToInteger(endVal)
 		return &Range{Start: startInt, End: endInt}
 	}
-	
+
 	// Check if it has Evaluate method
 	if evaluable, ok := object.(interface {
 		Evaluate(context *Context) interface{}
 	}); ok {
 		return evaluable.Evaluate(c)
 	}
-	
+
 	return object
 }
 
@@ -454,7 +454,7 @@ func (c *Context) Evaluate(object interface{}) interface{} {
 func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// Key is already a string
 	keyStr := key
-	
+
 	// Check scopes except the last one (outerScope)
 	// We want to check environments before outerScope so custom assigns override instance assigns
 	scopesToCheck := c.scopes
@@ -463,7 +463,7 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 		outerScope = scopesToCheck[len(scopesToCheck)-1]
 		scopesToCheck = scopesToCheck[:len(scopesToCheck)-1]
 	}
-	
+
 	for _, scope := range scopesToCheck {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
@@ -660,4 +660,3 @@ func (c *Context) Profiler() *Profiler {
 func (c *Context) SetProfiler(profiler *Profiler) {
 	c.profiler = profiler
 }
-

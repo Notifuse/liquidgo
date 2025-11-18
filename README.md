@@ -1,7 +1,7 @@
 # Liquid Go - Liquid Template Engine for Go
 
 > **💌 Built by [Notifuse](https://www.notifuse.com/)** - The modern open-source emailing platform to send newsletters, transactional emails & write blogs.
-> Notifuse uses Liquid templating to personalize emails with variables like `{{ contact.first_name }}`. Self-hosted, free forever, and a modern alternative to Mailchimp, Brevo, and Klaviyo.  
+> Notifuse uses Liquid templating to personalize emails and blog templates with variables like `{{ contact.first_name }}`. Self-hosted, free forever, and a modern alternative to Mailchimp, Resend etc...
 > [Try the live demo →](https://www.notifuse.com/)
 
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)

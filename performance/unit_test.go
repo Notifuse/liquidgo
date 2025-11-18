@@ -184,4 +184,3 @@ func BenchmarkLexerTokenize(b *testing.B) {
 		}
 	}
 }
-

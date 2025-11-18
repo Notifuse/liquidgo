@@ -7,9 +7,9 @@ import (
 
 var (
 	variableFilterMarkupRegex        = regexp.MustCompile(`\|\s*(.*)`)
-	variableFilterParser            = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
-	variableFilterArgsRegex         = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
-	variableJustTagAttributes       = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
+	variableFilterParser             = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
+	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
+	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
 	variableMarkupWithQuotedFragment = regexp.MustCompile(`^([^\|]+)(.*)$`)
 )
 
@@ -62,13 +62,13 @@ func NewVariable(markup string, parseContext ParseContextInterface) *Variable {
 			errorMode: "lax", // Default to lax if we can't determine
 		}
 	}
-	
+
 	ps := &ParserSwitching{
 		parseContext:  psContext,
 		lineNumber:    parseContext.LineNumber(),
 		markupContext: v.markupContext,
 	}
-	
+
 	err := ps.StrictParseWithErrorModeFallback(
 		markup,
 		func(m string) error {
@@ -110,13 +110,13 @@ func NewVariable(markup string, parseContext ParseContextInterface) *Variable {
 			return parseErr
 		},
 	)
-	
+
 	// If there was an error, it's already been handled by parser switching
 	// But in strict/rigid mode, we need to panic it
 	if err != nil {
 		panic(err)
 	}
-	
+
 	return v
 }
 
@@ -329,7 +329,7 @@ func (v *Variable) Render(context TagContext) interface{} {
 	// Evaluate the variable name expression directly (like Ruby: context.evaluate(@name))
 	nameExpr := v.Name()
 	value := context.Evaluate(nameExpr)
-	
+
 	// Apply filters
 	for _, filter := range v.Filters() {
 		if len(filter) == 0 {
@@ -342,21 +342,21 @@ func (v *Variable) Render(context TagContext) interface{} {
 				filterArgs = args
 			}
 		}
-		
+
 		// Evaluate filter arguments
 		evaluatedArgs := make([]interface{}, len(filterArgs))
 		for i, arg := range filterArgs {
 			evaluatedArgs[i] = context.Evaluate(arg)
 		}
-		
+
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
 	}
-	
+
 	// Apply global filter (like Ruby: context.apply_global_filter(obj))
 	ctx := context.Context().(*Context)
 	value = ctx.ApplyGlobalFilter(value)
-	
+
 	return value
 }
 
@@ -378,4 +378,3 @@ func (p *parseContextWrapper) ErrorMode() string {
 func (p *parseContextWrapper) AddWarning(error) {
 	// No-op for wrapper
 }
-

@@ -44,7 +44,12 @@ type Lexer struct{}
 
 // Tokenize tokenizes the input string scanner and returns a slice of tokens.
 func (l *Lexer) Tokenize(ss *StringScanner) ([]Token, error) {
-	var output []Token
+	// Pre-allocate output slice: estimate 1 token per 4-6 characters of input
+	estimatedTokens := len(ss.String()) / 5
+	if estimatedTokens < 8 {
+		estimatedTokens = 8
+	}
+	output := make([]Token, 0, estimatedTokens)
 
 	for !ss.EOS() {
 		ss.Skip(lexerWhitespaceOrNothing)

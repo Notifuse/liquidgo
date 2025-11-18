@@ -66,10 +66,15 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 }
 
 // ToInteger converts a value to an integer.
+// Optimization: Fast path for int type (most common case).
 func ToInteger(num interface{}) (int, error) {
-	switch v := num.(type) {
-	case int:
+	// Fast path for most common case
+	if v, ok := num.(int); ok {
 		return v, nil
+	}
+	
+	// Handle other numeric types
+	switch v := num.(type) {
 	case int8:
 		return int(v), nil
 	case int16:
@@ -87,6 +92,8 @@ func ToInteger(num interface{}) (int, error) {
 	case uint32:
 		return int(v), nil
 	case uint64:
+		return int(v), nil
+	case float64:
 		return int(v), nil
 	case string:
 		i, err := strconv.Atoi(v)
@@ -201,20 +208,35 @@ func ToLiquidValue(obj interface{}) interface{} {
 }
 
 // ToS converts an object to a string representation.
+// Optimization: Fast path for common types to enable compiler inlining.
 func ToS(obj interface{}, seen map[uintptr]bool) string {
 	// Handle nil - in Liquid, nil renders as empty string (like Ruby's nil.to_s)
 	if obj == nil {
 		return ""
 	}
 
-	if seen == nil {
-		seen = make(map[uintptr]bool)
-	}
-
+	// Fast path for common types (helps with inlining)
 	switch v := obj.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
 	case map[string]interface{}:
+		if seen == nil {
+			seen = make(map[uintptr]bool)
+		}
 		return hashInspect(v, seen)
 	case []interface{}:
+		if seen == nil {
+			seen = make(map[uintptr]bool)
+		}
 		return arrayInspect(v, seen)
 	default:
 		return fmt.Sprintf("%v", obj)

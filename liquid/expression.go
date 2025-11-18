@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
@@ -11,6 +12,10 @@ var (
 	expressionIntegerRegex = regexp.MustCompile(`^(-?\d+)$`)
 	expressionFloatRegex   = regexp.MustCompile(`^(-?\d+)\.\d+$`)
 )
+
+// globalExprCache provides thread-safe caching of parsed expressions across templates.
+// Optimization: Avoids re-parsing the same expressions repeatedly when cache parameter is nil.
+var globalExprCache sync.Map // map[string]interface{}
 
 // Expression literals map
 var expressionLiterals = map[string]interface{}{
@@ -36,6 +41,7 @@ func SafeParse(parser *Parser, ss *StringScanner, cache map[string]interface{}) 
 }
 
 // Parse parses a markup string into an expression value.
+// Optimization: Uses global cache when local cache is nil for better performance across templates.
 func Parse(markup string, ss *StringScanner, cache map[string]interface{}) interface{} {
 	if markup == "" {
 		return nil
@@ -43,18 +49,18 @@ func Parse(markup string, ss *StringScanner, cache map[string]interface{}) inter
 
 	markup = strings.TrimSpace(markup)
 
-	// Handle quoted strings
+	// Handle quoted strings (fast path, don't cache)
 	if (strings.HasPrefix(markup, `"`) && strings.HasSuffix(markup, `"`)) ||
 		(strings.HasPrefix(markup, `'`) && strings.HasSuffix(markup, `'`)) {
 		return markup[1 : len(markup)-1]
 	}
 
-	// Check literals
+	// Check literals (fast path, don't cache)
 	if val, ok := expressionLiterals[markup]; ok {
 		return val
 	}
 
-	// Handle cache
+	// Try local cache first (template-specific)
 	if cache != nil {
 		if cached, ok := cache[markup]; ok {
 			return cached
@@ -64,7 +70,14 @@ func Parse(markup string, ss *StringScanner, cache map[string]interface{}) inter
 		return result
 	}
 
-	return innerParse(markup, ss, nil)
+	// Use global cache when local cache is nil (cross-template caching)
+	if cached, ok := globalExprCache.Load(markup); ok {
+		return cached
+	}
+
+	result := innerParse(markup, ss, nil)
+	globalExprCache.Store(markup, result)
+	return result
 }
 
 func innerParse(markup string, ss *StringScanner, cache map[string]interface{}) interface{} {
