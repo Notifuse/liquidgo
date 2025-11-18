@@ -1,20 +1,19 @@
+version: 2
+
 run:
   timeout: 5m
   tests: true
 
 linters:
   enable:
-    - gofmt
     - govet
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
-    - typecheck
-    - exportloopref
     - gocyclo
     - misspell
+    - revive
 
 linters-settings:
   gocyclo:
@@ -32,7 +31,7 @@ issues:
         - errcheck
         - dupl
         - gosec
-    
+
     # Exclude reference-liquid directory
     - path: reference-liquid/
       linters:
@@ -42,4 +41,3 @@ output:
   format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-

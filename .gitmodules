@@ -1,0 +1,4 @@
+[submodule "reference-liquid"]
+	path = reference-liquid
+	url = https://github.com/Shopify/liquid.git
+
