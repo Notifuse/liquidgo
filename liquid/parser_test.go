@@ -45,7 +45,7 @@ func TestParserRange(t *testing.T) {
 
 func TestParserConsume(t *testing.T) {
 	parser := NewParser("hello world")
-	
+
 	first, err := parser.Consume(":id")
 	if err != nil {
 		t.Fatalf("Consume() error = %v", err)
@@ -63,7 +63,7 @@ func TestParserConsume(t *testing.T) {
 
 func TestParserConsumeOptional(t *testing.T) {
 	parser := NewParser("hello")
-	
+
 	val, ok := parser.ConsumeOptional(":id")
 	if !ok {
 		t.Error("Expected ConsumeOptional to succeed")
@@ -73,7 +73,7 @@ func TestParserConsumeOptional(t *testing.T) {
 	}
 
 	// Try consuming something that doesn't match
-	val, ok = parser.ConsumeOptional(":number")
+	_, ok = parser.ConsumeOptional(":number")
 	if ok {
 		t.Error("Expected ConsumeOptional to fail")
 	}
@@ -81,7 +81,7 @@ func TestParserConsumeOptional(t *testing.T) {
 
 func TestParserID(t *testing.T) {
 	parser := NewParser("hello")
-	
+
 	val, ok := parser.ID("hello")
 	if !ok {
 		t.Error("Expected ID() to succeed")
@@ -100,7 +100,7 @@ func TestParserID(t *testing.T) {
 
 func TestParserLook(t *testing.T) {
 	parser := NewParser("hello world")
-	
+
 	if !parser.Look(":id", 0) {
 		t.Error("Expected Look() to return true")
 	}
@@ -114,7 +114,7 @@ func TestParserLook(t *testing.T) {
 
 func TestParserVariableLookups(t *testing.T) {
 	parser := NewParser("user.name")
-	
+
 	expr, err := parser.Expression()
 	if err != nil {
 		t.Fatalf("Expression() error = %v", err)
@@ -126,7 +126,7 @@ func TestParserVariableLookups(t *testing.T) {
 
 func TestParserArgument(t *testing.T) {
 	parser := NewParser("name: value")
-	
+
 	arg, err := parser.Argument()
 	if err != nil {
 		t.Fatalf("Argument() error = %v", err)
@@ -135,4 +135,3 @@ func TestParserArgument(t *testing.T) {
 		t.Error("Expected Argument() to return non-empty string")
 	}
 }
-

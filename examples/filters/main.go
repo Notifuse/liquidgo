@@ -27,7 +27,9 @@ func main() {
 	// Create environment with standard tags and custom filters
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	env.RegisterFilter(&MyFilters{})
+	if err := env.RegisterFilter(&MyFilters{}); err != nil {
+		panic(err)
+	}
 
 	template := `
 Original: {{ text }}

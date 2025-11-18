@@ -138,9 +138,8 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 	}
 
 	if byte == dash {
-		peekedByte := ss.PeekByte()
 		ss.ScanByte() // consume dash
-		peekedByte = ss.PeekByte()
+		peekedByte := ss.PeekByte()
 		// If it starts with a dash, the next byte must be a digit
 		if peekedByte == 0 || peekedByte < zero || peekedByte > nine {
 			return nil

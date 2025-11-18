@@ -58,10 +58,8 @@ func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibili
 	if buf != "hello" {
 		t.Errorf("Expected buf 'hello', got %q", buf)
 	}
-	// In Go, we can't check object identity like Ruby, but we can check that output points to buf
-	if &buf != &buf {
-		t.Error("Output should be the same buffer")
-	}
+	// In Go, we can't check object identity like Ruby does in the original test
+	// The output and buf are separate string values in Go
 
 	// Test with inheritance
 	env2 := liquid.NewEnvironment()

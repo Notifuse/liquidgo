@@ -35,13 +35,13 @@ jobs:
         run: go mod verify
 
       - name: Run unit tests
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./liquid/...
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic github.com/Notifuse/liquidgo/liquid
 
       - name: Run tag tests
-        run: go test -v -race ./liquid/tag/... ./liquid/tags/...
+        run: go test -v -race github.com/Notifuse/liquidgo/liquid/tag/... github.com/Notifuse/liquidgo/liquid/tags/...
 
       - name: Run integration tests
-        run: go test -v -race ./integration/...
+        run: go test -v -race github.com/Notifuse/liquidgo/integration
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'

@@ -281,10 +281,10 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 
 		resultVal := liquid.ToLiquidValue(result)
 		if resultVal != nil && resultVal != false && resultVal != "" {
-			executeElseBlock = false
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
 				attachment.RenderToOutputBuffer(context, output)
 			}
+			executeElseBlock = false
 			return
 		}
 	}

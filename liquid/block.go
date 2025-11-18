@@ -138,7 +138,7 @@ func (b *Block) SetBlockDelimiter(delimiter string) {
 
 // UnknownTag handles unknown tags encountered during parsing.
 func (b *Block) UnknownTag(tagName, markup string, tokenizer *Tokenizer) error {
-	return RaiseUnknownTag(tagName, b.BlockName(), b.BlockDelimiter(), b.Tag.ParseContext())
+	return RaiseUnknownTag(tagName, b.BlockName(), b.BlockDelimiter(), b.ParseContext())
 }
 
 // RaiseUnknownTag raises an error for an unknown tag.
@@ -193,7 +193,7 @@ func (b *Block) newBody() *BlockBody {
 }
 
 func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
-	parseContext := b.Tag.ParseContext()
+	parseContext := b.ParseContext()
 
 	// Check depth
 	if parseContext.Depth() >= blockMaxDepth {
@@ -217,12 +217,9 @@ func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 			return false
 		}
 
-		// Unknown tag - let block handle it
-		err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
-		if err != nil {
-			return false
-		}
-		return true
+	// Unknown tag - let block handle it
+	err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
+	return err == nil
 	}
 
 	err := b.body.Parse(tokenizer, parseContext, unknownTagHandler)
