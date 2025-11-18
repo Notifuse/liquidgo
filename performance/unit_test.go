@@ -180,7 +180,7 @@ func BenchmarkLexerTokenize(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, expr := range lexerExpressions {
 			ss := liquid.NewStringScanner(expr)
-			lexer.Tokenize(ss)
+			_ = lexer.Tokenize(ss)
 		}
 	}
 }

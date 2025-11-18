@@ -30,7 +30,7 @@ func NewEnvironment() *Environment {
 
 	// Add standard filters
 	standardFilters := &StandardFilters{}
-	env.strainerTemplate.AddFilter(standardFilters)
+	_ = env.strainerTemplate.AddFilter(standardFilters)
 
 	return env
 }
@@ -103,7 +103,7 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	}
 	// Add additional filters
 	for _, filter := range filters {
-		class.AddFilter(filter)
+		_ = class.AddFilter(filter)
 	}
 	
 	// Cache the class

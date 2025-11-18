@@ -668,7 +668,7 @@ func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInte
 	liquidTagTokenizer := parseContext.NewTokenizer(markup, lineNumber != nil, lineNumber, true)
 
 	// Recursively parse using parseForLiquidTag
-	bb.parseForLiquidTag(liquidTagTokenizer, parseContext, func(endTagName, _endTagMarkup string) bool {
+	if err := bb.parseForLiquidTag(liquidTagTokenizer, parseContext, func(endTagName, _endTagMarkup string) bool {
 		if endTagName != "" {
 			// Unknown tag in liquid tag - raise error
 			// This would call Block.raise_unknown_tag in Ruby
@@ -676,7 +676,9 @@ func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInte
 			panic(NewSyntaxError("Unknown tag '" + endTagName + "' in liquid tag"))
 		}
 		return true
-	})
+	}); err != nil {
+		panic(err)
+	}
 }
 
 // raiseMissingVariableTerminator raises an error for missing variable terminator.

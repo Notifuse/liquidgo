@@ -309,7 +309,7 @@ func (v *Variable) rigidParseFilterExpressions(p *Parser) []interface{} {
 func (v *Variable) argument(p *Parser, positionalArgs *[]interface{}, keywordArgs map[string]interface{}) {
 	if p.Look(":id", 0) && p.Look(":colon", 1) {
 		key, _ := p.Consume(":id")
-		p.Consume(":colon")
+		_, _ = p.Consume(":colon")
 		value := v.parseContext.SafeParseExpression(p)
 		keywordArgs[key] = value
 	} else {

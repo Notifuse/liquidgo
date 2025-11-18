@@ -35,7 +35,7 @@ func TestStrainerTemplateClass(t *testing.T) {
 func TestStrainerTemplateInvoke(t *testing.T) {
 	stc := NewStrainerTemplateClass()
 	filter := &StandardFilters{}
-	stc.AddFilter(filter)
+	_ = stc.AddFilter(filter)
 
 	ctx := &mockContext{}
 	st := NewStrainerTemplate(stc, ctx, false)
@@ -62,7 +62,7 @@ func TestStrainerTemplateInvoke(t *testing.T) {
 func TestStrainerTemplateStrictMode(t *testing.T) {
 	stc := NewStrainerTemplateClass()
 	filter := &StandardFilters{}
-	stc.AddFilter(filter)
+	_ = stc.AddFilter(filter)
 
 	ctx := &mockContext{}
 	st := NewStrainerTemplate(stc, ctx, true)
@@ -80,7 +80,7 @@ func TestStrainerTemplateStrictMode(t *testing.T) {
 func TestStrainerTemplateFilterMethodNames(t *testing.T) {
 	stc := NewStrainerTemplateClass()
 	filter := &StandardFilters{}
-	stc.AddFilter(filter)
+	_ = stc.AddFilter(filter)
 
 	names := stc.FilterMethodNames()
 	if len(names) == 0 {
@@ -104,7 +104,7 @@ func TestStrainerTemplateFilterMethodNames(t *testing.T) {
 func TestStrainerTemplateReflectionInvocation(t *testing.T) {
 	stc := NewStrainerTemplateClass()
 	filter := &StandardFilters{}
-	stc.AddFilter(filter)
+	_ = stc.AddFilter(filter)
 	
 	ctx := &mockContext{}
 	st := NewStrainerTemplate(stc, ctx, false)

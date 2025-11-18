@@ -18,10 +18,10 @@ func RegisterAll(env *liquid.Environment) {
 	}))
 
 	// Register filters (each filter object exposes multiple methods)
-	env.RegisterFilter(&JsonFilter{})
-	env.RegisterFilter(&MoneyFilter{})
-	env.RegisterFilter(&WeightFilter{})
-	env.RegisterFilter(&ShopFilter{})
-	env.RegisterFilter(&TagFilter{})
+	_ = env.RegisterFilter(&JsonFilter{})
+	_ = env.RegisterFilter(&MoneyFilter{})
+	_ = env.RegisterFilter(&WeightFilter{})
+	_ = env.RegisterFilter(&ShopFilter{})
+	_ = env.RegisterFilter(&TagFilter{})
 }
 
