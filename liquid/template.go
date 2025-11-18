@@ -85,11 +85,11 @@ func NewTemplate(options *TemplateOptions) *Template {
 		environment:     env,
 		rethrowErrors:   false,
 		resourceLimits:  resourceLimits,
-		registers:       make(map[string]interface{}, 4),  // Pre-allocate map
-		assigns:         make(map[string]interface{}, 8),  // Pre-allocate for typical assigns
-		instanceAssigns: make(map[string]interface{}, 8),  // Pre-allocate for instance assigns
-		errors:          make([]error, 0, 2),              // Pre-allocate errors
-		warnings:        make([]error, 0, 2),              // Pre-allocate warnings
+		registers:       make(map[string]interface{}, 4), // Pre-allocate map
+		assigns:         make(map[string]interface{}, 8), // Pre-allocate for typical assigns
+		instanceAssigns: make(map[string]interface{}, 8), // Pre-allocate for instance assigns
+		errors:          make([]error, 0, 2),             // Pre-allocate errors
+		warnings:        make([]error, 0, 2),             // Pre-allocate warnings
 	}
 }
 
