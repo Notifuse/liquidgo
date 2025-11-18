@@ -32,16 +32,19 @@ jobs:
 
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
-      if: github.event_name != 'pull_request'
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      continue-on-error: true  # Don't fail if gh-pages branch doesn't exist yet
       with:
         name: Go Benchmark
         tool: 'go'
         output-file-path: performance/benchmark_results.txt
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        auto-push: true
+        auto-push: false  # Disabled until gh-pages branch is set up
         alert-threshold: '150%'
-        comment-on-alert: true
+        comment-on-alert: false
         fail-on-alert: false
+        save-data-file: true
+        comment-always: false
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
