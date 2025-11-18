@@ -65,11 +65,11 @@ jobs:
           go-version: '1.23'
           cache: true
 
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v7
-      with:
-        version: v2.6.2
-        args: --timeout=5m
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.6.2
+          args: --timeout=5m
 
   build:
     name: Build
