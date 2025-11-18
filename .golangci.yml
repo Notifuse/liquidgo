@@ -1,8 +1,7 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
-  tests: true
 
 linters:
   enable:
@@ -10,15 +9,3 @@ linters:
     - errcheck
     - staticcheck
     - unused
-
-issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - errcheck
-
-    # Exclude reference-liquid directory
-    - path: reference-liquid/
-      linters:
-        - all
