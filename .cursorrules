@@ -1,0 +1,133 @@
+# Liquid Go Implementation - AI Agent Instructions
+
+## Project Overview
+
+This is a Go implementation of Shopify's Liquid template engine (https://github.com/Shopify/liquid). The goal is to achieve full feature parity with the Ruby implementation while maintaining matching file naming conventions to enable easy application of changelog updates.
+
+## Reference Repository
+
+The Ruby implementation is cloned in `reference-liquid/` directory. Always reference the Ruby code when implementing Go equivalents.
+
+## File Naming Convention
+
+**CRITICAL**: Maintain exact base file names (without extension) to enable easy cross-referencing and changelog application.
+
+### Mapping Rules:
+
+- Ruby file: `lib/liquid/template.rb` → Go file: `liquid/template.go`
+- Ruby file: `lib/liquid/tags/if.rb` → Go file: `liquid/tags/if.go`
+- Ruby file: `lib/liquid/tag/disableable.rb` → Go file: `liquid/tag/disableable.go`
+- Ruby test: `test/integration/template_test.rb` → Go test: `liquid/template_integration_test.go`
+- Ruby test: `test/unit/template_unit_test.rb` → Go test: `liquid/template_unit_test.go`
+
+### Directory Structure Mapping:
+
+```
+reference-liquid/lib/liquid/     → liquidgo/liquid/
+reference-liquid/lib/liquid/tags/ → liquidgo/liquid/tags/
+reference-liquid/lib/liquid/tag/  → liquidgo/liquid/tag/
+reference-liquid/lib/liquid/profiler/ → liquidgo/liquid/profiler/
+reference-liquid/test/integration/ → liquidgo/liquid/*_integration_test.go
+reference-liquid/test/unit/        → liquidgo/liquid/*_unit_test.go
+```
+
+## Implementation Guidelines
+
+### 1. Always Reference Ruby Implementation
+
+- Before implementing any feature, read the corresponding Ruby file from `reference-liquid/lib/liquid/`
+- Understand the Ruby implementation's behavior, edge cases, and test coverage
+- Maintain the same logical structure and behavior in Go
+
+### 2. Go Idioms While Maintaining Parity
+
+- Use Go idioms (interfaces, structs, methods) but preserve the logical organization
+- Ruby classes → Go structs/types
+- Ruby modules → Go interfaces or packages
+- Ruby methods → Go methods or functions
+- Maintain the same public API surface where possible
+
+### 3. Versioning
+
+- Version numbers MUST match the Ruby repository exactly
+- Current version is tracked in `liquid/version.go` (maps to `reference-liquid/lib/liquid/version.rb`)
+- When implementing new releases, update version to match Ruby release version
+- Version format: Semantic versioning (e.g., "5.10.0")
+
+### 4. Testing Strategy
+
+- Write Go tests that mirror Ruby test cases
+- Use Go's testing package (`testing`)
+- Test file naming: `*_test.go` (integration tests: `*_integration_test.go`, unit tests: `*_unit_test.go`)
+- Mirror test structure from `reference-liquid/test/`
+- Ensure test coverage matches Ruby implementation
+
+### 5. Error Handling
+
+- Map Ruby exceptions to Go errors appropriately
+- Maintain error types that correspond to Ruby error classes
+- Reference `reference-liquid/lib/liquid/errors.rb` for error types
+
+### 6. API Compatibility
+
+- Maintain API compatibility with Ruby version where possible
+- Public methods should have similar signatures
+- Document any deviations from Ruby API
+
+## Changelog Application Process
+
+When applying updates from `reference-liquid/History.md`:
+
+1. **Identify Affected Files**: Read the changelog entry and identify which Ruby files were modified
+2. **Map to Go Files**: Use the file naming convention to find corresponding Go files
+3. **Review Ruby Changes**: Check the git history or diff in `reference-liquid/` for the specific changes
+4. **Implement Changes**: Apply equivalent changes in Go maintaining same behavior
+5. **Update Version**: Update `liquid/version.go` to match the Ruby release version
+6. **Update Tests**: Add/update tests to match Ruby test changes
+7. **Verify Parity**: Ensure behavior matches Ruby implementation
+
+## Code Organization
+
+### Core Components:
+
+- `liquid/template.go` - Main template parsing and rendering (maps to `lib/liquid/template.rb`)
+- `liquid/environment.go` - Environment configuration (maps to `lib/liquid/environment.rb`)
+- `liquid/parser.go` - Template parsing logic (maps to `lib/liquid/parser.rb`)
+- `liquid/lexer.go` - Lexical analysis (maps to `lib/liquid/lexer.rb`)
+- `liquid/context.go` - Rendering context (maps to `lib/liquid/context.rb`)
+- `liquid/variable.go` - Variable handling (maps to `lib/liquid/variable.rb`)
+- `liquid/tags/` - Tag implementations (maps to `lib/liquid/tags/`)
+- `liquid/tag/` - Tag base classes (maps to `lib/liquid/tag/`)
+
+### When Implementing:
+
+1. Check if corresponding Ruby file exists in `reference-liquid/lib/liquid/`
+2. Read and understand the Ruby implementation
+3. Implement Go equivalent maintaining same behavior
+4. Write tests mirroring Ruby tests
+5. Ensure file names match (without extension)
+
+## Testing Requirements
+
+- All tests must be in `*_test.go` files
+- Integration tests: `*_integration_test.go`
+- Unit tests: `*_unit_test.go`
+- Use Go's standard testing patterns
+- Mirror test cases from Ruby implementation
+- Run tests with: `go test ./...`
+
+## Documentation
+
+- Document public APIs with Go doc comments
+- Reference Ruby implementation in complex logic comments
+- Document any deviations from Ruby behavior
+- Keep `IMPLEMENTATION.md` updated with architectural decisions
+
+## Important Notes
+
+- DO NOT change file names from Ruby convention (only extension changes)
+- DO NOT skip features - aim for full parity
+- DO NOT modify the reference repository (`reference-liquid/`)
+- DO maintain version alignment with Ruby releases
+- DO reference Ruby tests when writing Go tests
+- DO use Go idioms while preserving logical structure

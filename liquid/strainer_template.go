@@ -1,0 +1,177 @@
+package liquid
+
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
+
+// StrainerTemplate is the computed class for the filters system.
+// New filters are mixed into the strainer class which is then instantiated for each liquid template render run.
+type StrainerTemplate struct {
+	context          interface{ Context() interface{} }
+	filterMethods    map[string]bool
+	strictFilters    bool
+	filterInstances  map[string]interface{} // Map of filter instances by type
+}
+
+// StrainerTemplateClass represents a strainer template class that can have filters added.
+type StrainerTemplateClass struct {
+	filterMethods map[string]bool
+}
+
+// NewStrainerTemplateClass creates a new strainer template class.
+func NewStrainerTemplateClass() *StrainerTemplateClass {
+	return &StrainerTemplateClass{
+		filterMethods: make(map[string]bool),
+	}
+}
+
+// AddFilter adds a filter module to the strainer template class.
+func (stc *StrainerTemplateClass) AddFilter(filter interface{}) error {
+	// Get all methods from the filter
+	filterType := reflect.TypeOf(filter)
+	if filterType.Kind() != reflect.Ptr {
+		return fmt.Errorf("filter must be a pointer to a struct")
+	}
+
+	// Get methods from the filter
+	for i := 0; i < filterType.NumMethod(); i++ {
+		method := filterType.Method(i)
+		// Only include exported methods
+		if method.PkgPath == "" {
+			stc.filterMethods[method.Name] = true
+		}
+	}
+
+	return nil
+}
+
+// Invokable checks if a method name is invokable.
+func (stc *StrainerTemplateClass) Invokable(method string) bool {
+	return stc.filterMethods[method]
+}
+
+// FilterMethodNames returns all filter method names.
+func (stc *StrainerTemplateClass) FilterMethodNames() []string {
+	names := make([]string, 0, len(stc.filterMethods))
+	for name := range stc.filterMethods {
+		names = append(names, name)
+	}
+	return names
+}
+
+// NewStrainerTemplate creates a new strainer template instance.
+func NewStrainerTemplate(class *StrainerTemplateClass, context interface{ Context() interface{} }, strictFilters bool) *StrainerTemplate {
+	st := &StrainerTemplate{
+		context:        context,
+		filterMethods:  class.filterMethods,
+		strictFilters:  strictFilters,
+		filterInstances: make(map[string]interface{}),
+	}
+	
+	// Always add StandardFilters as a base filter
+	sf := &StandardFilters{}
+	st.filterInstances["*liquid.StandardFilters"] = sf
+	
+	return st
+}
+
+// NewStrainerTemplateWithFilters creates a new strainer template instance with additional filters.
+func NewStrainerTemplateWithFilters(class *StrainerTemplateClass, context interface{ Context() interface{} }, strictFilters bool, filters []interface{}) *StrainerTemplate {
+	st := NewStrainerTemplate(class, context, strictFilters)
+	
+	// Add additional filter instances
+	for _, filter := range filters {
+		filterType := reflect.TypeOf(filter)
+		if filterType.Kind() == reflect.Ptr {
+			st.filterInstances[filterType.String()] = filter
+		}
+	}
+	
+	return st
+}
+
+// Invoke invokes a filter method.
+func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interface{}, error) {
+	// Check if method is invokable (try both lowercase and capitalized)
+	methodInvokable := st.filterMethods[method]
+	if !methodInvokable && len(method) > 0 {
+		// Try capitalized version (Go method names are capitalized)
+		capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
+		methodInvokable = st.filterMethods[capitalizedMethod]
+		if methodInvokable {
+			// Use capitalized version for lookup
+			method = capitalizedMethod
+		}
+	}
+	if !methodInvokable {
+		if st.strictFilters {
+			return nil, NewUndefinedFilter("undefined filter " + method)
+		}
+		// In non-strict mode, return first arg
+		if len(args) > 0 {
+			return args[0], nil
+		}
+		return nil, nil
+	}
+
+	// Method is invokable - use reflection to find and call it on filter instances
+	// Try each filter instance until we find one with the method
+	for _, filterInstance := range st.filterInstances {
+		filterValue := reflect.ValueOf(filterInstance)
+		
+		// Look for the method - try both original case and capitalized version
+		// Go method names are capitalized, but Liquid filter names are lowercase
+		methodValue := filterValue.MethodByName(method)
+		if !methodValue.IsValid() && len(method) > 0 {
+			// Try capitalized version (first letter uppercase)
+			capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
+			methodValue = filterValue.MethodByName(capitalizedMethod)
+		}
+		if !methodValue.IsValid() {
+			continue
+		}
+		
+		// Check if method signature matches (first arg is input, rest are filter args)
+		methodType := methodValue.Type()
+		if methodType.NumIn() < 1 {
+			continue
+		}
+		
+		// Prepare arguments
+		callArgs := make([]reflect.Value, 0, len(args)+1)
+		// First arg is the input (from args[0])
+		if len(args) == 0 {
+			continue
+		}
+		callArgs = append(callArgs, reflect.ValueOf(args[0]))
+		
+		// Remaining args are filter arguments
+		expectedArgs := methodType.NumIn() - 1
+		if len(args)-1 < expectedArgs {
+			// Not enough args, skip this filter
+			continue
+		}
+		
+		// Add filter arguments
+		for i := 1; i <= expectedArgs && i < len(args); i++ {
+			callArgs = append(callArgs, reflect.ValueOf(args[i]))
+		}
+		
+		// Call the method
+		results := methodValue.Call(callArgs)
+		if len(results) > 0 {
+			return results[0].Interface(), nil
+		}
+		return nil, nil
+	}
+	
+	// Method not found in any filter - this shouldn't happen if filterMethods is correct
+	// but handle gracefully
+	if len(args) > 0 {
+		return args[0], nil
+	}
+	return nil, nil
+}
+

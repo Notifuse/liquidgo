@@ -1,0 +1,8 @@
+# Benchmark results (except baseline)
+benchmark_results/
+
+# Temporary test files
+test_data.go
+*.prof
+*.pprof
+

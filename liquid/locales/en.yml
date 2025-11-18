@@ -1,0 +1,15 @@
+---
+  simple: "less is more"
+  whatever: "something %{something}"
+  errors:
+    i18n:
+      undefined_interpolation: "undefined key %{key}"
+      unknown_translation: "translation '%{name}' wasn't found"
+    syntax:
+      oops: "something wasn't right"
+      unknown_tag: "Unknown tag '%{tag}'"
+      invalid_delimiter: "'%{tag}' is not a valid delimiter for %{block_name} tags. use %{block_delimiter}"
+      unexpected_else: "Unexpected else tag in %{block_name}"
+    disabled:
+      tag: "usage is not allowed in this context"
+

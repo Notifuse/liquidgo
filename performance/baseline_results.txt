@@ -1,0 +1,17 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/liquidgo/liquidgo/performance
+cpu: Apple M1 Pro
+BenchmarkTokenize-10                   	    1104	    541380 ns/op	  253453 B/op	    3416 allocs/op
+BenchmarkParse-10                      	      87	   6584390 ns/op	 2595259 B/op	   60925 allocs/op
+BenchmarkRender-10                     	      55	  10501414 ns/op	18423869 B/op	   34790 allocs/op
+BenchmarkParseAndRender-10             	      33	  17325994 ns/op	21531089 B/op	   96146 allocs/op
+BenchmarkExpressionParseString-10      	 3953755	       153.7 ns/op	      96 B/op	       6 allocs/op
+BenchmarkExpressionParseLiteral-10     	 6831073	        87.77 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseVariable-10    	 5061795	       118.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseNumber-10      	 1773674	       333.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseRange-10       	 2713394	       221.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseAll-10         	  637768	      1225 ns/op	      96 B/op	       6 allocs/op
+BenchmarkLexerTokenize-10              	   37323	     16065 ns/op	    8370 B/op	     237 allocs/op
+PASS
+ok  	github.com/liquidgo/liquidgo/performance	8.146s
