@@ -45,7 +45,7 @@ func TestForloopLastDetailed(t *testing.T) {
 			env := liquid.NewEnvironment()
 			tags.RegisterStandardTags(env)
 			tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-			
+
 			err := tmpl.Parse(tt.template, nil)
 			if err != nil {
 				t.Fatalf("Parse failed: %v", err)

@@ -7,10 +7,11 @@ import (
 	"github.com/Notifuse/liquidgo/liquid/tags"
 )
 
+// TestArrayCommandMethods tests array command methods like .last, .first, and .size.
 func TestArrayCommandMethods(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	
+
 	tests := []struct {
 		name     string
 		template string
@@ -42,7 +43,7 @@ func TestArrayCommandMethods(t *testing.T) {
 			want:     "5",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
@@ -50,7 +51,7 @@ func TestArrayCommandMethods(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Parse failed: %v", err)
 			}
-			
+
 			got := tmpl.Render(tt.vars, nil)
 			if got != tt.want {
 				t.Errorf("FAILED\nTemplate: %s\nWant: %q\nGot:  %q", tt.template, tt.want, got)
