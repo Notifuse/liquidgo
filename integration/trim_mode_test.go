@@ -529,3 +529,129 @@ func TestPreTrimBlankPrecedingText(t *testing.T) {
 func TestTrimBlank(t *testing.T) {
 	assertTemplateResult(t, "foobar", "foo {{-}} bar", nil)
 }
+
+// TestLayoutWithRender tests layout pattern with render tag
+func TestLayoutWithRender(t *testing.T) {
+	// Template that uses render tag to include a partial
+	template := `<div class="layout">
+  <header>{% render "header" %}</header>
+  <main>{{ content_for_layout }}</main>
+  <footer>{% render "footer" %}</footer>
+</div>`
+
+	// Expected output with content_for_layout set
+	expected := `<div class="layout">
+  <header>Welcome</header>
+  <main>Page Content</main>
+  <footer>Copyright 2024</footer>
+</div>`
+
+	// Partials for render tag
+	partials := map[string]string{
+		"header": "Welcome",
+		"footer": "Copyright 2024",
+	}
+
+	// Assigns including content_for_layout
+	assigns := map[string]interface{}{
+		"content_for_layout": "Page Content",
+	}
+
+	assertTemplateResult(t, expected, template, assigns, TemplateResultOptions{
+		Partials: partials,
+	})
+}
+
+// TestNestedIf tests that nested if statements work correctly inside if-elsif-else blocks.
+// This matches the Ruby test_nested_if from reference-liquid/test/integration/tags/if_else_tag_test.rb.
+func TestNestedIf(t *testing.T) {
+	// Test basic nested if statements (matching Ruby test_nested_if lines 111-120)
+	assertTemplateResult(t, "", "{% if false %}{% if false %} NO {% endif %}{% endif %}", nil)
+	assertTemplateResult(t, "", "{% if false %}{% if true %} NO {% endif %}{% endif %}", nil)
+	assertTemplateResult(t, "", "{% if true %}{% if false %} NO {% endif %}{% endif %}", nil)
+	assertTemplateResult(t, " YES ", "{% if true %}{% if true %} YES {% endif %}{% endif %}", nil)
+
+	assertTemplateResult(t, " YES ", "{% if true %}{% if true %} YES {% else %} NO {% endif %}{% else %} NO {% endif %}", nil)
+	assertTemplateResult(t, " YES ", "{% if true %}{% if false %} NO {% else %} YES {% endif %}{% else %} NO {% endif %}", nil)
+	assertTemplateResult(t, " YES ", "{% if false %}{% if true %} NO {% else %} NONO {% endif %}{% else %} YES {% endif %}", nil)
+}
+
+// TestNestedIfWithOrOperator tests nested if statements with OR operators in the outer condition.
+// This is a real-world use case from meta tag generation.
+func TestNestedIfWithOrOperator(t *testing.T) {
+	template := `{% if post.seo.og_title or post.title %}
+
+    <meta property="og:title" content="{% if post.seo.og_title %}{{ post.seo.og_title }}{% else %}{{ post.title }}{% endif %}">
+
+{% elsif category.seo.og_title or category.name %}
+
+    <meta property="og:title" content="{% if category.seo.og_title %}{{ category.seo.og_title }}{% else %}{{ category.name }}{% endif %}">
+
+{% else %}
+
+    <meta property="og:title" content="{{ workspace.name }}">
+
+{% endif %}`
+
+	// Test case 1: post.seo.og_title exists (nested if should use og_title)
+	assigns1 := map[string]interface{}{
+		"post": map[string]interface{}{
+			"seo": map[string]interface{}{
+				"og_title": "Post OG Title",
+			},
+			"title": "Post Title",
+		},
+	}
+	expected1 := "\n\n    <meta property=\"og:title\" content=\"Post OG Title\">\n\n"
+	assertTemplateResult(t, expected1, template, assigns1)
+
+	// Test case 2: post.seo.og_title doesn't exist, but post.title does (nested if should use title)
+	assigns2 := map[string]interface{}{
+		"post": map[string]interface{}{
+			"seo":   map[string]interface{}{},
+			"title": "Post Title Only",
+		},
+	}
+	expected2 := "\n\n    <meta property=\"og:title\" content=\"Post Title Only\">\n\n"
+	assertTemplateResult(t, expected2, template, assigns2)
+
+	// Test case 3: category.seo.og_title exists (elsif branch)
+	assigns3 := map[string]interface{}{
+		"post": map[string]interface{}{
+			"seo": map[string]interface{}{},
+		},
+		"category": map[string]interface{}{
+			"seo": map[string]interface{}{
+				"og_title": "Category OG Title",
+			},
+			"name": "Category Name",
+		},
+	}
+	expected3 := "\n\n    <meta property=\"og:title\" content=\"Category OG Title\">\n\n"
+	assertTemplateResult(t, expected3, template, assigns3)
+
+	// Test case 4: category.seo.og_title doesn't exist, but category.name does (elsif branch, nested if)
+	assigns4 := map[string]interface{}{
+		"post": map[string]interface{}{
+			"seo": map[string]interface{}{},
+		},
+		"category": map[string]interface{}{
+			"seo":  map[string]interface{}{},
+			"name": "Category Name Only",
+		},
+	}
+	expected4 := "\n\n    <meta property=\"og:title\" content=\"Category Name Only\">\n\n"
+	assertTemplateResult(t, expected4, template, assigns4)
+
+	// Test case 5: else branch - use workspace.name
+	assigns5 := map[string]interface{}{
+		"post": map[string]interface{}{
+			"seo": map[string]interface{}{},
+		},
+		"workspace": map[string]interface{}{
+			"name": "Workspace Name",
+		},
+	}
+	expected5 := "\n\n    <meta property=\"og:title\" content=\"Workspace Name\">\n\n"
+	assertTemplateResult(t, expected5, template, assigns5)
+}

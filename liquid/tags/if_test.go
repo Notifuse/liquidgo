@@ -312,6 +312,178 @@ func TestIfTagParseIfCondition(t *testing.T) {
 	if condition4 == nil {
 		t.Error("Expected condition, got nil")
 	}
+
+	// Test with 'or' operator
+	condition5, err := parseIfCondition("a or b", pc)
+	if err != nil {
+		t.Fatalf("parseIfCondition() with or operator error = %v", err)
+	}
+	if condition5 == nil {
+		t.Error("Expected condition, got nil")
+	}
+	if condition5.ChildCondition() == nil {
+		t.Error("Expected child condition for 'or' operator")
+	}
+
+	// Test with 'and' operator
+	condition6, err := parseIfCondition("a and b", pc)
+	if err != nil {
+		t.Fatalf("parseIfCondition() with and operator error = %v", err)
+	}
+	if condition6 == nil {
+		t.Error("Expected condition, got nil")
+	}
+	if condition6.ChildCondition() == nil {
+		t.Error("Expected child condition for 'and' operator")
+	}
+
+	// Test with comparison and 'or'
+	condition7, err := parseIfCondition("a == 1 or b == 2", pc)
+	if err != nil {
+		t.Fatalf("parseIfCondition() with comparison and or error = %v", err)
+	}
+	if condition7 == nil {
+		t.Error("Expected condition, got nil")
+	}
+
+	// Test with multiple 'or' operators
+	condition8, err := parseIfCondition("a or b or c", pc)
+	if err != nil {
+		t.Fatalf("parseIfCondition() with multiple or operators error = %v", err)
+	}
+	if condition8 == nil {
+		t.Error("Expected condition, got nil")
+	}
+}
+
+// TestParseIfConditionWithOrOperator tests parsing conditions with OR operator
+func TestParseIfConditionWithOrOperator(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	tests := []struct {
+		name     string
+		markup   string
+		wantErr  bool
+		hasChild bool
+	}{
+		{"simple or", "a or b", false, true},
+		{"comparison or", "a == 1 or b == 2", false, true},
+		{"multiple or", "a or b or c", false, true},
+		{"nested property or", "post.title or post.name", false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition, err := parseIfCondition(tt.markup, pc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseIfCondition() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if condition == nil {
+				t.Error("Expected non-nil condition")
+				return
+			}
+			if tt.hasChild && condition.ChildCondition() == nil {
+				t.Error("Expected child condition")
+			}
+		})
+	}
+}
+
+// TestParseIfConditionWithAndOperator tests parsing conditions with AND operator
+func TestParseIfConditionWithAndOperator(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	tests := []struct {
+		name     string
+		markup   string
+		wantErr  bool
+		hasChild bool
+	}{
+		{"simple and", "a and b", false, true},
+		{"comparison and", "a == 1 and b == 2", false, true},
+		{"multiple and", "a and b and c", false, true},
+		{"nested property and", "post.title and post.name", false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition, err := parseIfCondition(tt.markup, pc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseIfCondition() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if condition == nil {
+				t.Error("Expected non-nil condition")
+				return
+			}
+			if tt.hasChild && condition.ChildCondition() == nil {
+				t.Error("Expected child condition")
+			}
+		})
+	}
+}
+
+// TestSplitByBooleanOperators tests the splitByBooleanOperators helper function
+func TestSplitByBooleanOperators(t *testing.T) {
+	tests := []struct {
+		name    string
+		markup  string
+		wantLen int
+		wantOps []string // expected operators after each part
+	}{
+		{"simple or", "a or b", 2, []string{"or", ""}},
+		{"simple and", "a and b", 2, []string{"and", ""}},
+		{"multiple or", "a or b or c", 3, []string{"or", "or", ""}},
+		{"mixed operators", "a or b and c", 3, []string{"or", "and", ""}},
+		{"no operators", "a", 1, []string{""}},
+		{"with spaces", "a  or  b", 2, []string{"or", ""}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parts := splitByBooleanOperators(tt.markup)
+			if len(parts) != tt.wantLen {
+				t.Errorf("splitByBooleanOperators() got %d parts, want %d", len(parts), tt.wantLen)
+				return
+			}
+			for i, part := range parts {
+				if part.nextOp != tt.wantOps[i] {
+					t.Errorf("Part %d: got operator %q, want %q", i, part.nextOp, tt.wantOps[i])
+				}
+			}
+		})
+	}
+}
+
+// TestParseSingleCondition tests the parseSingleCondition helper function
+func TestParseSingleCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	tests := []struct {
+		name    string
+		expr    string
+		wantErr bool
+	}{
+		{"simple variable", "var", false},
+		{"comparison", "a == b", false},
+		{"number comparison", "x > 5", false},
+		{"string comparison", "name == 'test'", false},
+		{"nested property", "post.title", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition, err := parseSingleCondition(tt.expr, pc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseSingleCondition() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if condition == nil && !tt.wantErr {
+				t.Error("Expected non-nil condition")
+			}
+		})
+	}
 }
 
 // Test parseBodyForBlock with invalid attachment type
@@ -615,37 +787,136 @@ func TestIfTagMultipleElsif(t *testing.T) {
 }
 
 // TestIfTagComplexNestedConditions tests complex nested conditions
+// Note: This test requires an environment with registered tags for nested parsing to work
 func TestIfTagComplexNestedConditions(t *testing.T) {
-	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	// Create an environment and register the if tag
+	env := liquid.NewEnvironment()
+	env.RegisterTag("if", NewIfTag)
+
+	pcOpts := liquid.ParseContextOptions{
+		Environment: env,
+	}
+	pc := liquid.NewParseContext(pcOpts)
+
 	tag, err := NewIfTag("if", "true", pc)
 	if err != nil {
 		t.Fatalf("NewIfTag() error = %v", err)
 	}
 
-	// Parse if with nested if inside (may panic, so catch it)
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				t.Logf("Note: Nested if parsing panicked with %v (may be expected behavior)", r)
-			}
-		}()
+	// Parse if with nested if inside
+	tokenizer := pc.NewTokenizer("outer {% if false %}inner{% endif %} outer end {% endif %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
 
-		tokenizer := pc.NewTokenizer("outer {% if false %}inner{% endif %} outer end {% endif %}", false, nil, false)
-		err = tag.Parse(tokenizer)
-		if err != nil {
-			t.Logf("Note: Parse() returned error: %v (may be expected)", err)
-			return
-		}
+	ctx := liquid.NewContext()
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
 
-		ctx := liquid.NewContext()
-		var output string
-		tag.RenderToOutputBuffer(ctx, &output)
+	// Should render outer content but not inner
+	expected := "outer  outer end "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
+	}
+}
 
-		// Should render outer content but not inner
-		if len(output) == 0 {
-			t.Logf("Note: Output is empty: %q", output)
-		} else {
-			t.Logf("Note: Complex nested conditions output: %q", output)
-		}
-	}()
+// TestIfTagWithOrCondition tests if tag with OR condition
+func TestIfTagWithOrCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test: a or b (a=false, b=true) should be true
+	tag, err := NewIfTag("if", "a or b", pc)
+	if err != nil {
+		t.Fatalf("NewIfTag() error = %v", err)
+	}
+
+	tokenizer := pc.NewTokenizer("YES {% endif %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.Set("a", false)
+	ctx.Set("b", true)
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	if output != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output)
+	}
+}
+
+// TestIfTagWithAndCondition tests if tag with AND condition
+func TestIfTagWithAndCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test: a and b (a=true, b=true) should be true
+	tag, err := NewIfTag("if", "a and b", pc)
+	if err != nil {
+		t.Fatalf("NewIfTag() error = %v", err)
+	}
+
+	tokenizer := pc.NewTokenizer("YES {% endif %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.Set("a", true)
+	ctx.Set("b", true)
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	if output != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output)
+	}
+
+	// Test: a and b (a=true, b=false) should be false
+	tag2, _ := NewIfTag("if", "a and b", pc)
+	tokenizer2 := pc.NewTokenizer("YES {% endif %}", false, nil, false)
+	_ = tag2.Parse(tokenizer2)
+
+	ctx2 := liquid.NewContext()
+	ctx2.Set("a", true)
+	ctx2.Set("b", false)
+
+	var output2 string
+	tag2.RenderToOutputBuffer(ctx2, &output2)
+
+	if output2 != "" {
+		t.Errorf("Expected empty output, got %q", output2)
+	}
+}
+
+// TestIfTagWithComplexCondition tests if tag with complex condition
+func TestIfTagWithComplexCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test: a == 1 or b == 2
+	tag, err := NewIfTag("if", "a == 1 or b == 2", pc)
+	if err != nil {
+		t.Fatalf("NewIfTag() error = %v", err)
+	}
+
+	tokenizer := pc.NewTokenizer("YES {% endif %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.Set("a", 0)
+	ctx.Set("b", 2)
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	if output != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output)
+	}
 }

@@ -2,12 +2,14 @@ package tags
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
 var (
-	ifSyntax = regexp.MustCompile(`(` + liquid.QuotedFragment.String() + `)\s*([=!<>a-z_]+)?\s*(` + liquid.QuotedFragment.String() + `)?`)
+	ifSyntax           = regexp.MustCompile(`(` + liquid.QuotedFragment.String() + `)\s*([=!<>a-z_]+)?\s*(` + liquid.QuotedFragment.String() + `)?`)
+	ifBooleanOperators = []string{"and", "or"}
 )
 
 // ConditionBlock represents a condition with its attachment.
@@ -224,18 +226,106 @@ func (i *IfTag) Blank() bool {
 }
 
 // parseIfCondition parses a condition from markup.
+// This implements the lax parsing similar to Ruby's lax_parse method.
 func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) (*liquid.Condition, error) {
-	// For now, use simple parsing - can be enhanced later
-	matches := ifSyntax.FindStringSubmatch(markup)
+	markup = strings.TrimSpace(markup)
+
+	// Split by 'and' and 'or' operators, keeping track of which operator was used
+	// We need to parse from right to left like Ruby does
+	parts := splitByBooleanOperators(markup)
+
+	if len(parts) == 0 {
+		return nil, liquid.NewSyntaxError("Syntax Error in 'if' - Valid syntax: if [expression]")
+	}
+
+	// Parse the rightmost condition first
+	condition, err := parseSingleCondition(parts[len(parts)-1].expr, parseContext)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the condition chain from right to left
+	for i := len(parts) - 2; i >= 0; i-- {
+		part := parts[i]
+		newCondition, err := parseSingleCondition(part.expr, parseContext)
+		if err != nil {
+			return nil, err
+		}
+
+		// Chain with the next operator
+		if part.nextOp == "or" {
+			newCondition.Or(condition)
+		} else if part.nextOp == "and" {
+			newCondition.And(condition)
+		}
+		condition = newCondition
+	}
+
+	return condition, nil
+}
+
+type conditionPart struct {
+	expr   string
+	nextOp string // "and" or "or" - the operator that follows this expression
+}
+
+// splitByBooleanOperators splits markup by 'and' and 'or' operators
+func splitByBooleanOperators(markup string) []conditionPart {
+	var parts []conditionPart
+	var currentExpr strings.Builder
+	words := strings.Fields(markup)
+
+	for i := 0; i < len(words); i++ {
+		word := words[i]
+		// Check if word is a boolean operator
+		isBoolOp := false
+		for _, op := range ifBooleanOperators {
+			if word == op {
+				isBoolOp = true
+				break
+			}
+		}
+
+		if isBoolOp {
+			// Found an operator
+			if currentExpr.Len() > 0 {
+				parts = append(parts, conditionPart{
+					expr:   strings.TrimSpace(currentExpr.String()),
+					nextOp: word,
+				})
+				currentExpr.Reset()
+			}
+		} else {
+			if currentExpr.Len() > 0 {
+				currentExpr.WriteString(" ")
+			}
+			currentExpr.WriteString(word)
+		}
+	}
+
+	// Add the last expression
+	if currentExpr.Len() > 0 {
+		parts = append(parts, conditionPart{
+			expr:   strings.TrimSpace(currentExpr.String()),
+			nextOp: "",
+		})
+	}
+
+	return parts
+}
+
+// parseSingleCondition parses a single condition (without and/or)
+func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface) (*liquid.Condition, error) {
+	matches := ifSyntax.FindStringSubmatch(expr)
 	if len(matches) == 0 {
-		// Try parsing as a simple expression (no operator)
-		expr := parseContext.ParseExpression(markup)
-		return liquid.NewCondition(expr, "", nil), nil
+		// Try as simple expression
+		parsedExpr := parseContext.ParseExpression(expr)
+		return liquid.NewCondition(parsedExpr, "", nil), nil
 	}
 
 	left := parseContext.ParseExpression(matches[1])
 	operator := matches[2]
-	right := interface{}(nil)
+	var right interface{}
 	if len(matches) > 3 && matches[3] != "" {
 		right = parseContext.ParseExpression(matches[3])
 	}
