@@ -2,38 +2,38 @@ package liquid
 
 // ContextConfig configures a Context.
 type ContextConfig struct {
+	Registers          interface{}
 	Environment        *Environment
-	Environments       []map[string]interface{}
 	OuterScope         map[string]interface{}
-	Registers          interface{} // *Registers or map[string]interface{}
-	RethrowErrors      bool
 	ResourceLimits     *ResourceLimits
+	Environments       []map[string]interface{}
 	StaticEnvironments []map[string]interface{}
+	RethrowErrors      bool
 }
 
 // Context keeps the variable stack and resolves variables, as well as keywords.
 type Context struct {
-	environment        *Environment
-	environments       []map[string]interface{}
-	staticEnvironments []map[string]interface{}
-	scopes             []map[string]interface{}
-	registers          *Registers
-	errors             []error
-	warnings           []error
-	partial            bool
-	strictVariables    bool
-	strictFilters      bool
-	resourceLimits     *ResourceLimits
-	baseScopeDepth     int
-	interrupts         []interface{} // Can be *Interrupt, *BreakInterrupt, *ContinueInterrupt
-	filters            []interface{}
-	globalFilter       func(interface{}) interface{}
 	disabledTags       map[string]int
-	strainer           *StrainerTemplate
-	stringScanner      *StringScanner
-	templateName       string
-	exceptionRenderer  func(error) interface{}
+	resourceLimits     *ResourceLimits
 	profiler           *Profiler
+	exceptionRenderer  func(error) interface{}
+	registers          *Registers
+	stringScanner      *StringScanner
+	strainer           *StrainerTemplate
+	environment        *Environment
+	globalFilter       func(interface{}) interface{}
+	templateName       string
+	warnings           []error
+	environments       []map[string]interface{}
+	filters            []interface{}
+	interrupts         []interface{}
+	errors             []error
+	scopes             []map[string]interface{}
+	staticEnvironments []map[string]interface{}
+	baseScopeDepth     int
+	strictFilters      bool
+	strictVariables    bool
+	partial            bool
 }
 
 // BuildContext creates a new Context with the given configuration.
@@ -654,4 +654,41 @@ func (c *Context) Profiler() *Profiler {
 // SetProfiler sets the profiler.
 func (c *Context) SetProfiler(profiler *Profiler) {
 	c.profiler = profiler
+}
+
+// Reset clears the Context for reuse from the pool.
+// This method must reset all fields to their zero values.
+func (c *Context) Reset() {
+	// Clear slices (keep capacity for reuse)
+	c.scopes = c.scopes[:0]
+	c.errors = c.errors[:0]
+	c.warnings = c.warnings[:0]
+	c.filters = c.filters[:0]
+	c.interrupts = c.interrupts[:0]
+	c.environments = c.environments[:0]
+	c.staticEnvironments = c.staticEnvironments[:0]
+
+	// Clear maps
+	if c.disabledTags != nil {
+		for k := range c.disabledTags {
+			delete(c.disabledTags, k)
+		}
+	}
+
+	// Nil out pointer fields
+	c.resourceLimits = nil
+	c.profiler = nil
+	c.exceptionRenderer = nil
+	c.registers = nil
+	c.stringScanner = nil
+	c.strainer = nil
+	c.environment = nil
+	c.globalFilter = nil
+
+	// Reset primitive fields
+	c.templateName = ""
+	c.baseScopeDepth = 0
+	c.strictFilters = false
+	c.strictVariables = false
+	c.partial = false
 }

@@ -33,11 +33,11 @@ type ParseContextInterface interface {
 
 // Variable represents a Liquid variable with optional filters.
 type Variable struct {
-	markup       string
 	name         interface{}
-	filters      [][]interface{}
 	parseContext ParseContextInterface
 	lineNumber   *int
+	markup       string
+	filters      [][]interface{}
 }
 
 // NewVariable creates a new Variable from markup.

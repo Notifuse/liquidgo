@@ -3,9 +3,9 @@ package liquid
 // ForloopDrop provides information about a parent for loop.
 type ForloopDrop struct {
 	*Drop
+	parentloop *ForloopDrop
 	name       string
 	length     int
-	parentloop *ForloopDrop
 	index      int
 }
 

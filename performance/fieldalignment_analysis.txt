@@ -1,0 +1,17 @@
+/Users/pierre/Sites/liquidgo/liquid/condition.go:25:16: struct with 88 pointer bytes could be 80
+/Users/pierre/Sites/liquidgo/liquid/context.go:4:20: struct with 80 pointer bytes could be 72
+/Users/pierre/Sites/liquidgo/liquid/context.go:15:14: struct with 272 pointer bytes could be 240
+/Users/pierre/Sites/liquidgo/liquid/environment.go:9:18: struct with 72 pointer bytes could be 64
+/Users/pierre/Sites/liquidgo/liquid/forloop_drop.go:4:18: struct with 40 pointer bytes could be 24
+/Users/pierre/Sites/liquidgo/liquid/i18n.go:19:11: struct with 24 pointer bytes could be 16
+/Users/pierre/Sites/liquidgo/liquid/parse_context.go:4:26: struct with 48 pointer bytes could be 40
+/Users/pierre/Sites/liquidgo/liquid/parse_context.go:13:19: struct of size 120 could be 112
+/Users/pierre/Sites/liquidgo/liquid/profiler.go:22:15: struct with 32 pointer bytes could be 16
+/Users/pierre/Sites/liquidgo/liquid/profiler.go:29:13: struct with 80 pointer bytes could be 56
+/Users/pierre/Sites/liquidgo/liquid/resource_limits.go:4:21: struct with 48 pointer bytes could be 32
+/Users/pierre/Sites/liquidgo/liquid/strainer_template.go:11:23: struct with 40 pointer bytes could be 32
+/Users/pierre/Sites/liquidgo/liquid/template.go:19:15: struct of size 136 could be 128
+/Users/pierre/Sites/liquidgo/liquid/template.go:36:22: struct with 48 pointer bytes could be 40
+/Users/pierre/Sites/liquidgo/liquid/template.go:305:20: struct with 56 pointer bytes could be 40
+/Users/pierre/Sites/liquidgo/liquid/tokenizer.go:20:16: struct with 72 pointer bytes could be 40
+/Users/pierre/Sites/liquidgo/liquid/variable.go:35:15: struct with 80 pointer bytes could be 64

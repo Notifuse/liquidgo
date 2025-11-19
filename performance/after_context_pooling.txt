@@ -1,0 +1,7 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/Notifuse/liquidgo/performance
+cpu: Apple M1 Pro
+BenchmarkRender-10    	     374	   9491105 ns/op	25650518 B/op	   33075 allocs/op
+PASS
+ok  	github.com/Notifuse/liquidgo/performance	4.730s

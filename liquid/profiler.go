@@ -20,19 +20,19 @@ import (
 //
 // All render times are in seconds. There is a small performance hit when profiling is enabled.
 type Profiler struct {
+	currentChildren *[]*Timing
 	rootChildren    []*Timing
-	currentChildren *[]*Timing // Pointer to current children slice being built
 	totalTime       float64
 }
 
 // Timing represents a single timing node in the profiler tree.
 type Timing struct {
+	lineNumber   *int
+	selfTime     *float64
 	code         string
 	templateName string
-	lineNumber   *int
 	children     []*Timing
 	totalTime    float64
-	selfTime     *float64 // Cached self time
 }
 
 // NewProfiler creates a new Profiler instance.

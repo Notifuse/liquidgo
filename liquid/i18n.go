@@ -17,8 +17,8 @@ var (
 
 // I18n handles internationalization for Liquid templates.
 type I18n struct {
-	path   string
 	locale map[string]interface{}
+	path   string
 }
 
 // NewI18n creates a new I18n instance with the given locale path.

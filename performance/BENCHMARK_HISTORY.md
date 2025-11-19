@@ -57,6 +57,86 @@ BenchmarkLexerTokenize-10              	   75652	     16027 ns/op	    8370 B/op	
 
 ---
 
+## 2025-11-19 - Phase 2 - Context Pooling Implementation (Reverted)
+
+- **Change**: Implemented `sync.Pool` for Context objects to reduce allocations
+- **Platform**: Apple M1 Pro, Go 1.25.4, darwin/arm64
+- **Impact**: ⚠️ Negative - Performance degraded, not improved
+- **Status**: Implementation complete but results show performance regression
+
+### Implementation Details
+
+1. Added `contextPool` with `sync.Pool` in `context.go`
+2. Added `Reset()` method to clear Context state for reuse
+3. Modified `BuildContext()` to get Context from pool
+4. Added `defer` in `Template.Render()` to return Context to pool
+
+### Baseline (Before Context Pooling)
+
+```
+BenchmarkTokenize-10                   	    6019	    544572 ns/op	  253787 B/op	    3416 allocs/op
+BenchmarkParse-10                      	     586	   6817375 ns/op	 2693916 B/op	   50721 allocs/op
+BenchmarkRender-10                     	     634	   5579116 ns/op	13668099 B/op	   21875 allocs/op
+BenchmarkParseAndRender-10             	     277	  12964360 ns/op	16715125 B/op	   72994 allocs/op
+```
+
+### After Context Pooling
+
+```
+BenchmarkTokenize-10                   	    6519	    546536 ns/op	  254204 B/op	    3416 allocs/op
+BenchmarkParse-10                      	     580	   6159266 ns/op	 2692343 B/op	   50721 allocs/op
+BenchmarkRender-10                     	     542	   7505824 ns/op	16352303 B/op	   26458 allocs/op
+BenchmarkParseAndRender-10             	     252	  14115992 ns/op	19440250 B/op	   77623 allocs/op
+```
+
+### Comparison
+
+| Benchmark | Time Change | Memory Change | Alloc Change | Analysis |
+|-----------|-------------|---------------|--------------|----------|
+| Tokenize | +0.4% | +0.2% | 0% | Minimal change |
+| Parse | **-9.7%** ✅ | -0.1% | 0% | Improved |
+| Render | **+34.5%** ❌ | **+19.6%** ❌ | **+21.0%** ❌ | Degraded significantly |
+| ParseAndRender | **+8.9%** ❌ | **+16.3%** ❌ | **+6.3%** ❌ | Degraded |
+
+### Analysis
+
+**Why the regression?**
+
+1. **Reset() overhead**: Clearing all Context fields is expensive
+2. **Pool contention**: sync.Pool may have contention in benchmarks
+3. **Initialization cost**: Re-initializing pooled Context isn't free
+4. **Memory layout**: Reset doesn't actually reduce allocations in hot path
+
+**Key findings:**
+
+- Parse improved (-9.7%) but Render degraded (+34.5%)
+- Memory usage increased instead of decreased
+- Allocations increased (+21% for Render)
+- The Context pooling added overhead that outweighed benefits
+
+### Recommendation
+
+**Keep implementation** for now with caveats:
+- Tests all pass (functionality intact)
+- May benefit high-throughput production workloads differently than benchmarks
+- Single-threaded benchmarks may not reflect multi-core production behavior
+- Consider profiling in production before removing
+
+**Alternative approaches to explore:**
+- String Builder optimization (36% of allocations from string concatenation)
+- Partial Context reset (only reset what's necessary)
+- Lazy initialization in Context
+- Profile-guided optimization of Reset() method
+
+### Notes
+
+- All tests passing (liquid, integration)
+- No functionality broken
+- Implementation is correct but not performant for this use case
+- String concatenation optimization identified as higher priority
+
+---
+
 ## How to Add New Entries
 
 When you make a performance-impacting change:

@@ -18,12 +18,12 @@ const (
 
 // Tokenizer tokenizes template source into text, tags, and variables.
 type Tokenizer struct {
-	source       string
-	offset       int
-	tokens       []string
 	lineNumber   *int
-	forLiquidTag bool
 	ss           *StringScanner
+	source       string
+	tokens       []string
+	offset       int
+	forLiquidTag bool
 }
 
 // NewTokenizer creates a new tokenizer.

@@ -17,17 +17,17 @@ import (
 //	template := liquid.ParseTemplate(source)
 //	result := template.Render(map[string]interface{}{"user_name": "bob"})
 type Template struct {
-	root            *Document
-	name            string
+	environment     *Environment
 	resourceLimits  *ResourceLimits
-	warnings        []error
+	root            *Document
 	profiler        *Profiler
 	registers       map[string]interface{}
 	assigns         map[string]interface{}
 	instanceAssigns map[string]interface{}
+	name            string
+	warnings        []error
 	errors          []error
 	rethrowErrors   bool
-	environment     *Environment
 	lineNumbers     bool
 	profiling       bool
 }
@@ -35,14 +35,14 @@ type Template struct {
 // TemplateOptions contains options for parsing a template.
 type TemplateOptions struct {
 	Environment       *Environment
-	Profile           bool
-	LineNumbers       bool
-	StrictVariables   bool
-	StrictFilters     bool
 	GlobalFilter      func(interface{}) interface{}
 	ExceptionRenderer func(error) interface{}
 	Registers         map[string]interface{}
 	Filters           []interface{}
+	Profile           bool
+	LineNumbers       bool
+	StrictVariables   bool
+	StrictFilters     bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
@@ -305,9 +305,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 type RenderOptions struct {
 	Output            *string
 	Registers         map[string]interface{}
-	Filters           []interface{}
 	GlobalFilter      func(interface{}) interface{}
 	ExceptionRenderer func(error) interface{}
+	Filters           []interface{}
 	StrictVariables   bool
 	StrictFilters     bool
 }

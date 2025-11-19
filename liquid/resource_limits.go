@@ -5,9 +5,9 @@ type ResourceLimits struct {
 	renderLengthLimit *int
 	renderScoreLimit  *int
 	assignScoreLimit  *int
+	lastCaptureLength *int
 	renderScore       int
 	assignScore       int
-	lastCaptureLength *int
 	reachedLimit      bool
 }
 

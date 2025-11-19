@@ -1,0 +1,50 @@
+File: performance.test
+Type: alloc_space
+Time: 2025-11-19 12:28:05 CET
+Showing nodes accounting for 25775.43MB, 97.09% of 26548.97MB total
+Dropped 194 nodes (cum <= 132.74MB)
+      flat  flat%   sum%        cum   cum%
+ 9549.92MB 35.97% 35.97% 17068.48MB 64.29%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).RenderToOutputBuffer
+ 5687.79MB 21.42% 57.39%  7168.30MB 27.00%  github.com/Notifuse/liquidgo/liquid.(*Variable).RenderToOutputBuffer
+ 2752.15MB 10.37% 67.76%  2757.65MB 10.39%  github.com/Notifuse/liquidgo/liquid.Parse
+ 2277.03MB  8.58% 76.34%  3007.32MB 11.33%  github.com/Notifuse/liquidgo/liquid.(*Lexer).Tokenize
+ 1457.48MB  5.49% 81.83%  1867.18MB  7.03%  github.com/Notifuse/liquidgo/liquid.(*Tokenizer).tokenize
+ 1124.42MB  4.24% 86.06%  1124.42MB  4.24%  strings.(*Builder).WriteString (inline)
+ 1102.02MB  4.15% 90.21%  1316.15MB  4.96%  regexp.(*Regexp).backtrack
+  644.68MB  2.43% 92.64%   644.68MB  2.43%  github.com/Notifuse/liquidgo/liquid.NewBlockBody (inline)
+  203.62MB  0.77% 93.41%   203.62MB  0.77%  regexp.(*bitState).reset
+  151.01MB  0.57% 93.98%   151.01MB  0.57%  reflect.New
+  144.53MB  0.54% 94.52%   209.08MB  0.79%  fmt.Sprintf
+  104.51MB  0.39% 94.92%  1244.78MB  4.69%  github.com/Notifuse/liquidgo/liquid.NewVariable
+   99.01MB  0.37% 95.29%   274.14MB  1.03%  regexp.(*Regexp).FindStringSubmatch
+      54MB   0.2% 95.49%  1316.99MB  4.96%  github.com/Notifuse/liquidgo/liquid.hashInspect
+      53MB   0.2% 95.69%  2480.33MB  9.34%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).parseForDocument
+      43MB  0.16% 95.85%  1097.39MB  4.13%  reflect.Value.call
+      41MB  0.15% 96.01%   842.36MB  3.17%  github.com/Notifuse/liquidgo/liquid.NewParser
+   39.50MB  0.15% 96.16%  1906.68MB  7.18%  github.com/Notifuse/liquidgo/liquid.NewTokenizer
+   35.09MB  0.13% 96.29%   762.91MB  2.87%  github.com/Notifuse/liquidgo/liquid/tags.(*TableRowTag).RenderToOutputBuffer.func1
+   33.53MB  0.13% 96.42% 11373.77MB 42.84%  github.com/Notifuse/liquidgo/performance.(*ThemeRunner).Render
+   33.50MB  0.13% 96.54%   184.51MB  0.69%  reflect.(*rtype).Method
+   29.50MB  0.11% 96.65%  1140.27MB  4.29%  github.com/Notifuse/liquidgo/liquid.(*Variable).strictParse
+   19.51MB 0.074% 96.73%  6889.23MB 25.95%  github.com/Notifuse/liquidgo/performance.(*ThemeRunner).compileAndRender
+   18.08MB 0.068% 96.79%  1420.95MB  5.35%  github.com/Notifuse/liquidgo/performance/shopify.(*Paginate).RenderToOutputBuffer
+   14.50MB 0.055% 96.85%   440.58MB  1.66%  github.com/Notifuse/liquidgo/liquid/tags.NewIfTag
+      14MB 0.053% 96.90%   260.93MB  0.98%  github.com/Notifuse/liquidgo/liquid/tags.NewForTag
+      13MB 0.049% 96.95% 11210.08MB 42.22%  github.com/Notifuse/liquidgo/liquid/tags.(*ForTag).renderSegment
+      13MB 0.049% 97.00%   154.54MB  0.58%  github.com/Notifuse/liquidgo/liquid.(*Context).Invoke
+   11.03MB 0.042% 97.04%   774.44MB  2.92%  github.com/Notifuse/liquidgo/liquid/tags.(*TableRowTag).RenderToOutputBuffer
+    7.50MB 0.028% 97.07%   172.54MB  0.65%  github.com/Notifuse/liquidgo/liquid.(*Variable).Render
+    2.50MB 0.0094% 97.08%  1170.49MB  4.41%  github.com/Notifuse/liquidgo/liquid.arrayInspect
+       2MB 0.0075% 97.09% 17128.49MB 64.52%  github.com/Notifuse/liquidgo/liquid.(*Template).Render
+         0     0% 97.09%   272.56MB  1.03%  github.com/Notifuse/liquidgo/liquid.(*Block).Parse
+         0     0% 97.09%  1502.95MB  5.66%  github.com/Notifuse/liquidgo/liquid.(*Block).Render
+         0     0% 97.09%   724.82MB  2.73%  github.com/Notifuse/liquidgo/liquid.(*Block).RenderToOutputBuffer
+         0     0% 97.09%   258.05MB  0.97%  github.com/Notifuse/liquidgo/liquid.(*Block).parseBody
+         0     0% 97.09%  2480.33MB  9.34%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).Parse
+         0     0% 97.09%  1604.02MB  6.04%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).Render (inline)
+         0     0% 97.09%  1242.28MB  4.68%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).createVariable
+         0     0% 97.09% 12612.76MB 47.51%  github.com/Notifuse/liquidgo/liquid.(*BlockBody).renderNodeOptimized
+         0     0% 97.09% 11955.98MB 45.03%  github.com/Notifuse/liquidgo/liquid.(*Context).Stack
+         0     0% 97.09%  2480.33MB  9.34%  github.com/Notifuse/liquidgo/liquid.(*Document).Parse
+         0     0% 97.09% 17068.48MB 64.29%  github.com/Notifuse/liquidgo/liquid.(*Document).RenderToOutputBuffer
+         0     0% 97.09%  2480.33MB  9.34%  github.com/Notifuse/liquidgo/liquid.(*Document).parseBody

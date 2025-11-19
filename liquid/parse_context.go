@@ -5,24 +5,24 @@ type ParseContextOptions struct {
 	Environment     *Environment
 	Locale          *I18n
 	ExpressionCache map[string]interface{}
-	ErrorMode       string
 	TemplateOptions map[string]interface{}
+	ErrorMode       string
 }
 
 // ParseContext represents the context during template parsing.
 type ParseContext struct {
 	environment     *Environment
 	locale          *I18n
-	warnings        []error
-	errorMode       string
 	lineNumber      *int
-	trimWhitespace  bool
-	depth           int
-	partial         bool
 	stringScanner   *StringScanner
 	expressionCache map[string]interface{}
 	templateOptions map[string]interface{}
 	partialOptions  map[string]interface{}
+	errorMode       string
+	warnings        []error
+	depth           int
+	trimWhitespace  bool
+	partial         bool
 }
 
 // NewParseContext creates a new ParseContext.

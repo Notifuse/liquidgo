@@ -1,0 +1,17 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/Notifuse/liquidgo/performance
+cpu: Apple M1 Pro
+BenchmarkTokenize-10                   	    5750	    546495 ns/op	  254312 B/op	    3416 allocs/op
+BenchmarkParse-10                      	     577	   6202014 ns/op	 2694436 B/op	   50721 allocs/op
+BenchmarkRender-10                     	     574	   6263635 ns/op	15092578 B/op	   23749 allocs/op
+BenchmarkParseAndRender-10             	     265	  13584417 ns/op	18186657 B/op	   74884 allocs/op
+BenchmarkExpressionParseString-10      	22806690	       158.8 ns/op	      96 B/op	       6 allocs/op
+BenchmarkExpressionParseLiteral-10     	44746250	        80.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseVariable-10    	32280336	       118.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseNumber-10      	11258161	       312.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseRange-10       	17437540	       207.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExpressionParseAll-10         	 3871314	       942.0 ns/op	      96 B/op	       6 allocs/op
+BenchmarkLexerTokenize-10              	  244178	     14747 ns/op	    8164 B/op	     199 allocs/op
+PASS
+ok  	github.com/Notifuse/liquidgo/performance	44.276s

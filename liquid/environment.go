@@ -7,13 +7,13 @@ import (
 // Environment is the container for all configuration options of Liquid, such as
 // the registered tags, filters, and the default error mode.
 type Environment struct {
-	errorMode                  string
-	tags                       map[string]interface{} // Tag name -> Tag class
+	fileSystem                 FileSystem
+	tags                       map[string]interface{}
 	strainerTemplate           *StrainerTemplateClass
 	exceptionRenderer          func(error) interface{}
-	fileSystem                 FileSystem
 	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
+	errorMode                  string
 }
 
 // NewEnvironment creates a new environment instance.

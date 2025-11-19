@@ -1,0 +1,50 @@
+File: performance.test
+Type: cpu
+Time: 2025-11-19 12:27:21 CET
+Duration: 44.05s, Total samples = 61.15s (138.81%)
+Showing nodes accounting for 53.18s, 86.97% of 61.15s total
+Dropped 504 nodes (cum <= 0.31s)
+      flat  flat%   sum%        cum   cum%
+        9s 14.72% 14.72%         9s 14.72%  runtime.pthread_kill
+     5.87s  9.60% 24.32%      5.87s  9.60%  runtime.kevent
+     4.42s  7.23% 31.55%      6.35s 10.38%  internal/runtime/maps.(*Map).getWithoutKeySmallFastStr
+     3.98s  6.51% 38.05%      3.98s  6.51%  runtime.pthread_cond_wait
+     3.93s  6.43% 44.48%     11.44s 18.71%  runtime.mapaccess2_faststr
+     3.32s  5.43% 49.91%      3.32s  5.43%  runtime.usleep
+     2.86s  4.68% 54.59%      2.86s  4.68%  runtime.madvise
+     2.20s  3.60% 58.18%     17.50s 28.62%  github.com/Notifuse/liquidgo/liquid.Parse
+     1.96s  3.21% 61.39%      1.96s  3.21%  runtime.pthread_cond_signal
+     1.93s  3.16% 64.55%      1.93s  3.16%  aeshashbody
+     1.51s  2.47% 67.02%      1.51s  2.47%  strings.TrimSpace
+     1.15s  1.88% 68.90%      1.82s  2.98%  runtime.greyobject
+     1.12s  1.83% 70.73%      2.53s  4.14%  runtime.mallocgcSmallScanNoHeader
+     1.01s  1.65% 72.38%      4.05s  6.62%  runtime.scanobject
+     0.74s  1.21% 73.59%      1.69s  2.76%  regexp.(*Regexp).tryBacktrack
+     0.54s  0.88% 74.47%     14.46s 23.65%  runtime.gcDrain
+     0.48s  0.78% 75.26%      0.48s  0.78%  runtime.strhash
+     0.43s   0.7% 75.96%      0.43s   0.7%  runtime.memequal
+     0.40s  0.65% 76.61%      0.40s  0.65%  runtime.memclrNoHeapPointers
+     0.39s  0.64% 77.25%     17.72s 28.98%  github.com/Notifuse/liquidgo/liquid.(*ParseContext).ParseExpression (inline)
+     0.39s  0.64% 77.89%      0.39s  0.64%  regexp/syntax.(*Inst).MatchRunePos
+     0.39s  0.64% 78.53%      0.42s  0.69%  runtime.(*mspan).writeHeapBitsSmall
+     0.36s  0.59% 79.12%      0.36s  0.59%  regexp.(*bitState).shouldVisit (inline)
+     0.36s  0.59% 79.71%      0.36s  0.59%  runtime.markBits.setMarked (inline)
+     0.35s  0.57% 80.28%      0.35s  0.57%  runtime.(*lfstack).pop (inline)
+     0.35s  0.57% 80.85%      0.61s     1%  runtime.findObject
+     0.34s  0.56% 81.41%      0.34s  0.56%  internal/stringslite.HasPrefix (inline)
+     0.34s  0.56% 81.96%      0.41s  0.67%  runtime.typePointers.next
+     0.31s  0.51% 82.47%      3.68s  6.02%  runtime.mallocgc
+     0.23s  0.38% 82.85%      0.48s  0.78%  regexp.(*bitState).reset
+     0.21s  0.34% 83.19%      0.63s  1.03%  runtime.stealWork
+     0.19s  0.31% 83.50%      3.41s  5.58%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseLiteral
+     0.16s  0.26% 83.76%      3.55s  5.81%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseNumber
+     0.16s  0.26% 84.02%      2.02s  3.30%  runtime.convTstring
+     0.14s  0.23% 84.25%      0.36s  0.59%  github.com/Notifuse/liquidgo/liquid.(*Tokenizer).nextVariableToken
+     0.14s  0.23% 84.48%      0.52s  0.85%  runtime.mallocgcSmallNoscan
+     0.13s  0.21% 84.69%      3.51s  5.74%  regexp.(*Regexp).backtrack
+     0.12s   0.2% 84.89%      1.84s  3.01%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseString
+     0.10s  0.16% 85.05%      0.90s  1.47%  runtime.growslice
+     0.09s  0.15% 85.20%      3.19s  5.22%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseAll
+     0.09s  0.15% 85.35%      3.12s  5.10%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseVariable
+     0.08s  0.13% 85.48%      2.66s  4.35%  github.com/Notifuse/liquidgo/liquid.(*Lexer).Tokenize
+     0.08s  0.13% 85.61%      3.30s  5.40%  github.com/Notifuse/liquidgo/performance.BenchmarkExpressionParseRange

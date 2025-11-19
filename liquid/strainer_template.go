@@ -11,8 +11,8 @@ import (
 type StrainerTemplate struct {
 	context         interface{ Context() interface{} }
 	filterMethods   map[string]bool
+	filterInstances map[string]interface{}
 	strictFilters   bool
-	filterInstances map[string]interface{} // Map of filter instances by type
 }
 
 // StrainerTemplateClass represents a strainer template class that can have filters added.
