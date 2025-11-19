@@ -843,15 +843,6 @@ func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
 	}
 }
 
-// mockPartialLoader is a mock file system that returns non-template objects
-type mockPartialLoader struct {
-	liquid.FileSystem
-}
-
-func (m *mockPartialLoader) ReadTemplateFile(templatePath string) (string, error) {
-	return "content", nil
-}
-
 // TestRenderTagPartialNotTemplate tests when LoadPartial returns non-template
 func TestRenderTagPartialNotTemplate(t *testing.T) {
 	env := liquid.NewEnvironment()

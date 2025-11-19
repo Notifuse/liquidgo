@@ -852,7 +852,6 @@ func TestGetInvokableMethodsEdgeCases(t *testing.T) {
 func TestInvokeDropOnMethodReturningNothing(t *testing.T) {
 	type testDropNoReturn struct {
 		Drop
-		called bool
 	}
 
 	// Add a method that returns nothing
@@ -1013,7 +1012,6 @@ func TestInvokeDropOnWithMethodReturningEmptyResults(t *testing.T) {
 	// Create a drop with a method that returns nothing
 	type testDropVoidMethod struct {
 		Drop
-		called bool
 	}
 
 	// Add a method with no return values using a function that matches the pattern
@@ -1186,18 +1184,6 @@ func TestInvokeDropOldNonStructValue(t *testing.T) {
 	if result != nil {
 		t.Logf("Non-existent access returned: %v", result)
 	}
-}
-
-// testDropPointerMethod has methods on pointer that won't be found on value
-type testDropPointerMethod struct {
-	Drop
-	TestField string
-}
-
-// PointerMethod is defined on *testDropPointerMethod, not testDropPointerMethod
-// This means v.MethodByName on the VALUE won't find it after v.Elem()
-func (t *testDropPointerMethod) PointerMethod() string {
-	return "pointer_method"
 }
 
 // TestInvokeDropOldPointerMethodNotFound tests InvokeDropOld when method is on pointer
