@@ -43,7 +43,7 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 
 	// Get registers
 	registers := context.Registers()
-	
+
 	// Set form context
 	form := map[string]interface{}{
 		"posted_successfully?": registers.Get("posted_successfully"),
@@ -71,4 +71,3 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 
 	*output += formHTML
 }
-

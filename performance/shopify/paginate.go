@@ -173,4 +173,3 @@ func (p *Paginate) link(page int) map[string]interface{} {
 func (p *Paginate) currentURL() string {
 	return "/collections/frontpage"
 }
-
