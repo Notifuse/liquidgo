@@ -33,3 +33,31 @@ func TestIncrementTag(t *testing.T) {
 		t.Errorf("Expected '1', got %q", output)
 	}
 }
+
+// TestIncrementTagRenderToOutputBufferEdgeCases tests RenderToOutputBuffer edge cases
+func TestIncrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag := NewIncrementTag("increment", "counter", pc)
+
+	ctx := liquid.NewContext()
+
+	// Test with empty scopes (should initialize)
+	ctx.Scopes() // Ensure scopes exist
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Should output 0 on first call
+	if output != "0" {
+		t.Errorf("Expected '0' on first call, got %q", output)
+	}
+
+	// Test multiple increments
+	for i := 1; i <= 5; i++ {
+		output = ""
+		tag.RenderToOutputBuffer(ctx, &output)
+		expected := liquid.ToS(i, nil)
+		if output != expected {
+			t.Errorf("Expected %q on call %d, got %q", expected, i+1, output)
+		}
+	}
+}

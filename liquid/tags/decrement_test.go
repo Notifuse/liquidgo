@@ -33,3 +33,31 @@ func TestDecrementTag(t *testing.T) {
 		t.Errorf("Expected '-2', got %q", output)
 	}
 }
+
+// TestDecrementTagRenderToOutputBufferEdgeCases tests RenderToOutputBuffer edge cases
+func TestDecrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag := NewDecrementTag("decrement", "counter", pc)
+
+	ctx := liquid.NewContext()
+
+	// Test with empty scopes (should initialize)
+	ctx.Scopes() // Ensure scopes exist
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Should output -1 on first call
+	if output != "-1" {
+		t.Errorf("Expected '-1' on first call, got %q", output)
+	}
+
+	// Test multiple decrements
+	for i := 2; i <= 5; i++ {
+		output = ""
+		tag.RenderToOutputBuffer(ctx, &output)
+		expected := liquid.ToS(-i, nil)
+		if output != expected {
+			t.Errorf("Expected %q on call %d, got %q", expected, i, output)
+		}
+	}
+}

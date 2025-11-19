@@ -194,3 +194,107 @@ func TestTokenizerNextTagTokenEdgeCases(t *testing.T) {
 		t.Errorf("Expected token length >= 2, got %d", len(token))
 	}
 }
+
+// TestTokenizerForLiquidTagEdgeCases tests tokenize() with forLiquidTag=true edge cases
+func TestTokenizerForLiquidTagEdgeCases(t *testing.T) {
+	// Test with empty source
+	source := ""
+	ss := NewStringScanner(source)
+	tokenizer := NewTokenizer(source, ss, false, nil, true)
+
+	tokens := []string{}
+	for {
+		token := tokenizer.Shift()
+		if token == "" {
+			break
+		}
+		tokens = append(tokens, token)
+	}
+
+	// Empty source should produce empty token or single empty token
+	if len(tokens) > 1 {
+		t.Errorf("Expected 0 or 1 token for empty source, got %d", len(tokens))
+	}
+
+	// Test with single line (no newlines)
+	source2 := "single line"
+	ss2 := NewStringScanner(source2)
+	tokenizer2 := NewTokenizer(source2, ss2, false, nil, true)
+
+	tokens2 := []string{}
+	for {
+		token := tokenizer2.Shift()
+		if token == "" {
+			break
+		}
+		tokens2 = append(tokens2, token)
+	}
+
+	// Single line should produce one token
+	if len(tokens2) != 1 {
+		t.Errorf("Expected 1 token for single line, got %d", len(tokens2))
+	}
+
+	// Test with multiple consecutive newlines
+	source3 := "line1\n\nline3"
+	ss3 := NewStringScanner(source3)
+	tokenizer3 := NewTokenizer(source3, ss3, false, nil, true)
+
+	tokens3 := []string{}
+	for {
+		token := tokenizer3.Shift()
+		if token == "" {
+			break
+		}
+		tokens3 = append(tokens3, token)
+	}
+
+	// Should split on newlines (may include empty lines as separate tokens)
+	// Note: strings.Split includes empty strings between consecutive delimiters
+	if len(tokens3) < 1 {
+		t.Errorf("Expected at least 1 token for multiple lines, got %d", len(tokens3))
+	}
+}
+
+// TestTokenizerShiftNormalEdgeCases tests shiftNormal() edge cases
+func TestTokenizerShiftNormalEdgeCases(t *testing.T) {
+	// Test with source that produces empty tokens
+	// This tests the remaining text handling in tokenize()
+	source := "text"
+	ss := NewStringScanner(source)
+	tokenizer := NewTokenizer(source, ss, false, nil, false)
+
+	// Shift all tokens
+	tokens := []string{}
+	for {
+		token := tokenizer.Shift()
+		if token == "" {
+			break
+		}
+		tokens = append(tokens, token)
+	}
+
+	// Should have at least one token
+	if len(tokens) == 0 {
+		t.Error("Expected at least one token")
+	}
+
+	// Test with source ending in variable/tag
+	source2 := "text {{ var }}"
+	ss2 := NewStringScanner(source2)
+	tokenizer2 := NewTokenizer(source2, ss2, false, nil, false)
+
+	tokens2 := []string{}
+	for {
+		token := tokenizer2.Shift()
+		if token == "" {
+			break
+		}
+		tokens2 = append(tokens2, token)
+	}
+
+	// Should handle remaining text after last token
+	if len(tokens2) == 0 {
+		t.Error("Expected tokens for source with variable")
+	}
+}

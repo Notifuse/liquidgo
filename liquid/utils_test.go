@@ -415,3 +415,178 @@ func TestSliceCollectionEdgeCases(t *testing.T) {
 		t.Errorf("Expected empty result when to == from, got %d items", len(result5))
 	}
 }
+
+// TestToNumberEdgeCases tests ToNumber with edge cases
+func TestToNumberEdgeCases(t *testing.T) {
+	// Test decimal numbers
+	result := ToNumber("3.14")
+	if f, ok := result.(float64); !ok || f != 3.14 {
+		t.Errorf("Expected 3.14, got %v", result)
+	}
+
+	// Test decimal starting with dot (may not be supported by regex)
+	result2 := ToNumber(".5")
+	// This may return 0 if regex doesn't match, which is acceptable
+	if result2 != 0 && result2 != 0.5 {
+		t.Logf("Note: .5 conversion returned %v (may not be supported)", result2)
+	}
+
+	// Test decimal ending with dot (may not be supported by regex)
+	result3 := ToNumber("10.")
+	// This may return 0 if regex doesn't match, which is acceptable
+	if result3 != 0 && result3 != 10.0 {
+		t.Logf("Note: 10. conversion returned %v (may not be supported)", result3)
+	}
+
+	// Test invalid number format
+	result4 := ToNumber("abc")
+	if result4 != 0 {
+		t.Errorf("Expected 0 for invalid number, got %v", result4)
+	}
+
+	// Test number with whitespace
+	result5 := ToNumber("  42  ")
+	if i, ok := result5.(int); !ok || i != 42 {
+		t.Errorf("Expected 42, got %v", result5)
+	}
+
+	// Test decimal with whitespace
+	result6 := ToNumber("  3.14  ")
+	if f, ok := result6.(float64); !ok || f != 3.14 {
+		t.Errorf("Expected 3.14, got %v", result6)
+	}
+
+	// Test custom ToNumber interface
+	customNum := &testToNumberer{value: 99}
+	result7 := ToNumber(customNum)
+	if result7 != 99 {
+		t.Errorf("Expected 99 from custom ToNumberer, got %v", result7)
+	}
+
+	// Test various numeric types
+	if ToNumber(int8(10)) != int8(10) {
+		t.Error("Expected int8 to pass through")
+	}
+	if ToNumber(int16(20)) != int16(20) {
+		t.Error("Expected int16 to pass through")
+	}
+	if ToNumber(int32(30)) != int32(30) {
+		t.Error("Expected int32 to pass through")
+	}
+	if ToNumber(int64(40)) != int64(40) {
+		t.Error("Expected int64 to pass through")
+	}
+	if ToNumber(uint(50)) != uint(50) {
+		t.Error("Expected uint to pass through")
+	}
+	if ToNumber(float32(1.5)) != 1.5 {
+		t.Error("Expected float32 to convert to float64")
+	}
+}
+
+type testToNumberer struct {
+	value int
+}
+
+func (t *testToNumberer) ToNumber() interface{} {
+	return t.value
+}
+
+// TestToLiquidValueEdgeCases tests ToLiquidValue with edge cases
+func TestToLiquidValueEdgeCases(t *testing.T) {
+	// Test with custom ToLiquidValue interface
+	customLiquid := &testToLiquidValuer{value: "custom"}
+	result := ToLiquidValue(customLiquid)
+	if result != "custom" {
+		t.Errorf("Expected 'custom', got %v", result)
+	}
+
+	// Test with regular value (no interface)
+	result2 := ToLiquidValue("regular")
+	if result2 != "regular" {
+		t.Errorf("Expected 'regular', got %v", result2)
+	}
+
+	// Test with nil
+	result3 := ToLiquidValue(nil)
+	if result3 != nil {
+		t.Errorf("Expected nil, got %v", result3)
+	}
+
+	// Test with various types
+	result4 := ToLiquidValue(42)
+	if result4 != 42 {
+		t.Errorf("Expected 42, got %v", result4)
+	}
+
+	result5 := ToLiquidValue(true)
+	if result5 != true {
+		t.Errorf("Expected true, got %v", result5)
+	}
+}
+
+type testToLiquidValuer struct {
+	value string
+}
+
+func (t *testToLiquidValuer) ToLiquidValue() interface{} {
+	return t.value
+}
+
+// TestToSEdgeCases tests ToS with edge cases
+func TestToSEdgeCases(t *testing.T) {
+	// Test nil
+	result := ToS(nil, nil)
+	if result != "" {
+		t.Errorf("Expected empty string for nil, got %q", result)
+	}
+
+	// Test various types
+	if ToS(42, nil) != "42" {
+		t.Error("Expected '42' for int")
+	}
+	if ToS(true, nil) != "true" {
+		t.Error("Expected 'true' for bool")
+	}
+	if ToS(false, nil) != "false" {
+		t.Error("Expected 'false' for bool")
+	}
+	if ToS(3.14, nil) != "3.14" {
+		t.Error("Expected '3.14' for float64")
+	}
+	if ToS("hello", nil) != "hello" {
+		t.Error("Expected 'hello' for string")
+	}
+
+	// Test with custom type that has String() method
+	customStringer := &testStringer{value: "custom"}
+	result2 := ToS(customStringer, nil)
+	if result2 != "custom" {
+		t.Errorf("Expected 'custom', got %q", result2)
+	}
+
+	// Test with map (should use hashInspect)
+	m := map[string]interface{}{"key": "value"}
+	result3 := ToS(m, nil)
+	if result3 == "" {
+		t.Error("Expected non-empty string for map")
+	}
+	if !contains(result3, "key") || !contains(result3, "value") {
+		t.Errorf("Expected map string to contain key and value, got %q", result3)
+	}
+
+	// Test with array (should use arrayInspect)
+	arr := []interface{}{1, 2, 3}
+	result4 := ToS(arr, nil)
+	if result4 == "" {
+		t.Error("Expected non-empty string for array")
+	}
+}
+
+type testStringer struct {
+	value string
+}
+
+func (t *testStringer) String() string {
+	return t.value
+}

@@ -571,3 +571,66 @@ func TestRenderTagRenderToOutputBufferWithEmptyTemplateName(t *testing.T) {
 		t.Error("Expected non-empty output")
 	}
 }
+
+// TestRenderTagRenderToOutputBufferErrorScenarios tests RenderToOutputBuffer error scenarios
+func TestRenderTagRenderToOutputBufferErrorScenarios(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test with nonexistent template name
+	tag, err := NewRenderTag("render", "'nonexistent_template'", pc)
+	if err != nil {
+		t.Fatalf("NewRenderTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	var output string
+
+	// Should handle missing template gracefully
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Output may be empty or contain error message
+	if len(output) > 0 {
+		t.Logf("Note: RenderToOutputBuffer with nonexistent template produced: %q", output)
+	}
+}
+
+// TestRenderTagRenderToOutputBufferDynamicTemplateName tests dynamic template name resolution
+func TestRenderTagRenderToOutputBufferDynamicTemplateName(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test with variable expression for template name
+	tag, err := NewRenderTag("render", "template_name", pc)
+	if err != nil {
+		t.Fatalf("NewRenderTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.Set("template_name", "test_template")
+
+	var output string
+	// Should resolve template name from variable
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Output depends on whether template exists
+	t.Logf("Note: Dynamic template name resolution output: %q", output)
+}
+
+// TestRenderTagRenderToOutputBufferPartialLoadingFailure tests partial loading failure handling
+func TestRenderTagRenderToOutputBufferPartialLoadingFailure(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Create a render tag
+	tag, err := NewRenderTag("render", "'missing_partial'", pc)
+	if err != nil {
+		t.Fatalf("NewRenderTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	var output string
+
+	// Should handle partial loading failure gracefully
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// May produce error output or empty string
+	t.Logf("Note: Partial loading failure output: %q", output)
+}

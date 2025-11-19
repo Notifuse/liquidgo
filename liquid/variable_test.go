@@ -442,3 +442,50 @@ func TestVariableAddWarning(t *testing.T) {
 	// This tests the parseContextWrapper.AddWarning method
 	_ = v
 }
+
+// TestVariableParseContextWrapperAddWarning tests parseContextWrapper.AddWarning (no-op)
+func TestVariableParseContextWrapperAddWarning(t *testing.T) {
+	// Create a variable with a parseContextWrapper
+	// This happens when parseContext is not a *ParseContext
+	wrapper := &parseContextWrapper{
+		errorMode: "lax",
+	}
+
+	// AddWarning should be a no-op and not panic
+	wrapper.AddWarning(NewSyntaxError("test warning"))
+
+	// Verify it's a no-op by checking errorMode is unchanged
+	if wrapper.errorMode != "lax" {
+		t.Error("Expected errorMode to be unchanged")
+	}
+}
+
+// TestVariableNewVariableWithParseContextWrapper tests NewVariable with parseContextWrapper
+func TestVariableNewVariableWithParseContextWrapper(t *testing.T) {
+	// Create a custom parse context that's not *ParseContext
+	customPC := &mockParseContext{
+		lineNum: intPtr(1),
+		env:     NewEnvironment(),
+	}
+
+	// NewVariable should create a parseContextWrapper
+	v := NewVariable("name", customPC)
+	if v == nil {
+		t.Fatal("Expected Variable, got nil")
+	}
+
+	// Variable should have been created successfully
+	nameVal := v.Name()
+	if nameVal == nil {
+		t.Error("Expected non-nil name")
+	} else {
+		// Name() returns interface{}, check if it's a VariableLookup
+		if vl, ok := nameVal.(*VariableLookup); ok {
+			if vl.Name() != "name" {
+				t.Errorf("Expected name 'name', got %v", vl.Name())
+			}
+		} else {
+			t.Logf("Note: Name() returned %T: %v", nameVal, nameVal)
+		}
+	}
+}
