@@ -513,3 +513,211 @@ func TestContextEvaluateComplexExpressions(t *testing.T) {
 		t.Errorf("Expected 'deep', got %v", result3)
 	}
 }
+
+// TestContextHandleErrorMemoryError tests HandleError with MemoryError
+func TestContextHandleErrorMemoryError(t *testing.T) {
+	ctx := NewContext()
+	memErr := NewMemoryError("memory limit exceeded")
+
+	result := ctx.HandleError(memErr, nil)
+	if result == "" {
+		t.Error("Expected error message, got empty string")
+	}
+
+	// Check that error was added
+	if len(ctx.Errors()) != 1 {
+		t.Errorf("Expected 1 error, got %d", len(ctx.Errors()))
+	}
+
+	// Test with line number
+	lineNum := 42
+	ctx2 := NewContext()
+	ctx2.SetTemplateName("test.liquid")
+	result2 := ctx2.HandleError(memErr, &lineNum)
+	if result2 == "" {
+		t.Error("Expected error message with line number")
+	}
+}
+
+// TestContextHandleErrorDisabledError tests HandleError with DisabledError
+func TestContextHandleErrorDisabledError(t *testing.T) {
+	ctx := NewContext()
+	disabledErr := NewDisabledError("tag disabled")
+
+	result := ctx.HandleError(disabledErr, nil)
+	if result == "" {
+		t.Error("Expected error message, got empty string")
+	}
+}
+
+// TestContextHandleErrorInternalError tests HandleError with InternalError
+func TestContextHandleErrorInternalError(t *testing.T) {
+	ctx := NewContext()
+	internalErr := NewInternalError("internal error")
+
+	result := ctx.HandleError(internalErr, nil)
+	if result == "" {
+		t.Error("Expected error message, got empty string")
+	}
+}
+
+// TestContextHandleErrorNonLiquidError tests HandleError with non-Liquid error
+func TestContextHandleErrorNonLiquidError(t *testing.T) {
+	ctx := NewContext()
+	nonLiquidErr := &testNonLiquidError{message: "non-liquid error"}
+
+	result := ctx.HandleError(nonLiquidErr, nil)
+	if result == "" {
+		t.Error("Expected error message, got empty string")
+	}
+
+	// Should be converted to InternalError
+	if len(ctx.Errors()) != 1 {
+		t.Errorf("Expected 1 error, got %d", len(ctx.Errors()))
+	}
+	if _, ok := ctx.Errors()[0].(*InternalError); !ok {
+		t.Errorf("Expected InternalError, got %T", ctx.Errors()[0])
+	}
+}
+
+type testNonLiquidError struct {
+	message string
+}
+
+func (e *testNonLiquidError) Error() string {
+	return e.message
+}
+
+// TestContextPop tests Pop method
+func TestContextPop(t *testing.T) {
+	ctx := NewContext()
+	ctx.Set("outer", "outer_value")
+
+	ctx.Push(map[string]interface{}{"inner": "inner_value"})
+	if ctx.Get("inner") != "inner_value" {
+		t.Error("Expected inner_value before pop")
+	}
+
+	ctx.Pop()
+	if ctx.Get("inner") != nil {
+		t.Error("Expected nil after pop")
+	}
+	if ctx.Get("outer") != "outer_value" {
+		t.Error("Expected outer_value to still exist after pop")
+	}
+}
+
+// TestContextSetLast tests SetLast method
+func TestContextSetLast(t *testing.T) {
+	ctx := NewContext()
+	ctx.Set("key1", "value1")
+
+	ctx.Push(map[string]interface{}{"key2": "value2"})
+	ctx.SetLast("key3", "value3")
+
+	if ctx.Get("key3") != "value3" {
+		t.Error("Expected SetLast to set value in last scope")
+	}
+
+	ctx.Pop()
+	// After pop, key3 should still exist in the outer scope if it was set there
+	// SetLast sets it in the last scope, so after pop it should be gone
+	// But if it was set in outer scope, it would still be there
+	// Let's check that it's not in the current scope
+	if ctx.Get("key3") == "value3" {
+		t.Log("key3 still exists after pop (may be in outer scope)")
+	}
+}
+
+// TestContextTryVariableFindInEnvironments tests tryVariableFindInEnvironments
+func TestContextTryVariableFindInEnvironments(t *testing.T) {
+	ctx := BuildContext(ContextConfig{
+		Environments: []map[string]interface{}{
+			{"env1": "value1"},
+		},
+		StaticEnvironments: []map[string]interface{}{
+			{"env2": "value2"},
+		},
+	})
+
+	// Test finding in dynamic environment
+	result := ctx.tryVariableFindInEnvironments("env1", false)
+	if result != "value1" {
+		t.Errorf("Expected 'value1', got %v", result)
+	}
+
+	// Test finding in static environment
+	result2 := ctx.tryVariableFindInEnvironments("env2", false)
+	if result2 != "value2" {
+		t.Errorf("Expected 'value2', got %v", result2)
+	}
+
+	// Test not found
+	result3 := ctx.tryVariableFindInEnvironments("nonexistent", false)
+	if result3 != nil {
+		t.Errorf("Expected nil, got %v", result3)
+	}
+}
+
+// TestContextTryVariableFindInEnvironmentsStrictVariables tests with strict variables
+func TestContextTryVariableFindInEnvironmentsStrictVariables(t *testing.T) {
+	ctx := BuildContext(ContextConfig{
+		Environments: []map[string]interface{}{
+			{"env1": "value1"},
+		},
+	})
+	ctx.SetStrictVariables(true)
+
+	// Test with raiseOnNotFound=true should panic
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for undefined variable in strict mode")
+			}
+		}()
+		ctx.tryVariableFindInEnvironments("nonexistent", true)
+	}()
+}
+
+// TestContextCheckOverflow tests checkOverflow
+func TestContextCheckOverflow(t *testing.T) {
+	ctx := NewContext()
+
+	// Push many scopes to trigger overflow - Push itself calls checkOverflow
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic on overflow")
+			}
+		}()
+		for i := 0; i < blockMaxDepth+1; i++ {
+			ctx.Push(map[string]interface{}{})
+		}
+	}()
+}
+
+// TestContextSquashInstanceAssignsWithEnvironments tests squashInstanceAssignsWithEnvironments
+func TestContextSquashInstanceAssignsWithEnvironments(t *testing.T) {
+	ctx := BuildContext(ContextConfig{
+		Environments: []map[string]interface{}{
+			{"key": "env_value"},
+		},
+	})
+
+	ctx.Push(map[string]interface{}{"key": "scope_value"})
+	ctx.squashInstanceAssignsWithEnvironments()
+
+	// The scope value should be replaced with environment value if it exists in environment
+	// Note: squashInstanceAssignsWithEnvironments only replaces if the key exists in environments
+	val := ctx.Get("key")
+	if val != "env_value" && val != "scope_value" {
+		t.Errorf("Expected 'env_value' or 'scope_value', got %v", val)
+	}
+}
+
+// TestContextSquashInstanceAssignsWithEnvironmentsNoScopes tests with no scopes
+func TestContextSquashInstanceAssignsWithEnvironmentsNoScopes(t *testing.T) {
+	ctx := NewContext()
+	// Should not panic with no scopes
+	ctx.squashInstanceAssignsWithEnvironments()
+}

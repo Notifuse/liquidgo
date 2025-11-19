@@ -99,3 +99,112 @@ func TestResourceLimitsReached(t *testing.T) {
 		rl.IncrementRenderScore(1)
 	}()
 }
+
+// TestResourceLimitsIncrementWriteScore tests IncrementWriteScore
+func TestResourceLimitsIncrementWriteScore(t *testing.T) {
+	limit := 10
+	config := ResourceLimitsConfig{
+		RenderLengthLimit: &limit,
+	}
+	rl := NewResourceLimits(config)
+
+	// Test without capture (should check render length limit)
+	rl.IncrementWriteScore("short")
+	if rl.Reached() {
+		t.Error("Expected not reached for short output")
+	}
+
+	// Test with long output (should trigger limit)
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic when exceeding render length limit")
+			}
+		}()
+		rl.IncrementWriteScore("this is a very long string that exceeds the limit")
+	}()
+}
+
+// TestResourceLimitsIncrementWriteScoreWithCapture tests IncrementWriteScore with capture
+func TestResourceLimitsIncrementWriteScoreWithCapture(t *testing.T) {
+	limit := 100
+	config := ResourceLimitsConfig{
+		AssignScoreLimit: &limit,
+	}
+	rl := NewResourceLimits(config)
+
+	// Test with capture
+	rl.WithCapture(func() {
+		rl.IncrementWriteScore("first")
+		if rl.AssignScore() == 0 {
+			t.Error("Expected assign score to be incremented")
+		}
+
+		rl.IncrementWriteScore("first second")
+		// Should increment by difference in length
+		score := rl.AssignScore()
+		if score <= 5 {
+			t.Errorf("Expected assign score > 5, got %d", score)
+		}
+	})
+
+	// After capture, should reset lastCaptureLength
+	rl.IncrementWriteScore("test")
+	// Should check render length limit, not assign score
+	if rl.Reached() {
+		t.Error("Expected not reached after capture")
+	}
+}
+
+// TestResourceLimitsIncrementWriteScoreWithCaptureLimit tests IncrementWriteScore exceeding assign limit in capture
+func TestResourceLimitsIncrementWriteScoreWithCaptureLimit(t *testing.T) {
+	limit := 5
+	config := ResourceLimitsConfig{
+		AssignScoreLimit: &limit,
+	}
+	rl := NewResourceLimits(config)
+
+	// Test with capture exceeding assign limit
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic when exceeding assign score limit in capture")
+			}
+		}()
+		rl.WithCapture(func() {
+			rl.IncrementWriteScore("this is a very long string")
+		})
+	}()
+}
+
+// TestResourceLimitsIncrementWriteScoreEmptyString tests IncrementWriteScore with empty string
+func TestResourceLimitsIncrementWriteScoreEmptyString(t *testing.T) {
+	config := ResourceLimitsConfig{}
+	rl := NewResourceLimits(config)
+
+	// Should not panic with empty string
+	rl.IncrementWriteScore("")
+	if rl.Reached() {
+		t.Error("Expected not reached for empty string")
+	}
+}
+
+// TestResourceLimitsIncrementWriteScoreByteLength tests IncrementWriteScore uses byte length
+func TestResourceLimitsIncrementWriteScoreByteLength(t *testing.T) {
+	limit := 5
+	config := ResourceLimitsConfig{
+		RenderLengthLimit: &limit,
+	}
+	rl := NewResourceLimits(config)
+
+	// Test with string that has byte length > rune length
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for string exceeding byte limit")
+			}
+		}()
+		// Use a string with multi-byte characters
+		rl.IncrementWriteScore("测试测试测试") // 6 Chinese characters = 18 bytes
+	}()
+}

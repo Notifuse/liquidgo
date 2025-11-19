@@ -282,3 +282,181 @@ func TestConditionMethodLiteral(t *testing.T) {
 		t.Error("Expected empty == {} to evaluate to true")
 	}
 }
+
+// TestConditionCheckMethodLiteral tests checkMethodLiteral with various inputs
+func TestConditionCheckMethodLiteral(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+
+	// Test blank method literal
+	blankML := ParseConditionExpression(pc, "blank", false)
+	if ml, ok := blankML.(*MethodLiteral); ok {
+		// Test blank with empty string
+		if !checkMethodLiteral(ml, "") {
+			t.Error("Expected blank == \"\" to be true")
+		}
+
+		// Test blank with whitespace string
+		if !checkMethodLiteral(ml, "   ") {
+			t.Error("Expected blank == \"   \" to be true")
+		}
+
+		// Test blank with non-empty string
+		if checkMethodLiteral(ml, "hello") {
+			t.Error("Expected blank == \"hello\" to be false")
+		}
+
+		// Test blank with nil
+		if !checkMethodLiteral(ml, nil) {
+			t.Error("Expected blank == nil to be true")
+		}
+
+		// Test blank with non-string, non-nil
+		if checkMethodLiteral(ml, 42) {
+			t.Error("Expected blank == 42 to be false")
+		}
+	}
+
+	// Test empty method literal
+	emptyML := ParseConditionExpression(pc, "empty", false)
+	if ml, ok := emptyML.(*MethodLiteral); ok {
+		// Test empty with empty string
+		if !checkMethodLiteral(ml, "") {
+			t.Error("Expected empty == \"\" to be true")
+		}
+
+		// Test empty with non-empty string
+		if checkMethodLiteral(ml, "hello") {
+			t.Error("Expected empty == \"hello\" to be false")
+		}
+
+		// Test empty with empty array
+		if !checkMethodLiteral(ml, []interface{}{}) {
+			t.Error("Expected empty == [] to be true")
+		}
+
+		// Test empty with non-empty array
+		if checkMethodLiteral(ml, []interface{}{1, 2}) {
+			t.Error("Expected empty == [1,2] to be false")
+		}
+
+		// Test empty with empty map
+		if !checkMethodLiteral(ml, map[string]interface{}{}) {
+			t.Error("Expected empty == {} to be true")
+		}
+
+		// Test empty with non-empty map
+		if checkMethodLiteral(ml, map[string]interface{}{"key": "value"}) {
+			t.Error("Expected empty == {key:value} to be false")
+		}
+
+		// Test empty with nil
+		if !checkMethodLiteral(ml, nil) {
+			t.Error("Expected empty == nil to be true")
+		}
+	}
+
+	// Test unknown method literal
+	unknownML := &MethodLiteral{MethodName: "unknown"}
+	if checkMethodLiteral(unknownML, "anything") {
+		t.Error("Expected unknown method literal to return false")
+	}
+}
+
+// TestConditionCompareValuesEdgeCases tests compareValues with various edge case inputs
+func TestConditionCompareValuesEdgeCases(t *testing.T) {
+	// Test numeric comparison
+	result := compareValues(1, 2)
+	if result >= 0 {
+		t.Error("Expected 1 < 2 to return negative")
+	}
+
+	result2 := compareValues(2, 1)
+	if result2 <= 0 {
+		t.Error("Expected 2 > 1 to return positive")
+	}
+
+	result3 := compareValues(1, 1)
+	if result3 != 0 {
+		t.Error("Expected 1 == 1 to return 0")
+	}
+
+	// Test float comparison
+	result4 := compareValues(1.5, 2.5)
+	if result4 >= 0 {
+		t.Error("Expected 1.5 < 2.5 to return negative")
+	}
+
+	// Test string comparison
+	result5 := compareValues("a", "b")
+	if result5 >= 0 {
+		t.Error("Expected \"a\" < \"b\" to return negative")
+	}
+
+	result6 := compareValues("b", "a")
+	if result6 <= 0 {
+		t.Error("Expected \"b\" > \"a\" to return positive")
+	}
+
+	result7 := compareValues("a", "a")
+	if result7 != 0 {
+		t.Error("Expected \"a\" == \"a\" to return 0")
+	}
+
+	// Test mixed types (should convert to string)
+	result8 := compareValues(42, "hello")
+	// Should compare as strings
+	if result8 == 0 {
+		t.Error("Expected mixed type comparison to not return 0")
+	}
+}
+
+// TestConditionToNumberEdgeCases tests toNumber with various edge case inputs
+func TestConditionToNumberEdgeCases(t *testing.T) {
+	// Test with int
+	result, ok := toNumber(42)
+	if !ok || result != 42.0 {
+		t.Errorf("Expected 42.0, got %v, ok=%v", result, ok)
+	}
+
+	// Test with int64
+	result2, ok2 := toNumber(int64(42))
+	if !ok2 || result2 != 42.0 {
+		t.Errorf("Expected 42.0, got %v, ok=%v", result2, ok2)
+	}
+
+	// Test with float64
+	result3, ok3 := toNumber(3.14)
+	if !ok3 || result3 != 3.14 {
+		t.Errorf("Expected 3.14, got %v, ok=%v", result3, ok3)
+	}
+
+	// Test with string number
+	result4, ok4 := toNumber("42")
+	if !ok4 || result4 != 42.0 {
+		t.Errorf("Expected 42.0, got %v, ok=%v", result4, ok4)
+	}
+
+	// Test with string float
+	result5, ok5 := toNumber("3.14")
+	if !ok5 || result5 != 3.14 {
+		t.Errorf("Expected 3.14, got %v, ok=%v", result5, ok5)
+	}
+
+	// Test with invalid string
+	result6, ok6 := toNumber("abc")
+	if ok6 {
+		t.Errorf("Expected ok=false for invalid string, got ok=true, result=%v", result6)
+	}
+
+	// Test with nil
+	result7, ok7 := toNumber(nil)
+	if ok7 {
+		t.Errorf("Expected ok=false for nil, got ok=true, result=%v", result7)
+	}
+
+	// Test with bool
+	result8, ok8 := toNumber(true)
+	if ok8 {
+		t.Errorf("Expected ok=false for bool, got ok=true, result=%v", result8)
+	}
+}

@@ -43,6 +43,23 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 		return []interface{}{str}
 	}
 
+	// Check if collection implements Each method
+	if eacher, ok := collection.(interface {
+		Each(func(interface{}))
+	}); ok {
+		index := 0
+		eacher.Each(func(item interface{}) {
+			if to != nil && *to <= index {
+				return
+			}
+			if from <= index {
+				segments = append(segments, item)
+			}
+			index++
+		})
+		return segments
+	}
+
 	// Use reflection to iterate
 	v := reflect.ValueOf(collection)
 	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {

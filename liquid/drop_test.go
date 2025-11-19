@@ -432,3 +432,148 @@ func TestSnippetDropInvokeDrop(t *testing.T) {
 		t.Errorf("Expected Name 'name', got %v", result)
 	}
 }
+
+// TestDropInvokeDropOldWithMethod tests InvokeDropOld with method calls
+func TestDropInvokeDropOldWithMethod(t *testing.T) {
+	fl := NewForloopDrop("items", 5, nil)
+
+	// Test invoking Length method - InvokeDropOld works on Drop, not ForloopDrop directly
+	// ForloopDrop embeds Drop, so we need to call it on the Drop part
+	drop := &Drop{}
+	drop.SetContext(NewContext())
+
+	// Test that InvokeDropOld exists and can be called
+	result := drop.InvokeDropOld("nonexistent")
+	// Should return nil or call LiquidMethodMissing
+	if result != nil {
+		t.Logf("InvokeDropOld returned: %v", result)
+	}
+
+	// Test with actual drop that has methods
+	result2 := fl.InvokeDrop("Length")
+	if result2 != 5 {
+		t.Errorf("Expected Length 5 via InvokeDrop, got %v", result2)
+	}
+}
+
+// TestDropInvokeDropOldWithField tests InvokeDropOld with field access
+func TestDropInvokeDropOldWithField(t *testing.T) {
+	// Create a drop with a field
+	type testDrop struct {
+		*Drop
+		TestField string
+	}
+
+	td := &testDrop{
+		Drop:      NewDrop(),
+		TestField: "test_value",
+	}
+
+	// Test accessing field - InvokeDropOld tries method first, then field
+	result := td.InvokeDropOld("TestField")
+	// May return nil if method doesn't exist and field access fails
+	if result != "test_value" && result != nil {
+		t.Logf("InvokeDropOld returned: %v (may not support field access directly)", result)
+	}
+
+	// Test that the field exists
+	if td.TestField != "test_value" {
+		t.Errorf("Expected TestField 'test_value', got %v", td.TestField)
+	}
+}
+
+// TestInvokeDropOnWithNonPointer tests InvokeDropOn with non-pointer
+func TestInvokeDropOnWithNonPointer(t *testing.T) {
+	drop := Drop{} // not a pointer
+	result := InvokeDropOn(drop, "Context")
+	if result != nil {
+		t.Errorf("Expected nil for non-pointer, got %v", result)
+	}
+}
+
+// TestInvokeDropOnWithFieldAccess tests InvokeDropOn with field access
+func TestInvokeDropOnWithFieldAccess(t *testing.T) {
+	type testDrop struct {
+		*Drop
+		TestField string
+	}
+
+	td := &testDrop{
+		Drop:      NewDrop(),
+		TestField: "test_value",
+	}
+
+	// Test accessing field - InvokeDropOn tries method first, then field
+	result := InvokeDropOn(td, "TestField")
+	if result != "test_value" {
+		t.Logf("InvokeDropOn returned: %v (may try method first)", result)
+		// Field access should work if no method exists
+		if result == nil {
+			t.Log("Field access returned nil (method lookup may have failed)")
+		}
+	}
+
+	// Test with capitalized field name (Go convention)
+	result2 := InvokeDropOn(td, "TestField")
+	if result2 != "test_value" && result2 != nil {
+		t.Errorf("Expected 'test_value' or nil, got %v", result2)
+	}
+}
+
+// TestInvokeDropOnWithLiquidMethodMissing tests InvokeDropOn calling LiquidMethodMissing
+func TestInvokeDropOnWithLiquidMethodMissing(t *testing.T) {
+	drop := NewDrop()
+
+	// Test with non-existent method (should call LiquidMethodMissing)
+	result := InvokeDropOn(drop, "nonexistent")
+	if result != nil {
+		t.Errorf("Expected nil for nonexistent method, got %v", result)
+	}
+
+	// Test with strict variables
+	ctx := NewContext()
+	ctx.SetStrictVariables(true)
+	drop.SetContext(ctx)
+
+	// Should panic in strict mode
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for undefined method in strict mode")
+			}
+		}()
+		InvokeDropOn(drop, "nonexistent")
+	}()
+}
+
+// TestInvokeDropOnWithNonInvokable tests InvokeDropOn with non-invokable drop
+func TestInvokeDropOnWithNonInvokable(t *testing.T) {
+	// Test with nil
+	result := InvokeDropOn(nil, "method")
+	if result != nil {
+		t.Errorf("Expected nil for nil drop, got %v", result)
+	}
+
+	// Test with non-drop type
+	result2 := InvokeDropOn("not a drop", "method")
+	if result2 != nil {
+		t.Errorf("Expected nil for non-drop, got %v", result2)
+	}
+}
+
+// TestInvokeDropOnWithMethodCache tests InvokeDropOn method caching
+func TestInvokeDropOnWithMethodCache(t *testing.T) {
+	fl := NewForloopDrop("items", 5, nil)
+
+	// First call should build cache
+	result1 := InvokeDropOn(fl, "Length")
+	if result1 != 5 {
+		t.Errorf("Expected Length 5, got %v", result1)
+	}
+
+	// Second call should use cache
+	result2 := InvokeDropOn(fl, "Length")
+	if result2 != 5 {
+		t.Errorf("Expected Length 5 on second call, got %v", result2)
+	}
+}

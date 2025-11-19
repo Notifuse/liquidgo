@@ -156,3 +156,119 @@ func TestStrictParseWithErrorModeFallback(t *testing.T) {
 		t.Errorf("Expected no error (falls back to lax), got %v", err)
 	}
 }
+
+func TestMarkupContext(t *testing.T) {
+	result := MarkupContext("test markup")
+	expected := "in \"test markup\""
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+
+	// Test with whitespace
+	result2 := MarkupContext("  test  ")
+	expected2 := "in \"test\""
+	if result2 != expected2 {
+		t.Errorf("Expected %q, got %q", expected2, result2)
+	}
+
+	// Test with empty string
+	result3 := MarkupContext("")
+	expected3 := "in \"\""
+	if result3 != expected3 {
+		t.Errorf("Expected %q, got %q", expected3, result3)
+	}
+}
+
+func TestParserSwitchingDefaultMode(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "unknown"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	strictParse := func(m string) error { return NewSyntaxError("strict error") }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return NewSyntaxError("rigid error") }
+
+	err := ps.ParseWithSelectedParser("test", strictParse, laxParse, rigidParse)
+	if err != nil {
+		t.Errorf("Expected no error in default mode (falls back to lax), got %v", err)
+	}
+}
+
+func TestParserSwitchingWarnModeNonSyntaxError(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "warn"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	strictParse := func(m string) error { return NewInternalError("internal error") }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return NewInternalError("internal error") }
+
+	err := ps.ParseWithSelectedParser("test", strictParse, laxParse, rigidParse)
+	if err == nil {
+		t.Error("Expected error for non-SyntaxError in warn mode")
+	}
+}
+
+func TestStrictParseWithErrorModeFallbackRigidMode(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "rigid"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	strictParse := func(m string) error { return nil }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return nil }
+
+	err := ps.StrictParseWithErrorModeFallback("test", strictParse, laxParse, rigidParse)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
+func TestStrictParseWithErrorModeFallbackStrictMode(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "strict"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	syntaxErr := NewSyntaxError("test error")
+	strictParse := func(m string) error { return syntaxErr }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return nil }
+
+	err := ps.StrictParseWithErrorModeFallback("test", strictParse, laxParse, rigidParse)
+	if err == nil {
+		t.Fatal("Expected error in strict mode")
+	}
+	if se, ok := err.(*SyntaxError); !ok {
+		t.Errorf("Expected SyntaxError, got %T", err)
+	} else if se.Err.Message != "test error" {
+		t.Errorf("Expected 'test error', got %q", se.Err.Message)
+	}
+}
+
+func TestStrictParseWithErrorModeFallbackWarnMode(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "warn"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	syntaxErr := NewSyntaxError("test error")
+	strictParse := func(m string) error { return syntaxErr }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return nil }
+
+	err := ps.StrictParseWithErrorModeFallback("test", strictParse, laxParse, rigidParse)
+	if err != nil {
+		t.Errorf("Expected no error (falls back to lax), got %v", err)
+	}
+	if len(pc.warnings) == 0 {
+		t.Error("Expected warning to be added")
+	}
+}
+
+func TestStrictParseWithErrorModeFallbackNonSyntaxError(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "lax"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	strictParse := func(m string) error { return NewInternalError("internal error") }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { return nil }
+
+	err := ps.StrictParseWithErrorModeFallback("test", strictParse, laxParse, rigidParse)
+	if err == nil {
+		t.Error("Expected error for non-SyntaxError")
+	}
+}

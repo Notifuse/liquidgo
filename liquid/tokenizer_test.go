@@ -122,3 +122,75 @@ func TestTokenizerLineNumbers(t *testing.T) {
 		t.Errorf("Expected line number >= 1, got %d", *lineNumber)
 	}
 }
+
+func TestTokenizerNextTagTokenWithStart(t *testing.T) {
+	// Test nextTagTokenWithStart indirectly through tokenization
+	// This method is called internally by nextVariableToken when it encounters {% inside {{ }}
+	// Testing it directly is complex due to internal state requirements
+	// Instead, we test the edge cases that exercise this code path
+
+	// Test with nested tags in variables (which uses nextTagTokenWithStart)
+	source := "text {{ var {% tag %} }} more"
+	ss := NewStringScanner(source)
+	tokenizer := NewTokenizer(source, ss, false, nil, false)
+
+	// Tokenize and verify we can handle nested tags
+	tokens := []string{}
+	for i := 0; i < 10; i++ {
+		token := tokenizer.Shift()
+		if token == "" {
+			break
+		}
+		tokens = append(tokens, token)
+	}
+
+	// Should have parsed tokens successfully
+	if len(tokens) == 0 {
+		t.Error("Expected at least one token")
+	}
+}
+
+func TestTokenizerNextVariableTokenEdgeCases(t *testing.T) {
+	// Test edge cases through public tokenization API
+	// These exercise nextVariableToken and nextTagTokenWithStart internally
+
+	// Test with unclosed variable
+	source := "{{ unclosed"
+	ss := NewStringScanner(source)
+	tokenizer := NewTokenizer(source, ss, false, nil, false)
+
+	// Tokenize and check behavior with unclosed variable
+	token := tokenizer.Shift()
+	if token == "" {
+		t.Error("Expected at least one token")
+	}
+
+	// Test with nested braces
+	source2 := "{{ outer {{ inner }} }}"
+	ss2 := NewStringScanner(source2)
+	tokenizer2 := NewTokenizer(source2, ss2, false, nil, false)
+	token2 := tokenizer2.Shift()
+	if len(token2) == 0 {
+		t.Error("Expected non-empty token for nested braces")
+	}
+}
+
+func TestTokenizerNextTagTokenEdgeCases(t *testing.T) {
+	// Test edge cases through public tokenization API
+	// These exercise nextTagToken internally
+
+	// Test with unclosed tag
+	source := "{% unclosed"
+	ss := NewStringScanner(source)
+	tokenizer := NewTokenizer(source, ss, false, nil, false)
+
+	// Tokenize and check behavior with unclosed tag
+	token := tokenizer.Shift()
+	if token == "" {
+		t.Error("Expected at least one token")
+	}
+	// Should handle unclosed tag gracefully
+	if len(token) < 2 {
+		t.Errorf("Expected token length >= 2, got %d", len(token))
+	}
+}

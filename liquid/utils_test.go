@@ -282,3 +282,136 @@ func TestInspect(t *testing.T) {
 		})
 	}
 }
+
+// TestSliceCollectionWithLoadSlice tests SliceCollection with LoadSlice interface
+func TestSliceCollectionWithLoadSlice(t *testing.T) {
+	// Create a collection that implements LoadSlice
+	loadSliceCollection := &testLoadSliceCollection{
+		data: []interface{}{1, 2, 3, 4, 5},
+	}
+
+	// Test with from=0, to=nil (should not use LoadSlice, uses Each instead)
+	result := SliceCollection(loadSliceCollection, 0, nil)
+	if len(result) == 0 {
+		t.Error("Expected non-empty result")
+	}
+
+	// Test with from=1, to=4 (should use LoadSlice)
+	// LoadSlice returns items from index 1 to 4 (exclusive), so indices 1, 2, 3 = [2, 3, 4]
+	to := 4
+	result2 := SliceCollection(loadSliceCollection, 1, &to)
+	if len(result2) < 2 {
+		t.Errorf("Expected at least 2 items, got %d", len(result2))
+	}
+	// Should contain items starting from index 1 (value 2)
+	if len(result2) > 0 && result2[0] != 2 {
+		t.Errorf("Expected first item to be 2, got %v", result2[0])
+	}
+}
+
+type testLoadSliceCollection struct {
+	data []interface{}
+}
+
+func (t *testLoadSliceCollection) LoadSlice(from int, to *int) []interface{} {
+	end := len(t.data)
+	if to != nil {
+		end = *to
+	}
+	if from < 0 {
+		from = 0
+	}
+	if end > len(t.data) {
+		end = len(t.data)
+	}
+	if from >= end {
+		return []interface{}{}
+	}
+	return t.data[from:end]
+}
+
+func (t *testLoadSliceCollection) Each(fn func(interface{})) {
+	for _, item := range t.data {
+		fn(item)
+	}
+}
+
+func (t *testLoadSliceCollection) Count() int {
+	return len(t.data)
+}
+
+// TestToIntegerEdgeCases tests ToInteger with various edge cases
+func TestToIntegerEdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   interface{}
+		want    int
+		wantErr bool
+	}{
+		{"int8", int8(42), 42, false},
+		{"int16", int16(42), 42, false},
+		{"int32", int32(42), 42, false},
+		{"int64", int64(42), 42, false},
+		{"uint", uint(42), 42, false},
+		{"uint8", uint8(42), 42, false},
+		{"uint16", uint16(42), 42, false},
+		{"uint32", uint32(42), 42, false},
+		{"uint64", uint64(42), 42, false},
+		{"float64", float64(42.7), 42, false},
+		{"negative float64", float64(-42.7), -42, false},
+		{"string with spaces", "  42  ", 0, true}, // ToInteger doesn't trim spaces
+		{"invalid string", "abc", 0, true},
+		{"empty string", "", 0, true},
+		{"nil", nil, 0, true},
+		{"bool", true, 0, true},
+		{"map", map[string]interface{}{}, 0, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ToInteger(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ToInteger() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Errorf("ToInteger() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestSliceCollectionEdgeCases tests SliceCollection edge cases
+func TestSliceCollectionEdgeCases(t *testing.T) {
+	// Test with non-slice, non-string collection
+	result := SliceCollection(map[string]interface{}{"key": "value"}, 0, nil)
+	if len(result) != 0 {
+		t.Errorf("Expected empty result for map, got %d items", len(result))
+	}
+
+	// Test with empty array
+	result2 := SliceCollection([]interface{}{}, 0, nil)
+	if len(result2) != 0 {
+		t.Errorf("Expected empty result for empty array, got %d items", len(result2))
+	}
+
+	// Test with from > length
+	result3 := SliceCollection([]interface{}{1, 2, 3}, 10, nil)
+	if len(result3) != 0 {
+		t.Errorf("Expected empty result when from > length, got %d items", len(result3))
+	}
+
+	// Test with to < from
+	to := 1
+	result4 := SliceCollection([]interface{}{1, 2, 3, 4, 5}, 3, &to)
+	if len(result4) != 0 {
+		t.Errorf("Expected empty result when to < from, got %d items", len(result4))
+	}
+
+	// Test with to == from
+	to2 := 2
+	result5 := SliceCollection([]interface{}{1, 2, 3, 4, 5}, 2, &to2)
+	if len(result5) != 0 {
+		t.Errorf("Expected empty result when to == from, got %d items", len(result5))
+	}
+}
