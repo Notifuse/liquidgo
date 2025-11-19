@@ -96,4 +96,3 @@ func (l *LocalFileSystem) FullPath(templatePath string) (string, error) {
 
 	return fullPath, nil
 }
-

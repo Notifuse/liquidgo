@@ -102,4 +102,3 @@ func (f *TagFilter) LinkToRemoveTag(label, tag string) string {
 	tagsStr := strings.Join(tags, "+")
 	return fmt.Sprintf(`<a title="Show tag %s" href="/collections/%s/%s">%s</a>`, tag, handle, tagsStr, label)
 }
-

@@ -156,5 +156,3 @@ func TestStrictParseWithErrorModeFallback(t *testing.T) {
 		t.Errorf("Expected no error (falls back to lax), got %v", err)
 	}
 }
-
-

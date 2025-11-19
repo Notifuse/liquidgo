@@ -56,7 +56,7 @@ func NewThemeRunner() (*ThemeRunner, error) {
 	// Create environment with standard tags
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	
+
 	// Register Shopify custom tags and filters
 	shopify.RegisterAll(env)
 
@@ -189,14 +189,14 @@ func (tr *ThemeRunner) Render() error {
 		if test.layout != nil {
 			// Render template first
 			output := test.tmpl.Render(test.assigns, nil)
-			
+
 			// Set content_for_layout
 			layoutAssigns := make(map[string]interface{})
 			for k, v := range test.assigns {
 				layoutAssigns[k] = v
 			}
 			layoutAssigns["content_for_layout"] = output
-			
+
 			// Render layout
 			test.layout.Render(layoutAssigns, nil)
 		} else {
@@ -214,7 +214,7 @@ func (tr *ThemeRunner) compileAllTests() error {
 	}
 
 	tr.compiledTests = make([]*compiledTest, 0, len(tr.tests))
-	
+
 	for _, test := range tr.tests {
 		compiled, err := tr.compileTest(test.liquid, test.layout, assigns, test.templateName)
 		if err != nil {
@@ -222,7 +222,7 @@ func (tr *ThemeRunner) compileAllTests() error {
 		}
 		tr.compiledTests = append(tr.compiledTests, compiled)
 	}
-	
+
 	return nil
 }
 
@@ -280,14 +280,14 @@ func (tr *ThemeRunner) compileAndRender(templateSource, layoutSource string, ass
 	if compiled.layout != nil {
 		// Render template
 		output := compiled.tmpl.Render(compiled.assigns, nil)
-		
+
 		// Set content_for_layout
 		layoutAssigns := make(map[string]interface{})
 		for k, v := range compiled.assigns {
 			layoutAssigns[k] = v
 		}
 		layoutAssigns["content_for_layout"] = output
-		
+
 		// Render layout
 		compiled.layout.Render(layoutAssigns, nil)
 	} else {
@@ -314,4 +314,3 @@ func (tr *ThemeRunner) initTemplate(pageTemplate, templateFile string) (*liquid.
 
 	return tmpl, nil
 }
-

@@ -90,4 +90,3 @@ func toInteger(input interface{}) int {
 		return 0
 	}
 }
-

@@ -26,4 +26,3 @@ func (f *JsonFilter) Json(input interface{}) (string, error) {
 	}
 	return string(bytes), nil
 }
-

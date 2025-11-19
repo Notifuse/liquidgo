@@ -9,10 +9,10 @@ import (
 // StrainerTemplate is the computed class for the filters system.
 // New filters are mixed into the strainer class which is then instantiated for each liquid template render run.
 type StrainerTemplate struct {
-	context          interface{ Context() interface{} }
-	filterMethods    map[string]bool
-	strictFilters    bool
-	filterInstances  map[string]interface{} // Map of filter instances by type
+	context         interface{ Context() interface{} }
+	filterMethods   map[string]bool
+	strictFilters   bool
+	filterInstances map[string]interface{} // Map of filter instances by type
 }
 
 // StrainerTemplateClass represents a strainer template class that can have filters added.
@@ -64,23 +64,23 @@ func (stc *StrainerTemplateClass) FilterMethodNames() []string {
 // NewStrainerTemplate creates a new strainer template instance.
 func NewStrainerTemplate(class *StrainerTemplateClass, context interface{ Context() interface{} }, strictFilters bool) *StrainerTemplate {
 	st := &StrainerTemplate{
-		context:        context,
-		filterMethods:  class.filterMethods,
-		strictFilters:  strictFilters,
+		context:         context,
+		filterMethods:   class.filterMethods,
+		strictFilters:   strictFilters,
 		filterInstances: make(map[string]interface{}),
 	}
-	
+
 	// Always add StandardFilters as a base filter
 	sf := &StandardFilters{}
 	st.filterInstances["*liquid.StandardFilters"] = sf
-	
+
 	return st
 }
 
 // NewStrainerTemplateWithFilters creates a new strainer template instance with additional filters.
 func NewStrainerTemplateWithFilters(class *StrainerTemplateClass, context interface{ Context() interface{} }, strictFilters bool, filters []interface{}) *StrainerTemplate {
 	st := NewStrainerTemplate(class, context, strictFilters)
-	
+
 	// Add additional filter instances
 	for _, filter := range filters {
 		filterType := reflect.TypeOf(filter)
@@ -88,7 +88,7 @@ func NewStrainerTemplateWithFilters(class *StrainerTemplateClass, context interf
 			st.filterInstances[filterType.String()] = filter
 		}
 	}
-	
+
 	return st
 }
 
@@ -120,7 +120,7 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 	// Try each filter instance until we find one with the method
 	for _, filterInstance := range st.filterInstances {
 		filterValue := reflect.ValueOf(filterInstance)
-		
+
 		// Look for the method - try both original case and capitalized version
 		// Go method names are capitalized, but Liquid filter names are lowercase
 		methodValue := filterValue.MethodByName(method)
@@ -132,13 +132,13 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		if !methodValue.IsValid() {
 			continue
 		}
-		
+
 		// Check if method signature matches (first arg is input, rest are filter args)
 		methodType := methodValue.Type()
 		if methodType.NumIn() < 1 {
 			continue
 		}
-		
+
 		// Prepare arguments
 		callArgs := make([]reflect.Value, 0, len(args)+1)
 		// First arg is the input (from args[0])
@@ -146,19 +146,19 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 			continue
 		}
 		callArgs = append(callArgs, reflect.ValueOf(args[0]))
-		
+
 		// Remaining args are filter arguments
 		expectedArgs := methodType.NumIn() - 1
 		if len(args)-1 < expectedArgs {
 			// Not enough args, skip this filter
 			continue
 		}
-		
+
 		// Add filter arguments
 		for i := 1; i <= expectedArgs && i < len(args); i++ {
 			callArgs = append(callArgs, reflect.ValueOf(args[i]))
 		}
-		
+
 		// Call the method
 		results := methodValue.Call(callArgs)
 		if len(results) > 0 {
@@ -166,7 +166,7 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		}
 		return nil, nil
 	}
-	
+
 	// Method not found in any filter - this shouldn't happen if filterMethods is correct
 	// but handle gracefully
 	if len(args) > 0 {
@@ -174,4 +174,3 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 	}
 	return nil, nil
 }
-

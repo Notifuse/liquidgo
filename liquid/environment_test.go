@@ -17,7 +17,7 @@ func TestNewEnvironment(t *testing.T) {
 func TestEnvironmentRegisterTag(t *testing.T) {
 	env := NewEnvironment()
 	env.RegisterTag("test", "TestTag")
-	
+
 	tag := env.TagForName("test")
 	if tag != "TestTag" {
 		t.Errorf("Expected 'TestTag', got %v", tag)
@@ -26,19 +26,19 @@ func TestEnvironmentRegisterTag(t *testing.T) {
 
 func TestEnvironmentRegisterFilter(t *testing.T) {
 	env := NewEnvironment()
-	
+
 	// Register a filter (StandardFilters already has methods)
 	filter := &StandardFilters{}
 	err := env.RegisterFilter(filter)
 	if err != nil {
 		t.Fatalf("RegisterFilter() error = %v", err)
 	}
-	
+
 	names := env.FilterMethodNames()
 	if len(names) == 0 {
 		t.Error("Expected filter method names, got empty")
 	}
-	
+
 	// Check for a known method
 	found := false
 	for _, name := range names {
@@ -55,7 +55,7 @@ func TestEnvironmentRegisterFilter(t *testing.T) {
 func TestEnvironmentCreateStrainer(t *testing.T) {
 	env := NewEnvironment()
 	ctx := &mockContext{}
-	
+
 	strainer := env.CreateStrainer(ctx, nil, false)
 	if strainer == nil {
 		t.Fatal("Expected StrainerTemplate, got nil")
@@ -66,7 +66,7 @@ func TestEnvironmentFileSystem(t *testing.T) {
 	env := NewEnvironment()
 	fs := &BlankFileSystem{}
 	env.SetFileSystem(fs)
-	
+
 	if env.FileSystem() != fs {
 		t.Error("FileSystem mismatch")
 	}
@@ -78,7 +78,7 @@ func TestEnvironmentExceptionRenderer(t *testing.T) {
 		return "rendered"
 	}
 	env.SetExceptionRenderer(renderer)
-	
+
 	if env.ExceptionRenderer() == nil {
 		t.Error("Expected exception renderer, got nil")
 	}
@@ -96,22 +96,21 @@ func TestEnvironmentSetErrorMode(t *testing.T) {
 func TestEnvironmentStrainerCaching(t *testing.T) {
 	env := NewEnvironment()
 	ctx := &mockContext{}
-	
+
 	// Create first strainer
 	strainer1 := env.CreateStrainer(ctx, nil, false)
 	if strainer1 == nil {
 		t.Fatal("Expected StrainerTemplate, got nil")
 	}
-	
+
 	// Create second strainer with same filters (should use cache)
 	strainer2 := env.CreateStrainer(ctx, nil, false)
 	if strainer2 == nil {
 		t.Fatal("Expected StrainerTemplate, got nil")
 	}
-	
+
 	// Both should be valid strainers
 	if strainer1 == nil || strainer2 == nil {
 		t.Error("Both strainers should be valid")
 	}
 }
-

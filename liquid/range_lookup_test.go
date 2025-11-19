@@ -6,10 +6,10 @@ import (
 
 func TestRangeLookupParse(t *testing.T) {
 	tests := []struct {
-		name         string
-		startMarkup  string
-		endMarkup    string
-		check        func(interface{}) bool
+		name        string
+		startMarkup string
+		endMarkup   string
+		check       func(interface{}) bool
 	}{
 		{"simple integers", "1", "10", func(r interface{}) bool {
 			rg, ok := r.(*Range)
@@ -54,4 +54,3 @@ func TestRangeLookupWithVariables(t *testing.T) {
 		t.Error("EndObj mismatch")
 	}
 }
-

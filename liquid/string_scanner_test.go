@@ -141,4 +141,3 @@ func TestStringScannerSetPos(t *testing.T) {
 		t.Errorf("Expected 'w' at pos 6, got %c", ss.PeekByte())
 	}
 }
-

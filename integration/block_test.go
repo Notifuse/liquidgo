@@ -106,4 +106,3 @@ func (t *TestBlockTag2) Render(ctx liquid.TagContext) string {
 	// So result is "foo" + "hello" + "bar" = "foohellobar"
 	return "foo" + t.TestBlockTag.Render(ctx) + "bar"
 }
-

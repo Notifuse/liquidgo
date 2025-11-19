@@ -28,7 +28,7 @@ func ForParseTreeVisitor(node interface{}, callbacks map[reflect.Type]ParseTreeV
 	if nodeType == nil {
 		return NewParseTreeVisitor(node, callbacks)
 	}
-	
+
 	// Check for node-specific ParseTreeVisitor type
 	// In Ruby: if defined?(node.class::ParseTreeVisitor)
 	// In Go, we check if the node type has a method that returns a ParseTreeVisitor constructor
@@ -48,7 +48,7 @@ func ForParseTreeVisitor(node interface{}, callbacks map[reflect.Type]ParseTreeV
 			}
 		}
 	}
-	
+
 	// Use default visitor
 	return NewParseTreeVisitor(node, callbacks)
 }
@@ -68,7 +68,7 @@ func (ptv *ParseTreeVisitor) AddCallbackFor(types []interface{}, callback ParseT
 func (ptv *ParseTreeVisitor) Visit(context interface{}) []interface{} {
 	children := ptv.children()
 	result := make([]interface{}, 0, len(children))
-	
+
 	for _, child := range children {
 		childType := reflect.TypeOf(child)
 		callback, ok := ptv.callbacks[childType]
@@ -78,14 +78,14 @@ func (ptv *ParseTreeVisitor) Visit(context interface{}) []interface{} {
 				return node, ctx
 			}
 		}
-		
+
 		item, newContext := callback(child, context)
 		childVisitor := ForParseTreeVisitor(child, ptv.callbacks)
 		childResults := childVisitor.Visit(newContext)
-		
+
 		result = append(result, []interface{}{item, childResults})
 	}
-	
+
 	return result
 }
 
@@ -95,7 +95,7 @@ func (ptv *ParseTreeVisitor) children() []interface{} {
 	if !nodeValue.IsValid() {
 		return EMPTY_ARRAY
 	}
-	
+
 	nodelistMethod := nodeValue.MethodByName("Nodelist")
 	if nodelistMethod.IsValid() {
 		result := nodelistMethod.Call(nil)
@@ -105,7 +105,6 @@ func (ptv *ParseTreeVisitor) children() []interface{} {
 			}
 		}
 	}
-	
+
 	return EMPTY_ARRAY
 }
-

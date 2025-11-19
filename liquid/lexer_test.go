@@ -13,9 +13,9 @@ func TestLexerTokenize(t *testing.T) {
 		{"identifier", "hello", 2}, // token + EOS
 		{"number", "42", 2},
 		{"string", "\"hello\"", 2},
-		{"comparison", "a == b", 4}, // a, ==, b, EOS
+		{"comparison", "a == b", 4},      // a, ==, b, EOS
 		{"dot notation", "user.name", 4}, // user, ., name, EOS
-		{"brackets", "items[0]", 5}, // items, [, 0, ], EOS
+		{"brackets", "items[0]", 5},      // items, [, 0, ], EOS
 	}
 
 	for _, tt := range tests {
@@ -98,4 +98,3 @@ func TestLexerContains(t *testing.T) {
 		t.Errorf("Expected comparison token 'contains', got %v", tokens[0])
 	}
 }
-

@@ -131,7 +131,7 @@ func TestStandardFiltersLast(t *testing.T) {
 // TestStandardFiltersStripHTML tests HTML stripping functionality
 func TestStandardFiltersStripHTML(t *testing.T) {
 	sf := &StandardFilters{}
-	
+
 	tests := []struct {
 		name     string
 		input    string
@@ -173,7 +173,7 @@ func TestStandardFiltersStripHTML(t *testing.T) {
 			expected: "Hello  World",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := sf.StripHTML(tt.input)
@@ -183,4 +183,3 @@ func TestStandardFiltersStripHTML(t *testing.T) {
 		})
 	}
 }
-

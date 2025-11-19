@@ -22,4 +22,3 @@ func TestTemplateFactoryFor(t *testing.T) {
 		t.Errorf("Expected *Template, got %T", result)
 	}
 }
-

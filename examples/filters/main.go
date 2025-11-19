@@ -52,4 +52,3 @@ Combined: {{ text | reverse | shout }}
 
 	fmt.Println(output)
 }
-

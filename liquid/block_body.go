@@ -403,58 +403,58 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 	if renderable, ok := node.(Renderable); ok {
 		nodeValue := reflect.ValueOf(node)
 		nodeType := nodeValue.Type()
-		
+
 		// Detect which methods are overridden by checking method counts
 		// Methods with pointer receivers show up on pointer type, value receivers on both
 		hasOwnRender := false
 		hasOwnRTOB := false
-		
+
 		if nodeValue.Kind() == reflect.Ptr {
 			elemType := nodeType.Elem()
-			
+
 			// For pointer receiver methods, check on the pointer type
 			// Compare method counts: if tag has more methods than base, it overrode something
-			
+
 			// Check if this type defines Render (pointer receiver method appears on pointer type)
 			// but NOT on elem type (unless it has value receiver)
 			ptrHasRender := false
 			elemHasRender := false
-			
+
 			if _, ok := nodeType.MethodByName("Render"); ok {
 				ptrHasRender = true
 			}
 			if _, ok := elemType.MethodByName("Render"); ok {
 				elemHasRender = true
 			}
-			
+
 			// Similar check for RenderToOutputBuffer
 			ptrHasRTOB := false
 			elemHasRTOB := false
-			
+
 			if _, ok := nodeType.MethodByName("RenderToOutputBuffer"); ok {
 				ptrHasRTOB = true
 			}
 			if _, ok := elemType.MethodByName("RenderToOutputBuffer"); ok {
 				elemHasRTOB = true
 			}
-			
+
 			// Detect if Render was overridden with pointer receiver
 			// If ptr has it but elem doesn't, AND this isn't *Tag or *Block, it's an override
 			if ptrHasRender && !elemHasRender && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
 				hasOwnRender = true
 			}
-			
+
 			// Detect if RenderToOutputBuffer was overridden with pointer receiver
 			if ptrHasRTOB && !elemHasRTOB && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
 				hasOwnRTOB = true
 			}
 		}
-		
+
 		// Decision logic from plan:
 		// 1. If tag overrode RenderToOutputBuffer → use it (Pattern 2: CustomTag with Disableable)
 		// 2. Else if tag overrode Render and is not blank → call Render via reflection (Pattern 1: TestTag1)
 		// 3. Else → use inherited RenderToOutputBuffer (Pattern 3: standard tags)
-		
+
 		if hasOwnRTOB {
 			// Pattern 2: Tag has its own RenderToOutputBuffer
 			if profiler {
@@ -466,13 +466,13 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 			}
 			return
 		}
-		
+
 		// Check if blank
 		isBlank := false
 		if blanker, ok := node.(interface{ Blank() bool }); ok {
 			isBlank = blanker.Blank()
 		}
-		
+
 		if hasOwnRender && !isBlank {
 			// Pattern 1: Tag only overrode Render(), call it via reflection
 			if nodeValue.Kind() == reflect.Ptr {
@@ -495,7 +495,7 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 				}
 			}
 		}
-		
+
 		// Pattern 3: Use inherited RenderToOutputBuffer
 		if profiler {
 			ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {

@@ -23,12 +23,12 @@ type ConditionOperator func(cond *Condition, left, right interface{}) (bool, err
 
 // Condition represents a Liquid condition.
 type Condition struct {
-	left          interface{}
-	operator      string
-	right         interface{}
-	childRelation string // "or" or "and"
+	left           interface{}
+	operator       string
+	right          interface{}
+	childRelation  string // "or" or "and"
 	childCondition *Condition
-	attachment    interface{}
+	attachment     interface{}
 }
 
 // NewCondition creates a new Condition.
@@ -321,4 +321,3 @@ func (e *ElseCondition) Else() bool {
 func (e *ElseCondition) Evaluate(context ConditionContext) (bool, error) {
 	return true, nil
 }
-

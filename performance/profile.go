@@ -83,4 +83,3 @@ func main() {
 		fmt.Printf("  go tool pprof %s\n", *memprofile)
 	}
 }
-

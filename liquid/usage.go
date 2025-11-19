@@ -17,4 +17,3 @@ var GlobalUsage = &Usage{}
 func IncrementUsage(name string) {
 	GlobalUsage.Increment(name)
 }
-

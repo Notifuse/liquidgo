@@ -57,8 +57,8 @@ func TestToInteger(t *testing.T) {
 
 func TestToNumber(t *testing.T) {
 	tests := []struct {
-		name string
-		input interface{}
+		name     string
+		input    interface{}
 		wantType string
 	}{
 		{"int", 42, "int"},
@@ -81,8 +81,8 @@ func TestToNumber(t *testing.T) {
 func TestToDate(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
-		name string
-		input interface{}
+		name    string
+		input   interface{}
 		wantNil bool
 	}{
 		{"time.Time", now, false},
@@ -104,8 +104,8 @@ func TestToDate(t *testing.T) {
 
 func TestToS(t *testing.T) {
 	tests := []struct {
-		name string
-		input interface{}
+		name         string
+		input        interface{}
 		wantContains string
 	}{
 		{"string", "hello", "hello"},
@@ -140,9 +140,9 @@ func getTypeName(v interface{}) string {
 }
 
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
-		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
-		containsMiddle(s, substr))))
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
+			containsMiddle(s, substr))))
 }
 
 func containsMiddle(s, substr string) bool {
@@ -153,4 +153,3 @@ func containsMiddle(s, substr string) bool {
 	}
 	return false
 }
-

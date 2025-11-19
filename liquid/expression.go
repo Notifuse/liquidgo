@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	expressionRangesRegex = regexp.MustCompile(`^\(\s*(\S+)\s*\.\.\s*(\S+)\s*\)$`)
+	expressionRangesRegex  = regexp.MustCompile(`^\(\s*(\S+)\s*\.\.\s*(\S+)\s*\)$`)
 	expressionIntegerRegex = regexp.MustCompile(`^(-?\d+)$`)
 	expressionFloatRegex   = regexp.MustCompile(`^(-?\d+)\.\d+$`)
 )
@@ -195,4 +195,3 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 
 	return nil
 }
-

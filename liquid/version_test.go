@@ -7,4 +7,3 @@ func TestVersion(t *testing.T) {
 		t.Errorf("Expected version to be '5.10.0', got '%s'", Version)
 	}
 }
-

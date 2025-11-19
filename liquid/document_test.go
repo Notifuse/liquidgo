@@ -21,7 +21,7 @@ func TestNewDocument(t *testing.T) {
 func TestDocumentParseSimple(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("Hello World", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
@@ -29,7 +29,7 @@ func TestDocumentParseSimple(t *testing.T) {
 	if doc == nil {
 		t.Fatal("Expected Document, got nil")
 	}
-	
+
 	nodelist := doc.Nodelist()
 	if len(nodelist) != 1 {
 		t.Errorf("Expected 1 node, got %d", len(nodelist))
@@ -42,12 +42,12 @@ func TestDocumentParseSimple(t *testing.T) {
 func TestDocumentParseWithVariable(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("Hello {{ name }}", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
 	}
-	
+
 	nodelist := doc.Nodelist()
 	if len(nodelist) < 2 {
 		t.Errorf("Expected at least 2 nodes, got %d", len(nodelist))
@@ -57,12 +57,12 @@ func TestDocumentParseWithVariable(t *testing.T) {
 func TestDocumentRenderSimple(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("Hello World", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
 	}
-	
+
 	ctx := NewContext()
 	result := doc.Render(ctx)
 	if result != "Hello World" {
@@ -73,12 +73,12 @@ func TestDocumentRenderSimple(t *testing.T) {
 func TestDocumentRenderToOutputBuffer(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("Test", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
 	}
-	
+
 	ctx := NewContext()
 	var output string
 	doc.RenderToOutputBuffer(ctx, &output)
@@ -90,7 +90,7 @@ func TestDocumentRenderToOutputBuffer(t *testing.T) {
 func TestDocumentUnknownTag(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	doc := NewDocument(pc)
-	
+
 	// Test unknown tag
 	err := doc.UnknownTag("unknown", "", nil)
 	if err == nil {
@@ -104,7 +104,7 @@ func TestDocumentUnknownTag(t *testing.T) {
 func TestDocumentUnknownTagElse(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	doc := NewDocument(pc)
-	
+
 	// Test else tag (should error)
 	err := doc.UnknownTag("else", "", nil)
 	if err == nil {
@@ -118,7 +118,7 @@ func TestDocumentUnknownTagElse(t *testing.T) {
 func TestDocumentUnknownTagEnd(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	doc := NewDocument(pc)
-	
+
 	// Test end tag (should error)
 	err := doc.UnknownTag("end", "", nil)
 	if err == nil {
@@ -132,12 +132,12 @@ func TestDocumentUnknownTagEnd(t *testing.T) {
 func TestDocumentNodelist(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("text1 text2", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
 	}
-	
+
 	nodelist := doc.Nodelist()
 	if len(nodelist) == 0 {
 		t.Error("Expected nodelist to have nodes")
@@ -147,7 +147,7 @@ func TestDocumentNodelist(t *testing.T) {
 func TestDocumentParseEmpty(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	tokenizer := pc.NewTokenizer("", false, nil, false)
-	
+
 	doc, err := ParseDocument(tokenizer, pc)
 	if err != nil {
 		t.Fatalf("ParseDocument() error = %v", err)
@@ -155,11 +155,10 @@ func TestDocumentParseEmpty(t *testing.T) {
 	if doc == nil {
 		t.Fatal("Expected Document, got nil")
 	}
-	
+
 	nodelist := doc.Nodelist()
 	// Empty document should have empty nodelist or just whitespace
 	if len(nodelist) > 1 {
 		t.Errorf("Expected empty or minimal nodelist, got %d nodes", len(nodelist))
 	}
 }
-

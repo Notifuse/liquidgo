@@ -55,11 +55,11 @@ func main() {
 	// Profile parse phase
 	fmt.Println("\nProfiling: Parse phase...")
 	beforeParse := getMemStats()
-	
+
 	if err := runner.Compile(); err != nil {
 		log.Fatal("Parse phase failed:", err)
 	}
-	
+
 	runtime.GC() // Force GC to get accurate retained memory
 	afterParse := getMemStats()
 
@@ -71,11 +71,11 @@ func main() {
 	// Profile render phase
 	fmt.Println("\nProfiling: Render phase...")
 	beforeRender := getMemStats()
-	
+
 	if err := runner.Render(); err != nil {
 		log.Fatal("Render phase failed:", err)
 	}
-	
+
 	runtime.GC() // Force GC to get accurate retained memory
 	afterRender := getMemStats()
 
@@ -90,13 +90,13 @@ func main() {
 	fmt.Println("╠═══════════════════════════════════════════════════════╣")
 	fmt.Printf("║ %-20s ║ %-15s ║ %-12s ║\n", "Phase", "Parse", "Render")
 	fmt.Println("╠═══════════════════════════════════════════════════════╣")
-	fmt.Printf("║ %-20s ║ %-15s ║ %-12s ║\n", 
-		"Total allocated", 
-		formatBytes(parseAllocated), 
+	fmt.Printf("║ %-20s ║ %-15s ║ %-12s ║\n",
+		"Total allocated",
+		formatBytes(parseAllocated),
 		formatBytes(renderAllocated))
-	fmt.Printf("║ %-20s ║ %-15d ║ %-12d ║\n", 
-		"Total allocations", 
-		parseMallocs, 
+	fmt.Printf("║ %-20s ║ %-15d ║ %-12d ║\n",
+		"Total allocations",
+		parseMallocs,
 		renderMallocs)
 	fmt.Println("╚═══════════════════════════════════════════════════════╝")
 
@@ -104,4 +104,3 @@ func main() {
 	fmt.Println("      the phase execution. Use runtime/pprof for detailed")
 	fmt.Println("      allocation traces.")
 }
-

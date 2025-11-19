@@ -85,4 +85,3 @@ func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibili
 		t.Errorf("Expected buf 'foohellobar', got %q", buf2)
 	}
 }
-

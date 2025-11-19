@@ -26,13 +26,13 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 	// Try global cache first for simple variable lookups (no dynamic parts)
 	// We can only cache if the markup doesn't contain dynamic expressions in brackets
 	canCache := !strings.Contains(markup, "[")
-	
+
 	if canCache {
 		if cached, ok := globalVariableLookupCache.Load(markup); ok {
 			return cached.(*VariableLookup)
 		}
 	}
-	
+
 	// Scan for variable parts using VariableParser pattern
 	// This matches [brackets] or identifier? patterns
 	matches := VariableParser.FindAllString(markup, -1)
@@ -116,11 +116,11 @@ func (vl *VariableLookup) Lookups() []interface{} {
 func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 	name := context.Evaluate(vl.name)
 	obj := context.FindVariable(ToString(name, nil), false)
-	
+
 	for i, lookup := range vl.lookups {
 		key := context.Evaluate(lookup)
 		key = ToLiquidValue(key)
-		
+
 		// Try to access as map/array
 		if m, ok := obj.(map[string]interface{}); ok {
 			if k, ok := key.(string); ok {
@@ -130,7 +130,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				}
 			}
 		}
-		
+
 		if arr, ok := obj.([]interface{}); ok {
 			idx, _ := ToInteger(key)
 			if idx >= 0 && idx < len(arr) {
@@ -138,7 +138,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				continue
 			}
 		}
-		
+
 		// Try command method
 		if vl.LookupCommand(i) {
 			if _, ok := key.(string); ok {
@@ -147,7 +147,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				return nil
 			}
 		}
-		
+
 		// Try drop method invocation
 		if keyStr, ok := key.(string); ok {
 			if IsInvokable(obj, keyStr) {
@@ -158,14 +158,14 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				continue
 			}
 		}
-		
+
 		// Not found
 		if context.StrictVariables() {
 			panic(NewUndefinedVariable("undefined variable " + ToString(key, nil)))
 		}
 		return nil
 	}
-	
+
 	return ToLiquid(obj)
 }
 
@@ -173,4 +173,3 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 func ToString(v interface{}, ctx *Context) string {
 	return ToS(v, nil)
 }
-

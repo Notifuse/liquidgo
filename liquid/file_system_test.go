@@ -70,4 +70,3 @@ func TestLocalFileSystemCustomPattern(t *testing.T) {
 		t.Errorf("Expected path '%s', got '%s'", expectedPath, fullPath)
 	}
 }
-

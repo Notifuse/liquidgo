@@ -11,18 +11,18 @@ type ParseContextOptions struct {
 
 // ParseContext represents the context during template parsing.
 type ParseContext struct {
-	environment      *Environment
-	locale           *I18n
-	warnings         []error
-	errorMode        string
-	lineNumber       *int
-	trimWhitespace   bool
-	depth            int
-	partial          bool
-	stringScanner    *StringScanner
-	expressionCache  map[string]interface{}
-	templateOptions  map[string]interface{}
-	partialOptions   map[string]interface{}
+	environment     *Environment
+	locale          *I18n
+	warnings        []error
+	errorMode       string
+	lineNumber      *int
+	trimWhitespace  bool
+	depth           int
+	partial         bool
+	stringScanner   *StringScanner
+	expressionCache map[string]interface{}
+	templateOptions map[string]interface{}
+	partialOptions  map[string]interface{}
 }
 
 // NewParseContext creates a new ParseContext.
@@ -229,4 +229,3 @@ func (pc *ParseContext) ParseExpressionSafe(markup string, safe bool) interface{
 	}
 	return Parse(markup, pc.stringScanner, pc.expressionCache)
 }
-

@@ -10,7 +10,7 @@ type Document struct {
 // Catches panics from parsing and converts them to errors to prevent application crashes.
 func ParseDocument(tokenizer *Tokenizer, parseContext ParseContextInterface) (*Document, error) {
 	doc := NewDocument(parseContext)
-	
+
 	// Catch panics from parsing and convert to errors
 	var parseErr error
 	func() {
@@ -31,7 +31,7 @@ func ParseDocument(tokenizer *Tokenizer, parseContext ParseContextInterface) (*D
 			parseErr = err
 		}
 	}()
-	
+
 	if parseErr != nil {
 		return nil, parseErr
 	}
@@ -122,7 +122,7 @@ func (d *Document) RenderToOutputBuffer(context TagContext, output *string) {
 		})
 		return
 	}
-	
+
 	d.body.RenderToOutputBuffer(context, output)
 }
 
@@ -153,4 +153,3 @@ func (d *Document) parseBody(tokenizer *Tokenizer, parseContext ParseContextInte
 	// Return false to stop parsing (body.Parse handles the loop)
 	return false
 }
-

@@ -75,4 +75,3 @@ var (
 	// EMPTY_ARRAY is an empty slice that can be reused
 	EMPTY_ARRAY = []interface{}{}
 )
-

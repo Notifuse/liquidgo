@@ -9,7 +9,7 @@ func (pc *PartialCache) Load(templateName string, context interface {
 }, parseContext ParseContextInterface) (interface{}, error) {
 	registers := context.Registers()
 	cachedPartials := registers.Get("cached_partials")
-	
+
 	var cache map[string]interface{}
 	if cp, ok := cachedPartials.(map[string]interface{}); ok {
 		cache = cp
@@ -17,19 +17,19 @@ func (pc *PartialCache) Load(templateName string, context interface {
 		cache = make(map[string]interface{})
 		registers.Set("cached_partials", cache)
 	}
-	
+
 	// Create cache key
 	errorMode := "lax" // Default
 	if env := parseContext.Environment(); env != nil {
 		errorMode = env.ErrorMode()
 	}
 	cacheKey := templateName + ":" + errorMode
-	
+
 	// Check cache
 	if cached, ok := cache[cacheKey]; ok {
 		return cached, nil
 	}
-	
+
 	// Load from file system
 	fileSystem := registers.Get("file_system")
 	var fs FileSystem
@@ -38,18 +38,18 @@ func (pc *PartialCache) Load(templateName string, context interface {
 	} else {
 		fs = &BlankFileSystem{}
 	}
-	
+
 	source, err := fs.ReadTemplateFile(templateName)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Set partial flag
 	if pc, ok := parseContext.(*ParseContext); ok {
 		pc.SetPartial(true)
 		defer pc.SetPartial(false)
 	}
-	
+
 	// Get template factory
 	templateFactory := registers.Get("template_factory")
 	var tf *TemplateFactory
@@ -58,7 +58,7 @@ func (pc *PartialCache) Load(templateName string, context interface {
 	} else {
 		tf = NewTemplateFactory()
 	}
-	
+
 	// Get template instance
 	template := tf.For(templateName)
 	var tmpl *Template
@@ -67,7 +67,7 @@ func (pc *PartialCache) Load(templateName string, context interface {
 	} else {
 		return nil, NewFileSystemError("template factory returned invalid template")
 	}
-	
+
 	// Parse the template
 	parseOptions := &TemplateOptions{}
 	if pc, ok := parseContext.(*ParseContext); ok {
@@ -85,15 +85,15 @@ func (pc *PartialCache) Load(templateName string, context interface {
 		}
 		return nil, err
 	}
-	
+
 	// Set name if not already set
 	if tmpl.Name() == "" {
 		tmpl.SetName(templateName)
 	}
-	
+
 	// Cache the partial
 	cache[cacheKey] = tmpl
-	
+
 	return tmpl, nil
 }
 
@@ -104,4 +104,3 @@ func LoadPartial(templateName string, context interface {
 	pc := &PartialCache{}
 	return pc.Load(templateName, context, parseContext)
 }
-

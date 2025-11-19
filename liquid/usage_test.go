@@ -14,4 +14,3 @@ func TestIncrementUsage(t *testing.T) {
 	// Should not panic
 	IncrementUsage("test")
 }
-

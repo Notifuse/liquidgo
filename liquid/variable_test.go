@@ -6,10 +6,10 @@ import (
 
 // MockParseContext for testing
 type mockParseContext struct {
-	lineNum       *int
-	env           *Environment
+	lineNum        *int
+	env            *Environment
 	trimWhitespace bool
-	depth         int
+	depth          int
 }
 
 func (m *mockParseContext) ParseExpression(markup string) interface{} {
@@ -74,7 +74,7 @@ func (m *mockParseContext) NewTokenizer(source string, lineNumbers bool, startLi
 func TestVariableBasic(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContext{lineNum: &lineNum}
-	
+
 	v := NewVariable("user.name", pc)
 	if v == nil {
 		t.Fatal("Expected Variable, got nil")
@@ -90,7 +90,7 @@ func TestVariableBasic(t *testing.T) {
 func TestVariableWithFilters(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContext{lineNum: &lineNum}
-	
+
 	v := NewVariable("user.name | upcase", pc)
 	if v == nil {
 		t.Fatal("Expected Variable, got nil")
@@ -103,7 +103,7 @@ func TestVariableWithFilters(t *testing.T) {
 func TestVariableLineNumber(t *testing.T) {
 	lineNum := 42
 	pc := &mockParseContext{lineNum: &lineNum}
-	
+
 	v := NewVariable("test", pc)
 	if v.LineNumber() == nil || *v.LineNumber() != 42 {
 		t.Errorf("Expected line number 42, got %v", v.LineNumber())
@@ -113,7 +113,7 @@ func TestVariableLineNumber(t *testing.T) {
 // TestVariableParserSwitching tests parser switching based on error mode
 func TestVariableParserSwitching(t *testing.T) {
 	lineNum := 1
-	
+
 	// Test strict mode
 	pcStrict := NewParseContext(ParseContextOptions{ErrorMode: "strict"})
 	pcStrict.SetLineNumber(&lineNum)
@@ -121,7 +121,7 @@ func TestVariableParserSwitching(t *testing.T) {
 	if v == nil {
 		t.Fatal("Expected Variable, got nil")
 	}
-	
+
 	// Test lax mode
 	pcLax := NewParseContext(ParseContextOptions{ErrorMode: "lax"})
 	pcLax.SetLineNumber(&lineNum)
@@ -129,7 +129,7 @@ func TestVariableParserSwitching(t *testing.T) {
 	if v == nil {
 		t.Fatal("Expected Variable, got nil")
 	}
-	
+
 	// Test rigid mode
 	pcRigid := NewParseContext(ParseContextOptions{ErrorMode: "rigid"})
 	pcRigid.SetLineNumber(&lineNum)
@@ -138,4 +138,3 @@ func TestVariableParserSwitching(t *testing.T) {
 		t.Fatal("Expected Variable, got nil")
 	}
 }
-

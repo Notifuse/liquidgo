@@ -234,15 +234,15 @@ func (sf *StandardFilters) Rstrip(input interface{}) string {
 // StripHTML strips HTML tags from a string.
 func (sf *StandardFilters) StripHTML(input interface{}) string {
 	s := ToS(input, nil)
-	
+
 	// First remove script/style/comment blocks
 	stripHTMLBlocks := regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
 	result := stripHTMLBlocks.ReplaceAllString(s, "")
-	
+
 	// Then remove all HTML tags
 	stripHTMLTags := regexp.MustCompile(`<.*?>`)
 	result = stripHTMLTags.ReplaceAllString(result, "")
-	
+
 	return result
 }
 
@@ -278,4 +278,3 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 	}
 	return ToS(input, nil)
 }
-

@@ -64,4 +64,3 @@ func TestVariableLookupCommandMethods(t *testing.T) {
 		t.Error("Expected name NOT to be a command method")
 	}
 }
-

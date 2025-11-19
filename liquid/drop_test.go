@@ -18,7 +18,7 @@ func TestDropSetContext(t *testing.T) {
 	drop := NewDrop()
 	ctx := NewContext()
 	drop.SetContext(ctx)
-	
+
 	if drop.Context() != ctx {
 		t.Error("Expected context to be set")
 	}
@@ -26,7 +26,7 @@ func TestDropSetContext(t *testing.T) {
 
 func TestDropInvokeDrop(t *testing.T) {
 	drop := NewDrop()
-	
+
 	// Test invoking a non-existent method (should call LiquidMethodMissing)
 	result := drop.InvokeDrop("nonexistent")
 	if result != nil {
@@ -70,14 +70,14 @@ func TestForloopDropBasic(t *testing.T) {
 
 func TestForloopDropIndex(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)
-	
+
 	if fl.Index() != 1 {
 		t.Errorf("Expected Index 1, got %d", fl.Index())
 	}
 	if fl.Index0() != 0 {
 		t.Errorf("Expected Index0 0, got %d", fl.Index0())
 	}
-	
+
 	fl.Increment()
 	if fl.Index() != 2 {
 		t.Errorf("Expected Index 2 after increment, got %d", fl.Index())
@@ -89,19 +89,19 @@ func TestForloopDropIndex(t *testing.T) {
 
 func TestForloopDropFirstLast(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)
-	
+
 	if !fl.First() {
 		t.Error("Expected First to be true initially")
 	}
 	if fl.Last() {
 		t.Error("Expected Last to be false initially")
 	}
-	
+
 	// Increment to last
 	for i := 0; i < 4; i++ {
 		fl.Increment()
 	}
-	
+
 	if fl.First() {
 		t.Error("Expected First to be false at end")
 	}
@@ -112,14 +112,14 @@ func TestForloopDropFirstLast(t *testing.T) {
 
 func TestForloopDropRindex(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)
-	
+
 	if fl.Rindex() != 5 {
 		t.Errorf("Expected Rindex 5, got %d", fl.Rindex())
 	}
 	if fl.Rindex0() != 4 {
 		t.Errorf("Expected Rindex0 4, got %d", fl.Rindex0())
 	}
-	
+
 	fl.Increment()
 	if fl.Rindex() != 4 {
 		t.Errorf("Expected Rindex 4, got %d", fl.Rindex())
@@ -132,7 +132,7 @@ func TestForloopDropRindex(t *testing.T) {
 func TestForloopDropParentloop(t *testing.T) {
 	parent := NewForloopDrop("outer", 3, nil)
 	child := NewForloopDrop("inner", 2, parent)
-	
+
 	if child.Parentloop() != parent {
 		t.Error("Expected parentloop to be set")
 	}
@@ -159,7 +159,7 @@ func TestTablerowloopDropBasic(t *testing.T) {
 
 func TestTablerowloopDropIncrement(t *testing.T) {
 	tr := NewTablerowloopDrop(10, 3)
-	
+
 	// First increment
 	tr.Increment()
 	if tr.Row() != 1 {
@@ -168,7 +168,7 @@ func TestTablerowloopDropIncrement(t *testing.T) {
 	if tr.Col() != 2 {
 		t.Errorf("Expected col 2, got %d", tr.Col())
 	}
-	
+
 	// Second increment
 	tr.Increment()
 	if tr.Row() != 1 {
@@ -177,7 +177,7 @@ func TestTablerowloopDropIncrement(t *testing.T) {
 	if tr.Col() != 3 {
 		t.Errorf("Expected col 3, got %d", tr.Col())
 	}
-	
+
 	// Third increment (should wrap to next row)
 	tr.Increment()
 	if tr.Row() != 2 {
@@ -190,14 +190,14 @@ func TestTablerowloopDropIncrement(t *testing.T) {
 
 func TestTablerowloopDropColFirstLast(t *testing.T) {
 	tr := NewTablerowloopDrop(10, 3)
-	
+
 	if !tr.ColFirst() {
 		t.Error("Expected ColFirst to be true initially")
 	}
 	if tr.ColLast() {
 		t.Error("Expected ColLast to be false initially")
 	}
-	
+
 	tr.Increment()
 	if tr.ColFirst() {
 		t.Error("Expected ColFirst to be false")
@@ -205,7 +205,7 @@ func TestTablerowloopDropColFirstLast(t *testing.T) {
 	if tr.ColLast() {
 		t.Error("Expected ColLast to be false")
 	}
-	
+
 	tr.Increment()
 	if !tr.ColLast() {
 		t.Error("Expected ColLast to be true")
@@ -214,11 +214,11 @@ func TestTablerowloopDropColFirstLast(t *testing.T) {
 
 func TestTablerowloopDropCol0(t *testing.T) {
 	tr := NewTablerowloopDrop(10, 3)
-	
+
 	if tr.Col0() != 0 {
 		t.Errorf("Expected Col0 0, got %d", tr.Col0())
 	}
-	
+
 	tr.Increment()
 	if tr.Col0() != 1 {
 		t.Errorf("Expected Col0 1, got %d", tr.Col0())
@@ -257,13 +257,13 @@ func TestSnippetDropString(t *testing.T) {
 
 func TestDropInvokeDropWithMethod(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)
-	
+
 	// Test invoking Length method
 	result := fl.InvokeDrop("Length")
 	if result != 5 {
 		t.Errorf("Expected Length 5, got %v", result)
 	}
-	
+
 	// Test invoking Name method
 	result = fl.InvokeDrop("Name")
 	if result != "items" {
@@ -276,7 +276,7 @@ func TestDropStrictVariables(t *testing.T) {
 	ctx := NewContext()
 	ctx.SetStrictVariables(true)
 	drop.SetContext(ctx)
-	
+
 	// Should panic on undefined method
 	func() {
 		defer func() {
@@ -287,4 +287,3 @@ func TestDropStrictVariables(t *testing.T) {
 		drop.InvokeDrop("nonexistent")
 	}()
 }
-

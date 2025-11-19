@@ -21,7 +21,7 @@ func TestParseTreeVisitorChildren(t *testing.T) {
 	// Create a tag with nodelist
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
-	
+
 	ptv := NewParseTreeVisitor(tag, nil)
 	children := ptv.children()
 	if len(children) != 2 {
@@ -34,7 +34,7 @@ func TestParseTreeVisitorVisit(t *testing.T) {
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello"})
-	
+
 	ptv := NewParseTreeVisitor(tag, nil)
 	result := ptv.Visit(nil)
 	if len(result) != 1 {
@@ -56,7 +56,7 @@ func TestForParseTreeVisitor(t *testing.T) {
 func TestForParseTreeVisitorNodeSpecific(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	// Create a node with a ParseTreeVisitor method
 	node := &nodeWithParseTreeVisitor{tag: NewTag("test", "", pc)}
 	callbacks := make(map[reflect.Type]ParseTreeVisitorCallback)
@@ -74,4 +74,3 @@ type nodeWithParseTreeVisitor struct {
 func (n *nodeWithParseTreeVisitor) ParseTreeVisitor(callbacks map[reflect.Type]ParseTreeVisitorCallback) *ParseTreeVisitor {
 	return NewParseTreeVisitor(n.tag, callbacks)
 }
-

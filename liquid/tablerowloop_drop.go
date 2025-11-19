@@ -103,4 +103,3 @@ func (t *TablerowloopDrop) Increment() {
 func (t *TablerowloopDrop) InvokeDrop(methodOrKey string) interface{} {
 	return InvokeDropOn(t, methodOrKey)
 }
-

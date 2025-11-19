@@ -28,4 +28,3 @@ func (f *WeightFilter) Weight(grams interface{}) string {
 func (f *WeightFilter) WeightWithUnit(grams interface{}) string {
 	return f.Weight(grams) + " kg"
 }
-

@@ -72,4 +72,3 @@ func TestExpressionParseVariableLookup(t *testing.T) {
 		t.Errorf("Expected *VariableLookup, got %T", result)
 	}
 }
-

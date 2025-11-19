@@ -59,14 +59,14 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 		}
 		return nil
 	}
-	
+
 	v := reflect.ValueOf(drop)
 	if v.Kind() != reflect.Ptr {
 		return nil
 	}
-	
+
 	t := v.Type()
-	
+
 	// Try to get cached method lookup
 	var cache *cachedDropMethods
 	if cached, ok := dropMethodCache.Load(t); ok {
@@ -76,7 +76,7 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 		cache = buildDropMethodCache(t)
 		dropMethodCache.Store(t, cache)
 	}
-	
+
 	// Try capitalized version first (Go convention)
 	methodName := stringsTitle(methodOrKey)
 	if methodIdx, exists := cache.methods[methodName]; exists {
@@ -89,7 +89,7 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 			return nil
 		}
 	}
-	
+
 	// Try original case
 	if methodIdx, exists := cache.methods[methodOrKey]; exists {
 		method := v.Method(methodIdx)
@@ -101,7 +101,7 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 			return nil
 		}
 	}
-	
+
 	// Try to get field
 	v = v.Elem()
 	if v.Kind() == reflect.Struct {
@@ -114,14 +114,14 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 			return field.Interface()
 		}
 	}
-	
+
 	// Call LiquidMethodMissing if available
 	if dropWithMissing, ok := drop.(interface {
 		LiquidMethodMissing(string) interface{}
 	}); ok {
 		return dropWithMissing.LiquidMethodMissing(methodOrKey)
 	}
-	
+
 	return nil
 }
 
@@ -130,12 +130,12 @@ func buildDropMethodCache(t reflect.Type) *cachedDropMethods {
 	cache := &cachedDropMethods{
 		methods: make(map[string]int, t.NumMethod()),
 	}
-	
+
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
 		cache.methods[method.Name] = i
 	}
-	
+
 	return cache
 }
 
@@ -153,13 +153,13 @@ func (d *Drop) InvokeDropOld(methodOrKey string) interface{} {
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}
-		
+
 		method := v.MethodByName(stringsTitle(methodOrKey))
 		if !method.IsValid() {
 			// Try with original case
 			method = v.MethodByName(methodOrKey)
 		}
-		
+
 		if method.IsValid() && method.Kind() == reflect.Func {
 			// Call the method
 			results := method.Call([]reflect.Value{})
@@ -169,7 +169,7 @@ func (d *Drop) InvokeDropOld(methodOrKey string) interface{} {
 			return nil
 		}
 	}
-	
+
 	// Try to get field
 	if v := reflect.ValueOf(d); v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -185,7 +185,7 @@ func (d *Drop) InvokeDropOld(methodOrKey string) interface{} {
 			}
 		}
 	}
-	
+
 	return d.LiquidMethodMissing(methodOrKey)
 }
 
@@ -233,20 +233,20 @@ func GetInvokableMethods(drop interface{}) []string {
 		// If not a pointer, create a pointer type
 		t = reflect.PointerTo(t)
 	}
-	
+
 	// Blacklist of methods that shouldn't be invokable
 	blacklist := map[string]bool{
-		"SetContext":     true,
-		"Context":        true,
-		"InvokeDrop":     true,
-		"Key":            true,
-		"ToLiquid":       true,
-		"String":         true,
+		"SetContext":          true,
+		"Context":             true,
+		"InvokeDrop":          true,
+		"Key":                 true,
+		"ToLiquid":            true,
+		"String":              true,
 		"LiquidMethodMissing": true,
-		"Each":           true,
-		"Increment":      true, // Protected method
+		"Each":                true,
+		"Increment":           true, // Protected method
 	}
-	
+
 	var methods []string
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
@@ -254,7 +254,7 @@ func GetInvokableMethods(drop interface{}) []string {
 			methods = append(methods, method.Name)
 		}
 	}
-	
+
 	// Also check for exported fields
 	elemType := t
 	if elemType.Kind() == reflect.Ptr {
@@ -268,7 +268,7 @@ func GetInvokableMethods(drop interface{}) []string {
 			}
 		}
 	}
-	
+
 	return methods
 }
 
@@ -279,4 +279,3 @@ func stringsTitle(s string) string {
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
 }
-

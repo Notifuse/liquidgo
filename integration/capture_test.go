@@ -52,4 +52,3 @@ func TestIncrementAssignScoreByBytesNotCharacters(t *testing.T) {
 		t.Errorf("Expected assign_score 9, got %d", tmpl.ResourceLimits().AssignScore())
 	}
 }
-

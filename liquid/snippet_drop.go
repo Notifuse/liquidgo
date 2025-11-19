@@ -47,4 +47,3 @@ func (s *SnippetDrop) String() string {
 func (s *SnippetDrop) InvokeDrop(methodOrKey string) interface{} {
 	return InvokeDropOn(s, methodOrKey)
 }
-

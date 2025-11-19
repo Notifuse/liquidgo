@@ -36,4 +36,3 @@ func NewContinueInterrupt() *ContinueInterrupt {
 		Interrupt: NewInterrupt("continue"),
 	}
 }
-

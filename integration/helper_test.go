@@ -11,10 +11,10 @@ import (
 
 // TemplateResultOptions contains options for assertTemplateResult.
 type TemplateResultOptions struct {
-	Message       string
-	Partials      map[string]string
-	ErrorMode     string
-	RenderErrors  bool
+	Message         string
+	Partials        map[string]string
+	ErrorMode       string
+	RenderErrors    bool
 	TemplateFactory interface{}
 }
 
@@ -23,19 +23,19 @@ type TemplateResultOptions struct {
 // and asserts the output matches the expected value.
 func assertTemplateResult(t *testing.T, expected, template string, assigns map[string]interface{}, opts ...TemplateResultOptions) {
 	t.Helper()
-	
+
 	var options TemplateResultOptions
 	if len(opts) > 0 {
 		options = opts[0]
 	}
-	
+
 	// Create file system for partials
 	fileSystem := NewStubFileSystem(options.Partials)
-	
+
 	// Create environment
 	env := liquid.NewEnvironment()
 	env.SetFileSystem(fileSystem)
-	
+
 	// Set error mode
 	if options.ErrorMode != "" {
 		env.SetErrorMode(options.ErrorMode)
@@ -43,44 +43,44 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 		// Default to strict mode (Ruby uses :strict by default from ENV, but test_helper sets it)
 		env.SetErrorMode("strict")
 	}
-	
+
 	// Register standard tags - need to import tags package
 	// Note: This will be done by importing tags.RegisterStandardTags
 	tags.RegisterStandardTags(env)
-	
+
 	// Parse template
 	templateOptions := &liquid.TemplateOptions{
 		Environment: env,
 		LineNumbers: true,
 	}
-	
+
 	tmpl, err := liquid.ParseTemplate(template, templateOptions)
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
-	
+
 	// Create registers
 	registersMap := make(map[string]interface{})
 	registersMap["file_system"] = fileSystem
 	if options.TemplateFactory != nil {
 		registersMap["template_factory"] = options.TemplateFactory
 	}
-	
+
 	// Build context with proper rethrowErrors setting
 	// When render_errors is false, rethrow_errors is true (default)
 	rethrowErrors := !options.RenderErrors
-	
+
 	contextConfig := liquid.ContextConfig{
-		Environment:       env,
+		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{assigns},
-		Registers:         liquid.NewRegisters(registersMap),
+		Registers:          liquid.NewRegisters(registersMap),
 		RethrowErrors:      rethrowErrors,
 	}
 	ctx := liquid.BuildContext(contextConfig)
-	
+
 	// Render template with context
 	output := tmpl.Render(ctx, &liquid.RenderOptions{})
-	
+
 	// Assert result
 	if output != expected {
 		message := options.Message
@@ -95,21 +95,21 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 // and that the error message matches the given pattern.
 func assertMatchSyntaxError(t *testing.T, match string, template string, errorMode ...string) {
 	t.Helper()
-	
+
 	mode := "strict"
 	if len(errorMode) > 0 && errorMode[0] != "" {
 		mode = errorMode[0]
 	}
-	
+
 	env := liquid.NewEnvironment()
 	env.SetErrorMode(mode)
 	tags.RegisterStandardTags(env)
-	
+
 	templateOptions := &liquid.TemplateOptions{
 		Environment: env,
 		LineNumbers: true,
 	}
-	
+
 	// ParseTemplate may panic in strict mode, so we need to recover
 	var err error
 	func() {
@@ -131,17 +131,17 @@ func assertMatchSyntaxError(t *testing.T, match string, template string, errorMo
 			err = parseErr
 		}
 	}()
-	
+
 	if err == nil {
 		t.Fatal("Expected SyntaxError, got nil")
 	}
-	
+
 	// Check if it's a SyntaxError
 	syntaxErr, ok := err.(*liquid.SyntaxError)
 	if !ok {
 		t.Fatalf("Expected SyntaxError, got %T: %v", err, err)
 	}
-	
+
 	// Match pattern if provided
 	if match != "" {
 		matched, regexErr := regexp.MatchString(match, syntaxErr.Error())
@@ -169,20 +169,20 @@ func _assertSyntaxError(t *testing.T, template string, errorMode ...string) {
 //nolint:unused
 func _withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func()) {
 	t.Helper()
-	
+
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	
+
 	// Register custom tag
 	env.RegisterTag(tagName, tagClass)
-	
+
 	// Store original environment
 	originalEnv := liquid.NewEnvironment()
 	tags.RegisterStandardTags(originalEnv)
-	
+
 	// Run test with custom tag
 	fn()
-	
+
 	// Restore is implicit - we're using a new environment for each test
 	_ = originalEnv
 }
@@ -193,18 +193,18 @@ func _withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func(
 //nolint:unused
 func _withErrorModes(t *testing.T, modes []string, fn func()) {
 	t.Helper()
-	
+
 	originalMode := "strict" // Default
-	
+
 	for _, mode := range modes {
 		env := liquid.NewEnvironment()
 		env.SetErrorMode(mode)
 		tags.RegisterStandardTags(env)
-		
+
 		// Run test
 		fn()
 	}
-	
+
 	_ = originalMode // Restore not needed as we create new env each time
 }
 
@@ -214,17 +214,17 @@ func _withErrorModes(t *testing.T, modes []string, fn func()) {
 //nolint:unused
 func _withGlobalFilter(t *testing.T, filters []interface{}, fn func()) {
 	t.Helper()
-	
+
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	
+
 	// Register filters
 	for _, filter := range filters {
 		if err := env.RegisterFilter(filter); err != nil {
 			t.Fatalf("RegisterFilter() error = %v", err)
 		}
 	}
-	
+
 	// Run test
 	fn()
 }
@@ -284,4 +284,3 @@ func (s *StubTemplateFactory) For(templateName string) interface{} {
 func (s *StubTemplateFactory) Count() int {
 	return s.count
 }
-

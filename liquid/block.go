@@ -71,7 +71,7 @@ func (b *Block) RenderToOutputBuffer(context TagContext, output *string) {
 	// Tag.RenderToOutputBuffer calls t.Render(context). If t is *TestBlockTag,
 	// it will call TestBlockTag.Render, not Block.Render, because Go's method resolution
 	// finds the most specific method.
-	// 
+	//
 	// But when Block.RenderToOutputBuffer is called, b is *Block, so calling b.Render
 	// will call Block.Render. We need to call Render on the actual type.
 	//
@@ -100,7 +100,7 @@ func (b *Block) RenderToOutputBuffer(context TagContext, output *string) {
 			}
 		}
 	}
-	
+
 	// No override detected or Render returns same as body, render body
 	if b.body == nil {
 		return
@@ -150,7 +150,7 @@ func RaiseUnknownTag(tag, blockName, blockDelimiter string, parseContext ParseCo
 		// Use default locale path
 		locale = NewI18n(DefaultLocalePath)
 	}
-	
+
 	if tag == "else" {
 		msg := locale.Translate("errors.syntax.unexpected_else", map[string]interface{}{
 			"block_name": blockName,
@@ -217,9 +217,9 @@ func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 			return false
 		}
 
-	// Unknown tag - let block handle it
-	err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
-	return err == nil
+		// Unknown tag - let block handle it
+		err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
+		return err == nil
 	}
 
 	err := b.body.Parse(tokenizer, parseContext, unknownTagHandler)

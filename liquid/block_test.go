@@ -7,7 +7,7 @@ import (
 func TestBlockBasic(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	block := NewBlock("if", "condition", pc)
 	if block == nil {
 		t.Fatal("Expected Block, got nil")
@@ -23,12 +23,12 @@ func TestBlockBasic(t *testing.T) {
 func TestBlockDelimiter(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	block := NewBlock("for", "item in items", pc)
 	if block.BlockDelimiter() != "endfor" {
 		t.Errorf("Expected delimiter 'endfor', got '%s'", block.BlockDelimiter())
 	}
-	
+
 	block.SetBlockDelimiter("endloop")
 	if block.BlockDelimiter() != "endloop" {
 		t.Errorf("Expected delimiter 'endloop', got '%s'", block.BlockDelimiter())
@@ -38,7 +38,7 @@ func TestBlockDelimiter(t *testing.T) {
 func TestBlockBlank(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	block := NewBlock("if", "condition", pc)
 	if !block.Blank() {
 		t.Error("Expected block to be blank initially")
@@ -48,7 +48,7 @@ func TestBlockBlank(t *testing.T) {
 func TestBlockNodelist(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	block := NewBlock("if", "condition", pc)
 	nodelist := block.Nodelist()
 	if nodelist == nil {
@@ -62,7 +62,7 @@ func TestBlockNodelist(t *testing.T) {
 func TestRaiseUnknownTag(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	err := RaiseUnknownTag("unknown", "if", "endif", pc)
 	if err == nil {
 		t.Fatal("Expected error, got nil")
@@ -75,7 +75,7 @@ func TestRaiseUnknownTag(t *testing.T) {
 func TestRaiseUnknownTagElse(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	err := RaiseUnknownTag("else", "if", "endif", pc)
 	if err == nil {
 		t.Fatal("Expected error, got nil")
@@ -88,7 +88,7 @@ func TestRaiseUnknownTagElse(t *testing.T) {
 func TestRaiseUnknownTagEnd(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-	
+
 	err := RaiseUnknownTag("endunless", "if", "endif", pc)
 	if err == nil {
 		t.Fatal("Expected error, got nil")
@@ -97,4 +97,3 @@ func TestRaiseUnknownTagEnd(t *testing.T) {
 		t.Errorf("Expected SyntaxError, got %T", err)
 	}
 }
-

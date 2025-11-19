@@ -246,4 +246,3 @@ func (p *Parser) VariableLookups() (string, error) {
 
 	return b.String(), nil
 }
-

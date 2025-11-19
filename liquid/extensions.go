@@ -16,4 +16,3 @@ func ToLiquid(obj interface{}) interface{} {
 	}
 	return obj
 }
-

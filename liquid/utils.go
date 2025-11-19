@@ -72,7 +72,7 @@ func ToInteger(num interface{}) (int, error) {
 	if v, ok := num.(int); ok {
 		return v, nil
 	}
-	
+
 	// Handle other numeric types
 	switch v := num.(type) {
 	case int8:
@@ -304,4 +304,3 @@ func hashInspect(hash map[string]interface{}, seen map[uintptr]bool) string {
 	b.WriteString("}")
 	return b.String()
 }
-

@@ -21,13 +21,13 @@ func TestParseContextWithOptions(t *testing.T) {
 	env := NewEnvironment()
 	env.SetErrorMode("strict")
 	locale := NewI18n("en")
-	
+
 	pc := NewParseContext(ParseContextOptions{
 		Environment: env,
 		Locale:      locale,
 		ErrorMode:   "lax",
 	})
-	
+
 	if pc.Environment() != env {
 		t.Error("Environment mismatch")
 	}
@@ -43,7 +43,7 @@ func TestParseContextLineNumber(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	lineNum := 42
 	pc.SetLineNumber(&lineNum)
-	
+
 	if pc.LineNumber() == nil || *pc.LineNumber() != 42 {
 		t.Errorf("Expected line number 42, got %v", pc.LineNumber())
 	}
@@ -52,7 +52,7 @@ func TestParseContextLineNumber(t *testing.T) {
 func TestParseContextTrimWhitespace(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	pc.SetTrimWhitespace(true)
-	
+
 	if !pc.TrimWhitespace() {
 		t.Error("Expected trim whitespace to be true")
 	}
@@ -63,12 +63,12 @@ func TestParseContextDepth(t *testing.T) {
 	if pc.Depth() != 0 {
 		t.Errorf("Expected depth 0, got %d", pc.Depth())
 	}
-	
+
 	pc.IncrementDepth()
 	if pc.Depth() != 1 {
 		t.Errorf("Expected depth 1, got %d", pc.Depth())
 	}
-	
+
 	pc.DecrementDepth()
 	if pc.Depth() != 0 {
 		t.Errorf("Expected depth 0 after decrement, got %d", pc.Depth())
@@ -80,7 +80,7 @@ func TestParseContextPartial(t *testing.T) {
 	if pc.Partial() {
 		t.Error("Expected partial to be false initially")
 	}
-	
+
 	pc.SetPartial(true)
 	if !pc.Partial() {
 		t.Error("Expected partial to be true")
@@ -92,10 +92,10 @@ func TestParseContextWarnings(t *testing.T) {
 	if len(pc.Warnings()) != 0 {
 		t.Errorf("Expected 0 warnings, got %d", len(pc.Warnings()))
 	}
-	
+
 	warning := NewSyntaxError("test warning")
 	pc.AddWarning(warning)
-	
+
 	if len(pc.Warnings()) != 1 {
 		t.Errorf("Expected 1 warning, got %d", len(pc.Warnings()))
 	}
@@ -149,7 +149,7 @@ func TestParseContextGetOption(t *testing.T) {
 			"test_option": "test_value",
 		},
 	})
-	
+
 	val := pc.GetOption("test_option")
 	if val != "test_value" {
 		t.Errorf("Expected 'test_value', got %v", val)
@@ -159,20 +159,19 @@ func TestParseContextGetOption(t *testing.T) {
 func TestParseContextPartialOptions(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{
 		TemplateOptions: map[string]interface{}{
-			"test_option": "test_value",
+			"test_option":               "test_value",
 			"include_options_blacklist": true,
 		},
 	})
-	
+
 	pc.SetPartial(true)
 	val := pc.GetOption("locale")
 	if val == nil {
 		t.Error("Expected locale in partial options")
 	}
-	
+
 	val = pc.GetOption("test_option")
 	if val != nil {
 		t.Error("Expected test_option to be excluded from partial options")
 	}
 }
-

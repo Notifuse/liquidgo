@@ -222,4 +222,3 @@ func NewDropWithUndefinedMethod() *DropWithUndefinedMethod {
 func (d *DropWithUndefinedMethod) Foo() interface{} {
 	return "foo"
 }
-

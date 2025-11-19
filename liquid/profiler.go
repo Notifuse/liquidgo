@@ -178,4 +178,3 @@ func (t *Timing) SelfTime() float64 {
 	t.selfTime = &selfTime
 	return selfTime
 }
-

@@ -76,4 +76,3 @@ func BenchmarkParseAndRender(b *testing.B) {
 		}
 	}
 }
-

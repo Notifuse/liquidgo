@@ -51,4 +51,3 @@ func TestToLiquidWithCustomType(t *testing.T) {
 		t.Errorf("Expected 'custom', got %v", result)
 	}
 }
-

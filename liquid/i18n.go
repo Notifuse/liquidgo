@@ -102,4 +102,3 @@ func (i *I18n) deepFetchTranslation(name string) string {
 	// If we get here, return the last value as string
 	return fmt.Sprintf("%v", current)
 }
-

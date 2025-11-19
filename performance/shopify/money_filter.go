@@ -48,4 +48,3 @@ func (f *MoneyFilter) Money(money interface{}) string {
 
 	return fmt.Sprintf("$ %.2f", cents/100.0)
 }
-
