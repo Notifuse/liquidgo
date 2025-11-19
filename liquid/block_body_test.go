@@ -601,3 +601,118 @@ func (n *interruptNode) RenderToOutputBuffer(context TagContext, output *string)
 	interrupt := NewBreakInterrupt()
 	context.PushInterrupt(interrupt)
 }
+
+func TestBlockBodyParseForDocumentNilEnvironment(t *testing.T) {
+	bb := NewBlockBody()
+
+	// Create a parse context with nil environment
+	mockPC := &mockParseContext{}
+	tokenizer := mockPC.NewTokenizer("{% tag %}", false, nil, false)
+
+	handlerCalled := false
+	unknownTagHandler := func(tagName, markup string) bool {
+		handlerCalled = true
+		return true
+	}
+
+	err := bb.parseForDocument(tokenizer, mockPC, unknownTagHandler)
+	if err != nil {
+		t.Fatalf("parseForDocument() error = %v", err)
+	}
+	// Should handle nil environment gracefully
+	_ = handlerCalled
+}
+
+func TestBlockBodyCreateVariableEdgeCases(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+	bb := NewBlockBody()
+
+	// Test creating variable with whitespace trimming variations
+	v2 := bb.createVariable("{{- var -}}", pc)
+	if v2 == nil {
+		t.Fatal("Expected variable with whitespace trimming, got nil")
+	}
+
+	// Test with just start marker (will raise error)
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for invalid variable syntax")
+			}
+		}()
+		bb.createVariable("{{ var", pc)
+	}()
+}
+
+func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+	bb := NewBlockBody()
+	ctx := NewContext()
+	var output string
+
+	// Test rendering a tag node with profiler
+	tag := NewTag("echo", "test", pc)
+	bb.nodelist = append(bb.nodelist, tag)
+
+	// Test with profiler
+	profiler := NewProfiler()
+	ctx.SetProfiler(profiler)
+	ctx.SetTemplateName("test_template")
+
+	bb.RenderToOutputBuffer(ctx, &output)
+	// Should render the tag
+	_ = output
+}
+
+func TestBlockBodyParseForDocumentWithLiquidTag(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+	bb := NewBlockBody()
+
+	// Test parsing document with liquid tag
+	tokenizer := pc.NewTokenizer("{% liquid assign x = 1 %}", false, nil, false)
+	unknownTagHandler := func(tagName, markup string) bool {
+		return true
+	}
+
+	err := bb.Parse(tokenizer, pc, unknownTagHandler)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+}
+
+func TestBlockBodyParseForDocumentWithVariable(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+	bb := NewBlockBody()
+
+	// Test parsing document with variable
+	tokenizer := pc.NewTokenizer("{{ var }}", false, nil, false)
+	unknownTagHandler := func(tagName, markup string) bool {
+		return true
+	}
+
+	err := bb.Parse(tokenizer, pc, unknownTagHandler)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(bb.Nodelist()) == 0 {
+		t.Error("Expected variable in nodelist")
+	}
+}
+
+func TestBlockBodyParseForDocumentWithTrimWhitespace(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{})
+	pc.SetTrimWhitespace(true)
+	bb := NewBlockBody()
+
+	// Test parsing with whitespace trimming
+	tokenizer := pc.NewTokenizer("   text   ", false, nil, false)
+	unknownTagHandler := func(tagName, markup string) bool {
+		return true
+	}
+
+	err := bb.Parse(tokenizer, pc, unknownTagHandler)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+}

@@ -70,3 +70,72 @@ func TestLocalFileSystemCustomPattern(t *testing.T) {
 		t.Errorf("Expected path '%s', got '%s'", expectedPath, fullPath)
 	}
 }
+
+func TestLocalFileSystemNestedPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	fs := NewLocalFileSystem(tmpDir, "")
+
+	// Test nested path: dir/mypartial should become root/dir/_mypartial.liquid
+	templatePath := "dir/mypartial"
+	fullPath, err := fs.FullPath(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to get full path: %v", err)
+	}
+
+	expectedPath := filepath.Join(tmpDir, "dir", "_mypartial.liquid")
+	if fullPath != expectedPath {
+		t.Errorf("Expected path '%s', got '%s'", expectedPath, fullPath)
+	}
+
+	// Create the directory and file
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+	if err := os.WriteFile(fullPath, []byte("nested content"), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	// Read it back
+	content, err := fs.ReadTemplateFile(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to read template: %v", err)
+	}
+
+	if content != "nested content" {
+		t.Errorf("Expected 'nested content', got '%s'", content)
+	}
+}
+
+func TestLocalFileSystemNestedPathWithCustomPattern(t *testing.T) {
+	tmpDir := t.TempDir()
+	fs := NewLocalFileSystem(tmpDir, "%s.html")
+
+	// Test nested path with custom pattern: dir/mypartial should become root/dir/mypartial.html
+	templatePath := "dir/mypartial"
+	fullPath, err := fs.FullPath(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to get full path: %v", err)
+	}
+
+	expectedPath := filepath.Join(tmpDir, "dir", "mypartial.html")
+	if fullPath != expectedPath {
+		t.Errorf("Expected path '%s', got '%s'", expectedPath, fullPath)
+	}
+}
+
+func TestLocalFileSystemDeeplyNestedPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	fs := NewLocalFileSystem(tmpDir, "")
+
+	// Test deeply nested path: a/b/c/template should become root/a/b/c/_template.liquid
+	templatePath := "a/b/c/template"
+	fullPath, err := fs.FullPath(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to get full path: %v", err)
+	}
+
+	expectedPath := filepath.Join(tmpDir, "a", "b", "c", "_template.liquid")
+	if fullPath != expectedPath {
+		t.Errorf("Expected path '%s', got '%s'", expectedPath, fullPath)
+	}
+}

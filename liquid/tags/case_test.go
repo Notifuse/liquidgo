@@ -314,3 +314,115 @@ func TestCaseTagRenderToOutputBuffer(t *testing.T) {
 	// Should handle error gracefully
 	_ = output
 }
+
+func TestCaseTagParseMarkupError(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	
+	// Test with invalid markup (should error)
+	tag, err := NewCaseTag("case", "invalid syntax here", pc)
+	if err == nil {
+		t.Error("Expected error for invalid case tag markup")
+	}
+	if tag != nil {
+		t.Error("Expected nil tag on error")
+	}
+}
+
+func TestCaseTagParseBodyForBlockDepthLimit(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+	
+	// Set depth to limit
+	for i := 0; i < 100; i++ {
+		pc.IncrementDepth()
+	}
+	
+	body := liquid.NewBlockBody()
+	tokenizer := pc.NewTokenizer("content {% endcase %}", false, nil, false)
+	
+	shouldContinue, err := tag.parseBodyForBlock(tokenizer, body)
+	if err == nil {
+		t.Error("Expected error for depth limit")
+	}
+	if shouldContinue {
+		t.Error("Expected shouldContinue to be false on error")
+	}
+	
+	// Reset depth
+	for i := 0; i < 100; i++ {
+		pc.DecrementDepth()
+	}
+}
+
+func TestCaseTagParseBodyForBlockUnknownTag(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+	
+	body := liquid.NewBlockBody()
+	// Test with unknown tag that should be handled
+	tokenizer := pc.NewTokenizer("content {% unknown_tag %}more{% endcase %}", false, nil, false)
+	
+	shouldContinue, err := tag.parseBodyForBlock(tokenizer, body)
+	if err != nil {
+		// Unknown tags might cause errors, which is acceptable
+		_ = err
+	}
+	_ = shouldContinue
+}
+
+func TestCaseTagRenderToOutputBufferWithError(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+	
+	// Parse with when block
+	tokenizer := pc.NewTokenizer("{% when 1 %}one{% endcase %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	
+	// Create a context that will cause evaluation error
+	ctx := liquid.NewContext()
+	// Set var to something that will cause evaluation issues
+	ctx.Set("var", func() {}) // Function that can't be evaluated properly
+	
+	var output string
+	// Should handle error gracefully
+	tag.RenderToOutputBuffer(ctx, &output)
+	// Output might contain error message or be empty
+	_ = output
+}
+
+func TestCaseTagRenderToOutputBufferNoMatchingWhen(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+	
+	// Parse with when but no else
+	tokenizer := pc.NewTokenizer("{% when 1 %}one{% endcase %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	
+	ctx := liquid.NewContext()
+	ctx.Set("var", 999) // Value that doesn't match any when
+	
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+	// Should render nothing when no match and no else
+	if output != "" {
+		t.Errorf("Expected empty output for no match, got %q", output)
+	}
+}

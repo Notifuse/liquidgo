@@ -19,19 +19,19 @@ func TestNewParseContext(t *testing.T) {
 
 func TestParseContextParseExpressionSafe(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{ErrorMode: "lax"})
-	
+
 	// Test with safe = true
 	result := pc.ParseExpressionSafe("42", true)
 	if result == nil {
 		t.Error("Expected non-nil result from ParseExpressionSafe")
 	}
-	
+
 	// Test with safe = false in lax mode (should work)
 	result2 := pc.ParseExpressionSafe("100", false)
 	if result2 == nil {
 		t.Error("Expected non-nil result from ParseExpressionSafe with safe=false in lax mode")
 	}
-	
+
 	// Test with safe = false in rigid mode (should panic)
 	pc2 := NewParseContext(ParseContextOptions{ErrorMode: "rigid"})
 	func() {
