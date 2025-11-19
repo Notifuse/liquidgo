@@ -89,10 +89,9 @@ func TestRenderTagRenderToOutputBuffer(t *testing.T) {
 	var output string
 	// RenderToOutputBuffer should handle missing template gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
-	// Should output error message or empty string
-	if output == "" {
-		t.Log("RenderToOutputBuffer returned empty output (expected for missing template)")
-	}
+	// Should handle missing template (error message or empty)
+	// Just verify no panic occurred
+	_ = output
 }
 
 func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
@@ -267,9 +266,8 @@ func TestRenderTagRenderToOutputBufferWithTemplateObjectToPartial(t *testing.T) 
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle error gracefully since template_obj doesn't implement ToPartial() *Template
-	if output == "" {
-		t.Log("Expected error message for non-string, non-template-object")
-	}
+	// May output error message or handle gracefully
+	_ = output
 }
 
 func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
@@ -317,9 +315,8 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle non-iterable gracefully (fallback to single render)
 	// The iterableObject doesn't actually implement the interface, so it will fallback
-	if output == "" {
-		t.Log("Expected output (may be empty if iterable interface not matched)")
-	}
+	// Output may be empty or contain rendered content
+	_ = output
 }
 
 func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
@@ -360,9 +357,10 @@ func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should render the template
-	if output == "" {
-		t.Error("Expected non-empty output")
+	// Should render the template (note: parent context vars not accessible in isolated render scope)
+	expected := "Hello from "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -402,8 +400,9 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterable(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render template multiple times
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Item: oneItem: twoItem: three"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -443,8 +442,9 @@ func TestRenderTagRenderToOutputBufferWithForLoopNonIterable(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render once with the variable
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Item: not_an_array"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -482,8 +482,9 @@ func TestRenderTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with attributes
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello Alice"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -522,8 +523,9 @@ func TestRenderTagRenderToOutputBufferWithAlias(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with alias
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello Bob"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -567,8 +569,9 @@ func TestRenderTagRenderToOutputBufferWithEmptyTemplateName(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should use template name string (greeting) when template name is empty
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -717,9 +720,8 @@ func TestRenderTagWithTemplateObjectImplementingToPartial(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// The object doesn't actually implement the interface in Go, so it will fall through to error
-	if output == "" {
-		t.Log("Expected output or error message")
-	}
+	// May output error message or handle gracefully
+	_ = output
 }
 
 // mockTemplateObjectWithToPartial implements the ToPartial, Filename, and Name interfaces
@@ -772,11 +774,10 @@ func TestRenderTagWithActualToPartialImplementation(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should render the template using ToPartial
-	if output == "" {
-		t.Error("Expected non-empty output from ToPartial template")
-	} else {
-		t.Logf("Output from ToPartial: %q", output)
+	// Should render the template using ToPartial (note: parent context not accessible)
+	expected := "Hello "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -836,10 +837,9 @@ func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render template multiple times using the iterable interface
-	if output == "" {
-		t.Error("Expected non-empty output from iterable")
-	} else {
-		t.Logf("Output from iterable: %q", output)
+	expected := "Item: one\nItem: two\nItem: three\n"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -863,10 +863,9 @@ func TestRenderTagPartialNotTemplate(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should handle the error gracefully
-	if output == "" {
-		t.Log("Expected error message for partial loading failure")
-	}
+	// Should handle the error gracefully (no panic)
+	// Output may be empty or contain error message
+	_ = output
 }
 
 // TestRenderTagWithForLoopAndNilVariable tests for loop with nil variable
@@ -943,7 +942,161 @@ func TestRenderTagWithoutVariableExpression(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render template once without any variable
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello World"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
+	}
+}
+
+// TestRenderTagPassesNamedArgumentsIntoInnerScope tests parameter passing to partials
+// Ruby ref: test_render_passes_named_arguments_into_inner_scope (render_tag_test.rb:24-31)
+func TestRenderTagPassesNamedArgumentsIntoInnerScope(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	template := `{% render "product", inner_product: outer_product %}`
+	partial := `{{ inner_product.title }}`
+
+	fs := &mapFileSystem{
+		templates: map[string]string{
+			"product": partial,
+		},
+	}
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+	})
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	tmpl.Registers()["file_system"] = fs
+
+	output := tmpl.Render(map[string]interface{}{
+		"outer_product": map[string]interface{}{
+			"title": "My Product",
+		},
+	}, nil)
+
+	expected := "My Product"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
+	}
+}
+
+// TestRenderTagDoesNotInheritParentScopeVariables verifies scope isolation
+// Ruby ref: test_render_does_not_inherit_parent_scope_variables (render_tag_test.rb:49-55)
+func TestRenderTagDoesNotInheritParentScopeVariables(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	template := `{% assign outer_variable = "should not be visible" %}{% render "snippet" %}`
+	partial := `{{ outer_variable }}`
+
+	fs := &mapFileSystem{
+		templates: map[string]string{
+			"snippet": partial,
+		},
+	}
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+	})
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	tmpl.Registers()["file_system"] = fs
+
+	output := tmpl.Render(map[string]interface{}{}, nil)
+
+	expected := ""
+	if output != expected {
+		t.Errorf("Expected %q (empty - parent vars not accessible), got %q", expected, output)
+	}
+}
+
+// TestRenderTagDoesNotMutateParentScope verifies render doesn't pollute parent scope
+// Ruby ref: test_render_does_not_mutate_parent_scope (render_tag_test.rb:65-71)
+func TestRenderTagDoesNotMutateParentScope(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	template := `{% render "snippet" %}{{ inner }}`
+	partial := `{% assign inner = 1 %}`
+
+	fs := &mapFileSystem{
+		templates: map[string]string{
+			"snippet": partial,
+		},
+	}
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+	})
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	tmpl.Registers()["file_system"] = fs
+
+	output := tmpl.Render(map[string]interface{}{}, nil)
+
+	expected := ""
+	if output != expected {
+		t.Errorf("Expected %q (empty - render vars don't leak), got %q", expected, output)
+	}
+}
+
+// TestRenderTagOptionalCommas tests parameter syntax flexibility
+// Ruby ref: test_optional_commas (render_tag_test.rb:123-128)
+func TestRenderTagOptionalCommas(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	partial := `hello {{ arg1 }} {{ arg2 }}`
+
+	fs := &mapFileSystem{
+		templates: map[string]string{
+			"snippet": partial,
+		},
+	}
+
+	tests := []struct {
+		name     string
+		template string
+	}{
+		{
+			name:     "with commas",
+			template: `{% render "snippet", arg1: "value1", arg2: "value2" %}`,
+		},
+		{
+			name:     "without comma after template name",
+			template: `{% render "snippet"  arg1: "value1", arg2: "value2" %}`,
+		},
+		{
+			name:     "no commas",
+			template: `{% render "snippet"  arg1: "value1"  arg2: "value2" %}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpl, err := liquid.ParseTemplate(tt.template, &liquid.TemplateOptions{
+				Environment: env,
+			})
+			if err != nil {
+				t.Fatalf("Parse error: %v", err)
+			}
+
+			tmpl.Registers()["file_system"] = fs
+
+			output := tmpl.Render(map[string]interface{}{}, nil)
+
+			expected := "hello value1 value2"
+			if output != expected {
+				t.Errorf("Expected %q, got %q", expected, output)
+			}
+		})
 	}
 }

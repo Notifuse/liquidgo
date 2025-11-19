@@ -282,8 +282,9 @@ func TestUnlessTagWithVariousValues(t *testing.T) {
 			tag.RenderToOutputBuffer(ctx, &output)
 
 			if tt.shouldRender {
-				if output == "" {
-					t.Errorf("Expected content to render for %v, got empty", tt.varValue)
+				expected := "content "
+				if output != expected {
+					t.Errorf("Expected %q for %v, got %q", expected, tt.varValue, output)
 				}
 			} else {
 				if output != "" {

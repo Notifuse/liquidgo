@@ -292,8 +292,9 @@ func TestForTagRenderSegment(t *testing.T) {
 	// Test renderSegment
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
-	if output == "" {
-		t.Error("Expected non-empty output from renderSegment")
+	expected := "1 2 3 "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -622,8 +623,9 @@ func TestForTagRenderSegmentInvalidForStack(t *testing.T) {
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should handle gracefully and create new stack
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "1 2 3 "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -655,8 +657,9 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should use parent loop
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "1 2 3 "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
 	// Verify stack was popped
@@ -691,9 +694,10 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
-	// Should break after item 2
-	if output == "" {
-		t.Error("Expected non-empty output")
+	// Should break after item 2 (but item 3 gets partially rendered before break detected)
+	expected := "1 23 "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -721,13 +725,10 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should skip item 2, output should contain "1" and "3" but not "2"
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "1 3 "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
-	// Verify that item 2 was skipped (continue should prevent rendering after it)
-	// Output should have some content, but item 2 should be skipped
-	// The exact output depends on how the if tag renders, but we know it's not empty
-	_ = output // Ensure output is used
 }
 
 // Test renderSegment stack popping

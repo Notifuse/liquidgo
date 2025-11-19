@@ -139,8 +139,9 @@ func TestStandardFiltersURLDecode(t *testing.T) {
 func TestStandardFiltersBase64Encode(t *testing.T) {
 	sf := &StandardFilters{}
 	result := sf.Base64Encode("hello")
-	if result == "" {
-		t.Error("Base64Encode() should return encoded string")
+	expected := "aGVsbG8="
+	if result != expected {
+		t.Errorf("Base64Encode() = %q, want %q", result, expected)
 	}
 }
 
@@ -165,8 +166,9 @@ func TestStandardFiltersBase64Decode(t *testing.T) {
 func TestStandardFiltersBase64URLSafeEncode(t *testing.T) {
 	sf := &StandardFilters{}
 	result := sf.Base64URLSafeEncode("hello")
-	if result == "" {
-		t.Error("Base64URLSafeEncode() should return encoded string")
+	expected := "aGVsbG8="
+	if result != expected {
+		t.Errorf("Base64URLSafeEncode() = %q, want %q", result, expected)
 	}
 }
 
@@ -217,13 +219,9 @@ func TestStandardFiltersTruncateWords(t *testing.T) {
 
 	t.Run("basic truncate words", func(t *testing.T) {
 		result := sf.TruncateWords("hello world test", 2, nil)
-		// TruncateWords may add ellipsis or handle differently
-		if result == "" {
-			t.Error("TruncateWords() should return non-empty string")
-		}
-		// Verify it contains at least "hello world"
-		if !strings.Contains(result, "hello") {
-			t.Errorf("TruncateWords() = %q, should contain 'hello'", result)
+		expected := "hello world..."
+		if result != expected {
+			t.Errorf("TruncateWords() = %q, want %q", result, expected)
 		}
 	})
 

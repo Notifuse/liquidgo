@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -168,8 +169,8 @@ func TestContextHandleError(t *testing.T) {
 	err := NewSyntaxError("test error")
 
 	result := ctx.HandleError(err, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	if !strings.Contains(result, "test error") {
+		t.Errorf("Expected error message containing 'test error', got %q", result)
 	}
 
 	if len(ctx.Errors()) != 1 {
@@ -254,8 +255,8 @@ func TestContextHandleErrorComprehensive(t *testing.T) {
 	// Test with SyntaxError
 	syntaxErr := NewSyntaxError("syntax error")
 	result := ctx.HandleError(syntaxErr, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	if !strings.Contains(result, "syntax error") {
+		t.Errorf("Expected error message containing 'syntax error', got %q", result)
 	}
 	if len(ctx.Errors()) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(ctx.Errors()))
@@ -520,8 +521,8 @@ func TestContextHandleErrorMemoryError(t *testing.T) {
 	memErr := NewMemoryError("memory limit exceeded")
 
 	result := ctx.HandleError(memErr, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	if !strings.Contains(result, "memory limit exceeded") {
+		t.Errorf("Expected error message containing 'memory limit exceeded', got %q", result)
 	}
 
 	// Check that error was added
@@ -545,8 +546,8 @@ func TestContextHandleErrorDisabledError(t *testing.T) {
 	disabledErr := NewDisabledError("tag disabled")
 
 	result := ctx.HandleError(disabledErr, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	if !strings.Contains(result, "tag disabled") {
+		t.Errorf("Expected error message containing 'tag disabled', got %q", result)
 	}
 }
 
@@ -556,8 +557,8 @@ func TestContextHandleErrorInternalError(t *testing.T) {
 	internalErr := NewInternalError("internal error")
 
 	result := ctx.HandleError(internalErr, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	if !strings.Contains(result, "internal error") {
+		t.Errorf("Expected error message containing 'internal error', got %q", result)
 	}
 }
 
@@ -567,8 +568,9 @@ func TestContextHandleErrorNonLiquidError(t *testing.T) {
 	nonLiquidErr := &testNonLiquidError{message: "non-liquid error"}
 
 	result := ctx.HandleError(nonLiquidErr, nil)
-	if result == "" {
-		t.Error("Expected error message, got empty string")
+	// Non-liquid errors are wrapped as InternalError
+	if !strings.Contains(result, "internal") && result == "" {
+		t.Errorf("Expected error message containing 'internal' or non-empty, got %q", result)
 	}
 
 	// Should be converted to InternalError

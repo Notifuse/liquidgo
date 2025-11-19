@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -301,12 +302,9 @@ func TestDropInvokeDropOld(t *testing.T) {
 func TestDropString(t *testing.T) {
 	drop := NewDrop()
 	result := drop.String()
-	if result == "" {
-		t.Error("Expected non-empty string representation")
-	}
-	// Should contain type information
-	if len(result) == 0 {
-		t.Error("Expected non-empty string representation")
+	// Drop.String() should return type information
+	if !strings.Contains(result, "Drop") && result == "" {
+		t.Errorf("Expected string containing 'Drop' or non-empty, got %q", result)
 	}
 }
 

@@ -3,6 +3,7 @@ package tags
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -81,10 +82,9 @@ func TestIncludeTagRenderToOutputBuffer(t *testing.T) {
 	var output string
 	// RenderToOutputBuffer should handle missing template gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
-	// Should output error message or empty string
-	if output == "" {
-		t.Log("RenderToOutputBuffer returned empty output (expected for missing template)")
-	}
+	// Should handle missing template (error message or empty)
+	// Just verify no panic occurred
+	_ = output
 }
 
 func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
@@ -195,9 +195,10 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should render the template
-	if output == "" {
-		t.Error("Expected non-empty output")
+	// Should render the template (note: variable 'partial' set in parent, but template also defines 'partial' from path)
+	expected := "Hello from "
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -237,8 +238,9 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello World"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -278,8 +280,9 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render template multiple times
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Item: oneItem: twoItem: three"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -317,8 +320,9 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with attributes
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello Alice"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -357,8 +361,9 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with alias
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello Bob"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
@@ -377,9 +382,9 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should output error message
-	if output == "" {
-		t.Error("Expected error message in output")
+	// Should output error message (Liquid error format)
+	if !strings.Contains(output, "Liquid") && output == "" {
+		t.Errorf("Expected Liquid error message, got %q", output)
 	}
 }
 
@@ -431,7 +436,8 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should use template name
-	if output == "" {
-		t.Error("Expected non-empty output")
+	expected := "Hello"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }

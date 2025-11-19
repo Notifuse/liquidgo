@@ -73,10 +73,7 @@ func (r *RenderTag) parseMarkup(markup string, parseContext liquid.ParseContextI
 		if len(match) >= 3 {
 			key := strings.TrimSpace(match[1])
 			value := strings.TrimSpace(match[2])
-			// Remove quotes if present
-			if len(value) > 0 && (value[0] == '"' || value[0] == '\'') {
-				value = value[1 : len(value)-1]
-			}
+			// Let ParseExpression handle quoted strings correctly
 			r.attributes[key] = parseContext.ParseExpression(value)
 		}
 	}

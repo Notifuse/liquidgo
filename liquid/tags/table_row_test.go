@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -214,9 +215,9 @@ func TestTableRowTagRenderToOutputBufferSingleRow(t *testing.T) {
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should generate single row with one column
-	if output == "" {
-		t.Error("Expected non-empty output for single row")
+	// Should generate single row with one column (check for expected HTML structure)
+	if !strings.Contains(output, "<tr") || !strings.Contains(output, "1") {
+		t.Errorf("Expected output to contain table row with item 1, got %q", output)
 	}
 	// Check that output contains row1 (using simple check)
 	hasRow1 := false

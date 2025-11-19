@@ -37,8 +37,9 @@ func TestBlockBodyRender(t *testing.T) {
 	bb.nodelist = append(bb.nodelist, "world")
 
 	output := bb.Render(nil)
-	if output == "" {
-		t.Error("Expected rendered output, got empty string")
+	expected := "hello world"
+	if output != expected {
+		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
 
