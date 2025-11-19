@@ -1,9 +1,5 @@
 package liquid
 
-import (
-	"sync"
-)
-
 // ContextConfig configures a Context.
 type ContextConfig struct {
 	Environment        *Environment
@@ -38,7 +34,6 @@ type Context struct {
 	templateName       string
 	exceptionRenderer  func(error) interface{}
 	profiler           *Profiler
-	mu                 sync.RWMutex // For thread safety
 }
 
 // BuildContext creates a new Context with the given configuration.

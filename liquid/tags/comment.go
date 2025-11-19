@@ -44,7 +44,7 @@ func (c *CommentTag) Blank() bool {
 
 // Parse parses the comment block with special handling for nested comments and raw tags.
 func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
-	parseContext := c.Block.ParseContext()
+	parseContext := c.ParseContext()
 
 	// Check depth (blockMaxDepth is 100, defined in liquid/block.go)
 	if parseContext.Depth() >= 100 {
@@ -109,7 +109,7 @@ func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 	}
 
 	// Tag never closed
-	return c.Block.RaiseTagNeverClosed()
+	return c.RaiseTagNeverClosed()
 }
 
 // parseRawTagBody parses the body of a raw tag within a comment.

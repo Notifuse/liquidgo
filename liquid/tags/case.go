@@ -159,7 +159,7 @@ func (c *CaseTag) Parse(tokenizer *liquid.Tokenizer) error {
 
 // parseBodyForBlock parses the body for a specific block.
 func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) (bool, error) {
-	parseContext := c.Block.ParseContext()
+	parseContext := c.ParseContext()
 	if parseContext.Depth() >= 100 {
 		return false, liquid.NewStackLevelError("Nesting too deep")
 	}

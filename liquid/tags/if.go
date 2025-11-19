@@ -110,7 +110,7 @@ func (i *IfTag) Parse(tokenizer *liquid.Tokenizer) error {
 // Returns (shouldContinue, error) where shouldContinue is true if we should continue parsing
 // (either more content in this block, or a new elsif/else block was created)
 func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition ConditionBlock) (bool, error) {
-	parseContext := i.Block.ParseContext()
+	parseContext := i.ParseContext()
 	attachment, ok := condition.Attachment().(*liquid.BlockBody)
 	if !ok {
 		return false, liquid.NewSyntaxError("invalid attachment for condition block")
@@ -175,7 +175,7 @@ func (i *IfTag) pushBlock(tagName, markup string) error {
 		condition = liquid.NewElseCondition()
 	} else {
 		// Parse elsif condition
-		elsifCondition, err := parseIfCondition(markup, i.Block.ParseContext())
+		elsifCondition, err := parseIfCondition(markup, i.ParseContext())
 		if err != nil {
 			return err
 		}

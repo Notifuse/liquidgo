@@ -154,14 +154,20 @@ func assertMatchSyntaxError(t *testing.T, match string, template string, errorMo
 	}
 }
 
-// assertSyntaxError is a simplified version that just checks for a SyntaxError.
-func assertSyntaxError(t *testing.T, template string, errorMode ...string) {
+// _assertSyntaxError is a simplified version that just checks for a SyntaxError.
+// Prefixed with _ to indicate it's intentionally unused but kept for future use.
+//
+//nolint:unused
+func _assertSyntaxError(t *testing.T, template string, errorMode ...string) {
 	t.Helper()
 	assertMatchSyntaxError(t, "", template, errorMode...)
 }
 
-// withCustomTag temporarily registers a custom tag, runs the test function, then restores.
-func withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func()) {
+// _withCustomTag temporarily registers a custom tag, runs the test function, then restores.
+// Prefixed with _ to indicate it's intentionally unused but kept for future use.
+//
+//nolint:unused
+func _withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func()) {
 	t.Helper()
 	
 	env := liquid.NewEnvironment()
@@ -181,8 +187,11 @@ func withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func()
 	_ = originalEnv
 }
 
-// withErrorModes runs a test function with different error modes.
-func withErrorModes(t *testing.T, modes []string, fn func()) {
+// _withErrorModes runs a test function with different error modes.
+// Prefixed with _ to indicate it's intentionally unused but kept for future use.
+//
+//nolint:unused
+func _withErrorModes(t *testing.T, modes []string, fn func()) {
 	t.Helper()
 	
 	originalMode := "strict" // Default
@@ -199,8 +208,11 @@ func withErrorModes(t *testing.T, modes []string, fn func()) {
 	_ = originalMode // Restore not needed as we create new env each time
 }
 
-// withGlobalFilter temporarily adds global filters to the environment.
-func withGlobalFilter(t *testing.T, filters []interface{}, fn func()) {
+// _withGlobalFilter temporarily adds global filters to the environment.
+// Prefixed with _ to indicate it's intentionally unused but kept for future use.
+//
+//nolint:unused
+func _withGlobalFilter(t *testing.T, filters []interface{}, fn func()) {
 	t.Helper()
 	
 	env := liquid.NewEnvironment()

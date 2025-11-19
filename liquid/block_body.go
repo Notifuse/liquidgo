@@ -9,7 +9,6 @@ import (
 var (
 	blockBodyLiquidTagToken      = regexp.MustCompile(`^\s*(` + TagName.String() + `)\s*(.*?)$`)
 	blockBodyFullToken           = regexp.MustCompile(`^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
-	blockBodyContentOfVariable   = regexp.MustCompile(`^` + VariableStart.String() + `-?(.*?)-?` + VariableEnd.String() + `$`)
 	blockBodyWhitespaceOrNothing = regexp.MustCompile(`^\s*$`)
 )
 

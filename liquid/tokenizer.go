@@ -8,7 +8,6 @@ import (
 var (
 	tokenizerTagEnd             = regexp.MustCompile(`%\}`)
 	tokenizerTagOrVariableStart = regexp.MustCompile(`\{[\{\%]`)
-	tokenizerNewline            = regexp.MustCompile(`\n`)
 )
 
 const (

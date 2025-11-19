@@ -112,9 +112,6 @@ func TestTagRender(t *testing.T) {
 
 	tag := NewTag("test", "", pc)
 
-	// Mock context
-	type mockTagContext struct{}
-
 	result := tag.Render(nil)
 	if result != "" {
 		t.Errorf("Expected empty string, got '%s'", result)
