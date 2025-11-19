@@ -104,8 +104,32 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 	var templateName string
 	var contextVariableName string
 
-	// Check if template responds to to_partial (for template objects)
-	if toPartial, ok := template.(interface{ ToPartial() *liquid.Template }); ok {
+	// Check if template responds to to_partial returning a string (for SnippetDrop)
+	if toPartialStr, ok := template.(interface{ ToPartial() string }); ok {
+		// Parse the body string as a template
+		body := toPartialStr.ToPartial()
+		if filename, ok := template.(interface{ Filename() string }); ok {
+			templateName = filename.Filename()
+		}
+		if name, ok := template.(interface{ Name() string }); ok {
+			contextVariableName = r.aliasName
+			if contextVariableName == "" {
+				contextVariableName = name.Name()
+			}
+		}
+		
+		// Parse the body as a template
+		parsedTemplate, err := liquid.ParseTemplate(body, &liquid.TemplateOptions{
+			Environment: r.ParseContext().Environment(),
+		})
+		if err != nil {
+			errorMsg := context.HandleError(err, nil)
+			*output += errorMsg
+			return
+		}
+		partial = parsedTemplate
+	} else if toPartial, ok := template.(interface{ ToPartial() *liquid.Template }); ok {
+		// Check if template responds to to_partial (for template objects)
 		partial = toPartial.ToPartial()
 		if filename, ok := template.(interface{ Filename() string }); ok {
 			templateName = filename.Filename()

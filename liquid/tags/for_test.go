@@ -694,8 +694,9 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
-	// Should break after item 2 (but item 3 gets partially rendered before break detected)
-	expected := "1 23 "
+	// Should break after rendering item 2 and detecting break in if statement
+	// Output: "1 " (item 1 + space) + "2" (item 2, then break before space)
+	expected := "1 2"
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}

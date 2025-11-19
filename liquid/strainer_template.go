@@ -70,8 +70,14 @@ func NewStrainerTemplate(class *StrainerTemplateClass, context interface{ Contex
 		filterInstances: make(map[string]interface{}),
 	}
 
-	// Always add StandardFilters as a base filter
-	sf := &StandardFilters{}
+	// Always add StandardFilters as a base filter with context
+	var ctx *Context
+	if context != nil {
+		if c, ok := context.Context().(*Context); ok {
+			ctx = c
+		}
+	}
+	sf := &StandardFilters{context: ctx}
 	st.filterInstances["*liquid.StandardFilters"] = sf
 
 	return st

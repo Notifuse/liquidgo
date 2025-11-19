@@ -36,6 +36,12 @@ func RegisterStandardTags(env *liquid.Environment) {
 	env.RegisterTag("comment", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
 		return NewCommentTag(tagName, markup, parseContext)
 	}))
+	env.RegisterTag("raw", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+		return NewRawTag(tagName, markup, parseContext)
+	}))
+	env.RegisterTag("#", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+		return NewInlineCommentTag(tagName, markup, parseContext)
+	}))
 	env.RegisterTag("doc", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
 		return NewDocTag(tagName, markup, parseContext)
 	}))

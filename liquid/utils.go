@@ -43,6 +43,19 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 		return []interface{}{str}
 	}
 
+	// Handle Range objects specially (convert to array)
+	if r, ok := collection.(*Range); ok {
+		for i := r.Start; i <= r.End; i++ {
+			if to != nil && *to <= (i-r.Start) {
+				break
+			}
+			if from <= (i - r.Start) {
+				segments = append(segments, i)
+			}
+		}
+		return segments
+	}
+
 	// Check if collection implements Each method
 	if eacher, ok := collection.(interface {
 		Each(func(interface{}))

@@ -324,6 +324,7 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 		ctx.Set("forloop", loopVars)
 
 		// Iterate over segment
+	forLoop:
 		for _, item := range segment {
 			// Set variable
 			ctx.Set(f.variableName, item)
@@ -339,9 +340,9 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 				interrupt := ctx.PopInterrupt()
 				switch interrupt.(type) {
 				case *liquid.BreakInterrupt:
-					break
+					break forLoop
 				case *liquid.ContinueInterrupt:
-					continue
+					continue forLoop
 				}
 			}
 		}

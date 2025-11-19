@@ -121,7 +121,8 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		key := context.Evaluate(lookup)
 		key = ToLiquidValue(key)
 
-		// Try to access as map/array
+		// Ruby logic: Try to access as hash/array first
+		// If object is a hash- or array-like object we look for the presence of the key
 		if m, ok := obj.(map[string]interface{}); ok {
 			if k, ok := key.(string); ok {
 				if val, exists := m[k]; exists {
@@ -131,29 +132,53 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			}
 		}
 
+		// Array index access
 		if arr, ok := obj.([]interface{}); ok {
-			idx, _ := ToInteger(key)
-			if idx >= 0 && idx < len(arr) {
-				obj = arr[idx]
-				continue
+			if idx, err := ToInteger(key); err == nil {
+				if idx >= 0 && idx < len(arr) {
+					obj = arr[idx]
+					continue
+				}
 			}
 		}
 
-		// Try command method
-		if vl.LookupCommand(i) {
-			if _, ok := key.(string); ok {
-				// Try to call method on object
-				// For now, return nil
-				return nil
-			}
-		}
-
-		// Try drop method invocation
+		// Ruby logic: Some special cases. If the part wasn't in square brackets and
+		// no key with the same name was found we interpret following calls
+		// as commands and call them on the current object
+		// (This is lines 67-71 in Ruby)
 		if keyStr, ok := key.(string); ok {
+			// Check if it's a command method AND the object responds to it
+			if vl.LookupCommand(i) {
+				// Command methods for arrays
+				if arr, ok := obj.([]interface{}); ok {
+					switch keyStr {
+					case "size":
+						obj = len(arr)
+						continue
+					case "first":
+						if len(arr) > 0 {
+							obj = arr[0]
+							continue
+						}
+					case "last":
+						if len(arr) > 0 {
+							obj = arr[len(arr)-1]
+							continue
+						}
+					}
+				}
+				// Command methods for strings
+				if str, ok := obj.(string); ok && keyStr == "size" {
+					obj = len(str)
+					continue
+				}
+			}
+
+			// Try drop method invocation (for drops like forloop.last)
+			// This handles objects that respond to methods
 			if IsInvokable(obj, keyStr) {
 				dropResult := InvokeDropOn(obj, keyStr)
 				// Even if result is nil, we found the method, so use it
-				// (nil is a valid return value)
 				obj = dropResult
 				continue
 			}

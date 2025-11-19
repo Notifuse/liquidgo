@@ -501,6 +501,148 @@ func TestCaseTagRenderToOutputBufferElseBlock(t *testing.T) {
 
 	// Should render else block
 	if output != "other" {
-		t.Logf("Note: Else block output: %q (expected 'other')", output)
+		t.Errorf("Expected 'other', got %q", output)
+	}
+}
+
+// TestCaseTagWithComma tests case/when with comma-separated values (Ruby test: test_case_when_with_comma)
+func TestCaseTagWithComma(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+	
+	template := `{%- case 1 -%}
+{%- when 2, 1 -%}
+one
+{%- else -%}
+two
+{%- endcase -%}`
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	result := tmpl.RenderBang(nil, nil)
+	expected := "one"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// TestCaseTagWithOr tests case/when with 'or' operator (Ruby test: test_case_when_with_or)
+func TestCaseTagWithOr(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+	
+	template := `{%- case 1 -%}
+{%- when 2 or 1 -%}
+one
+{%- else -%}
+two
+{%- endcase -%}`
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	result := tmpl.RenderBang(nil, nil)
+	expected := "one"
+	if result != expected {
+		t.Errorf("Expected %q, got %q", expected, result)
+	}
+}
+
+// TestCaseTagNodelistIntegration tests nodelist structure (Ruby test: test_case_nodelist)
+func TestCaseTagNodelistIntegration(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+	
+	template := `{% case var %}{% when true %}WHEN{% else %}ELSE{% endcase %}`
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	// Test with true
+	result := tmpl.RenderBang(map[string]interface{}{"var": true}, nil)
+	if result != "WHEN" {
+		t.Errorf("Expected 'WHEN', got %q", result)
+	}
+
+	// Test with false
+	result = tmpl.RenderBang(map[string]interface{}{"var": false}, nil)
+	if result != "ELSE" {
+		t.Errorf("Expected 'ELSE', got %q", result)
+	}
+}
+
+// TestCaseTagIntegrationMultipleConditions tests case tag with multiple conditions matching Ruby integration tests
+func TestCaseTagIntegrationMultipleConditions(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+	
+	tests := []struct{
+		name     string
+		template string
+		assigns  map[string]interface{}
+		expected string
+	}{
+		{
+			name:     "condition matches 2",
+			template: `{% case condition %}{% when 1 %} its 1 {% when 2 %} its 2 {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": 2},
+			expected: " its 2 ",
+		},
+		{
+			name:     "condition matches 1",
+			template: `{% case condition %}{% when 1 %} its 1 {% when 2 %} its 2 {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": 1},
+			expected: " its 1 ",
+		},
+		{
+			name:     "condition matches none",
+			template: `{% case condition %}{% when 1 %} its 1 {% when 2 %} its 2 {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": 3},
+			expected: "",
+		},
+		{
+			name:     "condition matches string",
+			template: `{% case condition %}{% when "string here" %} hit {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": "string here"},
+			expected: " hit ",
+		},
+		{
+			name:     "condition does not match string",
+			template: `{% case condition %}{% when "string here" %} hit {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": "bad string here"},
+			expected: "",
+		},
+		{
+			name:     "with else",
+			template: `{% case condition %}{% when 5 %} hit {% else %} else {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": 5},
+			expected: " hit ",
+		},
+		{
+			name:     "else fallback",
+			template: `{% case condition %}{% when 5 %} hit {% else %} else {% endcase %}`,
+			assigns:  map[string]interface{}{"condition": 6},
+			expected: " else ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpl, err := liquid.ParseTemplate(tt.template, &liquid.TemplateOptions{Environment: env})
+			if err != nil {
+				t.Fatalf("ParseTemplate() error = %v", err)
+			}
+
+			result := tmpl.RenderBang(tt.assigns, nil)
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
 	}
 }

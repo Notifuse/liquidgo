@@ -54,9 +54,8 @@ func (s *SnippetTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	// Create snippet drop
 	snippetDrop := liquid.NewSnippetDrop(bodyOutput, s.to, templateName)
 
-	// Assign to variable in current scope (last scope)
-	// Use Set which sets in the first scope (current/local scope)
-	ctx.Set(s.to, snippetDrop)
+	// Assign to variable in last scope (matching Ruby's context.scopes.last[@to])
+	ctx.SetLast(s.to, snippetDrop)
 
 	// Increment assign score in resource limits
 	rl := context.ResourceLimits()

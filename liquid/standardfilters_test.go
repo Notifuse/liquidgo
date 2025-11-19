@@ -603,3 +603,696 @@ func TestStandardFiltersStripHTML(t *testing.T) {
 		})
 	}
 }
+
+// String Filter Tests
+
+func TestStripNewlines(t *testing.T) {
+	sf := &StandardFilters{}
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"a\nb\nc", "abc"},
+		{"a\r\nb\nc", "abc"},
+		{"hello\nworld", "helloworld"},
+	}
+
+	for _, tt := range tests {
+		result := sf.StripNewlines(tt.input)
+		if result != tt.expected {
+			t.Errorf("StripNewlines(%q) = %q, want %q", tt.input, result, tt.expected)
+		}
+	}
+}
+
+func TestNewlineToBr(t *testing.T) {
+	sf := &StandardFilters{}
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"a\nb\nc", "a<br />\nb<br />\nc"},
+		{"a\r\nb\nc", "a<br />\nb<br />\nc"},
+	}
+
+	for _, tt := range tests {
+		result := sf.NewlineToBr(tt.input)
+		if result != tt.expected {
+			t.Errorf("NewlineToBr(%q) = %q, want %q", tt.input, result, tt.expected)
+		}
+	}
+}
+
+func TestReplace(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Replace("a a a a", "a", "b")
+	if result != "b b b b" {
+		t.Errorf("Replace() = %q, want 'b b b b'", result)
+	}
+
+	result = sf.Replace("1 1 1 1", 1, 2)
+	if result != "2 2 2 2" {
+		t.Errorf("Replace() = %q, want '2 2 2 2'", result)
+	}
+}
+
+func TestReplaceFirst(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.ReplaceFirst("a a a a", "a", "b")
+	if result != "b a a a" {
+		t.Errorf("ReplaceFirst() = %q, want 'b a a a'", result)
+	}
+
+	result = sf.ReplaceFirst("1 1 1 1", 1, 2)
+	if result != "2 1 1 1" {
+		t.Errorf("ReplaceFirst() = %q, want '2 1 1 1'", result)
+	}
+}
+
+func TestReplaceLast(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.ReplaceLast("a a a a", "a", "b")
+	if result != "a a a b" {
+		t.Errorf("ReplaceLast() = %q, want 'a a a b'", result)
+	}
+
+	result = sf.ReplaceLast("1 1 1 1", 1, 2)
+	if result != "1 1 1 2" {
+		t.Errorf("ReplaceLast() = %q, want '1 1 1 2'", result)
+	}
+}
+
+func TestRemove(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Remove("a a a a", "a")
+	if result != "   " {
+		t.Errorf("Remove() = %q, want '   '", result)
+	}
+}
+
+func TestRemoveFirst(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.RemoveFirst("a b a a", "a ")
+	if result != "b a a" {
+		t.Errorf("RemoveFirst() = %q, want 'b a a'", result)
+	}
+}
+
+func TestRemoveLast(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.RemoveLast("a a b a", " a")
+	if result != "a a b" {
+		t.Errorf("RemoveLast() = %q, want 'a a b'", result)
+	}
+}
+
+func TestAppend(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Append("bc", "d")
+	if result != "bcd" {
+		t.Errorf("Append() = %q, want 'bcd'", result)
+	}
+}
+
+func TestPrepend(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Prepend("bc", "a")
+	if result != "abc" {
+		t.Errorf("Prepend() = %q, want 'abc'", result)
+	}
+}
+
+// Math Filter Tests
+
+func TestAbs(t *testing.T) {
+	sf := &StandardFilters{}
+
+	tests := []struct {
+		input    interface{}
+		expected interface{}
+	}{
+		{17, 17},
+		{-17, 17},
+		{17.42, 17.42},
+		{-17.42, 17.42},
+		{"17", 17},
+		{"-17", 17},
+	}
+
+	for _, tt := range tests {
+		result := sf.Abs(tt.input)
+		if result != tt.expected {
+			t.Errorf("Abs(%v) = %v, want %v", tt.input, result, tt.expected)
+		}
+	}
+}
+
+func TestPlus(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Plus(1, 1)
+	if result != 2 {
+		t.Errorf("Plus(1, 1) = %v, want 2", result)
+	}
+
+	result = sf.Plus("1", "1.0")
+	if result != 2.0 {
+		t.Errorf("Plus('1', '1.0') = %v, want 2.0", result)
+	}
+}
+
+func TestMinus(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Minus(5, 1)
+	if result != 4 {
+		t.Errorf("Minus(5, 1) = %v, want 4", result)
+	}
+
+	result = sf.Minus("4.3", "2")
+	// Should be approximately 2.3
+	if f, ok := result.(float64); !ok || f < 2.2 || f > 2.4 {
+		t.Errorf("Minus('4.3', '2') = %v, want ~2.3", result)
+	}
+}
+
+func TestTimes(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Times(3, 4)
+	if result != 12 {
+		t.Errorf("Times(3, 4) = %v, want 12", result)
+	}
+
+	result = sf.Times(0.0725, 100)
+	if f, ok := result.(float64); !ok || f < 7.2 || f > 7.3 {
+		t.Errorf("Times(0.0725, 100) = %v, want ~7.25", result)
+	}
+}
+
+func TestDividedBy(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result, err := sf.DividedBy(12, 3)
+	if err != nil {
+		t.Fatalf("DividedBy(12, 3) error = %v", err)
+	}
+	if result != 4 {
+		t.Errorf("DividedBy(12, 3) = %v, want 4", result)
+	}
+
+	// Test division by zero
+	_, err = sf.DividedBy(5, 0)
+	if err == nil {
+		t.Error("Expected error for division by zero")
+	}
+
+	// Float division
+	result, err = sf.DividedBy(2.0, 4)
+	if err != nil {
+		t.Fatalf("DividedBy(2.0, 4) error = %v", err)
+	}
+	if result != 0.5 {
+		t.Errorf("DividedBy(2.0, 4) = %v, want 0.5", result)
+	}
+}
+
+func TestModulo(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result, err := sf.Modulo(3, 2)
+	if err != nil {
+		t.Fatalf("Modulo(3, 2) error = %v", err)
+	}
+	if result != 1 {
+		t.Errorf("Modulo(3, 2) = %v, want 1", result)
+	}
+
+	// Test modulo by zero
+	_, err = sf.Modulo(1, 0)
+	if err == nil {
+		t.Error("Expected error for modulo by zero")
+	}
+}
+
+func TestRound(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result, err := sf.Round(4.6, nil)
+	if err != nil {
+		t.Fatalf("Round(4.6) error = %v", err)
+	}
+	if result != 5 {
+		t.Errorf("Round(4.6) = %v, want 5", result)
+	}
+
+	result, err = sf.Round("4.3", nil)
+	if err != nil {
+		t.Fatalf("Round('4.3') error = %v", err)
+	}
+	if result != 4 {
+		t.Errorf("Round('4.3') = %v, want 4", result)
+	}
+
+	result, err = sf.Round(4.5612, 2)
+	if err != nil {
+		t.Fatalf("Round(4.5612, 2) error = %v", err)
+	}
+	if result != 4.56 {
+		t.Errorf("Round(4.5612, 2) = %v, want 4.56", result)
+	}
+}
+
+func TestCeil(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result, err := sf.Ceil(4.6)
+	if err != nil {
+		t.Fatalf("Ceil(4.6) error = %v", err)
+	}
+	if result != 5 {
+		t.Errorf("Ceil(4.6) = %v, want 5", result)
+	}
+
+	result, err = sf.Ceil("4.3")
+	if err != nil {
+		t.Fatalf("Ceil('4.3') error = %v", err)
+	}
+	if result != 5 {
+		t.Errorf("Ceil('4.3') = %v, want 5", result)
+	}
+}
+
+func TestFloor(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result, err := sf.Floor(4.6)
+	if err != nil {
+		t.Fatalf("Floor(4.6) error = %v", err)
+	}
+	if result != 4 {
+		t.Errorf("Floor(4.6) = %v, want 4", result)
+	}
+
+	result, err = sf.Floor("4.3")
+	if err != nil {
+		t.Fatalf("Floor('4.3') error = %v", err)
+	}
+	if result != 4 {
+		t.Errorf("Floor('4.3') = %v, want 4", result)
+	}
+}
+
+func TestAtMost(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.AtMost(5, 4)
+	if result != 4 {
+		t.Errorf("AtMost(5, 4) = %v, want 4", result)
+	}
+
+	result = sf.AtMost(5, 5)
+	if result != 5 {
+		t.Errorf("AtMost(5, 5) = %v, want 5", result)
+	}
+
+	result = sf.AtMost(5, 6)
+	if result != 5 {
+		t.Errorf("AtMost(5, 6) = %v, want 5", result)
+	}
+}
+
+func TestAtLeast(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.AtLeast(5, 4)
+	if result != 5 {
+		t.Errorf("AtLeast(5, 4) = %v, want 5", result)
+	}
+
+	result = sf.AtLeast(5, 5)
+	if result != 5 {
+		t.Errorf("AtLeast(5, 5) = %v, want 5", result)
+	}
+
+	result = sf.AtLeast(5, 6)
+	if result != 6 {
+		t.Errorf("AtLeast(5, 6) = %v, want 6", result)
+	}
+}
+
+func TestDefault(t *testing.T) {
+	sf := &StandardFilters{}
+
+	result := sf.Default("foo", "bar", nil)
+	if result != "foo" {
+		t.Errorf("Default('foo', 'bar') = %v, want 'foo'", result)
+	}
+
+	result = sf.Default(nil, "bar", nil)
+	if result != "bar" {
+		t.Errorf("Default(nil, 'bar') = %v, want 'bar'", result)
+	}
+
+	result = sf.Default("", "bar", nil)
+	if result != "bar" {
+		t.Errorf("Default('', 'bar') = %v, want 'bar'", result)
+	}
+
+	result = sf.Default(false, "bar", nil)
+	if result != "bar" {
+		t.Errorf("Default(false, 'bar') = %v, want 'bar'", result)
+	}
+
+	result = sf.Default([]interface{}{}, "bar", nil)
+	if result != "bar" {
+		t.Errorf("Default([], 'bar') = %v, want 'bar'", result)
+	}
+
+	// Test allow_false option
+	options := map[string]interface{}{"allow_false": true}
+	result = sf.Default(false, "bar", options)
+	if result != false {
+		t.Errorf("Default(false, 'bar', allow_false: true) = %v, want false", result)
+	}
+}
+
+// Array Filter Tests
+
+func TestSort(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{4, 3, 2, 1}
+	result := sf.Sort(input, nil)
+	expected := []interface{}{1, 2, 3, 4}
+
+	if arr, ok := result.([]interface{}); ok {
+		if len(arr) != len(expected) {
+			t.Fatalf("Sort() returned %d elements, want %d", len(arr), len(expected))
+		}
+		for i, v := range expected {
+			if arr[i] != v {
+				t.Errorf("Sort()[%d] = %v, want %v", i, arr[i], v)
+			}
+		}
+	} else {
+		t.Errorf("Sort() returned %T, want []interface{}", result)
+	}
+
+	// Test with property
+	input2 := []interface{}{
+		map[string]interface{}{"a": 4},
+		map[string]interface{}{"a": 3},
+		map[string]interface{}{"a": 1},
+		map[string]interface{}{"a": 2},
+	}
+	result2 := sf.Sort(input2, "a")
+	if arr, ok := result2.([]interface{}); ok {
+		if len(arr) != 4 {
+			t.Fatalf("Sort() with property returned %d elements, want 4", len(arr))
+		}
+		// Check order
+		if m, ok := arr[0].(map[string]interface{}); ok {
+			if m["a"] != 1 {
+				t.Errorf("Sort()[0]['a'] = %v, want 1", m["a"])
+			}
+		}
+	}
+}
+
+func TestSortNatural(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{"c", "D", "a", "B"}
+	result := sf.SortNatural(input, nil)
+	expected := []interface{}{"a", "B", "c", "D"}
+
+	if arr, ok := result.([]interface{}); ok {
+		if len(arr) != len(expected) {
+			t.Fatalf("SortNatural() returned %d elements, want %d", len(arr), len(expected))
+		}
+		for i, v := range expected {
+			if arr[i] != v {
+				t.Errorf("SortNatural()[%d] = %v, want %v", i, arr[i], v)
+			}
+		}
+	}
+}
+
+func TestReverse(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{1, 2, 3, 4}
+	result := sf.Reverse(input)
+	expected := []interface{}{4, 3, 2, 1}
+
+	if len(result) != len(expected) {
+		t.Fatalf("Reverse() returned %d elements, want %d", len(result), len(expected))
+	}
+
+	for i, v := range expected {
+		if result[i] != v {
+			t.Errorf("Reverse()[%d] = %v, want %v", i, result[i], v)
+		}
+	}
+}
+
+func TestUniq(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{1, 1, 3, 2, 3, 1, 4, 3, 2, 1}
+	result := sf.Uniq(input, nil)
+
+	if arr, ok := result.([]interface{}); ok {
+		// Should have unique values
+		if len(arr) != 4 {
+			t.Errorf("Uniq() returned %d unique elements, want 4", len(arr))
+		}
+	} else {
+		t.Errorf("Uniq() returned %T, want []interface{}", result)
+	}
+}
+
+func TestCompact(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{1, nil, 2, nil, 3}
+	result := sf.Compact(input, nil)
+
+	if arr, ok := result.([]interface{}); ok {
+		if len(arr) != 3 {
+			t.Errorf("Compact() returned %d elements, want 3", len(arr))
+		}
+		for _, v := range arr {
+			if v == nil {
+				t.Error("Compact() should remove nil values")
+			}
+		}
+	}
+}
+
+func TestMap(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"a": 1},
+		map[string]interface{}{"a": 2},
+		map[string]interface{}{"a": 3},
+		map[string]interface{}{"a": 4},
+	}
+
+	result, err := sf.Map(input, "a")
+	if err != nil {
+		t.Fatalf("Map() error = %v", err)
+	}
+
+	if arr, ok := result.([]interface{}); ok {
+		expected := []interface{}{1, 2, 3, 4}
+		if len(arr) != len(expected) {
+			t.Fatalf("Map() returned %d elements, want %d", len(arr), len(expected))
+		}
+		for i, v := range expected {
+			if arr[i] != v {
+				t.Errorf("Map()[%d] = %v, want %v", i, arr[i], v)
+			}
+		}
+	} else {
+		t.Errorf("Map() returned %T, want []interface{}", result)
+	}
+}
+
+func TestWhere(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"handle": "alpha", "ok": true},
+		map[string]interface{}{"handle": "beta", "ok": false},
+		map[string]interface{}{"handle": "gamma", "ok": false},
+		map[string]interface{}{"handle": "delta", "ok": true},
+	}
+
+	result := sf.Where(input, "ok", true)
+
+	if arr, ok := result.([]interface{}); ok {
+		if len(arr) != 2 {
+			t.Errorf("Where() returned %d elements, want 2", len(arr))
+		}
+	} else {
+		t.Errorf("Where() returned %T, want []interface{}", result)
+	}
+}
+
+func TestReject(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"handle": "alpha", "ok": true},
+		map[string]interface{}{"handle": "beta", "ok": false},
+		map[string]interface{}{"handle": "gamma", "ok": false},
+		map[string]interface{}{"handle": "delta", "ok": true},
+	}
+
+	result := sf.Reject(input, "ok", true)
+
+	if arr, ok := result.([]interface{}); ok {
+		if len(arr) != 2 {
+			t.Errorf("Reject() returned %d elements, want 2", len(arr))
+		}
+	} else {
+		t.Errorf("Reject() returned %T, want []interface{}", result)
+	}
+}
+
+func TestHas(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"handle": "alpha", "ok": true},
+		map[string]interface{}{"handle": "beta", "ok": false},
+		map[string]interface{}{"handle": "gamma", "ok": false},
+		map[string]interface{}{"handle": "delta", "ok": false},
+	}
+
+	result := sf.Has(input, "ok", true)
+	if !result {
+		t.Error("Has() = false, want true")
+	}
+
+	input2 := []interface{}{
+		map[string]interface{}{"handle": "alpha", "ok": false},
+		map[string]interface{}{"handle": "beta", "ok": false},
+	}
+
+	result2 := sf.Has(input2, "ok", true)
+	if result2 {
+		t.Error("Has() = true, want false")
+	}
+}
+
+func TestFind(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"title": "Pro goggles", "price": 1299},
+		map[string]interface{}{"title": "Thermal gloves", "price": 1499},
+		map[string]interface{}{"title": "Alpine jacket", "price": 3999},
+	}
+
+	result := sf.Find(input, "price", 3999)
+
+	if result == nil {
+		t.Fatal("Find() returned nil")
+	}
+
+	if m, ok := result.(map[string]interface{}); ok {
+		if m["title"] != "Alpine jacket" {
+			t.Errorf("Find() returned item with title %v, want 'Alpine jacket'", m["title"])
+		}
+	}
+}
+
+func TestFindIndex(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{
+		map[string]interface{}{"title": "Pro goggles", "price": 1299},
+		map[string]interface{}{"title": "Thermal gloves", "price": 1499},
+		map[string]interface{}{"title": "Alpine jacket", "price": 3999},
+	}
+
+	result := sf.FindIndex(input, "price", 3999)
+
+	if result != 2 {
+		t.Errorf("FindIndex() = %v, want 2", result)
+	}
+}
+
+func TestConcat(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{1, 2}
+	array := []interface{}{3, 4}
+
+	result, err := sf.Concat(input, array)
+	if err != nil {
+		t.Fatalf("Concat() error = %v", err)
+	}
+
+	if arr, ok := result.([]interface{}); ok {
+		expected := []interface{}{1, 2, 3, 4}
+		if len(arr) != len(expected) {
+			t.Fatalf("Concat() returned %d elements, want %d", len(arr), len(expected))
+		}
+		for i, v := range expected {
+			if arr[i] != v {
+				t.Errorf("Concat()[%d] = %v, want %v", i, arr[i], v)
+			}
+		}
+	} else {
+		t.Errorf("Concat() returned %T, want []interface{}", result)
+	}
+
+	// Test error case
+	_, err = sf.Concat(input, 10)
+	if err == nil {
+		t.Error("Expected error for non-array argument")
+	}
+}
+
+func TestSum(t *testing.T) {
+	sf := &StandardFilters{}
+
+	input := []interface{}{1, 2}
+	result := sf.Sum(input, nil)
+
+	if result != 3 {
+		t.Errorf("Sum([1, 2]) = %v, want 3", result)
+	}
+
+	// Test with property
+	input2 := []interface{}{
+		map[string]interface{}{"quantity": 1},
+		map[string]interface{}{"quantity": 2, "weight": 3},
+		map[string]interface{}{"weight": 4},
+	}
+
+	result2 := sf.Sum(input2, "quantity")
+	if result2 != 3 {
+		t.Errorf("Sum(input, 'quantity') = %v, want 3", result2)
+	}
+
+	result3 := sf.Sum(input2, "weight")
+	if result3 != 7 {
+		t.Errorf("Sum(input, 'weight') = %v, want 7", result3)
+	}
+}

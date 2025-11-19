@@ -67,6 +67,9 @@ func NewCaseTag(tagName, markup string, parseContext liquid.ParseContextInterfac
 
 // parseMarkup parses the case tag markup.
 func (c *CaseTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
+	// Trim whitespace to match Ruby behavior
+	markup = strings.TrimSpace(markup)
+	
 	matches := caseSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
 		return liquid.NewSyntaxError("invalid case tag syntax")

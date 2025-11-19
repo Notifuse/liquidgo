@@ -82,6 +82,12 @@ func (t *TableRowTag) parseMarkup(markup string, parseContext liquid.ParseContex
 	return nil
 }
 
+// Parse parses the block body from tokens.
+// TableRowTag uses the default Block.Parse() method which handles body parsing
+func (t *TableRowTag) Parse(tokenizer *liquid.Tokenizer) error {
+	return t.Block.Parse(tokenizer)
+}
+
 // VariableName returns the variable name.
 func (t *TableRowTag) VariableName() string {
 	return t.variableName
@@ -180,7 +186,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 			// Output <td> tag
 			*output += fmt.Sprintf("<td class=\"col%d\">", tablerowloop.Col())
 
-			// Render block body
+			// Render block body (equivalent to Ruby's 'super')
 			t.Block.RenderToOutputBuffer(context, output)
 
 			// Close </td>
