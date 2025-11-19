@@ -109,7 +109,7 @@ func TestRegistersStaticMap(t *testing.T) {
 		"static_key": "static_value",
 	}
 	r := NewRegisters(static)
-	
+
 	staticMap := r.Static()
 	if staticMap == nil {
 		t.Fatal("Expected non-nil static map")
@@ -122,7 +122,7 @@ func TestRegistersStaticMap(t *testing.T) {
 func TestRegistersChangesMap(t *testing.T) {
 	r := NewRegisters(nil)
 	r.Set("key", "value")
-	
+
 	changes := r.Changes()
 	if changes == nil {
 		t.Fatal("Expected non-nil changes map")

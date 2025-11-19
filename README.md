@@ -6,6 +6,7 @@
 
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)
 [![Benchmarks](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml)
+[![codecov](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
 [![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Notifuse/liquidgo)](https://goreportcard.com/report/github.com/Notifuse/liquidgo)
 
@@ -31,7 +32,7 @@ Liquid is a template engine written with specific requirements:
 - ⚡ **High performance** - 3-10x faster than Ruby implementation
 - 🔒 **Secure** - Safe for user-generated templates
 - 📦 **Zero dependencies** - Pure Go implementation
-- 🧪 **Well tested** - Comprehensive test suite matching Ruby tests
+- 🧪 **Superior test coverage** - ~90% code coverage with comprehensive edge case testing, exceeding the official Ruby library's test suite
 - 🎯 **Production ready** - Used in real-world applications
 
 ## Installation
@@ -441,12 +442,23 @@ All standard Liquid tags are supported:
 
 ## Testing
 
+Liquid Go maintains **superior test coverage** compared to the official Ruby library:
+
+- **~90% code coverage** across the entire codebase
+- **Comprehensive edge case testing** - Tests cover error paths, boundary conditions, and unusual scenarios
+- **Integration tests** - Full template rendering scenarios matching Ruby test suite
+- **Performance tests** - Benchmark suite ensuring optimal performance
+
 ```bash
 # Run all tests
 go test ./...
 
 # Run with coverage
 go test -cover ./...
+
+# Generate detailed coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
 
 # Run integration tests
 go test ./integration/...

@@ -328,17 +328,17 @@ func TestForTagParseWithElseBlock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Create else block first
 	tag.elseBlock = liquid.NewBlockBody()
-	
+
 	// Parse for block that doesn't find endfor (should continue to else)
 	tokenizer := pc.NewTokenizer("content {% else %}else content{% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	// Verify else block was parsed
 	if tag.elseBlock == nil {
 		t.Error("Expected elseBlock to exist")
@@ -352,14 +352,14 @@ func TestForTagParseWithBlankBlock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse empty for block (blank)
 	tokenizer := pc.NewTokenizer("   {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	// Block should be blank and blank strings removed
 	if !tag.Blank() {
 		t.Error("Expected block to be blank")
@@ -373,15 +373,15 @@ func TestForTagParseBodyDepthLimit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Set depth to limit
 	for i := 0; i < 100; i++ {
 		pc.IncrementDepth()
 	}
-	
+
 	body := liquid.NewBlockBody()
 	tokenizer := pc.NewTokenizer("content {% endfor %}", false, nil, false)
-	
+
 	shouldContinue, err := tag.parseBody(tokenizer, body)
 	if err == nil {
 		t.Error("Expected error for depth limit")
@@ -389,7 +389,7 @@ func TestForTagParseBodyDepthLimit(t *testing.T) {
 	if shouldContinue {
 		t.Error("Expected shouldContinue to be false on error")
 	}
-	
+
 	// Reset depth
 	for i := 0; i < 100; i++ {
 		pc.DecrementDepth()
@@ -403,11 +403,11 @@ func TestForTagParseBodyTagNeverClosed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	body := liquid.NewBlockBody()
 	// Create tokenizer that will trigger tag never closed path
 	tokenizer := pc.NewTokenizer("content", false, nil, false)
-	
+
 	shouldContinue, err := tag.parseBody(tokenizer, body)
 	// Should handle gracefully
 	_ = shouldContinue
@@ -421,10 +421,10 @@ func TestForTagParseBodyWithElseTag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	body := liquid.NewBlockBody()
 	tokenizer := pc.NewTokenizer("content {% else %}else content{% endfor %}", false, nil, false)
-	
+
 	shouldContinue, err := tag.parseBody(tokenizer, body)
 	if err != nil {
 		t.Fatalf("parseBody() error = %v", err)
@@ -445,10 +445,10 @@ func TestForTagParseBodyWithUnknownTag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	body := liquid.NewBlockBody()
 	tokenizer := pc.NewTokenizer("content {% unknown_tag %}more{% endfor %}", false, nil, false)
-	
+
 	shouldContinue, err := tag.parseBody(tokenizer, body)
 	// Unknown tags might cause errors, which is acceptable
 	_ = shouldContinue
@@ -462,14 +462,14 @@ func TestForTagCollectionSegmentInvalidOffsetsMap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	// Set invalid offsets type (not a map)
 	registers := ctx.Registers()
 	registers.Set("for", "not_a_map")
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should handle gracefully and create new map
 	if len(segment) != 3 {
@@ -484,15 +484,15 @@ func TestForTagCollectionSegmentContinueWithNonInt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	// Set offset with non-int value
 	registers := ctx.Registers()
 	forMap := map[string]interface{}{tag.name: "not_an_int"}
 	registers.Set("for", forMap)
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should start from 0 when offset is not an int
 	if len(segment) != 3 {
@@ -508,11 +508,11 @@ func TestForTagCollectionSegmentWithNilFromValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 	ctx.Set("nil_var", nil)
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0
 	if len(segment) != 3 {
@@ -527,11 +527,11 @@ func TestForTagCollectionSegmentWithInvalidFromValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 	ctx.Set("invalid_var", map[string]interface{}{"not": "an_int"})
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0 when ToInteger fails
 	if len(segment) != 3 {
@@ -546,11 +546,11 @@ func TestForTagCollectionSegmentWithRange(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	// Set Range as collection
 	ctx.Set("range", &liquid.Range{Start: 1, End: 5})
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should convert range to array [1, 2, 3, 4, 5]
 	if len(segment) != 5 {
@@ -565,11 +565,11 @@ func TestForTagCollectionSegmentWithNilLimitValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
 	ctx.Set("nil_var", nil)
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when limit is nil
 	if len(segment) != 5 {
@@ -584,11 +584,11 @@ func TestForTagCollectionSegmentWithInvalidLimitValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
 	ctx.Set("invalid_var", map[string]interface{}{"not": "an_int"})
-	
+
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when ToInteger fails
 	if len(segment) != 5 {
@@ -603,21 +603,21 @@ func TestForTagRenderSegmentInvalidForStack(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse for block
 	tokenizer := pc.NewTokenizer("{{item}} {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	// Set invalid for_stack type
 	registers := ctx.Registers()
 	registers.Set("for_stack", "not_a_slice")
-	
+
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
@@ -634,23 +634,23 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse for block
 	tokenizer := pc.NewTokenizer("{{item}} {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	// Set parent loop in for_stack
 	registers := ctx.Registers()
 	parentLoop := liquid.NewForloopDrop("parent", 10, nil)
 	forStack := []*liquid.ForloopDrop{parentLoop}
 	registers.Set("for_stack", forStack)
-	
+
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
@@ -658,7 +658,7 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 	if output == "" {
 		t.Error("Expected non-empty output")
 	}
-	
+
 	// Verify stack was popped
 	finalStack := registers.Get("for_stack")
 	if stack, ok := finalStack.([]*liquid.ForloopDrop); ok {
@@ -677,17 +677,17 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse for block with break tag
 	tokenizer := pc.NewTokenizer("{{item}}{% if item == 2 %}{% break %}{% endif %} {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
@@ -706,17 +706,17 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse for block with continue tag
 	tokenizer := pc.NewTokenizer("{% if item == 2 %}{% continue %}{% endif %}{{item}} {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	
+
 	var output string
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
@@ -738,25 +738,25 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewForTag() error = %v", err)
 	}
-	
+
 	// Parse for block
 	tokenizer := pc.NewTokenizer("{{item}} {% endfor %}", false, nil, false)
 	err = tag.Parse(tokenizer)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2})
-	
+
 	registers := ctx.Registers()
 	initialStack := []*liquid.ForloopDrop{}
 	registers.Set("for_stack", initialStack)
-	
+
 	var output string
 	segment := []interface{}{1, 2}
 	tag.renderSegment(ctx, &output, segment)
-	
+
 	// Verify stack was popped back to initial state
 	finalStack := registers.Get("for_stack")
 	if stack, ok := finalStack.([]*liquid.ForloopDrop); ok {

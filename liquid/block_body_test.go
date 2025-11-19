@@ -665,7 +665,14 @@ func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
 }
 
 func TestBlockBodyParseForDocumentWithLiquidTag(t *testing.T) {
-	pc := NewParseContext(ParseContextOptions{})
+	// Create environment with assign tag registered
+	env := NewEnvironment()
+	env.RegisterTag("assign", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+		// Import tags package to use NewAssignTag
+		// For now, create a simple tag
+		return NewTag(tagName, markup, parseContext), nil
+	})
+	pc := NewParseContext(ParseContextOptions{Environment: env})
 	bb := NewBlockBody()
 
 	// Test parsing document with liquid tag

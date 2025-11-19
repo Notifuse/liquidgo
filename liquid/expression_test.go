@@ -113,11 +113,11 @@ func TestExpressionParseNumberComplex(t *testing.T) {
 		{"negative decimal", "-0.5", -0.5},
 		{"scientific notation", "1e5", nil}, // May not be supported
 		{"empty string", "", nil},
-		{"whitespace", " 42 ", nil}, // Whitespace not trimmed
-		{"multiple dots", "1.2.3", nil}, // Invalid
-		{"dot at end", "123.", 123.0}, // Valid
+		{"whitespace", " 42 ", nil},           // Whitespace not trimmed
+		{"multiple dots", "1.2.3", nil},       // Invalid
+		{"dot at end", "123.", 123.0},         // Valid
 		{"negative dot at end", "-123.", nil}, // May not parse correctly
-		{"just dot", ".", nil}, // Invalid
+		{"just dot", ".", nil},                // Invalid
 	}
 
 	for _, tt := range tests {

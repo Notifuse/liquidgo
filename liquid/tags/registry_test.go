@@ -27,7 +27,7 @@ func TestRegisterStandardTags(t *testing.T) {
 
 	// Test that registered tags can be instantiated
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Test simple tags
 	testSimpleTags := map[string]string{
 		"assign":    "var = value",
@@ -90,4 +90,3 @@ func TestRegisterStandardTags(t *testing.T) {
 		}
 	}
 }
-

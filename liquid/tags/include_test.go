@@ -160,11 +160,11 @@ func TestIncludeTagTemplateNameExpr(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	// Create nested template: dir/partial
 	templatePath := "dir/partial"
 	fullPath, err := fs.FullPath(templatePath)
@@ -177,24 +177,24 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Hello from {{ partial }}"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Create include tag with nested path (no alias - should use last part "partial")
 	tag, err := NewIncludeTag("include", "'dir/partial'", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	ctx.Set("partial", "World")
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should render the template
 	if output == "" {
 		t.Error("Expected non-empty output")
@@ -204,11 +204,11 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	templatePath := "greeting"
 	fullPath, err := fs.FullPath(templatePath)
 	if err != nil {
@@ -217,25 +217,25 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Hello {{ greeting }}"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Create include tag without variableNameExpr - should find variable by template name
 	tag, err := NewIncludeTag("include", "'greeting'", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	// Set variable with same name as template
 	ctx.Set("greeting", "World")
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should render the template
 	if output == "" {
 		t.Error("Expected non-empty output")
@@ -245,11 +245,11 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	templatePath := "item"
 	fullPath, err := fs.FullPath(templatePath)
 	if err != nil {
@@ -258,25 +258,25 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Item: {{ item }}"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Create include tag with array variable (for clause)
 	tag, err := NewIncludeTag("include", "'item' for items", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	// Set array variable
 	ctx.Set("items", []interface{}{"one", "two", "three"})
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should render template multiple times
 	if output == "" {
 		t.Error("Expected non-empty output")
@@ -286,11 +286,11 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	templatePath := "greeting"
 	fullPath, err := fs.FullPath(templatePath)
 	if err != nil {
@@ -299,23 +299,23 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Hello {{ name }}"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Create include tag with attributes
 	tag, err := NewIncludeTag("include", "'greeting' name:'Alice'", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should render the template with attributes
 	if output == "" {
 		t.Error("Expected non-empty output")
@@ -325,11 +325,11 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	templatePath := "greeting"
 	fullPath, err := fs.FullPath(templatePath)
 	if err != nil {
@@ -338,24 +338,24 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Hello {{ person }}"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Create include tag with alias
 	tag, err := NewIncludeTag("include", "'greeting' with user as person", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	ctx.Set("user", "Bob")
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should render the template with alias
 	if output == "" {
 		t.Error("Expected non-empty output")
@@ -366,17 +366,17 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 	env := liquid.NewEnvironment()
 	locale := liquid.NewI18n("en")
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env, Locale: locale})
-	
+
 	// Create include tag with non-string template name
 	tag, err := NewIncludeTag("include", "123", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	ctx := liquid.NewContext()
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should output error message
 	if output == "" {
 		t.Error("Expected error message in output")
@@ -386,11 +386,11 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-	
+
 	// Create a file system with a template
 	tmpDir := t.TempDir()
 	fs := liquid.NewLocalFileSystem(tmpDir, "")
-	
+
 	templatePath := "greeting"
 	fullPath, err := fs.FullPath(templatePath)
 	if err != nil {
@@ -399,20 +399,20 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	if err := os.WriteFile(fullPath, []byte("Hello"), 0644); err != nil {
 		t.Fatalf("Failed to create template file: %v", err)
 	}
-	
+
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
 	registers.Set("cached_partials", make(map[string]interface{}))
 	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
-	
+
 	// Load the template normally first to cache it
 	_, err = liquid.LoadPartial("greeting", ctx, pc)
 	if err != nil {
 		t.Fatalf("Failed to load partial: %v", err)
 	}
-	
+
 	// Get the cached template and set its name
 	cache := registers.Get("cached_partials").(map[string]interface{})
 	if cached, ok := cache["greeting:lax"]; ok {
@@ -420,16 +420,16 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 			template.SetName("custom_name")
 		}
 	}
-	
+
 	// Create include tag
 	tag, err := NewIncludeTag("include", "'greeting'", pc)
 	if err != nil {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
-	
+
 	var output string
 	tag.RenderToOutputBuffer(ctx, &output)
-	
+
 	// Should use template name
 	if output == "" {
 		t.Error("Expected non-empty output")

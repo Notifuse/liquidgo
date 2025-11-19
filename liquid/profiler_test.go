@@ -109,11 +109,11 @@ func TestProfilerTimingSelfTime(t *testing.T) {
 
 func TestProfilerTotalRenderTime(t *testing.T) {
 	profiler := NewProfiler()
-	
+
 	profiler.Profile("test", func() {
 		// Do some work
 	})
-	
+
 	// TotalRenderTime is alias for TotalTime
 	totalRenderTime := profiler.TotalRenderTime()
 	totalTime := profiler.TotalTime()
@@ -124,22 +124,22 @@ func TestProfilerTotalRenderTime(t *testing.T) {
 
 func TestTimingTemplateName(t *testing.T) {
 	profiler := NewProfiler()
-	
+
 	profiler.Profile("template_name", func() {
 		profiler.ProfileNode("template_name", "code", nil, func() {
 			// Do work
 		})
 	})
-	
+
 	if profiler.Length() != 1 {
 		t.Fatalf("Expected length 1, got %d", profiler.Length())
 	}
-	
+
 	node := profiler.At(0)
 	if node == nil {
 		t.Fatal("Expected node, got nil")
 	}
-	
+
 	templateName := node.TemplateName()
 	if templateName != "template_name" {
 		t.Errorf("Expected TemplateName 'template_name', got %q", templateName)
@@ -148,27 +148,27 @@ func TestTimingTemplateName(t *testing.T) {
 
 func TestTimingPartial(t *testing.T) {
 	profiler := NewProfiler()
-	
+
 	profiler.Profile("partial_name", func() {
 		profiler.ProfileNode("partial_name", "code", nil, func() {
 			// Do work
 		})
 	})
-	
+
 	if profiler.Length() != 1 {
 		t.Fatalf("Expected length 1, got %d", profiler.Length())
 	}
-	
+
 	node := profiler.At(0)
 	if node == nil {
 		t.Fatal("Expected node, got nil")
 	}
-	
+
 	partial := node.Partial()
 	if partial != "partial_name" {
 		t.Errorf("Expected Partial 'partial_name', got %q", partial)
 	}
-	
+
 	// Partial should equal TemplateName
 	if partial != node.TemplateName() {
 		t.Errorf("Expected Partial to equal TemplateName, got %q != %q", partial, node.TemplateName())
@@ -177,22 +177,22 @@ func TestTimingPartial(t *testing.T) {
 
 func TestTimingRenderTime(t *testing.T) {
 	profiler := NewProfiler()
-	
+
 	profiler.Profile("test", func() {
 		profiler.ProfileNode("test", "code", nil, func() {
 			// Do work
 		})
 	})
-	
+
 	if profiler.Length() != 1 {
 		t.Fatalf("Expected length 1, got %d", profiler.Length())
 	}
-	
+
 	node := profiler.At(0)
 	if node == nil {
 		t.Fatal("Expected node, got nil")
 	}
-	
+
 	// RenderTime is alias for TotalTime
 	renderTime := node.RenderTime()
 	totalTime := node.TotalTime()

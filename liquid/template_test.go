@@ -204,7 +204,7 @@ func TestTemplateRenderToOutputBuffer(t *testing.T) {
 	if output3 != "test" {
 		t.Errorf("Expected 'test', got %q", output3)
 	}
-	
+
 	// Test with fallback path - create a context from map
 	ctx4 := BuildContext(ContextConfig{
 		Environments: []map[string]interface{}{{"name": "test"}},
@@ -511,23 +511,22 @@ func TestTemplateBuildContextWithDropInInstanceAssigns(t *testing.T) {
 	}
 }
 
-
 func TestTemplateRegisters(t *testing.T) {
 	env := NewEnvironment()
 	template := NewTemplate(&TemplateOptions{Environment: env})
-	
+
 	// Test Registers() - should return non-nil map
 	registers := template.Registers()
 	if registers == nil {
 		t.Fatal("Expected non-nil registers map")
 	}
-	
+
 	// Test that we can set values
 	registers["test"] = "value"
 	if registers["test"] != "value" {
 		t.Error("Expected to be able to set register value")
 	}
-	
+
 	// Test that subsequent calls return same map
 	registers2 := template.Registers()
 	if registers2["test"] != "value" {
@@ -538,19 +537,19 @@ func TestTemplateRegisters(t *testing.T) {
 func TestTemplateAssigns(t *testing.T) {
 	env := NewEnvironment()
 	template := NewTemplate(&TemplateOptions{Environment: env})
-	
+
 	// Test Assigns() - should return non-nil map
 	assigns := template.Assigns()
 	if assigns == nil {
 		t.Fatal("Expected non-nil assigns map")
 	}
-	
+
 	// Test that we can set values
 	assigns["test"] = "value"
 	if assigns["test"] != "value" {
 		t.Error("Expected to be able to set assign value")
 	}
-	
+
 	// Test that subsequent calls return same map
 	assigns2 := template.Assigns()
 	if assigns2["test"] != "value" {
@@ -561,19 +560,19 @@ func TestTemplateAssigns(t *testing.T) {
 func TestTemplateInstanceAssigns(t *testing.T) {
 	env := NewEnvironment()
 	template := NewTemplate(&TemplateOptions{Environment: env})
-	
+
 	// Test InstanceAssigns() - should return non-nil map
 	instanceAssigns := template.InstanceAssigns()
 	if instanceAssigns == nil {
 		t.Fatal("Expected non-nil instanceAssigns map")
 	}
-	
+
 	// Test that we can set values
 	instanceAssigns["test"] = "value"
 	if instanceAssigns["test"] != "value" {
 		t.Error("Expected to be able to set instanceAssign value")
 	}
-	
+
 	// Test that subsequent calls return same map
 	instanceAssigns2 := template.InstanceAssigns()
 	if instanceAssigns2["test"] != "value" {
@@ -584,24 +583,24 @@ func TestTemplateInstanceAssigns(t *testing.T) {
 func TestTemplateErrors(t *testing.T) {
 	env := NewEnvironment()
 	template := NewTemplate(&TemplateOptions{Environment: env})
-	
+
 	// Test Errors() - should return non-nil slice
 	errors := template.Errors()
 	if errors == nil {
 		t.Fatal("Expected non-nil errors slice")
 	}
-	
+
 	// Test that Errors() returns a slice (even if empty initially)
 	if errors == nil {
 		t.Error("Expected Errors() to return non-nil slice")
 	}
-	
+
 	// Test that subsequent calls return same slice
 	errors2 := template.Errors()
 	if errors2 == nil {
 		t.Error("Expected subsequent Errors() call to return non-nil slice")
 	}
-	
+
 	// Note: Errors are typically set during rendering, not directly appended
 	// The method returns the internal errors slice, which gets populated during render
 }

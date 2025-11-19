@@ -81,7 +81,7 @@ func TestStandardFiltersURLEncode(t *testing.T) {
 	if result != "hello+world" && result != "hello%20world" {
 		t.Errorf("URLEncode() = %q, want URL-encoded string", result)
 	}
-	
+
 	// Test with nil
 	result2 := sf.URLEncode(nil)
 	if result2 != "" {
@@ -98,7 +98,7 @@ func TestStandardFiltersURLDecode(t *testing.T) {
 	if result != "hello world" {
 		t.Errorf("URLDecode() = %q, want 'hello world'", result)
 	}
-	
+
 	// Test with nil
 	result2, err2 := sf.URLDecode(nil)
 	if err2 != nil {
@@ -107,7 +107,7 @@ func TestStandardFiltersURLDecode(t *testing.T) {
 	if result2 != "" {
 		t.Errorf("URLDecode(nil) = %q, want empty string", result2)
 	}
-	
+
 	// Test with invalid encoding
 	_, err3 := sf.URLDecode("%invalid")
 	if err3 == nil {
@@ -133,7 +133,7 @@ func TestStandardFiltersBase64Decode(t *testing.T) {
 	if result != "hello" {
 		t.Errorf("Base64Decode() = %q, want 'hello'", result)
 	}
-	
+
 	// Test with invalid base64
 	_, err2 := sf.Base64Decode("invalid!")
 	if err2 == nil {
@@ -159,7 +159,7 @@ func TestStandardFiltersBase64URLSafeDecode(t *testing.T) {
 	if result != "hello" {
 		t.Errorf("Base64URLSafeDecode() = %q, want 'hello'", result)
 	}
-	
+
 	// Test with invalid base64
 	_, err2 := sf.Base64URLSafeDecode("invalid!")
 	if err2 == nil {
@@ -203,7 +203,6 @@ func TestStandardFiltersTruncateWords(t *testing.T) {
 		t.Errorf("TruncateWords() = %q, should contain 'hello'", result)
 	}
 }
-
 
 func TestStandardFiltersEscape(t *testing.T) {
 	sf := &StandardFilters{}

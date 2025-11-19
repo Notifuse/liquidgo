@@ -436,7 +436,7 @@ func TestVariableAddWarning(t *testing.T) {
 	// Test AddWarning on parseContextWrapper (no-op)
 	pc := NewParseContext(ParseContextOptions{})
 	v := NewVariable("test", pc)
-	
+
 	// Create a wrapper (this happens internally)
 	// AddWarning is a no-op for wrapper, so we just verify it doesn't panic
 	// This tests the parseContextWrapper.AddWarning method

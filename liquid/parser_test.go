@@ -34,16 +34,16 @@ func TestParserExpression(t *testing.T) {
 
 func TestParserJump(t *testing.T) {
 	parser := NewParser("hello world test")
-	
+
 	// Consume first token
 	_, err := parser.Consume(":id")
 	if err != nil {
 		t.Fatalf("Consume() error = %v", err)
 	}
-	
+
 	// Jump back to start
 	parser.Jump(0)
-	
+
 	// Should be able to consume "hello" again
 	result, err := parser.Consume(":id")
 	if err != nil {
@@ -52,7 +52,7 @@ func TestParserJump(t *testing.T) {
 	if result != "hello" {
 		t.Errorf("Expected 'hello' after Jump(0), got %q", result)
 	}
-	
+
 	// Jump to middle
 	parser.Jump(1)
 	result2, err := parser.Consume(":id")
