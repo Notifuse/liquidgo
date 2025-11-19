@@ -253,9 +253,10 @@ func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) 
 		}
 
 		// Chain with the next operator
-		if part.nextOp == "or" {
+		switch part.nextOp {
+		case "or":
 			newCondition.Or(condition)
-		} else if part.nextOp == "and" {
+		case "and":
 			newCondition.And(condition)
 		}
 		condition = newCondition
