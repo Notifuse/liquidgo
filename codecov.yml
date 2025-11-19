@@ -1,0 +1,15 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 10%
+    patch: off
+  range: '60...80'
+  ignore:
+    - '**/performance/**'
+    - '**/reference-liquid/**'
+    - '**/integration/**'
+    - '**/examples/**'
+    - '**/tests/**'
+    - '**/testutil/**'

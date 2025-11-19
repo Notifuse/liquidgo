@@ -103,3 +103,31 @@ func TestRegistersFromRegisters(t *testing.T) {
 		t.Errorf("Expected 'value', got %v", val)
 	}
 }
+
+func TestRegistersStaticMap(t *testing.T) {
+	static := map[string]interface{}{
+		"static_key": "static_value",
+	}
+	r := NewRegisters(static)
+	
+	staticMap := r.Static()
+	if staticMap == nil {
+		t.Fatal("Expected non-nil static map")
+	}
+	if staticMap["static_key"] != "static_value" {
+		t.Errorf("Expected 'static_value', got %v", staticMap["static_key"])
+	}
+}
+
+func TestRegistersChangesMap(t *testing.T) {
+	r := NewRegisters(nil)
+	r.Set("key", "value")
+	
+	changes := r.Changes()
+	if changes == nil {
+		t.Fatal("Expected non-nil changes map")
+	}
+	if changes["key"] != "value" {
+		t.Errorf("Expected 'value', got %v", changes["key"])
+	}
+}

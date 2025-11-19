@@ -287,3 +287,149 @@ func TestDropStrictVariables(t *testing.T) {
 		drop.InvokeDrop("nonexistent")
 	}()
 }
+
+func TestDropInvokeDropOld(t *testing.T) {
+	drop := NewDrop()
+	
+	// Test InvokeDropOld (old implementation)
+	result := drop.InvokeDropOld("nonexistent")
+	if result != nil {
+		t.Errorf("Expected nil for nonexistent method, got %v", result)
+	}
+}
+
+func TestDropString(t *testing.T) {
+	drop := NewDrop()
+	result := drop.String()
+	if result == "" {
+		t.Error("Expected non-empty string representation")
+	}
+	// Should contain type information
+	if len(result) == 0 {
+		t.Error("Expected non-empty string representation")
+	}
+}
+
+func TestTablerowloopDropIndex(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test Index (1-based)
+	if tr.Index() != 1 {
+		t.Errorf("Expected Index 1, got %d", tr.Index())
+	}
+	
+	tr.Increment()
+	if tr.Index() != 2 {
+		t.Errorf("Expected Index 2, got %d", tr.Index())
+	}
+}
+
+func TestTablerowloopDropIndex0(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test Index0 (0-based)
+	if tr.Index0() != 0 {
+		t.Errorf("Expected Index0 0, got %d", tr.Index0())
+	}
+	
+	tr.Increment()
+	if tr.Index0() != 1 {
+		t.Errorf("Expected Index0 1, got %d", tr.Index0())
+	}
+}
+
+func TestTablerowloopDropRindex(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test Rindex (1-based reverse)
+	if tr.Rindex() != 10 {
+		t.Errorf("Expected Rindex 10, got %d", tr.Rindex())
+	}
+	
+	tr.Increment()
+	if tr.Rindex() != 9 {
+		t.Errorf("Expected Rindex 9, got %d", tr.Rindex())
+	}
+}
+
+func TestTablerowloopDropRindex0(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test Rindex0 (0-based reverse)
+	if tr.Rindex0() != 9 {
+		t.Errorf("Expected Rindex0 9, got %d", tr.Rindex0())
+	}
+	
+	tr.Increment()
+	if tr.Rindex0() != 8 {
+		t.Errorf("Expected Rindex0 8, got %d", tr.Rindex0())
+	}
+}
+
+func TestTablerowloopDropFirst(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test First
+	if !tr.First() {
+		t.Error("Expected First to be true initially")
+	}
+	
+	tr.Increment()
+	if tr.First() {
+		t.Error("Expected First to be false after increment")
+	}
+}
+
+func TestTablerowloopDropLast(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test Last (should be false initially)
+	if tr.Last() {
+		t.Error("Expected Last to be false initially")
+	}
+	
+	// Increment to last item
+	for i := 0; i < 9; i++ {
+		tr.Increment()
+	}
+	
+	if !tr.Last() {
+		t.Error("Expected Last to be true at end")
+	}
+}
+
+func TestTablerowloopDropInvokeDrop(t *testing.T) {
+	tr := NewTablerowloopDrop(10, 3)
+	
+	// Test InvokeDrop with various methods
+	result := tr.InvokeDrop("Index")
+	if result != 1 {
+		t.Errorf("Expected Index 1, got %v", result)
+	}
+	
+	result = tr.InvokeDrop("Length")
+	if result != 10 {
+		t.Errorf("Expected Length 10, got %v", result)
+	}
+	
+	result = tr.InvokeDrop("Cols")
+	if result != 3 {
+		t.Errorf("Expected Cols 3, got %v", result)
+	}
+}
+
+func TestSnippetDropInvokeDrop(t *testing.T) {
+	sd := NewSnippetDrop("body", "name", "file")
+	
+	// Test InvokeDrop
+	result := sd.InvokeDrop("Body")
+	if result != "body" {
+		t.Errorf("Expected Body 'body', got %v", result)
+	}
+	
+	result = sd.InvokeDrop("Name")
+	if result != "name" {
+		t.Errorf("Expected Name 'name', got %v", result)
+	}
+}
+

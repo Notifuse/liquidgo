@@ -114,3 +114,51 @@ func TestEnvironmentStrainerCaching(t *testing.T) {
 		t.Error("Both strainers should be valid")
 	}
 }
+
+func TestNewEnvironmentWithStandardTags(t *testing.T) {
+	env := NewEnvironmentWithStandardTags()
+	if env == nil {
+		t.Fatal("Expected Environment, got nil")
+	}
+	// Note: Standard tags are registered from outside the package
+	// This function just creates an environment
+}
+
+func TestEnvironmentTags(t *testing.T) {
+	env := NewEnvironment()
+	env.RegisterTag("test1", "Tag1")
+	env.RegisterTag("test2", "Tag2")
+
+	tags := env.Tags()
+	if tags == nil {
+		t.Fatal("Expected tags map, got nil")
+	}
+	if len(tags) < 2 {
+		t.Errorf("Expected at least 2 tags, got %d", len(tags))
+	}
+	if tags["test1"] != "Tag1" {
+		t.Errorf("Expected 'Tag1' for test1, got %v", tags["test1"])
+	}
+	if tags["test2"] != "Tag2" {
+		t.Errorf("Expected 'Tag2' for test2, got %v", tags["test2"])
+	}
+}
+
+func TestEnvironmentRegisterFilters(t *testing.T) {
+	env := NewEnvironment()
+
+	// Register multiple filters
+	filters := []interface{}{
+		&StandardFilters{},
+	}
+	err := env.RegisterFilters(filters)
+	if err != nil {
+		t.Fatalf("RegisterFilters() error = %v", err)
+	}
+
+	// Verify filters were registered
+	names := env.FilterMethodNames()
+	if len(names) == 0 {
+		t.Error("Expected filter method names after RegisterFilters, got empty")
+	}
+}

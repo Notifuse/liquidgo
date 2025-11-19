@@ -127,3 +127,93 @@ func TestTagBlank(t *testing.T) {
 		t.Error("Expected tag NOT to be blank by default (returns false)")
 	}
 }
+
+func TestTagRenderToOutputBuffer(t *testing.T) {
+	lineNum := 1
+	pc := &mockParseContextForTag{lineNum: &lineNum}
+
+	tag := NewTag("test", "", pc)
+	ctx := NewContext()
+	output := ""
+
+	// Test with empty render result
+	tag.RenderToOutputBuffer(ctx, &output)
+	if output != "" {
+		t.Errorf("Expected empty output, got %q", output)
+	}
+
+	// Test with non-empty render result (Tag.Render returns empty, so this tests the path)
+	// Since Tag.Render always returns empty, output should remain empty
+	tag.RenderToOutputBuffer(ctx, &output)
+	if output != "" {
+		t.Errorf("Expected empty output, got %q", output)
+	}
+}
+
+func TestParseTag(t *testing.T) {
+	lineNum := 1
+	pc := &mockParseContextForTag{lineNum: &lineNum}
+
+	// Test ParseTag function
+	tokenizer := pc.NewTokenizer("content", false, nil, false)
+	tag, err := ParseTag("test", "arg", tokenizer, pc)
+	if err != nil {
+		t.Fatalf("ParseTag() error = %v", err)
+	}
+	if tag == nil {
+		t.Fatal("Expected Tag, got nil")
+	}
+	if tag.TagName() != "test" {
+		t.Errorf("Expected tag name 'test', got '%s'", tag.TagName())
+	}
+}
+
+func TestTagLineNumber(t *testing.T) {
+	lineNum := 5
+	pc := &mockParseContextForTag{lineNum: &lineNum}
+
+	tag := NewTag("test", "", pc)
+	ln := tag.LineNumber()
+	if ln == nil {
+		t.Error("Expected line number, got nil")
+	} else if *ln != 5 {
+		t.Errorf("Expected line number 5, got %d", *ln)
+	}
+
+	// Test with nil line number
+	pc2 := &mockParseContextForTag{lineNum: nil}
+	tag2 := NewTag("test", "", pc2)
+	ln2 := tag2.LineNumber()
+	if ln2 != nil {
+		t.Errorf("Expected nil line number, got %v", ln2)
+	}
+}
+
+func TestTagSafeParseExpression(t *testing.T) {
+	lineNum := 1
+	pc := &mockParseContextForTag{lineNum: &lineNum}
+
+	tag := NewTag("test", "", pc)
+	parser := NewParser("42")
+	result := tag.SafeParseExpression(parser)
+	if result == nil {
+		t.Error("Expected non-nil result from SafeParseExpression")
+	}
+}
+
+func TestTagParseExpression(t *testing.T) {
+	lineNum := 1
+	pc := &mockParseContextForTag{lineNum: &lineNum}
+
+	tag := NewTag("test", "", pc)
+	result := tag.ParseExpression("42", false)
+	if result == nil {
+		t.Error("Expected non-nil result from ParseExpression")
+	}
+
+	// Test with safe = true (should still work the same way)
+	result2 := tag.ParseExpression("100", true)
+	if result2 == nil {
+		t.Error("Expected non-nil result from ParseExpression with safe=true")
+	}
+}

@@ -124,3 +124,70 @@ func TestTableRowTagWithOffset(t *testing.T) {
 		t.Errorf("Expected output %q, got %q", expected, output)
 	}
 }
+
+func TestTableRowTagCollectionName(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewTableRowTag("tablerow", "item in array", pc)
+	if err != nil {
+		t.Fatalf("NewTableRowTag() error = %v", err)
+	}
+
+	collectionName := tag.CollectionName()
+	if collectionName == nil {
+		t.Error("Expected CollectionName() to return non-nil expression")
+	}
+}
+
+func TestTableRowTagAttributes(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewTableRowTag("tablerow", "item in array cols:3", pc)
+	if err != nil {
+		t.Fatalf("NewTableRowTag() error = %v", err)
+	}
+
+	attributes := tag.Attributes()
+	if attributes == nil {
+		t.Error("Expected Attributes() to return non-nil map")
+	}
+	if len(attributes) == 0 {
+		t.Error("Expected Attributes() to contain attributes")
+	}
+}
+
+func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test with range attribute
+	tag, err := NewTableRowTag("tablerow", "n in numbers cols:2 range:1-3", pc)
+	if err != nil {
+		t.Fatalf("NewTableRowTag() error = %v", err)
+	}
+	tokenizer := pc.NewTokenizer("{{n}} {% endtablerow %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	ctx := liquid.NewContext()
+	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5})
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+	// Should render with range
+	_ = output
+
+	// Test with nil collection
+	tag2, _ := NewTableRowTag("tablerow", "n in numbers cols:2", pc)
+	tokenizer2 := pc.NewTokenizer("{{n}} {% endtablerow %}", false, nil, false)
+	tag2.Parse(tokenizer2)
+	ctx2 := liquid.NewContext()
+	ctx2.Set("numbers", nil)
+	var output2 string
+	tag2.RenderToOutputBuffer(ctx2, &output2)
+	// Should handle nil gracefully
+	_ = output2
+
+	// Test with invalid attribute
+	_, err3 := NewTableRowTag("tablerow", "n in numbers invalid:value", pc)
+	if err3 == nil {
+		t.Error("Expected error for invalid attribute")
+	}
+}

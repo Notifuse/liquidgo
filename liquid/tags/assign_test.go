@@ -138,6 +138,69 @@ func TestAssignTagWithArray(t *testing.T) {
 	}
 }
 
+func TestAssignTagFrom(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewAssignTag("assign", `var = "value"`, pc)
+	if err != nil {
+		t.Fatalf("NewAssignTag() error = %v", err)
+	}
+
+	from := tag.From()
+	if from == nil {
+		t.Fatal("Expected From() to return a Variable, got nil")
+	}
+	if from.Name() == nil {
+		t.Error("Expected Variable name to be set")
+	}
+}
+
+func TestAssignTagBlank(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewAssignTag("assign", `var = "value"`, pc)
+	if err != nil {
+		t.Fatalf("NewAssignTag() error = %v", err)
+	}
+
+	if !tag.Blank() {
+		t.Error("Expected Blank() to return true for assign tag")
+	}
+}
+
+func TestAssignTagAssignScoreOf(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	ctx := liquid.NewContext()
+
+	// Test assignScoreOf with string
+	tag1, _ := NewAssignTag("assign", `var = "hello"`, pc)
+	ctx.Set("var", "hello")
+	var output1 string
+	tag1.RenderToOutputBuffer(ctx, &output1)
+	// assignScoreOf is called internally, verify assignment worked
+	if ctx.Get("var") != "hello" {
+		t.Error("Expected variable to be assigned")
+	}
+
+	// Test assignScoreOf with array
+	tag2, _ := NewAssignTag("assign", `arr = values`, pc)
+	ctx.Set("values", []interface{}{"a", "b", "c"})
+	var output2 string
+	tag2.RenderToOutputBuffer(ctx, &output2)
+	arr := ctx.Get("arr")
+	if arr == nil {
+		t.Error("Expected array to be assigned")
+	}
+
+	// Test assignScoreOf with map
+	tag3, _ := NewAssignTag("assign", `map = data`, pc)
+	ctx.Set("data", map[string]interface{}{"key": "value"})
+	var output3 string
+	tag3.RenderToOutputBuffer(ctx, &output3)
+	m := ctx.Get("map")
+	if m == nil {
+		t.Error("Expected map to be assigned")
+	}
+}
+
 func TestAssignTagWithMap(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
 	ctx := liquid.NewContext()

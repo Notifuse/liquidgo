@@ -113,3 +113,34 @@ func TestCaptureTagWithQuotedVariableName(t *testing.T) {
 		t.Errorf("Expected To 'this-thing', got %q", tag.To())
 	}
 }
+
+func TestCaptureTagRenderToOutputBufferWithoutResourceLimits(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaptureTag("capture", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaptureTag() error = %v", err)
+	}
+
+	// Parse the block body
+	tokenizer := pc.NewTokenizer("test content {% endcapture %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	// Create context without resource limits
+	ctx := liquid.NewContext()
+	ctx.SetResourceLimits(nil) // Explicitly set to nil
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Check that variable was captured even without resource limits
+	val := ctx.Get("var")
+	if val == nil {
+		t.Error("Expected variable to be captured")
+	} else if valStr, ok := val.(string); !ok {
+		t.Errorf("Expected string value, got %T", val)
+	} else if valStr != "test content " {
+		t.Errorf("Expected variable value 'test content ', got %q", valStr)
+	}
+}

@@ -64,3 +64,49 @@ func TestVariableLookupCommandMethods(t *testing.T) {
 		t.Error("Expected name NOT to be a command method")
 	}
 }
+
+// TestVariableLookupEvaluate tests comprehensive variable lookup evaluation
+func TestVariableLookupEvaluate(t *testing.T) {
+	ctx := NewContext()
+	ctx.Set("items", []interface{}{"a", "b", "c"})
+
+	vl := VariableLookupParse("items", nil, nil)
+	result := vl.Evaluate(ctx)
+	if result == nil {
+		t.Error("Expected non-nil result")
+	}
+
+	// Test with nested lookup
+	ctx.Set("user", map[string]interface{}{
+		"name": "John",
+	})
+	vl2 := VariableLookupParse("user.name", nil, nil)
+	result2 := vl2.Evaluate(ctx)
+	if result2 != "John" {
+		t.Errorf("Expected 'John', got %v", result2)
+	}
+
+	// Test with array index
+	vl3 := VariableLookupParse("items[0]", nil, nil)
+	result3 := vl3.Evaluate(ctx)
+	if result3 != "a" {
+		t.Errorf("Expected 'a', got %v", result3)
+	}
+}
+
+// TestVariableLookupName tests Name method
+func TestVariableLookupName(t *testing.T) {
+	vl := VariableLookupParse("test", nil, nil)
+	if vl.Name() != "test" {
+		t.Errorf("Expected 'test', got %q", vl.Name())
+	}
+}
+
+// TestVariableLookupLookups tests Lookups method
+func TestVariableLookupLookups(t *testing.T) {
+	vl := VariableLookupParse("user.name", nil, nil)
+	lookups := vl.Lookups()
+	if len(lookups) != 1 {
+		t.Errorf("Expected 1 lookup, got %d", len(lookups))
+	}
+}

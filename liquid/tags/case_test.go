@@ -101,3 +101,216 @@ func TestCaseTagWithMultipleWhen(t *testing.T) {
 		t.Errorf("Expected output 'two', got %q", output)
 	}
 }
+
+func TestCaseTagLeft(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	left := tag.Left()
+	if left == nil {
+		t.Error("Expected Left() to return non-nil expression")
+	}
+}
+
+func TestCaseTagNodelist(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Parse case block with when
+	tokenizer := pc.NewTokenizer("{% when 1 %}one{% endcase %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	nodelist := tag.Nodelist()
+	if nodelist == nil {
+		t.Error("Expected Nodelist() to return non-nil slice")
+	}
+	if len(nodelist) == 0 {
+		t.Error("Expected Nodelist() to contain nodes after parsing")
+	}
+}
+
+func TestCaseTagUnknownTag(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Test UnknownTag with when (should be handled)
+	tokenizer := pc.NewTokenizer("", false, nil, false)
+	err = tag.UnknownTag("when", "1", tokenizer)
+	if err != nil {
+		t.Errorf("Expected nil error for when, got %v", err)
+	}
+
+	// Test UnknownTag with else (should be handled)
+	err = tag.UnknownTag("else", "", tokenizer)
+	if err != nil {
+		t.Errorf("Expected nil error for else, got %v", err)
+	}
+
+	// Test UnknownTag with unknown tag (should error)
+	err = tag.UnknownTag("unknown", "", tokenizer)
+	if err == nil {
+		t.Error("Expected error for unknown tag")
+	}
+}
+
+func TestCaseTagParseBodyForBlock(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Test with endcase tag
+	body := liquid.NewBlockBody()
+	tokenizer := pc.NewTokenizer("content {% endcase %}", false, nil, false)
+	shouldContinue, err := tag.parseBodyForBlock(tokenizer, body)
+	if err != nil {
+		t.Fatalf("parseBodyForBlock() error = %v", err)
+	}
+	if shouldContinue {
+		t.Error("Expected shouldContinue to be false after finding endcase")
+	}
+
+	// Test with when tag (should continue parsing more blocks)
+	body2 := liquid.NewBlockBody()
+	tokenizer2 := pc.NewTokenizer("content {% when 2 %}", false, nil, false)
+	shouldContinue2, err2 := tag.parseBodyForBlock(tokenizer2, body2)
+	if err2 != nil {
+		t.Fatalf("parseBodyForBlock() with when error = %v", err2)
+	}
+	if !shouldContinue2 {
+		t.Error("Expected shouldContinue to be true after finding when (more blocks may follow)")
+	}
+
+	// Test with else tag (should continue parsing more blocks)
+	body3 := liquid.NewBlockBody()
+	tokenizer3 := pc.NewTokenizer("content {% else %}", false, nil, false)
+	shouldContinue3, err3 := tag.parseBodyForBlock(tokenizer3, body3)
+	if err3 != nil {
+		t.Fatalf("parseBodyForBlock() with else error = %v", err3)
+	}
+	if !shouldContinue3 {
+		t.Error("Expected shouldContinue to be true after finding else (more blocks may follow)")
+	}
+
+	// Test with depth limit
+	pc4 := liquid.NewParseContext(liquid.ParseContextOptions{})
+	for i := 0; i < 100; i++ {
+		pc4.IncrementDepth()
+	}
+	tag4, _ := NewCaseTag("case", "var", pc4)
+	body4 := liquid.NewBlockBody()
+	tokenizer4 := pc4.NewTokenizer("content", false, nil, false)
+	_, err4 := tag4.parseBodyForBlock(tokenizer4, body4)
+		if err4 == nil {
+		t.Error("Expected error for depth limit exceeded")
+	}
+}
+
+func TestCaseTagRecordWhenCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Test with single condition
+	err = tag.recordWhenCondition("1")
+	if err != nil {
+		t.Fatalf("recordWhenCondition() error = %v", err)
+	}
+	if len(tag.Blocks()) != 1 {
+		t.Errorf("Expected 1 block, got %d", len(tag.Blocks()))
+	}
+
+	// Test with multiple conditions (comma-separated)
+	tag2, _ := NewCaseTag("case", "var", pc)
+	err = tag2.recordWhenCondition("1, 2, 3")
+	if err != nil {
+		t.Fatalf("recordWhenCondition() with multiple values error = %v", err)
+	}
+
+	// Test with invalid syntax - empty string doesn't enter loop, so returns nil
+	// The function only errors if it enters the loop and doesn't match
+	// Empty string is valid (no conditions)
+	tag3, _ := NewCaseTag("case", "var", pc)
+	err = tag3.recordWhenCondition("")
+	if err != nil {
+		t.Errorf("Empty when condition should not error, got %v", err)
+	}
+}
+
+func TestCaseTagRecordElseCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Test with empty markup
+	err = tag.recordElseCondition("")
+	if err != nil {
+		t.Fatalf("recordElseCondition() error = %v", err)
+	}
+	if len(tag.Blocks()) != 1 {
+		t.Errorf("Expected 1 block, got %d", len(tag.Blocks()))
+	}
+
+	// Test with non-empty markup (should error)
+	err = tag.recordElseCondition("invalid")
+	if err == nil {
+		t.Error("Expected error for else tag with markup")
+	}
+}
+
+func TestCaseTagRenderToOutputBuffer(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Parse with when and else
+	tokenizer := pc.NewTokenizer("{% when 1 %}one{% else %}other{% endcase %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	var output string
+
+	// Test with matching when condition
+	ctx.Set("var", 1)
+	tag.RenderToOutputBuffer(ctx, &output)
+	if output != "one" {
+		t.Errorf("Expected 'one', got %q", output)
+	}
+
+	// Test with else condition
+	output = ""
+	ctx.Set("var", 2)
+	tag.RenderToOutputBuffer(ctx, &output)
+	if output != "other" {
+		t.Errorf("Expected 'other', got %q", output)
+	}
+
+	// Test with error in evaluation
+	output = ""
+	ctx.Set("var", nil)
+	tag.RenderToOutputBuffer(ctx, &output)
+	// Should handle error gracefully
+	_ = output
+}

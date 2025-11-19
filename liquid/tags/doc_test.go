@@ -142,3 +142,44 @@ func TestDocTagNestedDocError(t *testing.T) {
 		t.Errorf("Expected SyntaxError, got %T", err)
 	}
 }
+
+func TestDocTagRenderToOutputBufferExplicit(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewDocTag("doc", "", pc)
+	if err != nil {
+		t.Fatalf("NewDocTag() error = %v", err)
+	}
+
+	// Parse doc block
+	tokenizer := pc.NewTokenizer("Documentation content {% enddoc %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	var output string
+	// Explicitly test RenderToOutputBuffer (should do nothing)
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Doc should render nothing
+	if output != "" {
+		t.Errorf("Expected empty output from RenderToOutputBuffer, got %q", output)
+	}
+}
+
+func TestDocTagRaiseTagNeverClosed(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewDocTag("doc", "", pc)
+	if err != nil {
+		t.Fatalf("NewDocTag() error = %v", err)
+	}
+
+	err = tag.RaiseTagNeverClosed()
+	if err == nil {
+		t.Error("Expected error from RaiseTagNeverClosed")
+	}
+	if _, ok := err.(*liquid.SyntaxError); !ok {
+		t.Errorf("Expected SyntaxError, got %T", err)
+	}
+}

@@ -32,6 +32,38 @@ func TestParserExpression(t *testing.T) {
 	}
 }
 
+func TestParserJump(t *testing.T) {
+	parser := NewParser("hello world test")
+	
+	// Consume first token
+	_, err := parser.Consume(":id")
+	if err != nil {
+		t.Fatalf("Consume() error = %v", err)
+	}
+	
+	// Jump back to start
+	parser.Jump(0)
+	
+	// Should be able to consume "hello" again
+	result, err := parser.Consume(":id")
+	if err != nil {
+		t.Fatalf("Consume() after Jump error = %v", err)
+	}
+	if result != "hello" {
+		t.Errorf("Expected 'hello' after Jump(0), got %q", result)
+	}
+	
+	// Jump to middle
+	parser.Jump(1)
+	result2, err := parser.Consume(":id")
+	if err != nil {
+		t.Fatalf("Consume() after Jump(1) error = %v", err)
+	}
+	if result2 != "world" {
+		t.Errorf("Expected 'world' after Jump(1), got %q", result2)
+	}
+}
+
 func TestParserRange(t *testing.T) {
 	parser := NewParser("(1..10)")
 	result, err := parser.Expression()
