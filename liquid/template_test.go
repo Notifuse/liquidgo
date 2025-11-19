@@ -128,7 +128,7 @@ func TestParseTemplate(t *testing.T) {
 	}
 
 	// Test with options
-	template, err = ParseTemplate("{{ value }}", &TemplateOptions{
+	_, err = ParseTemplate("{{ value }}", &TemplateOptions{
 		Environment:     env,
 		StrictVariables: true,
 		LineNumbers:     true,
@@ -138,7 +138,7 @@ func TestParseTemplate(t *testing.T) {
 	}
 
 	// Test with nil options
-	template, err = ParseTemplate("test", nil)
+	_, err = ParseTemplate("test", nil)
 	if err != nil {
 		t.Fatalf("ParseTemplate() with nil options error = %v", err)
 	}
@@ -254,7 +254,7 @@ func TestTemplateBuildContext(t *testing.T) {
 
 	// Test with RenderOptions
 	output := ""
-	result = template.Render(map[string]interface{}{"name": "options"}, &RenderOptions{
+	_ = template.Render(map[string]interface{}{"name": "options"}, &RenderOptions{
 		Output: &output,
 	})
 	if output != "options" {

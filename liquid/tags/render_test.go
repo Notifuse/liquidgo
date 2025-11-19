@@ -196,7 +196,9 @@ func TestRenderTagRenderToOutputBufferWithTemplateObject(t *testing.T) {
 
 	// Create a template object that implements ToPartial()
 	template := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	template.Parse("Hello {{ name }}", nil)
+	if err := template.Parse("Hello {{ name }}", nil); err != nil {
+		t.Fatalf("template.Parse() error = %v", err)
+	}
 
 	// Create a mock object that implements ToPartial, Filename, and Name
 	type templateObject struct {
@@ -234,7 +236,9 @@ func TestRenderTagRenderToOutputBufferWithTemplateObjectToPartial(t *testing.T) 
 
 	// Create a template object that implements ToPartial() *Template, Filename(), and Name()
 	partialTemplate := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	partialTemplate.Parse("Hello {{ name }}", nil)
+	if err := partialTemplate.Parse("Hello {{ name }}", nil); err != nil {
+		t.Fatalf("partialTemplate.Parse() error = %v", err)
+	}
 
 	// Create a mock object that implements all required interfaces
 	type templateObject struct {

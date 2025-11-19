@@ -261,7 +261,7 @@ func TestDocumentParseWithPanicRecovery(t *testing.T) {
 				t.Error("Expected panic for invalid syntax")
 			}
 		}()
-		doc.Parse(tokenizer, pc)
+		_ = doc.Parse(tokenizer, pc) // Error expected to panic
 	}()
 }
 
@@ -285,6 +285,6 @@ func TestDocumentParseWithLineNumber(t *testing.T) {
 				}
 			}
 		}()
-		doc.Parse(tokenizer, pc)
+		_ = doc.Parse(tokenizer, pc) // Error expected to panic
 	}()
 }

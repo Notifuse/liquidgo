@@ -251,7 +251,9 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	// Test with false condition and else
 	tag2, _ := NewIfTag("if", "false", pc)
 	tokenizer2 := pc.NewTokenizer("if content {% else %}else content {% endif %}", false, nil, false)
-	tag2.Parse(tokenizer2)
+	if err := tag2.Parse(tokenizer2); err != nil {
+		t.Fatalf("tag2.Parse() error = %v", err)
+	}
 	output2 := ""
 	tag2.RenderToOutputBuffer(ctx, &output2)
 	if output2 != "else content " {
@@ -261,7 +263,9 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	// Test with error in evaluation
 	tag3, _ := NewIfTag("if", "var", pc)
 	tokenizer3 := pc.NewTokenizer("content {% endif %}", false, nil, false)
-	tag3.Parse(tokenizer3)
+	if err := tag3.Parse(tokenizer3); err != nil {
+		t.Fatalf("tag3.Parse() error = %v", err)
+	}
 	output3 := ""
 	ctx3 := liquid.NewContext()
 	// Set var to something that causes error
@@ -388,9 +392,8 @@ func TestIfTagPushBlockParseIfConditionError(t *testing.T) {
 	// pushBlock with elsif and empty markup might still work
 	// as parseIfCondition handles empty markup
 	err = tag.pushBlock("elsif", "")
-	if err != nil {
-		// This is acceptable - empty elsif might be invalid
-	}
+	// This is acceptable - empty elsif might be invalid
+	_ = err
 }
 
 // Test RenderToOutputBuffer with error in Evaluate

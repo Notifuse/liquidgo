@@ -725,10 +725,9 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 		t.Error("Expected non-empty output")
 	}
 	// Verify that item 2 was skipped (continue should prevent rendering after it)
-	if len(output) > 0 {
-		// Output should have some content, but item 2 should be skipped
-		// The exact output depends on how the if tag renders, but we know it's not empty
-	}
+	// Output should have some content, but item 2 should be skipped
+	// The exact output depends on how the if tag renders, but we know it's not empty
+	_ = output // Ensure output is used
 }
 
 // Test renderSegment stack popping

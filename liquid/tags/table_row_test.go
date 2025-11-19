@@ -177,7 +177,9 @@ func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	// Test with nil collection
 	tag2, _ := NewTableRowTag("tablerow", "n in numbers cols:2", pc)
 	tokenizer2 := pc.NewTokenizer("{{n}} {% endtablerow %}", false, nil, false)
-	tag2.Parse(tokenizer2)
+	if err := tag2.Parse(tokenizer2); err != nil {
+		t.Fatalf("tag2.Parse() error = %v", err)
+	}
 	ctx2 := liquid.NewContext()
 	ctx2.Set("numbers", nil)
 	var output2 string
