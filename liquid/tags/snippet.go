@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -17,6 +19,7 @@ func NewSnippetTag(tagName, markup string, parseContext liquid.ParseContextInter
 	// Parse markup - should be just a variable name
 	// Ruby: p.consume(:id)
 	// For now, use simple parsing - expect just an identifier
+	markup = strings.TrimSpace(markup)
 	if markup == "" {
 		return nil, liquid.NewSyntaxError("snippet tag requires a variable name")
 	}
@@ -51,17 +54,11 @@ func (s *SnippetTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	// Get template name
 	templateName := ctx.TemplateName()
 
-	// Create snippet drop
+	// Create snippet drop (body is the rendered content, not the BlockBody)
 	snippetDrop := liquid.NewSnippetDrop(bodyOutput, s.to, templateName)
 
 	// Assign to variable in last scope (matching Ruby's context.scopes.last[@to])
-	// Use direct scope access like the test does
-	scopes := ctx.Scopes()
-	if len(scopes) == 0 {
-		scopes = []map[string]interface{}{make(map[string]interface{})}
-	}
-	// Set in the last scope
-	scopes[len(scopes)-1][s.to] = snippetDrop
+	ctx.SetLast(s.to, snippetDrop)
 
 	// Increment assign score in resource limits
 	rl := context.ResourceLimits()

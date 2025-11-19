@@ -117,7 +117,7 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 				contextVariableName = name.Name()
 			}
 		}
-		
+
 		// Parse the body as a template
 		parsedTemplate, err := liquid.ParseTemplate(body, &liquid.TemplateOptions{
 			Environment: r.ParseContext().Environment(),

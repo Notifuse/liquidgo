@@ -509,7 +509,7 @@ func TestCaseTagRenderToOutputBufferElseBlock(t *testing.T) {
 func TestCaseTagWithComma(t *testing.T) {
 	env := liquid.NewEnvironment()
 	RegisterStandardTags(env)
-	
+
 	template := `{%- case 1 -%}
 {%- when 2, 1 -%}
 one
@@ -533,7 +533,7 @@ two
 func TestCaseTagWithOr(t *testing.T) {
 	env := liquid.NewEnvironment()
 	RegisterStandardTags(env)
-	
+
 	template := `{%- case 1 -%}
 {%- when 2 or 1 -%}
 one
@@ -557,7 +557,7 @@ two
 func TestCaseTagNodelistIntegration(t *testing.T) {
 	env := liquid.NewEnvironment()
 	RegisterStandardTags(env)
-	
+
 	template := `{% case var %}{% when true %}WHEN{% else %}ELSE{% endcase %}`
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -581,8 +581,8 @@ func TestCaseTagNodelistIntegration(t *testing.T) {
 func TestCaseTagIntegrationMultipleConditions(t *testing.T) {
 	env := liquid.NewEnvironment()
 	RegisterStandardTags(env)
-	
-	tests := []struct{
+
+	tests := []struct {
 		name     string
 		template string
 		assigns  map[string]interface{}
