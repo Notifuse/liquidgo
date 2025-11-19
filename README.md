@@ -497,6 +497,10 @@ Liquid Go is released under the MIT License. See LICENSE file for details.
 
 The Ruby reference implementation is © Shopify Inc., also under MIT License.
 
+## Author
+
+Liquid Go is created and maintained by **Pierre Bazoge** ([@pierre-b](https://github.com/pierre-b)).
+
 ## Credits
 
 Liquid Go is a Go port of [Shopify's Liquid](https://github.com/Shopify/liquid) template engine, maintaining full compatibility with the Ruby implementation.
