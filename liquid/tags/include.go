@@ -92,7 +92,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	templateNameStr, ok := templateName.(string)
 	if !ok {
 		var locale *liquid.I18n
-		if pc, ok := i.Tag.ParseContext().(*liquid.ParseContext); ok {
+		if pc, ok := i.ParseContext().(*liquid.ParseContext); ok {
 			locale = pc.Locale()
 		}
 		var msg string
@@ -107,7 +107,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	}
 
 	// Load partial from cache
-	partial, err := liquid.LoadPartial(templateNameStr, context, i.Tag.ParseContext())
+	partial, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, nil)
 		*output += errorMsg

@@ -128,10 +128,11 @@ func (t *Tokenizer) nextToken() string {
 
 		byteB := t.ss.PeekByte()
 
-		if byteB == percentage {
+		switch byteB {
+		case percentage:
 			t.ss.ScanByte()
 			return t.nextTagToken()
-		} else if byteB == openCurley {
+		case openCurley:
 			t.ss.ScanByte()
 			return t.nextVariableToken()
 		}

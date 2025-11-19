@@ -21,7 +21,7 @@ func NewCommentForm(tagName, markup string, parseContext liquid.ParseContextInte
 	matches := re.FindStringSubmatch(markup)
 
 	if matches == nil {
-		return nil, fmt.Errorf("Syntax Error in 'comment_form' - Valid syntax: comment_form [article]")
+		return nil, fmt.Errorf("syntax error in 'comment_form' - valid syntax: comment_form [article]")
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)
@@ -55,7 +55,7 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 	ctx.Set("form", form)
 
 	// Render block content
-	bodyOutput := c.Block.Render(context)
+	bodyOutput := c.Render(context)
 
 	// Wrap in form tag
 	articleID := "unknown"

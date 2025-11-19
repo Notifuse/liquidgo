@@ -395,17 +395,11 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 	default:
 		// Check if it's a drop - if so, we need to make it accessible for variable lookups
 		// In Ruby Liquid, drops can be passed as context and their methods become available as variables
-		var outerScope map[string]interface{}
-		var dropToStore interface{}
-
-		if assigns != nil {
-			dropToStore = assigns
-			// Wrap the drop in the outer scope so it's accessible
-			// The drop itself will be the context for variable lookups
-			outerScope = map[string]interface{}{"__drop__": assigns}
-		} else {
-			outerScope = t.instanceAssigns
-		}
+		// assigns is not nil here (nil case handled above)
+		dropToStore := assigns
+		// Wrap the drop in the outer scope so it's accessible
+		// The drop itself will be the context for variable lookups
+		outerScope := map[string]interface{}{"__drop__": assigns}
 
 		ctx = BuildContext(ContextConfig{
 			Environments:   []map[string]interface{}{t.assigns},
@@ -436,11 +430,6 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			for key, value := range options.Registers {
 				ctx.Registers().Set(key, value)
 			}
-		}
-
-		// Set output if provided
-		if options.Output != nil {
-			// Output is handled in Render method
 		}
 
 		// Apply other options

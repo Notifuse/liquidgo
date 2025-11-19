@@ -126,13 +126,6 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 
 	foundEndTag := false
 	unknownTagHandler := func(endTagName, endTagMarkup string) bool {
-		// Update blank status (Ruby: @blank &&= body.blank?)
-		if !attachment.Blank() {
-			// If attachment is not blank, the if tag is not blank
-			// We can't directly set Block.blank, so we track it via the Block's body
-			// For now, we'll handle this in Blank() method
-		}
-
 		if endTagName == i.BlockDelimiter() {
 			foundEndTag = true
 			return false // Stop parsing - found endif

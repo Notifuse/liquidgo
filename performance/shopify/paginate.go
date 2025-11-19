@@ -25,7 +25,7 @@ func NewPaginate(tagName, markup string, parseContext liquid.ParseContextInterfa
 	matches := re.FindStringSubmatch(markup)
 
 	if matches == nil {
-		return nil, fmt.Errorf("Syntax Error in tag 'paginate' - Valid syntax: paginate [collection] by number")
+		return nil, fmt.Errorf("syntax error in tag 'paginate' - valid syntax: paginate [collection] by number")
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)
@@ -82,7 +82,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	collection := ctx.FindVariable(p.collectionName, false)
 	if collection == nil {
 		// In non-error mode, just render the block
-		bodyOutput := p.Block.Render(context)
+		bodyOutput := p.Render(context)
 		*output += bodyOutput
 		return
 	}
@@ -95,7 +95,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 		collectionSize = len(c)
 	default:
 		// In non-error mode, just render the block
-		bodyOutput := p.Block.Render(context)
+		bodyOutput := p.Render(context)
 		*output += bodyOutput
 		return
 	}
@@ -151,7 +151,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	pagination["parts"] = parts
 
 	// Render block content
-	bodyOutput := p.Block.Render(context)
+	bodyOutput := p.Render(context)
 	*output += bodyOutput
 }
 

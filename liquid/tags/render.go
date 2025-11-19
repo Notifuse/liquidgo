@@ -121,7 +121,7 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		}
 	} else if templateNameStr, ok := template.(string); ok {
 		// String template name - load from cache
-		partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.Tag.ParseContext())
+		partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
 		if err != nil {
 			errorMsg := context.HandleError(err, nil)
 			*output += errorMsg
