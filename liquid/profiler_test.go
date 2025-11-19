@@ -37,8 +37,9 @@ func TestProfilerProfile(t *testing.T) {
 		t.Errorf("Expected length 0 (root node has no children), got %d", profiler.Length())
 	}
 	
-	if profiler.TotalTime() <= 0 {
-		t.Errorf("Expected total time > 0, got %f", profiler.TotalTime())
+	// Note: Very fast operations may register as 0 time on systems with low timer resolution (e.g., Windows)
+	if profiler.TotalTime() < 0 {
+		t.Errorf("Expected total time >= 0, got %f", profiler.TotalTime())
 	}
 }
 
