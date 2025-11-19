@@ -424,7 +424,7 @@ func TestForTagParseBodyTagNeverClosed(t *testing.T) {
 		}
 	}()
 
-	tag.parseBody(tokenizer, body)
+	_, _ = tag.parseBody(tokenizer, body)
 }
 
 // Test parseBody with else tag during parsing

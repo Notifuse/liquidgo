@@ -359,7 +359,7 @@ func TestIfTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 		}
 	}()
 
-	tag.parseBodyForBlock(tokenizer, tag.blocks[0])
+	_, _ = tag.parseBodyForBlock(tokenizer, tag.blocks[0])
 }
 
 // Test parseBodyForBlock with error in pushBlock

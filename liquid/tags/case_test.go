@@ -246,7 +246,7 @@ func TestCaseTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 		}
 	}()
 
-	tag.parseBodyForBlock(tokenizer, body)
+	_, _ = tag.parseBodyForBlock(tokenizer, body)
 }
 
 func TestCaseTagRecordWhenCondition(t *testing.T) {

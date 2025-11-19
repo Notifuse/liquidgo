@@ -343,5 +343,5 @@ func TestBlockParseBodyTagNeverClosed(t *testing.T) {
 		}
 	}()
 
-	block.parseBody(tokenizer)
+	_, _ = block.parseBody(tokenizer)
 }
