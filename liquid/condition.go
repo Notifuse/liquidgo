@@ -87,11 +87,12 @@ func (c *Condition) Else() bool {
 	return false
 }
 
-// Evaluate evaluates the condition in the given context.
+// ConditionContext provides context for evaluating conditions.
 type ConditionContext interface {
 	Evaluate(expr interface{}) interface{}
 }
 
+// Evaluate evaluates the condition in the given context.
 func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	condition := c
 	var result bool

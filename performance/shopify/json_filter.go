@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 )
 
-// JsonFilter provides JSON encoding functionality
-type JsonFilter struct{}
+// JSONFilter provides JSON encoding functionality
+type JSONFilter struct{}
 
-// Json converts an object to JSON, excluding the "collections" key
-func (f *JsonFilter) Json(input interface{}) (string, error) {
+// JSON converts an object to JSON, excluding the "collections" key
+func (f *JSONFilter) JSON(input interface{}) (string, error) {
 	// If input is a map, remove collections key
 	if m, ok := input.(map[string]interface{}); ok {
 		filtered := make(map[string]interface{})

@@ -213,8 +213,8 @@ func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 		}
 
 		if endTagName == "" {
-			// Tag never closed
-			return false
+			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
+			panic(b.RaiseTagNeverClosed())
 		}
 
 		// Unknown tag - let block handle it

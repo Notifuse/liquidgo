@@ -9,18 +9,18 @@ import (
 // ShopFilter provides Shopify-specific template filters
 type ShopFilter struct{}
 
-// AssetUrl generates an asset URL
-func (f *ShopFilter) AssetUrl(input string) string {
+// AssetURL generates an asset URL
+func (f *ShopFilter) AssetURL(input string) string {
 	return fmt.Sprintf("/files/1/[shop_id]/[shop_id]/assets/%s", input)
 }
 
-// GlobalAssetUrl generates a global asset URL
-func (f *ShopFilter) GlobalAssetUrl(input string) string {
+// GlobalAssetURL generates a global asset URL
+func (f *ShopFilter) GlobalAssetURL(input string) string {
 	return fmt.Sprintf("/global/%s", input)
 }
 
-// ShopifyAssetUrl generates a Shopify asset URL
-func (f *ShopFilter) ShopifyAssetUrl(input string) string {
+// ShopifyAssetURL generates a Shopify asset URL
+func (f *ShopFilter) ShopifyAssetURL(input string) string {
 	return fmt.Sprintf("/shopify/%s", input)
 }
 
@@ -62,7 +62,7 @@ func (f *ShopFilter) LinkToVendor(vendor interface{}) string {
 		return "Unknown Vendor"
 	}
 	v := fmt.Sprint(vendor)
-	return f.LinkTo(v, f.UrlForVendor(v), v)
+	return f.LinkTo(v, f.URLForVendor(v), v)
 }
 
 // LinkToType generates a link to a product type
@@ -71,21 +71,21 @@ func (f *ShopFilter) LinkToType(productType interface{}) string {
 		return "Unknown Vendor"
 	}
 	t := fmt.Sprint(productType)
-	return f.LinkTo(t, f.UrlForType(t), t)
+	return f.LinkTo(t, f.URLForType(t), t)
 }
 
-// UrlForVendor generates a URL for a vendor
-func (f *ShopFilter) UrlForVendor(vendorTitle string) string {
+// URLForVendor generates a URL for a vendor
+func (f *ShopFilter) URLForVendor(vendorTitle string) string {
 	return fmt.Sprintf("/collections/%s", toHandle(vendorTitle))
 }
 
-// UrlForType generates a URL for a product type
-func (f *ShopFilter) UrlForType(typeTitle string) string {
+// URLForType generates a URL for a product type
+func (f *ShopFilter) URLForType(typeTitle string) string {
 	return fmt.Sprintf("/collections/%s", toHandle(typeTitle))
 }
 
-// ProductImgUrl generates a product image URL with size
-func (f *ShopFilter) ProductImgUrl(url string, style ...string) (string, error) {
+// ProductImgURL generates a product image URL with size
+func (f *ShopFilter) ProductImgURL(url string, style ...string) (string, error) {
 	re := regexp.MustCompile(`\Aproducts/([\w\-\_]+)\.(\w{2,4})`)
 	matches := re.FindStringSubmatch(url)
 	if matches == nil {

@@ -59,6 +59,7 @@ type ArgumentError struct {
 	Err *Error
 }
 
+// NewArgumentError creates a new ArgumentError with the given message.
 func NewArgumentError(message string) *ArgumentError {
 	return &ArgumentError{
 		Err: &Error{Message: message},
@@ -74,6 +75,7 @@ type ContextError struct {
 	Err *Error
 }
 
+// NewContextError creates a new ContextError with the given message.
 func NewContextError(message string) *ContextError {
 	return &ContextError{
 		Err: &Error{Message: message},
@@ -89,6 +91,7 @@ type FileSystemError struct {
 	Err *Error
 }
 
+// NewFileSystemError creates a new FileSystemError with the given message.
 func NewFileSystemError(message string) *FileSystemError {
 	return &FileSystemError{
 		Err: &Error{Message: message},
@@ -104,6 +107,7 @@ type StandardError struct {
 	Err *Error
 }
 
+// NewStandardError creates a new StandardError with the given message.
 func NewStandardError(message string) *StandardError {
 	return &StandardError{
 		Err: &Error{Message: message},
@@ -119,6 +123,7 @@ type SyntaxError struct {
 	Err *Error
 }
 
+// NewSyntaxError creates a new SyntaxError with the given message.
 func NewSyntaxError(message string) *SyntaxError {
 	return &SyntaxError{
 		Err: &Error{Message: message},
@@ -157,6 +162,7 @@ type StackLevelError struct {
 	Err *Error
 }
 
+// NewStackLevelError creates a new StackLevelError with the given message.
 func NewStackLevelError(message string) *StackLevelError {
 	return &StackLevelError{
 		Err: &Error{Message: message},
@@ -172,6 +178,7 @@ type MemoryError struct {
 	Err *Error
 }
 
+// NewMemoryError creates a new MemoryError with the given message.
 func NewMemoryError(message string) *MemoryError {
 	return &MemoryError{
 		Err: &Error{Message: message},
@@ -187,6 +194,7 @@ type ZeroDivisionError struct {
 	Err *Error
 }
 
+// NewZeroDivisionError creates a new ZeroDivisionError with the given message.
 func NewZeroDivisionError(message string) *ZeroDivisionError {
 	return &ZeroDivisionError{
 		Err: &Error{Message: message},
@@ -202,6 +210,7 @@ type FloatDomainError struct {
 	Err *Error
 }
 
+// NewFloatDomainError creates a new FloatDomainError with the given message.
 func NewFloatDomainError(message string) *FloatDomainError {
 	return &FloatDomainError{
 		Err: &Error{Message: message},
@@ -217,6 +226,7 @@ type UndefinedVariable struct {
 	Err *Error
 }
 
+// NewUndefinedVariable creates a new UndefinedVariable with the given message.
 func NewUndefinedVariable(message string) *UndefinedVariable {
 	return &UndefinedVariable{
 		Err: &Error{Message: message},
@@ -232,6 +242,7 @@ type UndefinedDropMethod struct {
 	Err *Error
 }
 
+// NewUndefinedDropMethod creates a new UndefinedDropMethod with the given message.
 func NewUndefinedDropMethod(message string) *UndefinedDropMethod {
 	return &UndefinedDropMethod{
 		Err: &Error{Message: message},
@@ -247,6 +258,7 @@ type UndefinedFilter struct {
 	Err *Error
 }
 
+// NewUndefinedFilter creates a new UndefinedFilter with the given message.
 func NewUndefinedFilter(message string) *UndefinedFilter {
 	return &UndefinedFilter{
 		Err: &Error{Message: message},
@@ -262,6 +274,7 @@ type MethodOverrideError struct {
 	Err *Error
 }
 
+// NewMethodOverrideError creates a new MethodOverrideError with the given message.
 func NewMethodOverrideError(message string) *MethodOverrideError {
 	return &MethodOverrideError{
 		Err: &Error{Message: message},
@@ -277,6 +290,7 @@ type DisabledError struct {
 	Err *Error
 }
 
+// NewDisabledError creates a new DisabledError with the given message.
 func NewDisabledError(message string) *DisabledError {
 	return &DisabledError{
 		Err: &Error{Message: message},
@@ -292,6 +306,7 @@ type InternalError struct {
 	Err *Error
 }
 
+// NewInternalError creates a new InternalError with the given message.
 func NewInternalError(message string) *InternalError {
 	return &InternalError{
 		Err: &Error{Message: message},
@@ -307,6 +322,7 @@ type TemplateEncodingError struct {
 	Err *Error
 }
 
+// NewTemplateEncodingError creates a new TemplateEncodingError with the given message.
 func NewTemplateEncodingError(message string) *TemplateEncodingError {
 	return &TemplateEncodingError{
 		Err: &Error{Message: message},

@@ -163,7 +163,8 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 			return false // Stop parsing
 		}
 		if endTagName == "" {
-			return false // Tag never closed
+			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
+			panic(liquid.NewSyntaxError("Tag was never closed: " + f.BlockName()))
 		}
 		if endTagName == "else" {
 			// Handle else - UnknownTag will create elseBlock if needed

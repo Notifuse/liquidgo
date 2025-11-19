@@ -343,10 +343,23 @@ func TestIfTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 
 	// Create tokenizer that will trigger tag never closed
 	tokenizer := pc.NewTokenizer("content", false, nil, false)
-	shouldContinue, err := tag.parseBodyForBlock(tokenizer, tag.blocks[0])
-	// Should handle gracefully
-	_ = shouldContinue
-	_ = err
+
+	// Should panic with "Tag was never closed" error
+	defer func() {
+		if r := recover(); r != nil {
+			syntaxErr, ok := r.(*liquid.SyntaxError)
+			if !ok {
+				t.Fatalf("Expected SyntaxError panic, got %T: %v", r, r)
+			}
+			if syntaxErr.Error() != "Liquid syntax error: Tag was never closed: if" {
+				t.Errorf("Expected 'Tag was never closed: if', got: %v", syntaxErr.Error())
+			}
+		} else {
+			t.Fatal("Expected panic for unclosed tag, but no panic occurred")
+		}
+	}()
+
+	tag.parseBodyForBlock(tokenizer, tag.blocks[0])
 }
 
 // Test parseBodyForBlock with error in pushBlock

@@ -194,11 +194,10 @@ func (t *Tokenizer) nextVariableToken() string {
 		if byteA == closeCurley {
 			if byteB == closeCurley {
 				return t.ss.Byteslice(start, t.ss.Pos()-start)
-			} else {
-				// Not a closing brace, back up
-				t.ss.SetPos(t.ss.Pos() - 1)
-				return t.ss.Byteslice(start, t.ss.Pos()-start)
 			}
+			// Not a closing brace, back up
+			t.ss.SetPos(t.ss.Pos() - 1)
+			return t.ss.Byteslice(start, t.ss.Pos()-start)
 		} else if byteA == openCurley && byteB == percentage {
 			return t.nextTagTokenWithStart(start)
 		}

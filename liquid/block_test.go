@@ -314,3 +314,34 @@ func TestBlockNesting(t *testing.T) {
 		t.Error("Expected body to be set")
 	}
 }
+
+// TestBlockParseBodyTagNeverClosed tests that parseBody panics when tag is never closed
+func TestBlockParseBodyTagNeverClosed(t *testing.T) {
+	lineNum := 1
+	pc := NewParseContext(ParseContextOptions{})
+	pc.SetLineNumber(&lineNum)
+
+	block := NewBlock("if", "condition", pc)
+	block.body = NewBlockBody()
+
+	// Test with content but no end tag - should panic
+	source := "content without end tag"
+	tokenizer := NewTokenizer(source, nil, false, nil, false)
+
+	// Should panic with "Tag was never closed" error
+	defer func() {
+		if r := recover(); r != nil {
+			syntaxErr, ok := r.(*SyntaxError)
+			if !ok {
+				t.Fatalf("Expected SyntaxError panic, got %T: %v", r, r)
+			}
+			if !strings.Contains(syntaxErr.Error(), "was never closed") {
+				t.Errorf("Expected 'was never closed' in error, got: %v", syntaxErr.Error())
+			}
+		} else {
+			t.Fatal("Expected panic for unclosed tag, but no panic occurred")
+		}
+	}()
+
+	block.parseBody(tokenizer)
+}

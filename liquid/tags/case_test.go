@@ -219,6 +219,36 @@ func TestCaseTagParseBodyForBlock(t *testing.T) {
 	}
 }
 
+// TestCaseTagParseBodyForBlockTagNeverClosed tests that parseBodyForBlock panics when tag is never closed
+func TestCaseTagParseBodyForBlockTagNeverClosed(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewCaseTag("case", "var", pc)
+	if err != nil {
+		t.Fatalf("NewCaseTag() error = %v", err)
+	}
+
+	// Create tokenizer with content but no endcase - should panic
+	body := liquid.NewBlockBody()
+	tokenizer := pc.NewTokenizer("content without endcase", false, nil, false)
+
+	// Should panic with "Tag was never closed" error
+	defer func() {
+		if r := recover(); r != nil {
+			syntaxErr, ok := r.(*liquid.SyntaxError)
+			if !ok {
+				t.Fatalf("Expected SyntaxError panic, got %T: %v", r, r)
+			}
+			if syntaxErr.Error() != "Liquid syntax error: Tag was never closed: case" {
+				t.Errorf("Expected 'Tag was never closed: case', got: %v", syntaxErr.Error())
+			}
+		} else {
+			t.Fatal("Expected panic for unclosed tag, but no panic occurred")
+		}
+	}()
+
+	tag.parseBodyForBlock(tokenizer, body)
+}
+
 func TestCaseTagRecordWhenCondition(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
 	tag, err := NewCaseTag("case", "var", pc)

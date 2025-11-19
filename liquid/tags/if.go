@@ -132,8 +132,8 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 		}
 
 		if endTagName == "" {
-			// Tag never closed
-			return false
+			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
+			panic(liquid.NewSyntaxError("Tag was never closed: " + i.BlockName()))
 		}
 
 		// Handle elsif and else (Ruby: unknown_tag handles these)

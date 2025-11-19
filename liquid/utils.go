@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	// DECIMAL_REGEX matches decimal numbers
-	DECIMAL_REGEX = regexp.MustCompile(`^-?\d+\.\d+$`)
+	// DecimalRegex matches decimal numbers
+	DecimalRegex = regexp.MustCompile(`^-?\d+\.\d+$`)
 
-	// UNIX_TIMESTAMP_REGEX matches unix timestamps
-	UNIX_TIMESTAMP_REGEX = regexp.MustCompile(`^\d+$`)
+	// UnixTimestampRegex matches unix timestamps
+	UnixTimestampRegex = regexp.MustCompile(`^\d+$`)
 )
 
 // SliceCollection slices a collection from index `from` to index `to` (exclusive).
@@ -147,7 +147,7 @@ func ToNumber(obj interface{}) interface{} {
 		return v
 	case string:
 		trimmed := strings.TrimSpace(v)
-		if DECIMAL_REGEX.MatchString(trimmed) {
+		if DecimalRegex.MatchString(trimmed) {
 			f, err := strconv.ParseFloat(trimmed, 64)
 			if err != nil {
 				return 0
@@ -186,7 +186,7 @@ func ToDate(obj interface{}) *time.Time {
 			now := time.Now()
 			return &now
 		}
-		if UNIX_TIMESTAMP_REGEX.MatchString(v) {
+		if UnixTimestampRegex.MatchString(v) {
 			ts, err := strconv.ParseInt(v, 10, 64)
 			if err != nil {
 				return nil

@@ -23,22 +23,22 @@ func TestConstants(t *testing.T) {
 		t.Error("VariableEnd should not be nil")
 	}
 
-	// Test EMPTY_HASH and EMPTY_ARRAY
-	if EMPTY_HASH == nil {
-		t.Error("EMPTY_HASH should not be nil")
+	// Test EmptyHash and EmptyArray
+	if EmptyHash == nil {
+		t.Error("EmptyHash should not be nil")
 	}
-	if EMPTY_ARRAY == nil {
-		t.Error("EMPTY_ARRAY should not be nil")
-	}
-
-	// Test that EMPTY_HASH is empty
-	if len(EMPTY_HASH) != 0 {
-		t.Errorf("EMPTY_HASH should be empty, got length %d", len(EMPTY_HASH))
+	if EmptyArray == nil {
+		t.Error("EmptyArray should not be nil")
 	}
 
-	// Test that EMPTY_ARRAY is empty
-	if len(EMPTY_ARRAY) != 0 {
-		t.Errorf("EMPTY_ARRAY should be empty, got length %d", len(EMPTY_ARRAY))
+	// Test that EmptyHash is empty
+	if len(EmptyHash) != 0 {
+		t.Errorf("EmptyHash should be empty, got length %d", len(EmptyHash))
+	}
+
+	// Test that EmptyArray is empty
+	if len(EmptyArray) != 0 {
+		t.Errorf("EmptyArray should be empty, got length %d", len(EmptyArray))
 	}
 }
 

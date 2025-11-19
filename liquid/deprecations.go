@@ -53,7 +53,7 @@ func (d *Deprecations) Reset() {
 	d.warned = make(map[string]bool)
 }
 
-// Reset clears all warned deprecations in the global instance (useful for testing).
+// ResetDeprecations clears all warned deprecations in the global instance (useful for testing).
 func ResetDeprecations() {
 	globalDeprecations.Reset()
 }

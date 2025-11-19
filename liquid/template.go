@@ -312,7 +312,7 @@ type RenderOptions struct {
 	StrictFilters     bool
 }
 
-// Render! renders the template with rethrow_errors enabled.
+// RenderBang renders the template with rethrow_errors enabled.
 func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) string {
 	t.rethrowErrors = true
 	return t.Render(assigns, options)

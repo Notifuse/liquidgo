@@ -174,6 +174,18 @@ func (bb *BlockBody) parseForDocument(tokenizer *Tokenizer, parseContext ParseCo
 				continue
 			}
 
+			// Count newlines inside the tag token (matches[1] and matches[3] are whitespace captures)
+			// This is particularly important for multiline {% liquid %} tags
+			if parseContext.LineNumber() != nil && len(matches) >= 4 {
+				whitespaceBefore := matches[1]
+				whitespaceAfter := matches[3]
+				newlineCount := strings.Count(whitespaceBefore, "\n") + strings.Count(whitespaceAfter, "\n")
+				if newlineCount > 0 {
+					lineNum := *parseContext.LineNumber() + newlineCount
+					parseContext.SetLineNumber(&lineNum)
+				}
+			}
+
 			tagName := matches[2]
 			markup := matches[4]
 
@@ -277,9 +289,10 @@ func (bb *BlockBody) whitespaceHandler(token string, parseContext ParseContextIn
 			}
 		}
 	}
-	if len(token) >= 3 && token[len(token)-3] == '-' {
-		parseContext.SetTrimWhitespace(true)
-	}
+	// Always set trim_whitespace flag based on whether this token has a trailing dash
+	// This matches Ruby's behavior: parse_context.trim_whitespace = (token[-3] == WhitespaceControl)
+	hasTrailingDash := len(token) >= 3 && token[len(token)-3] == '-'
+	parseContext.SetTrimWhitespace(hasTrailingDash)
 }
 
 func (bb *BlockBody) createVariable(token string, parseContext ParseContextInterface) *Variable {

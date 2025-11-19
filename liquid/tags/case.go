@@ -177,7 +177,8 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 			return false // Stop parsing - found endcase
 		}
 		if endTagName == "" {
-			return false // Tag never closed
+			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
+			panic(liquid.NewSyntaxError("Tag was never closed: " + c.BlockName()))
 		}
 
 		// Handle when and else

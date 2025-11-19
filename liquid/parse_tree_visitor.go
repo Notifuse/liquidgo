@@ -22,7 +22,7 @@ func NewParseTreeVisitor(node interface{}, callbacks map[reflect.Type]ParseTreeV
 	}
 }
 
-// For creates a ParseTreeVisitor for a node, using node-specific visitor if available.
+// ForParseTreeVisitor creates a ParseTreeVisitor for a node, using node-specific visitor if available.
 func ForParseTreeVisitor(node interface{}, callbacks map[reflect.Type]ParseTreeVisitorCallback) *ParseTreeVisitor {
 	nodeType := reflect.TypeOf(node)
 	if nodeType == nil {
@@ -93,7 +93,7 @@ func (ptv *ParseTreeVisitor) children() []interface{} {
 	// Check if node has Nodelist method
 	nodeValue := reflect.ValueOf(ptv.node)
 	if !nodeValue.IsValid() {
-		return EMPTY_ARRAY
+		return EmptyArray
 	}
 
 	nodelistMethod := nodeValue.MethodByName("Nodelist")
@@ -106,5 +106,5 @@ func (ptv *ParseTreeVisitor) children() []interface{} {
 		}
 	}
 
-	return EMPTY_ARRAY
+	return EmptyArray
 }

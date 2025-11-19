@@ -69,9 +69,9 @@ var (
 
 // Const contains empty constants similar to Ruby's frozen empty collections.
 var (
-	// EMPTY_HASH is an empty map that can be reused
-	EMPTY_HASH = map[string]interface{}{}
+	// EmptyHash is an empty map that can be reused
+	EmptyHash = map[string]interface{}{}
 
-	// EMPTY_ARRAY is an empty slice that can be reused
-	EMPTY_ARRAY = []interface{}{}
+	// EmptyArray is an empty slice that can be reused
+	EmptyArray = []interface{}{}
 )

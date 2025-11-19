@@ -24,7 +24,7 @@ func NewEnvironment() *Environment {
 		strainerTemplate:           NewStrainerTemplateClass(),
 		exceptionRenderer:          func(err error) interface{} { return err },
 		fileSystem:                 &BlankFileSystem{},
-		defaultResourceLimits:      EMPTY_HASH,
+		defaultResourceLimits:      EmptyHash,
 		strainerTemplateClassCache: make(map[string]*StrainerTemplateClass),
 	}
 

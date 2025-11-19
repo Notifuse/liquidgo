@@ -8,9 +8,10 @@ import (
 	"github.com/Notifuse/liquidgo/liquid/tags"
 )
 
-// Custom filter
+// MyFilters provides custom filter methods for templates.
 type MyFilters struct{}
 
+// Reverse reverses the input string.
 func (f *MyFilters) Reverse(input string) string {
 	runes := []rune(input)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
@@ -19,6 +20,7 @@ func (f *MyFilters) Reverse(input string) string {
 	return string(runes)
 }
 
+// Shout converts the input string to uppercase and appends exclamation marks.
 func (f *MyFilters) Shout(input string) string {
 	return strings.ToUpper(input) + "!!!"
 }
