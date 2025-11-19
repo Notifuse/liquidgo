@@ -55,7 +55,13 @@ func (s *SnippetTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	snippetDrop := liquid.NewSnippetDrop(bodyOutput, s.to, templateName)
 
 	// Assign to variable in last scope (matching Ruby's context.scopes.last[@to])
-	ctx.SetLast(s.to, snippetDrop)
+	// Use direct scope access like the test does
+	scopes := ctx.Scopes()
+	if len(scopes) == 0 {
+		scopes = []map[string]interface{}{make(map[string]interface{})}
+	}
+	// Set in the last scope
+	scopes[len(scopes)-1][s.to] = snippetDrop
 
 	// Increment assign score in resource limits
 	rl := context.ResourceLimits()
