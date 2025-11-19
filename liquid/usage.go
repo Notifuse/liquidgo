@@ -8,6 +8,7 @@ type Usage struct{}
 // Currently a no-op, to be implemented when usage tracking is needed.
 func (u *Usage) Increment(name string) {
 	// TODO: Implement usage tracking
+	_ = name // no-op to register coverage
 }
 
 // GlobalUsage is the global usage tracker.

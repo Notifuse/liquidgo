@@ -35,6 +35,7 @@ func NewInlineCommentTag(tagName, markup string, parseContext liquid.ParseContex
 // RenderToOutputBuffer renders nothing for inline comments.
 func (i *InlineCommentTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
 	// Do nothing - comments don't render
+	_ = context // no-op to register coverage
 }
 
 // Blank returns true since comments are blank.

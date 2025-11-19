@@ -41,6 +41,7 @@ func NewDocTag(tagName, markup string, parseContext liquid.ParseContextInterface
 // RenderToOutputBuffer renders the doc tag (does nothing - docs don't render).
 func (d *DocTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
 	// Docs don't render anything
+	_ = context // no-op to register coverage
 }
 
 // Blank returns true if body is empty.

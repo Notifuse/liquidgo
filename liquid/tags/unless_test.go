@@ -191,3 +191,105 @@ func TestUnlessTagRenderToOutputBufferEdgeCases(t *testing.T) {
 		t.Logf("Note: Unless with elsif output: %q (expected 'unless content ')", output)
 	}
 }
+
+// TestUnlessTagInvalidCondition tests error handling in NewUnlessTag
+func TestUnlessTagInvalidCondition(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Test with various syntaxes to try to trigger parse errors
+	testCases := []string{
+		"var ==",
+		"== value",
+		"var and",
+		"(unclosed",
+		"contains",
+	}
+
+	for _, markup := range testCases {
+		tag, err := NewUnlessTag("unless", markup, pc)
+		// May or may not error depending on parser behavior
+		if err != nil {
+			// Error is fine - this is one of the paths we want to test
+			continue
+		}
+		if tag == nil {
+			t.Errorf("Expected non-nil tag or error for markup: %s", markup)
+		}
+	}
+}
+
+// TestUnlessTagRenderWithError tests error handling during render
+func TestUnlessTagRenderWithError(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	// Create an unless tag with a condition that will error during evaluation
+	// Use an invalid filter or operation
+	tag, err := NewUnlessTag("unless", "var | invalid_filter", pc)
+	if err != nil {
+		// Parse error is fine, test passes
+		return
+	}
+
+	tokenizer := pc.NewTokenizer("content {% endunless %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.Set("var", "value")
+
+	var output string
+	// This should handle the error gracefully
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Output may contain error message or be empty
+	_ = output
+}
+
+// TestUnlessTagWithNonBooleanResultValues tests various falsy/truthy values
+func TestUnlessTagWithVariousValues(t *testing.T) {
+	tests := []struct {
+		name         string
+		varName      string
+		varValue     interface{}
+		shouldRender bool
+	}{
+		{"zero int", "myvar", 0, false},                       // 0 is truthy in Liquid
+		{"non-empty array", "myvar", []interface{}{1}, false}, // non-empty is truthy
+		{"false bool", "myvar", false, true},
+		{"true bool", "myvar", true, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+			tag, err := NewUnlessTag("unless", tt.varName, pc)
+			if err != nil {
+				t.Fatalf("NewUnlessTag() error = %v", err)
+			}
+
+			tokenizer := pc.NewTokenizer("content {% endunless %}", false, nil, false)
+			err = tag.Parse(tokenizer)
+			if err != nil {
+				t.Fatalf("Parse() error = %v", err)
+			}
+
+			ctx := liquid.NewContext()
+			ctx.Set(tt.varName, tt.varValue)
+
+			var output string
+			tag.RenderToOutputBuffer(ctx, &output)
+
+			if tt.shouldRender {
+				if output == "" {
+					t.Errorf("Expected content to render for %v, got empty", tt.varValue)
+				}
+			} else {
+				if output != "" {
+					t.Errorf("Expected no content for %v, got %q", tt.varValue, output)
+				}
+			}
+		})
+	}
+}

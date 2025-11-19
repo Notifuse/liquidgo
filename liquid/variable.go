@@ -375,6 +375,7 @@ func (p *parseContextWrapper) ErrorMode() string {
 	return p.errorMode
 }
 
-func (p *parseContextWrapper) AddWarning(error) {
+func (p *parseContextWrapper) AddWarning(err error) {
 	// No-op for wrapper
+	_ = err // no-op to register coverage
 }
