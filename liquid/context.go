@@ -277,7 +277,7 @@ func (c *Context) PopInterrupt() interface{} {
 
 // HandleError handles an error and returns the rendered error message.
 func (c *Context) HandleError(err error, lineNumber *int) string {
-	var liquidErr error = err
+	liquidErr := err
 
 	// Ensure it's a Liquid error
 	if _, ok := err.(*Error); !ok {

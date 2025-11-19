@@ -104,20 +104,19 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 		}
 
 		resultVal := ToLiquidValue(result)
+		shouldContinue := false
 		switch condition.childRelation {
 		case "or":
-			if resultVal != nil && resultVal != false && resultVal != "" {
-				break
+			if resultVal == nil || resultVal == false || resultVal == "" {
+				shouldContinue = true
 			}
 		case "and":
-			if resultVal == nil || resultVal == false || resultVal == "" {
-				break
+			if resultVal != nil && resultVal != false && resultVal != "" {
+				shouldContinue = true
 			}
-		default:
-			break
 		}
 
-		if condition.childCondition == nil {
+		if !shouldContinue || condition.childCondition == nil {
 			break
 		}
 		condition = condition.childCondition

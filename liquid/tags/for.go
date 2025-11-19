@@ -174,11 +174,7 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 			return false // Stop parsing current block, continue with else block
 		}
 		// Unknown tag - let block handle it
-		err := f.UnknownTag(endTagName, endTagMarkup, tokenizer)
-		if err != nil {
-			return false
-		}
-		return true
+		return f.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)
@@ -341,10 +337,10 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 			// Handle interrupts
 			if ctx.Interrupt() {
 				interrupt := ctx.PopInterrupt()
-				if _, ok := interrupt.(*liquid.BreakInterrupt); ok {
+				switch interrupt.(type) {
+				case *liquid.BreakInterrupt:
 					break
-				}
-				if _, ok := interrupt.(*liquid.ContinueInterrupt); ok {
+				case *liquid.ContinueInterrupt:
 					continue
 				}
 			}

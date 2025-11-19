@@ -122,7 +122,7 @@ func (sf *StandardFilters) Base64URLSafeDecode(input interface{}) (string, error
 // Slice returns a substring or series of array items.
 func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length interface{}) interface{} {
 	offsetInt, _ := ToInteger(offset)
-	var lengthInt int = 1
+	lengthInt := 1
 	if length != nil {
 		lengthInt, _ = ToInteger(length)
 	}

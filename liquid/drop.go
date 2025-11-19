@@ -231,7 +231,7 @@ func GetInvokableMethods(drop interface{}) []string {
 	// Keep pointer type for method lookup
 	if t.Kind() != reflect.Ptr {
 		// If not a pointer, create a pointer type
-		t = reflect.PtrTo(t)
+		t = reflect.PointerTo(t)
 	}
 	
 	// Blacklist of methods that shouldn't be invokable

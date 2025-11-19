@@ -187,11 +187,7 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 		}
 
 		// Unknown tag - let block handle it
-		err := c.UnknownTag(endTagName, endTagMarkup, tokenizer)
-		if err != nil {
-			return false
-		}
-		return true
+		return c.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)
@@ -284,7 +280,6 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
 				attachment.RenderToOutputBuffer(context, output)
 			}
-			executeElseBlock = false
 			return
 		}
 	}
