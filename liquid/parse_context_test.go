@@ -202,3 +202,104 @@ func TestParseContextPartialOptions(t *testing.T) {
 		t.Error("Expected test_option to be excluded from partial options")
 	}
 }
+
+func TestParseContextPartialOptionsWithBlacklistArray(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{
+		TemplateOptions: map[string]interface{}{
+			"test_option":               "test_value",
+			"another_option":            "another_value",
+			"include_options_blacklist": []string{"test_option"},
+		},
+	})
+
+	pc.SetPartial(true)
+
+	// test_option should be excluded
+	val := pc.GetOption("test_option")
+	if val != nil {
+		t.Error("Expected test_option to be excluded from partial options")
+	}
+
+	// another_option should be included
+	val = pc.GetOption("another_option")
+	if val != "another_value" {
+		t.Errorf("Expected 'another_value', got %v", val)
+	}
+}
+
+func TestParseContextPartialOptionsNoBlacklist(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{
+		TemplateOptions: map[string]interface{}{
+			"test_option": "test_value",
+		},
+	})
+
+	pc.SetPartial(true)
+
+	// All options should be included when no blacklist
+	val := pc.GetOption("test_option")
+	if val != "test_value" {
+		t.Errorf("Expected 'test_value', got %v", val)
+	}
+}
+
+func TestParseContextPartialOptionsSetToFalse(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{
+		TemplateOptions: map[string]interface{}{
+			"test_option": "test_value",
+		},
+	})
+
+	pc.SetPartial(true)
+	pc.SetPartial(false)
+
+	// After setting partial to false, should use template options directly
+	val := pc.GetOption("test_option")
+	if val != "test_value" {
+		t.Errorf("Expected 'test_value', got %v", val)
+	}
+
+	// Error mode should reset to environment default
+	if pc.ErrorMode() != pc.Environment().ErrorMode() {
+		t.Error("Expected error mode to reset to environment default")
+	}
+}
+
+func TestParseContextSafeParseExpressionStrictMode(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{ErrorMode: "strict"})
+	parser := pc.NewParser("invalid+++")
+
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic in strict mode for invalid expression")
+			}
+		}()
+		pc.SafeParseExpression(parser)
+	}()
+}
+
+func TestParseContextSafeParseExpressionRigidMode(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{ErrorMode: "rigid"})
+	parser := pc.NewParser("invalid+++")
+
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic in rigid mode for invalid expression")
+			}
+		}()
+		pc.SafeParseExpression(parser)
+	}()
+}
+
+func TestParseContextSafeParseExpressionLaxMode(t *testing.T) {
+	pc := NewParseContext(ParseContextOptions{ErrorMode: "lax"})
+	parser := pc.NewParser("invalid+++")
+
+	// Should not panic in lax mode
+	result := pc.SafeParseExpression(parser)
+	if result != nil {
+		t.Errorf("Expected nil result in lax mode for invalid expression, got %v", result)
+	}
+}

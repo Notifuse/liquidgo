@@ -81,3 +81,50 @@ func TestSnippetTagRenders(t *testing.T) {
 		t.Errorf("Expected SnippetDrop, got %T", val)
 	}
 }
+
+func TestSnippetTagEmptyMarkup(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	_, err := NewSnippetTag("snippet", "", pc)
+	if err == nil {
+		t.Fatal("Expected error for empty markup")
+	}
+	if _, ok := err.(*liquid.SyntaxError); !ok {
+		t.Errorf("Expected SyntaxError, got %T", err)
+	}
+}
+
+func TestSnippetTagWithResourceLimits(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	renderLimit := 1000
+	renderScoreLimit := 1000
+	assignScoreLimit := 1000
+	rl := liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+		RenderLengthLimit: &renderLimit,
+		RenderScoreLimit:  &renderScoreLimit,
+		AssignScoreLimit:  &assignScoreLimit,
+	})
+
+	tag, err := NewSnippetTag("snippet", "my_snippet", pc)
+	if err != nil {
+		t.Fatalf("NewSnippetTag() error = %v", err)
+	}
+
+	// Parse snippet block
+	tokenizer := pc.NewTokenizer("content {% endsnippet %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	ctx.SetResourceLimits(rl)
+	ctx.SetTemplateName("test.liquid")
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Verify snippet was assigned
+	val := ctx.Get("my_snippet")
+	if val == nil {
+		t.Error("Expected snippet to be assigned")
+	}
+}

@@ -167,3 +167,162 @@ func TestParserArgument(t *testing.T) {
 		t.Error("Expected Argument() to return non-empty string")
 	}
 }
+
+func TestParserExpressionArrayBrackets(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"simple array access", "[0]", "[0]"},
+		{"array access with expression", "[items[0]]", "[items[0]]"},
+		{"nested brackets", "[[0]]", "[[0]]"},
+		{"array with string index", "[\"key\"]", "[\"key\"]"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewParser(tt.input)
+			result, err := parser.Expression()
+			if err != nil {
+				t.Fatalf("Expression() error = %v", err)
+			}
+			if result != tt.want {
+				t.Errorf("Expression() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+func TestParserExpressionRange(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"number range", "(1..10)", "(1..10)"},
+		{"string range", "(\"a\"..\"z\")", "(\"a\"..\"z\")"},
+		{"variable range", "(start..end)", "(start..end)"},
+		{"complex range", "(items[0]..items[1])", "(items[0]..items[1])"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewParser(tt.input)
+			result, err := parser.Expression()
+			if err != nil {
+				t.Fatalf("Expression() error = %v", err)
+			}
+			if result != tt.want {
+				t.Errorf("Expression() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+func TestParserExpressionErrors(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"empty input", ""},
+		{"invalid token", "+++"},
+		{"incomplete range", "(1.."},
+		{"incomplete brackets", "[0"},
+		{"unclosed brackets", "items[0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewParser(tt.input)
+			_, err := parser.Expression()
+			if err == nil {
+				t.Error("Expected error from Expression()")
+			}
+		})
+	}
+}
+
+func TestParserExpressionComplex(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"nested array access", "items[0][1]", "items[0][1]"},
+		{"array with dot notation", "items[0].name", "items[0].name"},
+		{"complex nested", "user.profile.items[0].name", "user.profile.items[0].name"},
+		{"brackets with expression", "items[user.id]", "items[user.id]"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewParser(tt.input)
+			result, err := parser.Expression()
+			if err != nil {
+				t.Fatalf("Expression() error = %v", err)
+			}
+			if result != tt.want {
+				t.Errorf("Expression() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+func TestParserConsumeEndOfStream(t *testing.T) {
+	parser := NewParser("hello")
+	_, _ = parser.Consume(":id") // Consume "hello"
+
+	// Should error on end of stream
+	_, err := parser.Consume(":id")
+	if err == nil {
+		t.Error("Expected error when consuming at end of stream")
+	}
+}
+
+func TestParserConsumeOptionalEndOfStream(t *testing.T) {
+	parser := NewParser("hello")
+	_, _ = parser.ConsumeOptional(":id") // Consume "hello"
+
+	// Should return false at end of stream
+	_, ok := parser.ConsumeOptional(":id")
+	if ok {
+		t.Error("Expected ConsumeOptional to return false at end of stream")
+	}
+}
+
+func TestParserLookAhead(t *testing.T) {
+	parser := NewParser("hello world test")
+
+	// Look ahead beyond available tokens
+	if parser.Look(":id", 10) {
+		t.Error("Expected Look() to return false when looking too far ahead")
+	}
+}
+
+func TestParserIDEndOfStream(t *testing.T) {
+	parser := NewParser("hello")
+	_, _ = parser.Consume(":id") // Consume "hello"
+
+	// Should return false at end of stream
+	_, ok := parser.ID("world")
+	if ok {
+		t.Error("Expected ID() to return false at end of stream")
+	}
+}
+
+func TestParserNewParserWithStringScanner(t *testing.T) {
+	ss := NewStringScanner("test")
+	parser := NewParser(ss)
+	if parser == nil {
+		t.Fatal("Expected parser, got nil")
+	}
+}
+
+func TestParserNewParserWithOtherType(t *testing.T) {
+	// Test with non-string, non-scanner type
+	parser := NewParser(42)
+	if parser == nil {
+		t.Fatal("Expected parser, got nil")
+	}
+}

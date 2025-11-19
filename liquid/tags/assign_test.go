@@ -223,3 +223,83 @@ func TestAssignTagWithMap(t *testing.T) {
 		t.Errorf("Expected variable value 'result', got %v", val)
 	}
 }
+
+func TestAssignTagWithResourceLimits(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	renderLimit := 1000
+	renderScoreLimit := 1000
+	assignScoreLimit := 1000
+	rl := liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+		RenderLengthLimit: &renderLimit,
+		RenderScoreLimit:  &renderScoreLimit,
+		AssignScoreLimit:  &assignScoreLimit,
+	})
+
+	ctx := liquid.NewContext()
+	ctx.SetResourceLimits(rl)
+
+	tag, err := NewAssignTag("assign", `var = "hello"`, pc)
+	if err != nil {
+		t.Fatalf("NewAssignTag() error = %v", err)
+	}
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Verify assignment worked
+	val := ctx.Get("var")
+	if val != "hello" {
+		t.Errorf("Expected variable value 'hello', got %v", val)
+	}
+}
+
+func TestAssignTagWithComplexVariableName(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	tests := []struct {
+		name   string
+		markup string
+		wantTo string
+	}{
+		{"dot notation", `var.name = "value"`, "var.name"},
+		{"brackets", `var[0] = "value"`, "var[0]"},
+		{"nested brackets", `var[0][1] = "value"`, "var[0][1]"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tag, err := NewAssignTag("assign", tt.markup, pc)
+			if err != nil {
+				t.Fatalf("NewAssignTag() error = %v", err)
+			}
+			if tag.To() != tt.wantTo {
+				t.Errorf("Expected To() = %q, got %q", tt.wantTo, tag.To())
+			}
+		})
+	}
+}
+
+func TestAssignTagWithWhitespace(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+
+	tests := []struct {
+		name   string
+		markup string
+		wantTo string
+	}{
+		{"extra spaces", `  var  =  "value"  `, "var"},
+		{"tabs", "var\t=\t\"value\"", "var"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tag, err := NewAssignTag("assign", tt.markup, pc)
+			if err != nil {
+				t.Fatalf("NewAssignTag() error = %v", err)
+			}
+			if tag.To() != tt.wantTo {
+				t.Errorf("Expected To() = %q, got %q", tt.wantTo, tag.To())
+			}
+		})
+	}
+}

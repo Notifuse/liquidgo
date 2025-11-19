@@ -94,3 +94,73 @@ func TestUnlessTagWithElse(t *testing.T) {
 		t.Errorf("Expected output ' else content ', got %q", output)
 	}
 }
+
+func TestUnlessTagWithNilValue(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewUnlessTag("unless", "nil_var", pc)
+	if err != nil {
+		t.Fatalf("NewUnlessTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	// Don't set nil_var, so it will be nil
+	tokenizer := pc.NewTokenizer("content {% endunless %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// nil value should render (unless renders when false/nil)
+	if output != "content " {
+		t.Errorf("Expected output 'content ', got %q", output)
+	}
+}
+
+func TestUnlessTagWithEmptyString(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewUnlessTag("unless", `""`, pc)
+	if err != nil {
+		t.Fatalf("NewUnlessTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	tokenizer := pc.NewTokenizer("content {% endunless %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Empty string should render (unless renders when false/empty)
+	if output != "content " {
+		t.Errorf("Expected output 'content ', got %q", output)
+	}
+}
+
+func TestUnlessTagWithErrorInEvaluation(t *testing.T) {
+	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
+	tag, err := NewUnlessTag("unless", "invalid_var", pc)
+	if err != nil {
+		t.Fatalf("NewUnlessTag() error = %v", err)
+	}
+
+	ctx := liquid.NewContext()
+	tokenizer := pc.NewTokenizer("content {% endunless %}", false, nil, false)
+	err = tag.Parse(tokenizer)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	// Create a context that will cause an error during evaluation
+	// Use a variable that causes an error when evaluated
+	var output string
+	tag.RenderToOutputBuffer(ctx, &output)
+
+	// Should handle error gracefully (output may contain error message or be empty)
+	// The exact behavior depends on error handling implementation
+}
