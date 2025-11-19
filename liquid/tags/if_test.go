@@ -636,18 +636,3 @@ func TestIfTagComplexNestedConditions(t *testing.T) {
 		}
 	}()
 }
-
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr ||
-		(len(s) > len(substr) && (s[:len(substr)] == substr ||
-			s[len(s)-len(substr):] == substr || containsStringMiddle(s, substr))))
-}
-
-func containsStringMiddle(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
