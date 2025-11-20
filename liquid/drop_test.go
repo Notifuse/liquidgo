@@ -635,13 +635,14 @@ func TestDropInvokeDropOldEdgeCases(t *testing.T) {
 
 // TestDropInvokeDropOnEdgeCases tests InvokeDropOn with edge cases
 func TestDropInvokeDropOnEdgeCases(t *testing.T) {
-	// Test with non-pointer drop
+	// Test with non-pointer drop (now supported for typed slice compatibility)
 	nonPtrDrop := testDropStruct{
 		Value: "test",
 	}
 	result := InvokeDropOn(nonPtrDrop, "Value")
-	if result != nil {
-		t.Errorf("Expected nil for non-pointer drop, got %v", result)
+	// Non-pointer structs now support field access (for typed slices like []BlogPost)
+	if result != "test" {
+		t.Errorf("Expected 'test' for non-pointer struct field access, got %v", result)
 	}
 
 	// Test with non-invokable drop
@@ -1264,5 +1265,168 @@ func TestInvokeDropOnOriginalCasePath(t *testing.T) {
 	// Should find the field
 	if result2 != "caps" {
 		t.Logf("ALLCAPS access returned: %v (expected 'caps')", result2)
+	}
+}
+
+// TestSnakeToCamel tests the snake_case to CamelCase conversion function
+func TestSnakeToCamel(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"", ""},
+		{"simple", "Simple"},
+		{"snake_case", "SnakeCase"},
+		{"comments_count", "CommentsCount"},
+		{"created_at", "CreatedAt"},
+		{"user_id", "UserId"},
+		{"multi_word_property", "MultiWordProperty"},
+		{"already_camel", "AlreadyCamel"},
+		{"with_numbers_123", "WithNumbers123"},
+		{"_leading_underscore", "LeadingUnderscore"},
+		{"trailing_underscore_", "TrailingUnderscore"},
+		{"double__underscore", "DoubleUnderscore"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := snakeToCamel(tt.input)
+			if result != tt.expected {
+				t.Errorf("snakeToCamel(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestInvokeDropOnStructWithSnakeCase tests accessing struct fields using snake_case names
+func TestInvokeDropOnStructWithSnakeCase(t *testing.T) {
+	type BlogPost struct {
+		Title         string
+		Author        string
+		CommentsCount int
+		CreatedAt     string
+		IsPublished   bool
+	}
+
+	post := BlogPost{
+		Title:         "Test Post",
+		Author:        "Alice",
+		CommentsCount: 42,
+		CreatedAt:     "2024-01-15",
+		IsPublished:   true,
+	}
+
+	tests := []struct {
+		name     string
+		key      string
+		expected interface{}
+	}{
+		// CamelCase access (existing behavior)
+		{"CamelCase - Title", "Title", "Test Post"},
+		{"CamelCase - Author", "Author", "Alice"},
+		{"CamelCase - CommentsCount", "CommentsCount", 42},
+		// snake_case access (new behavior)
+		{"snake_case - title", "title", "Test Post"},
+		{"snake_case - author", "author", "Alice"},
+		{"snake_case - comments_count", "comments_count", 42},
+		{"snake_case - created_at", "created_at", "2024-01-15"},
+		{"snake_case - is_published", "is_published", true},
+		// lowercase access
+		{"lowercase - title", "title", "Test Post"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := InvokeDropOn(post, tt.key)
+			if result != tt.expected {
+				t.Errorf("InvokeDropOn(post, %q) = %v, want %v", tt.key, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestInvokeDropOnNonPointerStruct tests that InvokeDropOn works with non-pointer structs
+// This is important for structs extracted from typed slices
+func TestInvokeDropOnNonPointerStruct(t *testing.T) {
+	type Product struct {
+		Name  string
+		Price float64
+		Stock int
+	}
+
+	// Non-pointer struct (as you'd get from a []Product slice element)
+	product := Product{
+		Name:  "Widget",
+		Price: 19.99,
+		Stock: 100,
+	}
+
+	tests := []struct {
+		name     string
+		key      string
+		expected interface{}
+	}{
+		{"direct field access - Name", "Name", "Widget"},
+		{"direct field access - Price", "Price", 19.99},
+		{"direct field access - Stock", "Stock", 100},
+		{"lowercase access - name", "name", "Widget"},
+		{"lowercase access - price", "price", 19.99},
+		{"lowercase access - stock", "stock", 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := InvokeDropOn(product, tt.key)
+			if result != tt.expected {
+				t.Errorf("InvokeDropOn(product, %q) = %v, want %v", tt.key, result, tt.expected)
+			}
+		})
+	}
+
+	// Test that IsInvokable also works with non-pointer structs
+	if !IsInvokable(product, "Name") {
+		t.Error("IsInvokable(product, 'Name') should return true")
+	}
+	if !IsInvokable(product, "name") {
+		t.Error("IsInvokable(product, 'name') should return true")
+	}
+}
+
+// TestIsInvokableWithSnakeCase tests that IsInvokable recognizes snake_case field names
+func TestIsInvokableWithSnakeCase(t *testing.T) {
+	type TestStruct struct {
+		UserName      string
+		CommentsCount int
+		CreatedAt     string
+	}
+
+	obj := TestStruct{
+		UserName:      "test",
+		CommentsCount: 5,
+		CreatedAt:     "2024-01-15",
+	}
+
+	tests := []struct {
+		name     string
+		key      string
+		expected bool
+	}{
+		{"CamelCase field", "UserName", true},
+		{"snake_case conversion", "user_name", true},
+		{"CamelCase field 2", "CommentsCount", true},
+		{"snake_case conversion 2", "comments_count", true},
+		{"CamelCase field 3", "CreatedAt", true},
+		{"snake_case conversion 3", "created_at", true},
+		{"non-existent field", "nonexistent", false},
+		{"non-existent snake_case", "non_existent_field", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsInvokable(obj, tt.key)
+			if result != tt.expected {
+				t.Errorf("IsInvokable(obj, %q) = %v, want %v", tt.key, result, tt.expected)
+			}
+		})
 	}
 }

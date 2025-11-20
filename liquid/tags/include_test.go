@@ -441,3 +441,6 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
+
+// Note: Tests for include tag with typed slices are covered in integration tests
+// (see integration/comprehensive_test.go TestBlogPostTags/Include_tag)

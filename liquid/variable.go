@@ -325,6 +325,13 @@ func (v *Variable) endOfArguments(p *Parser) bool {
 }
 
 // Render renders the variable.
+// Evaluate evaluates the variable with filters, used when Variable appears in conditions.
+// This ensures that Variables with filters are properly evaluated in if/unless/case conditions.
+func (v *Variable) Evaluate(context *Context) interface{} {
+	// Context implements TagContext, so we can use it directly
+	return v.Render(context)
+}
+
 func (v *Variable) Render(context TagContext) interface{} {
 	// Evaluate the variable name expression directly (like Ruby: context.evaluate(@name))
 	nameExpr := v.Name()

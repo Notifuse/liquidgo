@@ -61,56 +61,73 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 	}
 
 	v := reflect.ValueOf(drop)
-	if v.Kind() != reflect.Ptr {
-		return nil
-	}
 
-	t := v.Type()
+	// Handle both pointer and non-pointer types for method calls
+	// For structs from typed slices, we get values not pointers
+	var t reflect.Type
+	var structValue reflect.Value
 
-	// Try to get cached method lookup
-	var cache *cachedDropMethods
-	if cached, ok := dropMethodCache.Load(t); ok {
-		cache = cached.(*cachedDropMethods)
+	if v.Kind() == reflect.Ptr {
+		t = v.Type()
+
+		// Try to get cached method lookup
+		var cache *cachedDropMethods
+		if cached, ok := dropMethodCache.Load(t); ok {
+			cache = cached.(*cachedDropMethods)
+		} else {
+			// Build cache for this type
+			cache = buildDropMethodCache(t)
+			dropMethodCache.Store(t, cache)
+		}
+
+		// Try capitalized version first (Go convention)
+		methodName := stringsTitle(methodOrKey)
+		if methodIdx, exists := cache.methods[methodName]; exists {
+			method := v.Method(methodIdx)
+			if method.IsValid() && method.Kind() == reflect.Func {
+				results := method.Call([]reflect.Value{})
+				if len(results) > 0 {
+					return results[0].Interface()
+				}
+				return nil
+			}
+		}
+
+		// Try original case
+		if methodIdx, exists := cache.methods[methodOrKey]; exists {
+			method := v.Method(methodIdx)
+			if method.IsValid() && method.Kind() == reflect.Func {
+				results := method.Call([]reflect.Value{})
+				if len(results) > 0 {
+					return results[0].Interface()
+				}
+				return nil
+			}
+		}
+
+		// For pointers, dereference to get struct value
+		structValue = v.Elem()
 	} else {
-		// Build cache for this type
-		cache = buildDropMethodCache(t)
-		dropMethodCache.Store(t, cache)
+		// For non-pointer values (e.g., structs from typed slices),
+		// we can only access fields, not methods
+		structValue = v
 	}
 
-	// Try capitalized version first (Go convention)
-	methodName := stringsTitle(methodOrKey)
-	if methodIdx, exists := cache.methods[methodName]; exists {
-		method := v.Method(methodIdx)
-		if method.IsValid() && method.Kind() == reflect.Func {
-			results := method.Call([]reflect.Value{})
-			if len(results) > 0 {
-				return results[0].Interface()
-			}
-			return nil
-		}
-	}
-
-	// Try original case
-	if methodIdx, exists := cache.methods[methodOrKey]; exists {
-		method := v.Method(methodIdx)
-		if method.IsValid() && method.Kind() == reflect.Func {
-			results := method.Call([]reflect.Value{})
-			if len(results) > 0 {
-				return results[0].Interface()
-			}
-			return nil
-		}
-	}
-
-	// Try to get field
-	v = v.Elem()
-	if v.Kind() == reflect.Struct {
-		field := v.FieldByName(stringsTitle(methodOrKey))
-		if field.IsValid() {
+	// Try to get field from struct
+	if structValue.IsValid() && structValue.Kind() == reflect.Struct {
+		// Try CamelCase (for snake_case property names like "comments_count" -> "CommentsCount")
+		field := structValue.FieldByName(snakeToCamel(methodOrKey))
+		if field.IsValid() && field.CanInterface() {
 			return field.Interface()
 		}
-		field = v.FieldByName(methodOrKey)
-		if field.IsValid() {
+		// Try simple capitalization (Title case)
+		field = structValue.FieldByName(stringsTitle(methodOrKey))
+		if field.IsValid() && field.CanInterface() {
+			return field.Interface()
+		}
+		// Try original case
+		field = structValue.FieldByName(methodOrKey)
+		if field.IsValid() && field.CanInterface() {
 			return field.Interface()
 		}
 	}
@@ -211,11 +228,15 @@ func IsInvokable(drop interface{}, methodName string) bool {
 		return false
 	}
 	invokableMethods := GetInvokableMethods(drop)
-	// Check both the original method name and the capitalized version
-	// (Liquid uses lowercase property names, but Go methods must be capitalized)
+	// Check multiple name variants:
+	// 1. Original name (e.g., "Title")
+	// 2. Simple capitalization (e.g., "title" -> "Title")
+	// 3. Snake-to-camel (e.g., "comments_count" -> "CommentsCount")
+	// This supports both Liquid's snake_case and Go's CamelCase conventions
 	capitalizedName := stringsTitle(methodName)
+	camelName := snakeToCamel(methodName)
 	for _, m := range invokableMethods {
-		if m == methodName || m == capitalizedName {
+		if m == methodName || m == capitalizedName || m == camelName {
 			return true
 		}
 	}
@@ -278,4 +299,21 @@ func stringsTitle(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// snakeToCamel converts snake_case to CamelCase.
+// This is used to map Liquid's snake_case property names to Go's CamelCase field names.
+// Examples: "comments_count" -> "CommentsCount", "created_at" -> "CreatedAt"
+func snakeToCamel(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	parts := strings.Split(s, "_")
+	for i := range parts {
+		if len(parts[i]) > 0 {
+			parts[i] = stringsTitle(parts[i])
+		}
+	}
+	return strings.Join(parts, "")
 }

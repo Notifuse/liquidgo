@@ -103,15 +103,34 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 	// Check if method is invokable (try both lowercase and capitalized)
 	methodInvokable := st.filterMethods[method]
 	if !methodInvokable && len(method) > 0 {
-		// Try capitalized version (Go method names are capitalized)
-		capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
-		methodInvokable = st.filterMethods[capitalizedMethod]
+		// Try CamelCase version (converts snake_case to CamelCase for Go method names)
+		// e.g., find_index -> FindIndex, sort_natural -> SortNatural
+		camelMethod := snakeToCamelCase(method)
+		methodInvokable = st.filterMethods[camelMethod]
 		if methodInvokable {
-			// Use capitalized version for lookup
-			method = capitalizedMethod
+			// Use CamelCase version for lookup
+			method = camelMethod
+		} else {
+			// Fallback: try simple capitalization (for single-word filters)
+			capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
+			methodInvokable = st.filterMethods[capitalizedMethod]
+			if methodInvokable {
+				// Use capitalized version for lookup
+				method = capitalizedMethod
+			}
 		}
 	}
 	if !methodInvokable {
+		// Before failing, try property access on the first argument
+		// This enables patterns like: {{ posts | first | title }}
+		if len(args) > 0 && args[0] != nil {
+			// Try to access property using InvokeDropOn
+			result := InvokeDropOn(args[0], method)
+			if result != nil {
+				return result, nil
+			}
+		}
+
 		if st.strictFilters {
 			return nil, NewUndefinedFilter("undefined filter " + method)
 		}
@@ -179,4 +198,24 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		return args[0], nil
 	}
 	return nil, nil
+}
+
+// snakeToCamelCase converts snake_case to CamelCase.
+// e.g., find_index -> FindIndex, sort_natural -> SortNatural
+func snakeToCamelCase(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	// Split by underscore
+	parts := strings.Split(s, "_")
+
+	// Capitalize each part
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+		}
+	}
+
+	return strings.Join(parts, "")
 }

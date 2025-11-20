@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -213,6 +214,15 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 		if m, ok := obj.(map[string]interface{}); ok {
 			return len(m) == 0
 		}
+		// Reflection fallback for typed slices/arrays/maps
+		// This matches Ruby's duck-typing behavior: objects respond to .empty?
+		if obj != nil {
+			v := reflect.ValueOf(obj)
+			kind := v.Kind()
+			if kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map {
+				return v.Len() == 0
+			}
+		}
 		return obj == nil || obj == ""
 	default:
 		return false
@@ -274,9 +284,26 @@ func containsOperator(left, right interface{}) bool {
 	// Check if left is a slice/array
 	if arr, ok := left.([]interface{}); ok {
 		for _, item := range arr {
-			if ToS(item, nil) == rightStr {
+			itemStr := ToS(item, nil)
+			// Check for exact match or substring match
+			if itemStr == rightStr || strings.Contains(itemStr, rightStr) {
 				return true
 			}
+		}
+	} else if left != nil {
+		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+		// This matches Ruby's duck-typing behavior: arrays respond to include?
+		v := reflect.ValueOf(left)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			for i := 0; i < v.Len(); i++ {
+				item := v.Index(i).Interface()
+				itemStr := ToS(item, nil)
+				// Check for exact match or substring match
+				if itemStr == rightStr || strings.Contains(itemStr, rightStr) {
+					return true
+				}
+			}
+			return false
 		}
 	}
 
@@ -284,6 +311,27 @@ func containsOperator(left, right interface{}) bool {
 	if m, ok := left.(map[string]interface{}); ok {
 		_, exists := m[rightStr]
 		return exists
+	}
+
+	// Use reflection to check typed maps (map[string]string, map[string]int, etc.)
+	if left != nil {
+		v := reflect.ValueOf(left)
+		if v.Kind() == reflect.Map {
+			// For maps, check if the key exists
+			keyVal := reflect.ValueOf(rightStr)
+			mapKey := v.MapIndex(keyVal)
+			if mapKey.IsValid() {
+				return true
+			}
+			// Also try to find the key by iterating (in case key types don't match exactly)
+			iter := v.MapRange()
+			for iter.Next() {
+				keyStr := ToS(iter.Key().Interface(), nil)
+				if keyStr == rightStr {
+					return true
+				}
+			}
+		}
 	}
 
 	return false
@@ -294,6 +342,14 @@ func ParseConditionExpression(parseContext ParseContextInterface, markup string,
 	if ml, ok := conditionMethodLiterals[markup]; ok {
 		return ml
 	}
+
+	// Check if markup contains filter syntax (|)
+	// If so, parse as Variable to support filters in conditions
+	if strings.Contains(markup, "|") {
+		// Use Variable which supports filter syntax
+		return NewVariable(markup, parseContext)
+	}
+
 	if safe {
 		// For safe parsing, we'd use SafeParseExpression if available
 		return parseContext.ParseExpression(markup)

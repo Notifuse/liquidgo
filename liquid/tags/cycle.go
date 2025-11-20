@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -92,6 +93,18 @@ func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *strin
 			parts[i] = liquid.ToS(item, nil)
 		}
 		valStr = strings.Join(parts, "")
+	} else if val != nil {
+		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+		v := reflect.ValueOf(val)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			parts := make([]string, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				parts[i] = liquid.ToS(v.Index(i).Interface(), nil)
+			}
+			valStr = strings.Join(parts, "")
+		} else {
+			valStr = liquid.ToS(val, nil)
+		}
 	} else {
 		valStr = liquid.ToS(val, nil)
 	}

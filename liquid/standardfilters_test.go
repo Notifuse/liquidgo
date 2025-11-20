@@ -1296,3 +1296,242 @@ func TestSum(t *testing.T) {
 		t.Errorf("Sum(input, 'weight') = %v, want 7", result3)
 	}
 }
+
+// TestStandardFiltersTypedSlices tests filters with typed slices ([]string, []int, etc.)
+func TestStandardFiltersTypedSlices(t *testing.T) {
+	env := NewEnvironment()
+	ctx := BuildContext(ContextConfig{Environment: env})
+	sf := &StandardFilters{context: ctx}
+
+	t.Run("Size with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    interface{}
+			expected interface{}
+		}{
+			{"[]string", []string{"a", "b", "c"}, 3},
+			{"[]int", []int{1, 2, 3, 4}, 4},
+			{"[]float64", []float64{1.1, 2.2}, 2},
+			{"[3]string array", [3]string{"x", "y", "z"}, 3},
+			{"[]interface{} baseline", []interface{}{"a", "b"}, 2},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := sf.Size(tt.input)
+				if result != tt.expected {
+					t.Errorf("Size(%v) = %v, want %v", tt.input, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("First with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    interface{}
+			expected interface{}
+		}{
+			{"[]string", []string{"a", "b", "c"}, "a"},
+			{"[]int", []int{10, 20, 30}, 10},
+			{"[]float64", []float64{1.5, 2.5}, 1.5},
+			{"[3]int array", [3]int{100, 200, 300}, 100},
+			{"empty []string", []string{}, nil},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := sf.First(tt.input)
+				if result != tt.expected {
+					t.Errorf("First(%v) = %v, want %v", tt.input, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("Last with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    interface{}
+			expected interface{}
+		}{
+			{"[]string", []string{"a", "b", "c"}, "c"},
+			{"[]int", []int{10, 20, 30}, 30},
+			{"[]float64", []float64{1.5, 2.5}, 2.5},
+			{"[3]int array", [3]int{100, 200, 300}, 300},
+			{"empty []string", []string{}, nil},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := sf.Last(tt.input)
+				if result != tt.expected {
+					t.Errorf("Last(%v) = %v, want %v", tt.input, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("Join with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			input     interface{}
+			separator interface{}
+			expected  string
+		}{
+			{"[]string with comma", []string{"a", "b", "c"}, ", ", "a, b, c"},
+			{"[]int with dash", []int{1, 2, 3}, "-", "1-2-3"},
+			{"[]float64 with space", []float64{1.5, 2.5}, " ", "1.5 2.5"},
+			{"[3]string array", [3]string{"x", "y", "z"}, "|", "x|y|z"},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := sf.Join(tt.input, tt.separator)
+				if result != tt.expected {
+					t.Errorf("Join(%v, %v) = %v, want %v", tt.input, tt.separator, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("Concat with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			input     interface{}
+			array     interface{}
+			expectErr bool
+		}{
+			{"[]string + []string", []string{"a", "b"}, []string{"c", "d"}, false},
+			{"[]int + []int", []int{1, 2}, []int{3, 4}, false},
+			{"[]string + []interface{}", []string{"a"}, []interface{}{"b", "c"}, false},
+			{"[]interface{} + []string", []interface{}{"a"}, []string{"b"}, false},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result, err := sf.Concat(tt.input, tt.array)
+				if tt.expectErr && err == nil {
+					t.Error("Expected error, got nil")
+				}
+				if !tt.expectErr && err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if !tt.expectErr && result == nil {
+					t.Error("Expected non-nil result")
+				}
+			})
+		}
+	})
+
+	t.Run("Default with typed slices", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    interface{}
+			defVal   interface{}
+			expected interface{}
+		}{
+			{"empty []string", []string{}, "default", "default"},
+			{"non-empty []string", []string{"a"}, "default", []string{"a"}},
+			{"empty []int", []int{}, 99, 99},
+			{"non-empty []int", []int{1}, 99, []int{1}},
+			{"empty map[string]string", map[string]string{}, "default", "default"},
+			{"non-empty map[string]int", map[string]int{"k": 1}, "default", map[string]int{"k": 1}},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := sf.Default(tt.input, tt.defVal, false)
+				// For default cases, check result equals default value
+				if tt.expected == "default" || tt.expected == 99 {
+					if result != tt.defVal {
+						t.Errorf("Default(%v, %v) = %v, want %v", tt.input, tt.defVal, result, tt.defVal)
+					}
+				} else {
+					// For non-default cases, result should be the original input
+					// Just verify it's not nil
+					if result == nil {
+						t.Errorf("Default(%v, %v) returned nil for non-empty input", tt.input, tt.defVal)
+					}
+				}
+			})
+		}
+	})
+}
+
+// TestNewInputIteratorTypedSlices tests that InputIterator works with typed slices
+func TestNewInputIteratorTypedSlices(t *testing.T) {
+	env := NewEnvironment()
+	ctx := BuildContext(ContextConfig{Environment: env})
+
+	tests := []struct {
+		name          string
+		input         interface{}
+		expectedCount int
+	}{
+		{"[]string", []string{"a", "b", "c"}, 3},
+		{"[]int", []int{1, 2, 3, 4}, 4},
+		{"[]float64", []float64{1.1, 2.2}, 2},
+		{"[3]string array", [3]string{"x", "y", "z"}, 3},
+		{"[]interface{} baseline", []interface{}{"a", "b"}, 2},
+		{"empty []string", []string{}, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			iter := NewInputIterator(tt.input, ctx)
+			if iter == nil {
+				t.Fatal("NewInputIterator returned nil")
+			}
+
+			count := 0
+			iter.Each(func(item interface{}) {
+				count++
+			})
+
+			if count != tt.expectedCount {
+				t.Errorf("Iterator count = %d, want %d", count, tt.expectedCount)
+			}
+		})
+	}
+}
+
+// TestIsTruthyTypedCollections tests the isTruthy function with typed collections
+func TestIsTruthyTypedCollections(t *testing.T) {
+	tests := []struct {
+		name     string
+		val      interface{}
+		expected bool
+	}{
+		// Typed slices
+		{"[]string non-empty", []string{"a"}, true},
+		{"[]string empty", []string{}, false},
+		{"[]int non-empty", []int{1, 2}, true},
+		{"[]int empty", []int{}, false},
+		// Arrays
+		{"[3]string non-empty", [3]string{"a", "b", "c"}, true},
+		{"[0]int empty", [0]int{}, false},
+		// Typed maps
+		{"map[string]string non-empty", map[string]string{"k": "v"}, true},
+		{"map[string]string empty", map[string]string{}, false},
+		{"map[string]int non-empty", map[string]int{"k": 1}, true},
+		{"map[string]int empty", map[string]int{}, false},
+		// Existing types should still work
+		{"[]interface{} non-empty", []interface{}{1}, true},
+		{"[]interface{} empty", []interface{}{}, false},
+		{"nil", nil, false},
+		{"bool true", true, true},
+		{"bool false", false, false},
+		{"non-empty string", "hello", true},
+		{"empty string", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isTruthy(tt.val)
+			if result != tt.expected {
+				t.Errorf("isTruthy(%v) = %v, want %v", tt.val, result, tt.expected)
+			}
+		})
+	}
+}

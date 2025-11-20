@@ -460,3 +460,165 @@ func TestConditionToNumberEdgeCases(t *testing.T) {
 		t.Errorf("Expected ok=false for bool, got ok=true, result=%v", result8)
 	}
 }
+
+// TestContainsOperatorTypedSlices tests the contains operator with typed slices
+func TestContainsOperatorTypedSlices(t *testing.T) {
+	tests := []struct {
+		name     string
+		left     interface{}
+		right    interface{}
+		expected bool
+	}{
+		// Typed slices
+		{
+			name:     "[]string contains element",
+			left:     []string{"apple", "banana", "cherry"},
+			right:    "banana",
+			expected: true,
+		},
+		{
+			name:     "[]string does not contain element",
+			left:     []string{"apple", "banana", "cherry"},
+			right:    "grape",
+			expected: false,
+		},
+		{
+			name:     "[]int contains element",
+			left:     []int{10, 20, 30},
+			right:    "20",
+			expected: true,
+		},
+		{
+			name:     "[]int does not contain element",
+			left:     []int{10, 20, 30},
+			right:    "40",
+			expected: false,
+		},
+		// Arrays
+		{
+			name:     "[3]string contains element",
+			left:     [3]string{"red", "green", "blue"},
+			right:    "green",
+			expected: true,
+		},
+		// Substring matching for structs
+		{
+			name: "[]struct contains substring",
+			left: []struct {
+				Name string
+			}{
+				{Name: "First Item"},
+				{Name: "Second Item"},
+			},
+			right:    "First",
+			expected: true,
+		},
+		// String contains (existing functionality)
+		{
+			name:     "string contains substring",
+			left:     "hello world",
+			right:    "world",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := containsOperator(tt.left, tt.right)
+			if result != tt.expected {
+				t.Errorf("containsOperator(%v, %v) = %v, want %v", tt.left, tt.right, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestCheckMethodLiteralTypedSlices tests the empty method literal with typed slices
+func TestCheckMethodLiteralTypedSlices(t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		obj      interface{}
+		expected bool
+	}{
+		// empty on typed slices
+		{
+			name:     "[]string empty - true",
+			method:   "empty",
+			obj:      []string{},
+			expected: true,
+		},
+		{
+			name:     "[]string empty - false",
+			method:   "empty",
+			obj:      []string{"a", "b"},
+			expected: false,
+		},
+		{
+			name:     "[]int empty - true",
+			method:   "empty",
+			obj:      []int{},
+			expected: true,
+		},
+		{
+			name:     "[]int empty - false",
+			method:   "empty",
+			obj:      []int{1, 2, 3},
+			expected: false,
+		},
+		// empty on arrays
+		{
+			name:     "[3]string not empty",
+			method:   "empty",
+			obj:      [3]string{"a", "b", "c"},
+			expected: false,
+		},
+		{
+			name:     "[0]int empty",
+			method:   "empty",
+			obj:      [0]int{},
+			expected: true,
+		},
+		// empty on typed maps
+		{
+			name:     "map[string]string empty - true",
+			method:   "empty",
+			obj:      map[string]string{},
+			expected: true,
+		},
+		{
+			name:     "map[string]string empty - false",
+			method:   "empty",
+			obj:      map[string]string{"key": "value"},
+			expected: false,
+		},
+		{
+			name:     "map[string]int empty - true",
+			method:   "empty",
+			obj:      map[string]int{},
+			expected: true,
+		},
+		// blank (existing functionality should still work)
+		{
+			name:     "blank - empty string",
+			method:   "blank",
+			obj:      "",
+			expected: true,
+		},
+		{
+			name:     "blank - whitespace",
+			method:   "blank",
+			obj:      "   ",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ml := &MethodLiteral{MethodName: tt.method}
+			result := checkMethodLiteral(ml, tt.obj)
+			if result != tt.expected {
+				t.Errorf("checkMethodLiteral(%s, %v) = %v, want %v", tt.method, tt.obj, result, tt.expected)
+			}
+		})
+	}
+}

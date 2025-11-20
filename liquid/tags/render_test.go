@@ -1100,3 +1100,6 @@ func TestRenderTagOptionalCommas(t *testing.T) {
 		})
 	}
 }
+
+// Note: Tests for render tag with typed slices are covered in integration tests
+// (see integration/comprehensive_test.go TestBlogPostTags/Render_tag)

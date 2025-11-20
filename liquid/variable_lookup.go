@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	variableLookupCommandMethods = []string{"size", "first", "last"}
+	variableLookupCommandMethods = []string{"size", "first", "last", "empty"}
 )
 
 // globalVariableLookupCache provides thread-safe caching of parsed variable lookups.
@@ -194,6 +194,18 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 					continue
 				}
 			}
+		} else if obj != nil {
+			// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+			// This matches Ruby's duck-typing behavior: arrays respond to []
+			v := reflect.ValueOf(obj)
+			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+				if idx, err := ToInteger(key); err == nil {
+					if idx >= 0 && idx < v.Len() {
+						obj = v.Index(idx).Interface()
+						continue
+					}
+				}
+			}
 		}
 
 		// Ruby logic: Some special cases. If the part wasn't in square brackets and
@@ -203,7 +215,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		if keyStr, ok := key.(string); ok {
 			// Check if it's a command method AND the object responds to it
 			if vl.LookupCommand(i) {
-				// Command methods for arrays
+				// Command methods for arrays/slices (handle []interface{} first for fast path)
 				if arr, ok := obj.([]interface{}); ok {
 					switch keyStr {
 					case "size":
@@ -219,12 +231,46 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 							obj = arr[len(arr)-1]
 							continue
 						}
+					case "empty":
+						obj = len(arr) == 0
+						continue
+					}
+				}
+				// Use reflection to handle other slice types ([]int, []string, etc.)
+				// This matches Ruby's behavior where arrays respond to .size, .first, .last, .empty
+				if obj != nil {
+					v := reflect.ValueOf(obj)
+					if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+						switch keyStr {
+						case "size":
+							obj = v.Len()
+							continue
+						case "first":
+							if v.Len() > 0 {
+								obj = v.Index(0).Interface()
+								continue
+							}
+						case "last":
+							if v.Len() > 0 {
+								obj = v.Index(v.Len() - 1).Interface()
+								continue
+							}
+						case "empty":
+							obj = v.Len() == 0
+							continue
+						}
 					}
 				}
 				// Command methods for strings
-				if str, ok := obj.(string); ok && keyStr == "size" {
-					obj = len(str)
-					continue
+				if str, ok := obj.(string); ok {
+					switch keyStr {
+					case "size":
+						obj = len(str)
+						continue
+					case "empty":
+						obj = str == ""
+						continue
+					}
 				}
 			}
 

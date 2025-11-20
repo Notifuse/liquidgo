@@ -317,18 +317,28 @@ func splitByBooleanOperators(markup string) []conditionPart {
 
 // parseSingleCondition parses a single condition (without and/or)
 func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface) (*liquid.Condition, error) {
-	matches := ifSyntax.FindStringSubmatch(expr)
-	if len(matches) == 0 {
-		// Try as simple expression
-		parsedExpr := parseContext.ParseExpression(expr)
+	// Check if expression contains filter syntax (pipe character)
+	// If so, treat entire expression as a simple expression (don't split by operators)
+	// This allows filters in conditions like: {% if posts | has: 'author', 'Alice' %}
+	if strings.Contains(expr, "|") {
+		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
 		return liquid.NewCondition(parsedExpr, "", nil), nil
 	}
 
-	left := parseContext.ParseExpression(matches[1])
+	matches := ifSyntax.FindStringSubmatch(expr)
+	if len(matches) == 0 {
+		// Try as simple expression - use ParseConditionExpression to support filters
+		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
+		return liquid.NewCondition(parsedExpr, "", nil), nil
+	}
+
+	// Parse left side - use ParseConditionExpression to support filters
+	left := liquid.ParseConditionExpression(parseContext, matches[1], false)
 	operator := matches[2]
 	var right interface{}
 	if len(matches) > 3 && matches[3] != "" {
-		right = parseContext.ParseExpression(matches[3])
+		// Parse right side - use ParseConditionExpression to support filters
+		right = liquid.ParseConditionExpression(parseContext, matches[3], false)
 	}
 
 	return liquid.NewCondition(left, operator, right), nil

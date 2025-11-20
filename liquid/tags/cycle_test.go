@@ -134,3 +134,6 @@ func TestCycleTagRenderToOutputBufferWithArray(t *testing.T) {
 		t.Errorf("Expected 'one' (wrapped), got %q", output)
 	}
 }
+
+// Note: Tests for cycle tag with typed slices are covered in integration tests
+// (see integration/comprehensive_test.go TestBlogPostTags/Cycle_tag)

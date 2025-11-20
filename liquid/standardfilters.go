@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -30,7 +31,15 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 	case map[string]interface{}:
 		return len(v)
 	default:
-		// Try to get size via reflection or return 0
+		// Reflection fallback for typed slices/arrays/maps
+		// This matches Ruby's duck-typing behavior: objects respond to .size
+		if input != nil {
+			val := reflect.ValueOf(input)
+			kind := val.Kind()
+			if kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map {
+				return val.Len()
+			}
+		}
 		return 0
 	}
 }
@@ -152,6 +161,25 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 		}
 		return v[offsetInt:end]
 	default:
+		// Use reflection to handle typed slices/arrays
+		if input != nil {
+			val := reflect.ValueOf(input)
+			if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+				if offsetInt < 0 || offsetInt >= val.Len() {
+					return []interface{}{}
+				}
+				end := offsetInt + lengthInt
+				if end > val.Len() {
+					end = val.Len()
+				}
+				// Convert slice to []interface{}
+				result := make([]interface{}, end-offsetInt)
+				for i := offsetInt; i < end; i++ {
+					result[i-offsetInt] = val.Index(i).Interface()
+				}
+				return result
+			}
+		}
 		return ""
 	}
 }
@@ -256,6 +284,14 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[0]
 	}
+	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+	// This matches Ruby's duck-typing behavior: arrays respond to .first
+	if input != nil {
+		v := reflect.ValueOf(input)
+		if (v.Kind() == reflect.Slice || v.Kind() == reflect.Array) && v.Len() > 0 {
+			return v.Index(0).Interface()
+		}
+	}
 	return nil
 }
 
@@ -263,6 +299,14 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 func (sf *StandardFilters) Last(input interface{}) interface{} {
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[len(arr)-1]
+	}
+	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+	// This matches Ruby's duck-typing behavior: arrays respond to .last
+	if input != nil {
+		v := reflect.ValueOf(input)
+		if (v.Kind() == reflect.Slice || v.Kind() == reflect.Array) && v.Len() > 0 {
+			return v.Index(v.Len() - 1).Interface()
+		}
 	}
 	return nil
 }
@@ -280,6 +324,18 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 			parts[i] = ToS(item, nil)
 		}
 		return strings.Join(parts, sep)
+	}
+	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+	// This matches Ruby's duck-typing behavior: arrays respond to .join
+	if input != nil {
+		v := reflect.ValueOf(input)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			parts := make([]string, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				parts[i] = ToS(v.Index(i).Interface(), nil)
+			}
+			return strings.Join(parts, sep)
+		}
 	}
 	return ToS(input, nil)
 }
@@ -619,6 +675,16 @@ func (sf *StandardFilters) Default(input interface{}, defaultValue interface{}, 
 		}
 	}
 
+	// Reflection fallback for typed slices/arrays/maps
+	// This matches Ruby's duck-typing behavior: objects respond to .empty?
+	if input != nil {
+		val := reflect.ValueOf(input)
+		kind := val.Kind()
+		if (kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map) && val.Len() == 0 {
+			return defaultValue
+		}
+	}
+
 	return input
 }
 
@@ -640,6 +706,19 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 		items = flattenArray(arr)
 	} else if m, ok := input.(map[string]interface{}); ok {
 		items = []interface{}{m}
+	} else if input != nil {
+		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+		// This matches Ruby's duck-typing behavior: arrays respond to iteration
+		v := reflect.ValueOf(input)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			items = make([]interface{}, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				items[i] = v.Index(i).Interface()
+			}
+		} else {
+			// Single item
+			items = []interface{}{input}
+		}
 	} else {
 		// Single item
 		items = []interface{}{input}
@@ -715,6 +794,14 @@ func (it *InputIterator) Concat(args interface{}) []interface{} {
 	result := it.ToArray()
 	if arr, ok := args.([]interface{}); ok {
 		result = append(result, arr...)
+	} else if args != nil {
+		// Use reflection to handle typed slices
+		v := reflect.ValueOf(args)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			for i := 0; i < v.Len(); i++ {
+				result = append(result, v.Index(i).Interface())
+			}
+		}
 	}
 	return result
 }
@@ -818,14 +905,17 @@ func ToNumberValue(obj interface{}) (float64, bool) {
 	case float32:
 		return float64(v), true
 	case string:
-		// Try to parse as number
-		num := ToNumber(v)
-		if f, ok := num.(float64); ok {
+		// Try to parse as float first
+		trimmed := strings.TrimSpace(v)
+		if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
 			return f, true
 		}
-		if i, ok := num.(int); ok {
+		// Try to parse as int
+		if i, err := strconv.Atoi(trimmed); err == nil {
 			return float64(i), true
 		}
+		// Not a number
+		return 0, false
 	}
 	return 0, false
 }
@@ -1306,7 +1396,18 @@ func (sf *StandardFilters) FindIndex(input interface{}, property interface{}, ta
 // Mirrors Ruby's concat from standardfilters.rb:682
 func (sf *StandardFilters) Concat(input interface{}, array interface{}) (interface{}, error) {
 	// Validate that second argument is an array
-	if _, ok := array.([]interface{}); !ok {
+	isArray := false
+	if _, ok := array.([]interface{}); ok {
+		isArray = true
+	} else if array != nil {
+		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+		v := reflect.ValueOf(array)
+		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+			isArray = true
+		}
+	}
+
+	if !isArray {
 		return nil, NewArgumentError("concat filter requires an array argument")
 	}
 
@@ -1412,19 +1513,19 @@ func getProperty(item interface{}, property string) interface{} {
 		return drop.Get(property)
 	}
 
-	// Try reflection for struct fields
+	// For structs, use InvokeDropOn which handles:
+	// - snake_case to CamelCase conversion (comments_count -> CommentsCount)
+	// - Method calls
+	// - Field access on both pointer and non-pointer structs
 	v := reflect.ValueOf(item)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 
 	if v.Kind() == reflect.Struct {
-		// Try to get field by name (case-insensitive)
-		for i := 0; i < v.NumField(); i++ {
-			field := v.Type().Field(i)
-			if strings.EqualFold(field.Name, property) {
-				return v.Field(i).Interface()
-			}
+		result := InvokeDropOn(item, property)
+		if result != nil {
+			return result
 		}
 	}
 
@@ -1449,6 +1550,16 @@ func isTruthy(val interface{}) bool {
 		return len(v) > 0
 	case map[string]interface{}:
 		return len(v) > 0
+	}
+
+	// Reflection fallback for typed slices/arrays/maps
+	// This matches Ruby's duck-typing behavior: empty collections are falsy
+	if val != nil {
+		v := reflect.ValueOf(val)
+		kind := v.Kind()
+		if kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map {
+			return v.Len() > 0
+		}
 	}
 
 	return true

@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -171,6 +172,20 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 			// Array: render once for each item
 			for _, varItem := range arr {
 				ctx.Set(contextVariableName, varItem)
+				partialTemplate.RenderToOutputBuffer(ctx, output)
+			}
+		} else if variable != nil {
+			// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
+			// This matches Ruby's duck-typing behavior: arrays respond to iteration
+			v := reflect.ValueOf(variable)
+			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+				for i := 0; i < v.Len(); i++ {
+					ctx.Set(contextVariableName, v.Index(i).Interface())
+					partialTemplate.RenderToOutputBuffer(ctx, output)
+				}
+			} else {
+				// Single value
+				ctx.Set(contextVariableName, variable)
 				partialTemplate.RenderToOutputBuffer(ctx, output)
 			}
 		} else {

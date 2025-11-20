@@ -256,3 +256,160 @@ func TestTryMapAccess(t *testing.T) {
 		})
 	}
 }
+
+// TestVariableLookupTypedSlices tests that typed slices (e.g., []string, []int) work with array index access
+func TestVariableLookupTypedSlices(t *testing.T) {
+	type TestStruct struct {
+		Name  string
+		Value int
+	}
+
+	tests := []struct {
+		name     string
+		data     map[string]interface{}
+		markup   string
+		expected interface{}
+	}{
+		{
+			name:     "[]string index access",
+			data:     map[string]interface{}{"items": []string{"a", "b", "c"}},
+			markup:   "items[1]",
+			expected: "b",
+		},
+		{
+			name:     "[]int index access",
+			data:     map[string]interface{}{"nums": []int{10, 20, 30}},
+			markup:   "nums[0]",
+			expected: 10,
+		},
+		{
+			name:     "[]float64 index access",
+			data:     map[string]interface{}{"floats": []float64{1.1, 2.2, 3.3}},
+			markup:   "floats[2]",
+			expected: 3.3,
+		},
+		{
+			name:     "[]struct index access",
+			data:     map[string]interface{}{"structs": []TestStruct{{Name: "first", Value: 1}, {Name: "second", Value: 2}}},
+			markup:   "structs[1].Name",
+			expected: "second",
+		},
+		{
+			name:     "[]string .size command",
+			data:     map[string]interface{}{"items": []string{"a", "b", "c"}},
+			markup:   "items.size",
+			expected: 3,
+		},
+		{
+			name:     "[]int .first command",
+			data:     map[string]interface{}{"nums": []int{10, 20, 30}},
+			markup:   "nums.first",
+			expected: 10,
+		},
+		{
+			name:     "[]string .last command",
+			data:     map[string]interface{}{"items": []string{"a", "b", "c"}},
+			markup:   "items.last",
+			expected: "c",
+		},
+		{
+			name:     "[]string .empty command - not empty",
+			data:     map[string]interface{}{"items": []string{"a", "b"}},
+			markup:   "items.empty",
+			expected: false,
+		},
+		{
+			name:     "[]string .empty command - empty",
+			data:     map[string]interface{}{"items": []string{}},
+			markup:   "items.empty",
+			expected: true,
+		},
+		{
+			name:     "array [3]int index access",
+			data:     map[string]interface{}{"arr": [3]int{5, 10, 15}},
+			markup:   "arr[1]",
+			expected: 10,
+		},
+		{
+			name:     "array .size command",
+			data:     map[string]interface{}{"arr": [4]string{"w", "x", "y", "z"}},
+			markup:   "arr.size",
+			expected: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vl := VariableLookupParse(tt.markup, nil, nil)
+			if vl == nil {
+				t.Fatal("VariableLookupParse returned nil")
+			}
+
+			ctx := BuildContext(ContextConfig{
+				Environment: NewEnvironment(),
+			})
+			for k, v := range tt.data {
+				ctx.Set(k, v)
+			}
+
+			result := vl.Evaluate(ctx)
+			if result != tt.expected {
+				t.Errorf("Expected %v (type %T), got %v (type %T)", tt.expected, tt.expected, result, result)
+			}
+		})
+	}
+}
+
+// TestVariableLookupStructFieldAccess tests that struct fields can be accessed with snake_case
+func TestVariableLookupStructFieldAccess(t *testing.T) {
+	type BlogPost struct {
+		Title         string
+		Author        string
+		CommentsCount int
+	}
+
+	tests := []struct {
+		name     string
+		post     BlogPost
+		markup   string
+		expected interface{}
+	}{
+		{
+			name:     "CamelCase field",
+			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
+			markup:   "post.Title",
+			expected: "Test Post",
+		},
+		{
+			name:     "snake_case to CamelCase",
+			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
+			markup:   "post.comments_count",
+			expected: 5,
+		},
+		{
+			name:     "lowercase to CamelCase",
+			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
+			markup:   "post.author",
+			expected: "Alice",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vl := VariableLookupParse(tt.markup, nil, nil)
+			if vl == nil {
+				t.Fatal("VariableLookupParse returned nil")
+			}
+
+			ctx := BuildContext(ContextConfig{
+				Environment: NewEnvironment(),
+			})
+			ctx.Set("post", tt.post)
+
+			result := vl.Evaluate(ctx)
+			if result != tt.expected {
+				t.Errorf("Expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}

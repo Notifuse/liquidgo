@@ -516,3 +516,166 @@ func TestAllowsNonStringValuesAsSource(t *testing.T) {
 		t.Errorf("Expected 'true', got %q", result)
 	}
 }
+
+// TestVariableLookupBlogPostArrayIndex tests array index access with []BlogPost.
+// This tests the issue in liquid/variable_lookup.go lines 189-197 where array index
+// access only works with []interface{} but not with typed slices.
+func TestVariableLookupBlogPostArrayIndex(t *testing.T) {
+	posts := SampleBlogPosts()
+
+	tests := []struct {
+		name     string
+		template string
+		posts    interface{}
+		expected string
+	}{
+		{
+			name:     "typed slice - first element",
+			template: `{{ posts[0].title }}`,
+			posts:    posts,
+			expected: "Getting Started with Go",
+		},
+		{
+			name:     "typed slice - second element",
+			template: `{{ posts[1].title }}`,
+			posts:    posts,
+			expected: "Advanced Liquid Templates",
+		},
+		{
+			name:     "typed slice - last element",
+			template: `{{ posts[4].title }}`,
+			posts:    posts,
+			expected: "Performance Optimization",
+		},
+		{
+			name:     "typed slice - out of bounds",
+			template: `{{ posts[10].title }}`,
+			posts:    posts,
+			expected: "",
+		},
+		{
+			name:     "baseline - []interface{} - first element",
+			template: `{{ posts[0].title }}`,
+			posts:    BlogPostsToInterfaceSlice(posts),
+			expected: "Getting Started with Go",
+		},
+		{
+			name:     "typed slice - access author property",
+			template: `{{ posts[0].author }}`,
+			posts:    posts,
+			expected: "Alice",
+		},
+		{
+			name:     "typed slice - access comments_count property",
+			template: `{{ posts[0].comments_count }}`,
+			posts:    posts,
+			expected: "5",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assigns := map[string]interface{}{
+				"posts": tt.posts,
+			}
+			assertTemplateResult(t, tt.expected, tt.template, assigns)
+		})
+	}
+}
+
+// TestConditionBlogPostEmpty tests the .empty method literal with []BlogPost.
+// This tests the issue in liquid/condition.go lines 206-212 where .empty only
+// checks []interface{} for emptiness.
+func TestConditionBlogPostEmpty(t *testing.T) {
+	posts := SampleBlogPosts()
+	emptyPosts := []BlogPost{}
+
+	tests := []struct {
+		name     string
+		template string
+		posts    interface{}
+		expected string
+	}{
+		{
+			name:     "typed slice - non-empty",
+			template: `{% if posts.empty %}empty{% else %}not empty{% endif %}`,
+			posts:    posts,
+			expected: "not empty",
+		},
+		{
+			name:     "typed slice - empty",
+			template: `{% if posts.empty %}empty{% else %}not empty{% endif %}`,
+			posts:    emptyPosts,
+			expected: "empty",
+		},
+		{
+			name:     "baseline - []interface{} - non-empty",
+			template: `{% if posts.empty %}empty{% else %}not empty{% endif %}`,
+			posts:    BlogPostsToInterfaceSlice(posts),
+			expected: "not empty",
+		},
+		{
+			name:     "baseline - []interface{} - empty",
+			template: `{% if posts.empty %}empty{% else %}not empty{% endif %}`,
+			posts:    []interface{}{},
+			expected: "empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assigns := map[string]interface{}{
+				"posts": tt.posts,
+			}
+			assertTemplateResult(t, tt.expected, tt.template, assigns)
+		})
+	}
+}
+
+// TestConditionBlogPostContains tests the contains operator with []BlogPost.
+// This tests the issue in liquid/condition.go lines 274-280 where contains
+// only works with []interface{}.
+func TestConditionBlogPostContains(t *testing.T) {
+	posts := SampleBlogPosts()
+
+	tests := []struct {
+		name     string
+		template string
+		posts    interface{}
+		expected string
+	}{
+		{
+			name:     "typed slice - contains title",
+			template: `{% if posts contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "found",
+		},
+		{
+			name:     "typed slice - contains author",
+			template: `{% if posts contains "Alice" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "found",
+		},
+		{
+			name:     "typed slice - does not contain",
+			template: `{% if posts contains "Non-existent Post" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "not found",
+		},
+		{
+			name:     "baseline - []interface{} - contains title",
+			template: `{% if posts contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
+			posts:    BlogPostsToInterfaceSlice(posts),
+			expected: "found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assigns := map[string]interface{}{
+				"posts": tt.posts,
+			}
+			assertTemplateResult(t, tt.expected, tt.template, assigns)
+		})
+	}
+}
