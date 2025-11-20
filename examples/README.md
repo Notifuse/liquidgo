@@ -52,6 +52,20 @@ cd loops && go run main.go
 - Conditional rendering
 - Array filters
 
+### Custom Map Types (`custom_map_types/`)
+
+Using custom type aliases based on maps (e.g., `type MapOfAny map[string]any`).
+
+```bash
+cd custom_map_types && go run main.go
+```
+
+**Demonstrates:**
+- Custom map type aliases
+- Nested custom types
+- Compatibility with native maps
+- Type safety with custom domain types
+
 ## More Examples
 
 For more advanced examples, see:

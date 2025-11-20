@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -97,6 +98,49 @@ func isCommandMethod(method string) bool {
 	return false
 }
 
+// tryMapAccess attempts to access a map value using reflection.
+// This handles custom map type aliases (e.g., type MapOfAny map[string]any)
+// that don't match the concrete type map[string]interface{}.
+// Returns (value, true) if successful, (nil, false) if not a map or key not found.
+func tryMapAccess(obj interface{}, key string) (interface{}, bool) {
+	if obj == nil {
+		return nil, false
+	}
+
+	v := reflect.ValueOf(obj)
+
+	// Check if it's a map type
+	if v.Kind() != reflect.Map {
+		return nil, false
+	}
+
+	// Get the map's key type
+	mapKeyType := v.Type().Key()
+
+	// Try to convert our string key to the map's key type
+	var keyValue reflect.Value
+
+	switch mapKeyType.Kind() {
+	case reflect.String:
+		keyValue = reflect.ValueOf(key)
+	case reflect.Interface:
+		// For map[interface{}]interface{} or map[any]any
+		keyValue = reflect.ValueOf(key)
+	default:
+		// Key type is not string or interface{}, can't look up
+		return nil, false
+	}
+
+	// Look up the value in the map
+	mapValue := v.MapIndex(keyValue)
+	if !mapValue.IsValid() {
+		// Key not found in map
+		return nil, false
+	}
+
+	return mapValue.Interface(), true
+}
+
 // LookupCommand returns true if the lookup at the given index is a command method.
 func (vl *VariableLookup) LookupCommand(lookupIndex int) bool {
 	return (vl.commandFlags & (1 << lookupIndex)) != 0
@@ -123,12 +167,22 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 
 		// Ruby logic: Try to access as hash/array first
 		// If object is a hash- or array-like object we look for the presence of the key
+		// Fast path: Check for map[string]interface{} first (most common case)
 		if m, ok := obj.(map[string]interface{}); ok {
 			if k, ok := key.(string); ok {
 				if val, exists := m[k]; exists {
 					obj = val
 					continue
 				}
+			}
+		}
+
+		// Fallback: Use reflection for custom map types (e.g., type MapOfAny map[string]any)
+		// This matches Ruby's duck-typing behavior: respond_to?(:[])
+		if k, ok := key.(string); ok {
+			if val, found := tryMapAccess(obj, k); found {
+				obj = val
+				continue
 			}
 		}
 
