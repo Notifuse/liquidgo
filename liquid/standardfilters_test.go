@@ -3,6 +3,7 @@ package liquid
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestStandardFiltersSize(t *testing.T) {
@@ -1533,5 +1534,16 @@ func TestIsTruthyTypedCollections(t *testing.T) {
 				t.Errorf("isTruthy(%v) = %v, want %v", tt.val, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestStandardFilters_Date_WithPointerToTime(t *testing.T) {
+	now := time.Date(2024, 3, 7, 12, 0, 0, 0, time.UTC)
+	ptr := &now
+	sf := &StandardFilters{}
+	result := sf.Date(ptr, "%b %d, %Y")
+	expected := "Mar 07, 2024"
+	if result != expected {
+		t.Errorf("Date(*time.Time) = %v, expected %v", result, expected)
 	}
 }

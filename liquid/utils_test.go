@@ -86,6 +86,8 @@ func TestToDate(t *testing.T) {
 		wantNil bool
 	}{
 		{"time.Time", now, false},
+		{"*time.Time pointer", &now, false},
+		{"nil *time.Time pointer", (*time.Time)(nil), true},
 		{"now string", "now", false},
 		{"today string", "today", false},
 		{"unix timestamp string", "1609459200", false},
@@ -99,6 +101,27 @@ func TestToDate(t *testing.T) {
 				t.Errorf("ToDate() = %v, wantNil %v", got, tt.wantNil)
 			}
 		})
+	}
+}
+
+func TestToDate_PointerToTime(t *testing.T) {
+	now := time.Now()
+	ptr := &now
+	got := ToDate(ptr)
+	if got == nil {
+		t.Errorf("ToDate(*time.Time) = nil, expected non-nil")
+		return
+	}
+	if !got.Equal(now) {
+		t.Errorf("ToDate(*time.Time) = %v, expected %v", got, now)
+	}
+}
+
+func TestToDate_NilPointerToTime(t *testing.T) {
+	var ptr *time.Time = nil
+	got := ToDate(ptr)
+	if got != nil {
+		t.Errorf("ToDate(nil *time.Time) = %v, expected nil", got)
 	}
 }
 

@@ -171,9 +171,17 @@ func ToNumber(obj interface{}) interface{} {
 
 // ToDate converts a value to a time.Time.
 func ToDate(obj interface{}) *time.Time {
-	// If it already has a Strftime method (time.Time), return it
+	// Handle time.Time directly
 	if t, ok := obj.(time.Time); ok {
 		return &t
+	}
+
+	// Handle *time.Time pointer (NEW - fixes the bug)
+	if t, ok := obj.(*time.Time); ok {
+		if t == nil {
+			return nil
+		}
+		return t
 	}
 
 	switch v := obj.(type) {
