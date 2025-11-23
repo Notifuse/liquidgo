@@ -260,13 +260,19 @@ func compareValues(left, right interface{}) (int, error) {
 	// If one is a number and the other is not, it's a type mismatch for comparison
 	if leftOk || rightOk {
 		// Format types nicely for error message
-		leftType := reflect.TypeOf(left).Name()
-		if leftType == "" {
-			leftType = reflect.TypeOf(left).String()
+		leftType := "nil"
+		if left != nil {
+			leftType = reflect.TypeOf(left).Name()
+			if leftType == "" {
+				leftType = reflect.TypeOf(left).String()
+			}
 		}
-		rightType := reflect.TypeOf(right).Name()
-		if rightType == "" {
-			rightType = reflect.TypeOf(right).String()
+		rightType := "nil"
+		if right != nil {
+			rightType = reflect.TypeOf(right).Name()
+			if rightType == "" {
+				rightType = reflect.TypeOf(right).String()
+			}
 		}
 		return 0, NewArgumentError("comparison of " + leftType + " with " + rightType + " failed")
 	}
