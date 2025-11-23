@@ -176,23 +176,33 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		}
 
 		// Prepare arguments
-		callArgs := make([]reflect.Value, 0, len(args)+1)
+		expectedArgs := methodType.NumIn()
+		callArgs := make([]reflect.Value, expectedArgs)
+
 		// First arg is the input (from args[0])
 		if len(args) == 0 {
 			continue
 		}
-		callArgs = append(callArgs, reflect.ValueOf(args[0]))
-
-		// Remaining args are filter arguments
-		expectedArgs := methodType.NumIn() - 1
-		if len(args)-1 < expectedArgs {
-			// Not enough args, skip this filter
-			continue
-		}
-
-		// Add filter arguments
-		for i := 1; i <= expectedArgs && i < len(args); i++ {
-			callArgs = append(callArgs, reflect.ValueOf(args[i]))
+		
+		// Build all arguments
+		for i := 0; i < expectedArgs; i++ {
+			if i < len(args) {
+				// Argument provided - use it
+				argValue := args[i]
+				if argValue == nil {
+					// nil argument - use zero value for the parameter type
+					paramType := methodType.In(i)
+					callArgs[i] = reflect.Zero(paramType)
+				} else {
+					callArgs[i] = reflect.ValueOf(argValue)
+				}
+			} else {
+				// Argument missing - pad with zero value for the parameter type
+				// This allows filters with optional parameters to work correctly
+				// and matches Ruby Liquid behavior where optional parameters default to nil
+				paramType := methodType.In(i)
+				callArgs[i] = reflect.Zero(paramType)
+			}
 		}
 
 		// Call the method
