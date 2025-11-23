@@ -14,6 +14,7 @@ type Environment struct {
 	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
 	errorMode                  string
+	registeredFilters          []interface{} // Store filter instances for use when creating strainers
 }
 
 // NewEnvironment creates a new environment instance.
@@ -26,6 +27,7 @@ func NewEnvironment() *Environment {
 		fileSystem:                 &BlankFileSystem{},
 		defaultResourceLimits:      EmptyHash,
 		strainerTemplateClassCache: make(map[string]*StrainerTemplateClass),
+		registeredFilters:          make([]interface{}, 0),
 	}
 
 	// Add standard filters
@@ -67,6 +69,8 @@ func (e *Environment) RegisterTag(name string, tagClass interface{}) {
 func (e *Environment) RegisterFilter(filter interface{}) error {
 	// Clear cache
 	e.strainerTemplateClassCache = make(map[string]*StrainerTemplateClass)
+	// Store the filter instance
+	e.registeredFilters = append(e.registeredFilters, filter)
 	return e.strainerTemplate.AddFilter(filter)
 }
 
@@ -74,6 +78,8 @@ func (e *Environment) RegisterFilter(filter interface{}) error {
 func (e *Environment) RegisterFilters(filters []interface{}) error {
 	e.strainerTemplateClassCache = make(map[string]*StrainerTemplateClass)
 	for _, filter := range filters {
+		// Store the filter instance
+		e.registeredFilters = append(e.registeredFilters, filter)
 		if err := e.strainerTemplate.AddFilter(filter); err != nil {
 			return err
 		}
@@ -84,6 +90,10 @@ func (e *Environment) RegisterFilters(filters []interface{}) error {
 // CreateStrainer creates a new strainer instance with the given filters.
 func (e *Environment) CreateStrainer(context interface{ Context() interface{} }, filters []interface{}, strictFilters bool) *StrainerTemplate {
 	if len(filters) == 0 {
+		// Use registered filters from the environment
+		if len(e.registeredFilters) > 0 {
+			return NewStrainerTemplateWithFilters(e.strainerTemplate, context, strictFilters, e.registeredFilters)
+		}
 		return NewStrainerTemplate(e.strainerTemplate, context, strictFilters)
 	}
 

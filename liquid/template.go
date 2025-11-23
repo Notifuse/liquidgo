@@ -295,6 +295,8 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 				err = e
 			case *InternalError:
 				err = e
+			case *StackLevelError:
+				err = e
 			case *Error:
 				err = e
 			case error:

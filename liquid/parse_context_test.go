@@ -275,7 +275,7 @@ func TestParseContextSafeParseExpressionStrictMode(t *testing.T) {
 				t.Error("Expected panic in strict mode for invalid expression")
 			}
 		}()
-		pc.SafeParseExpression(parser)
+		pc.SafeParseCompleteExpression(parser)
 	}()
 }
 
@@ -289,7 +289,7 @@ func TestParseContextSafeParseExpressionRigidMode(t *testing.T) {
 				t.Error("Expected panic in rigid mode for invalid expression")
 			}
 		}()
-		pc.SafeParseExpression(parser)
+		pc.SafeParseCompleteExpression(parser)
 	}()
 }
 
@@ -298,7 +298,7 @@ func TestParseContextSafeParseExpressionLaxMode(t *testing.T) {
 	parser := pc.NewParser("invalid+++")
 
 	// Should not panic in lax mode
-	result := pc.SafeParseExpression(parser)
+	result := pc.SafeParseCompleteExpression(parser)
 	if result != nil {
 		t.Errorf("Expected nil result in lax mode for invalid expression, got %v", result)
 	}

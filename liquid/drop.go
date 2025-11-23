@@ -281,6 +281,7 @@ func GetInvokableMethods(drop interface{}) []string {
 		"LiquidMethodMissing": true,
 		"Each":                true,
 		"Increment":           true, // Protected method
+		"Get":                 true, // Prevent recursion via Context.Get
 	}
 
 	var methods []string

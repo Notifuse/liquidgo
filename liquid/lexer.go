@@ -29,6 +29,10 @@ var (
 	lexerQuestion                     = Token{":question", "?"}
 	lexerOpenRound                    = Token{":open_round", "("}
 	lexerOpenSquare                   = Token{":open_square", "["}
+	// Arithmetic operators
+	lexerPlus   = Token{":plus", "+"}
+	lexerTimes  = Token{":times", "*"}
+	lexerDivide = Token{":divide", "/"}
 )
 
 var (
@@ -171,6 +175,12 @@ func getSpecialToken(b byte) Token {
 		return lexerQuestion
 	case '-':
 		return lexerDash
+	case '+':
+		return lexerPlus
+	case '*':
+		return lexerTimes
+	case '/':
+		return lexerDivide
 	default:
 		return Token{}
 	}

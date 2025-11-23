@@ -125,7 +125,7 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 		return false, liquid.NewSyntaxError("invalid attachment for condition block")
 	}
 
-	// Check depth
+	// Check depth during parsing to prevent stack overflow
 	if parseContext.Depth() >= 100 {
 		return false, liquid.NewStackLevelError("Nesting too deep")
 	}
@@ -203,6 +203,10 @@ func (i *IfTag) pushBlock(tagName, markup string) error {
 func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
+
+	// Track render depth for nested blocks
+	ctx.IncrementRenderDepth()
+	defer ctx.DecrementRenderDepth()
 
 	for _, block := range i.blocks {
 		result, err := block.Evaluate(ctx)
@@ -400,6 +404,11 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {
 	mode := parseContext.ErrorMode()
 	if mode == "strict" || mode == "warn" {
+		// Check for parentheses which are not allowed in Liquid conditions
+		if strings.Contains(expr, "(") || strings.Contains(expr, ")") {
+			return liquid.NewSyntaxError("Liquid syntax error: parentheses are not allowed in Liquid conditions")
+		}
+
 		p := parseContext.NewParser(expr)
 		if err := p.Error(); err != nil {
 			if syntaxErr, ok := err.(*liquid.SyntaxError); ok {

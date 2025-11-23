@@ -47,7 +47,7 @@ func (c *CommentTag) Blank() bool {
 func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 	parseContext := c.ParseContext()
 
-	// Check depth (blockMaxDepth is 100, defined in liquid/block.go)
+	// Check depth during parsing to prevent stack overflow
 	if parseContext.Depth() >= 100 {
 		return liquid.NewStackLevelError("Nesting too deep")
 	}

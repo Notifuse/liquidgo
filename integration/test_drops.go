@@ -192,7 +192,10 @@ func (t *TemplateContextDrop) LiquidMethodMissing(method string) interface{} {
 		return proxy
 	}
 	if t.Context() != nil {
-		return t.Context().Get(method)
+		result := t.Context().Get(method)
+		if result != nil {
+			return result
+		}
 	}
 	return method
 }

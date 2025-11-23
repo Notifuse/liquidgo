@@ -21,6 +21,60 @@ type VariableLookup struct {
 	commandFlags uint
 }
 
+// parseVariableTokens tokenizes a variable expression, properly handling nested brackets.
+// For example: "[list[settings.zero]]" returns ["[list[settings.zero]]"]
+// And: "list[settings.zero]" returns ["list", "[settings.zero]"]
+func parseVariableTokens(markup string) []string {
+	var tokens []string
+	i := 0
+
+	for i < len(markup) {
+		// Check if we're at the start of a bracket expression
+		switch {
+		case markup[i] == '[':
+			// Find the matching closing bracket, handling nesting
+			bracketCount := 1
+			start := i
+			i++
+			for i < len(markup) && bracketCount > 0 {
+				switch markup[i] {
+				case '[':
+					bracketCount++
+				case ']':
+					bracketCount--
+				}
+				i++
+			}
+			tokens = append(tokens, markup[start:i])
+		case (markup[i] >= 'a' && markup[i] <= 'z') ||
+			(markup[i] >= 'A' && markup[i] <= 'Z') ||
+			(markup[i] >= '0' && markup[i] <= '9') ||
+			markup[i] == '_' || markup[i] == '-':
+			// Identifier or number
+			start := i
+			for i < len(markup) && ((markup[i] >= 'a' && markup[i] <= 'z') ||
+				(markup[i] >= 'A' && markup[i] <= 'Z') ||
+				(markup[i] >= '0' && markup[i] <= '9') ||
+				markup[i] == '_' || markup[i] == '-') {
+				i++
+			}
+			// Check for optional '?' suffix
+			if i < len(markup) && markup[i] == '?' {
+				i++
+			}
+			tokens = append(tokens, markup[start:i])
+		case markup[i] == '.':
+			// Skip dots between identifiers (they're separators, not tokens)
+			i++
+		default:
+			// Unknown character, skip it
+			i++
+		}
+	}
+
+	return tokens
+}
+
 // VariableLookupParse parses a markup string into a VariableLookup.
 // Optimization: Uses global cache for better performance across templates.
 func VariableLookupParse(markup string, ss *StringScanner, cache map[string]interface{}) *VariableLookup {
@@ -34,9 +88,8 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 		}
 	}
 
-	// Scan for variable parts using VariableParser pattern
-	// This matches [brackets] or identifier? patterns
-	matches := VariableParser.FindAllString(markup, -1)
+	// Tokenize the variable expression, properly handling nested brackets
+	matches := parseVariableTokens(markup)
 	if len(matches) == 0 {
 		vl := &VariableLookup{name: markup, lookups: []interface{}{}}
 		if canCache {
@@ -202,6 +255,31 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				if idx, err := ToInteger(key); err == nil {
 					if idx >= 0 && idx < v.Len() {
 						obj = v.Index(idx).Interface()
+						continue
+					}
+				}
+			}
+
+			// Map access with integer keys (e.g., map[int]interface{})
+			// This handles maps where keys are not strings
+			if v.Kind() == reflect.Map {
+				// Try integer key first
+				if idx, err := ToInteger(key); err == nil {
+					intKey := reflect.ValueOf(idx)
+					if intKey.Type().ConvertibleTo(v.Type().Key()) {
+						mapValue := v.MapIndex(intKey.Convert(v.Type().Key()))
+						if mapValue.IsValid() {
+							obj = mapValue.Interface()
+							continue
+						}
+					}
+				}
+				// Try key as-is for other map key types
+				keyValue := reflect.ValueOf(key)
+				if keyValue.Type().ConvertibleTo(v.Type().Key()) {
+					mapValue := v.MapIndex(keyValue.Convert(v.Type().Key()))
+					if mapValue.IsValid() {
+						obj = mapValue.Interface()
 						continue
 					}
 				}

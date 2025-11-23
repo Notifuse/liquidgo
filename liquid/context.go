@@ -31,6 +31,8 @@ type Context struct {
 	scopes             []map[string]interface{}
 	staticEnvironments []map[string]interface{}
 	baseScopeDepth     int
+	renderDepth        int             // Track nesting depth during rendering
+	dropInvokeStack    map[string]bool // Track drop method invocations to prevent infinite recursion
 	strictFilters      bool
 	strictVariables    bool
 	partial            bool
@@ -97,6 +99,7 @@ func BuildContext(config ContextConfig) *Context {
 		stringScanner:      NewStringScanner(""),
 		templateName:       "",
 		exceptionRenderer:  env.ExceptionRenderer(),
+		dropInvokeStack:    make(map[string]bool),
 	}
 
 	// Initialize registers
@@ -153,6 +156,19 @@ func (c *Context) Warnings() []error {
 // AddWarning adds a warning.
 func (c *Context) AddWarning(warning error) {
 	c.warnings = append(c.warnings, warning)
+}
+
+// IncrementRenderDepth increments the render depth and checks for stack overflow.
+func (c *Context) IncrementRenderDepth() {
+	c.renderDepth++
+	if c.renderDepth > blockMaxDepth {
+		panic(NewStackLevelError("Nesting too deep"))
+	}
+}
+
+// DecrementRenderDepth decrements the render depth.
+func (c *Context) DecrementRenderDepth() {
+	c.renderDepth--
 }
 
 // ResourceLimits returns the resource limits.
@@ -518,6 +534,20 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// This allows drops to be used as context (Ruby behavior)
 	if outerScope != nil {
 		if drop, ok := outerScope["__drop__"]; ok {
+			// Check for infinite recursion in drop invocation
+			// This prevents cycles like: FindVariable -> InvokeDropOn -> LiquidMethodMissing -> Context.Get -> FindVariable
+			if c.dropInvokeStack[keyStr] {
+				// Already invoking drop for this key, return nil to break the cycle
+				return nil
+			}
+
+			// Mark this key as being invoked on the drop
+			c.dropInvokeStack[keyStr] = true
+			defer func() {
+				// Clean up after invocation
+				delete(c.dropInvokeStack, keyStr)
+			}()
+
 			// Always try to invoke on the drop - if the method doesn't exist,
 			// InvokeDropOn will call LiquidMethodMissing as a fallback
 			return InvokeDropOn(drop, keyStr)

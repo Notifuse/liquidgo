@@ -195,7 +195,7 @@ func (b *Block) newBody() *BlockBody {
 func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 	parseContext := b.ParseContext()
 
-	// Check depth
+	// Check depth during parsing to prevent stack overflow
 	if parseContext.Depth() >= blockMaxDepth {
 		return false, NewStackLevelError("Nesting too deep")
 	}

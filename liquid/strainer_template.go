@@ -12,6 +12,7 @@ type StrainerTemplate struct {
 	context         interface{ Context() interface{} }
 	filterMethods   map[string]bool
 	filterInstances map[string]interface{}
+	filterOrder     []interface{} // Maintains registration order for method precedence
 	strictFilters   bool
 }
 
@@ -29,10 +30,20 @@ func NewStrainerTemplateClass() *StrainerTemplateClass {
 
 // AddFilter adds a filter module to the strainer template class.
 func (stc *StrainerTemplateClass) AddFilter(filter interface{}) error {
-	// Get all methods from the filter
+	// Get type of the filter
 	filterType := reflect.TypeOf(filter)
+
+	// Handle functions as filters (e.g., func(interface{}) interface{})
+	if filterType.Kind() == reflect.Func {
+		// For functions, we'll treat the function itself as a callable filter
+		// We don't need to register method names since the function is the filter
+		// This will be handled during invocation
+		return nil
+	}
+
+	// Handle structs with methods as filters
 	if filterType.Kind() != reflect.Ptr {
-		return fmt.Errorf("filter must be a pointer to a struct")
+		return fmt.Errorf("filter must be a pointer to a struct or a function")
 	}
 
 	// Get methods from the filter
@@ -68,6 +79,7 @@ func NewStrainerTemplate(class *StrainerTemplateClass, context interface{ Contex
 		filterMethods:   class.filterMethods,
 		strictFilters:   strictFilters,
 		filterInstances: make(map[string]interface{}),
+		filterOrder:     make([]interface{}, 0),
 	}
 
 	// Always add StandardFilters as a base filter with context
@@ -79,6 +91,7 @@ func NewStrainerTemplate(class *StrainerTemplateClass, context interface{ Contex
 	}
 	sf := &StandardFilters{context: ctx}
 	st.filterInstances["*liquid.StandardFilters"] = sf
+	st.filterOrder = append(st.filterOrder, sf)
 
 	return st
 }
@@ -92,6 +105,7 @@ func NewStrainerTemplateWithFilters(class *StrainerTemplateClass, context interf
 		filterType := reflect.TypeOf(filter)
 		if filterType.Kind() == reflect.Ptr {
 			st.filterInstances[filterType.String()] = filter
+			st.filterOrder = append(st.filterOrder, filter)
 		}
 	}
 
@@ -153,8 +167,9 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 	}
 
 	// Method is invokable - use reflection to find and call it on filter instances
-	// Try each filter instance until we find one with the method
-	for _, filterInstance := range st.filterInstances {
+	// Iterate in reverse order so later-registered filters take precedence
+	for i := len(st.filterOrder) - 1; i >= 0; i-- {
+		filterInstance := st.filterOrder[i]
 		filterValue := reflect.ValueOf(filterInstance)
 
 		// Look for the method - try both original case and capitalized version
@@ -176,36 +191,45 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		}
 
 		// Prepare arguments
-		expectedArgs := methodType.NumIn()
-		callArgs := make([]reflect.Value, expectedArgs)
-
 		// First arg is the input (from args[0])
 		if len(args) == 0 {
 			continue
 		}
 
-		// Build all arguments
-		for i := 0; i < expectedArgs; i++ {
-			if i < len(args) {
-				// Argument provided - use it
-				argValue := args[i]
-				if argValue == nil {
-					// nil argument - use zero value for the parameter type
-					paramType := methodType.In(i)
-					callArgs[i] = reflect.Zero(paramType)
+		// Check if method is variadic (has ...interface{} parameter)
+		isVariadic := methodType.IsVariadic()
+		numIn := methodType.NumIn()
+		minRequired := numIn
+		if isVariadic {
+			minRequired = numIn - 1 // Variadic param is optional
+		}
+
+		// Build call arguments - convert all args to reflect.Value
+		callArgs := make([]reflect.Value, len(args))
+		for i := 0; i < len(args); i++ {
+			if args[i] == nil {
+				// For nil values, use zero value of the expected type
+				var paramType reflect.Type
+				if isVariadic && i >= minRequired {
+					// For variadic params beyond fixed params, use element type
+					paramType = methodType.In(numIn - 1).Elem()
 				} else {
-					callArgs[i] = reflect.ValueOf(argValue)
+					paramType = methodType.In(i)
 				}
-			} else {
-				// Argument missing - pad with zero value for the parameter type
-				// This allows filters with optional parameters to work correctly
-				// and matches Ruby Liquid behavior where optional parameters default to nil
-				paramType := methodType.In(i)
 				callArgs[i] = reflect.Zero(paramType)
+			} else {
+				callArgs[i] = reflect.ValueOf(args[i])
 			}
 		}
 
-		// Call the method
+		// Pad missing required (non-variadic) arguments with zero values
+		for i := len(callArgs); i < minRequired; i++ {
+			paramType := methodType.In(i)
+			callArgs = append(callArgs, reflect.Zero(paramType))
+		}
+
+		// Call the method - use Call for both variadic and non-variadic
+		// Go's reflect.Call handles variadic functions automatically
 		results := methodValue.Call(callArgs)
 		if len(results) > 0 {
 			return results[0].Interface(), nil

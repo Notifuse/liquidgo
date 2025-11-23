@@ -149,6 +149,8 @@ func (f *ForTag) Parse(tokenizer *liquid.Tokenizer) error {
 // Returns (shouldContinue, error) where shouldContinue is true if we should continue parsing (didn't find endfor).
 func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) (bool, error) {
 	parseContext := f.ParseContext()
+
+	// Check depth during parsing to prevent stack overflow
 	if parseContext.Depth() >= 100 {
 		return false, liquid.NewStackLevelError("Nesting too deep")
 	}
