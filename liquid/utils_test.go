@@ -61,15 +61,15 @@ func TestToNumber(t *testing.T) {
 		input    interface{}
 		wantType string
 	}{
-		{"int", 42, "int"},
+		{"int", 42, "float64"},
 		{"float", 3.14, "float64"},
-		{"string int", "42", "int"},
+		{"string int", "42", "float64"},
 		{"string float", "3.14", "float64"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToNumber(tt.input)
+			got, _ := ToNumber(tt.input)
 			gotType := getTypeName(got)
 			if gotType != tt.wantType {
 				t.Errorf("ToNumber() type = %v, want %v", gotType, tt.wantType)
@@ -442,67 +442,68 @@ func TestSliceCollectionEdgeCases(t *testing.T) {
 // TestToNumberEdgeCases tests ToNumber with edge cases
 func TestToNumberEdgeCases(t *testing.T) {
 	// Test decimal numbers
-	result := ToNumber("3.14")
+	result, _ := ToNumber("3.14")
 	if f, ok := result.(float64); !ok || f != 3.14 {
 		t.Errorf("Expected 3.14, got %v", result)
 	}
 
 	// Test decimal starting with dot (may not be supported by regex)
-	result2 := ToNumber(".5")
+	result2, _ := ToNumber(".5")
 	// This may return 0 if regex doesn't match, which is acceptable
 	if result2 != 0 && result2 != 0.5 {
 		t.Logf("Note: .5 conversion returned %v (may not be supported)", result2)
 	}
 
 	// Test decimal ending with dot (may not be supported by regex)
-	result3 := ToNumber("10.")
+	result3, _ := ToNumber("10.")
 	// This may return 0 if regex doesn't match, which is acceptable
 	if result3 != 0 && result3 != 10.0 {
 		t.Logf("Note: 10. conversion returned %v (may not be supported)", result3)
 	}
 
 	// Test invalid number format
-	result4 := ToNumber("abc")
+	result4, _ := ToNumber("abc")
 	if result4 != 0 {
 		t.Errorf("Expected 0 for invalid number, got %v", result4)
 	}
 
 	// Test number with whitespace
-	result5 := ToNumber("  42  ")
-	if i, ok := result5.(int); !ok || i != 42 {
+	result5, _ := ToNumber("  42  ")
+	if i, ok := result5.(float64); !ok || i != 42 {
 		t.Errorf("Expected 42, got %v", result5)
 	}
 
 	// Test decimal with whitespace
-	result6 := ToNumber("  3.14  ")
+	result6, _ := ToNumber("  3.14  ")
 	if f, ok := result6.(float64); !ok || f != 3.14 {
 		t.Errorf("Expected 3.14, got %v", result6)
 	}
 
 	// Test custom ToNumber interface
 	customNum := &testToNumberer{value: 99}
-	result7 := ToNumber(customNum)
+	result7, _ := ToNumber(customNum)
 	if result7 != 99 {
 		t.Errorf("Expected 99 from custom ToNumberer, got %v", result7)
 	}
 
 	// Test various numeric types
-	if ToNumber(int8(10)) != int8(10) {
-		t.Error("Expected int8 to pass through")
+	// ToNumber now converts all ints to float64 for consistent handling
+	if v, _ := ToNumber(int8(10)); v != float64(10) {
+		t.Error("Expected int8 to convert to float64")
 	}
-	if ToNumber(int16(20)) != int16(20) {
-		t.Error("Expected int16 to pass through")
+	if v, _ := ToNumber(int16(20)); v != float64(20) {
+		t.Error("Expected int16 to convert to float64")
 	}
-	if ToNumber(int32(30)) != int32(30) {
-		t.Error("Expected int32 to pass through")
+	if v, _ := ToNumber(int32(30)); v != float64(30) {
+		t.Error("Expected int32 to convert to float64")
 	}
-	if ToNumber(int64(40)) != int64(40) {
-		t.Error("Expected int64 to pass through")
+	if v, _ := ToNumber(int64(40)); v != float64(40) {
+		t.Error("Expected int64 to convert to float64")
 	}
-	if ToNumber(uint(50)) != uint(50) {
-		t.Error("Expected uint to pass through")
+	if v, _ := ToNumber(uint(50)); v != float64(50) {
+		t.Error("Expected uint to convert to float64")
 	}
-	if ToNumber(float32(1.5)) != 1.5 {
+	if v, _ := ToNumber(float32(1.5)); v != float64(1.5) {
 		t.Error("Expected float32 to convert to float64")
 	}
 }

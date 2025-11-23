@@ -8,7 +8,8 @@ import (
 // Parser parses expressions from tokens.
 type Parser struct {
 	tokens []Token
-	p      int // pointer to current location
+	p      int   // pointer to current location
+	err    error // Stored lexer error
 }
 
 // NewParser creates a new parser from a string scanner or string.
@@ -25,14 +26,20 @@ func NewParser(input interface{}) *Parser {
 
 	tokens, err := Tokenize(ss)
 	if err != nil {
-		// If tokenization fails, create parser with empty tokens
+		// If tokenization fails, create parser with empty tokens but store the error
 		tokens = []Token{lexerEOS}
 	}
 
 	return &Parser{
 		tokens: tokens,
 		p:      0,
+		err:    err,
 	}
+}
+
+// Error returns the lexer error if one occurred during initialization.
+func (p *Parser) Error() error {
+	return p.err
 }
 
 // Jump sets the parser position to the given point.

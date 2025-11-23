@@ -112,5 +112,5 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 
 // RaiseTagNeverClosed raises an error for a tag that was never closed.
 func (d *DocTag) RaiseTagNeverClosed() error {
-	return liquid.NewSyntaxError("tag " + d.BlockName() + " was never closed")
+	return liquid.NewSyntaxError("'" + d.BlockName() + "' tag was never closed")
 }

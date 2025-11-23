@@ -113,17 +113,45 @@ func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseC
 					reflect.ValueOf(markup),
 					reflect.ValueOf(parseContext),
 				}
-				results := tagClassValue.Call(args)
-				if len(results) == 2 {
-					// Check for error
-					if !results[1].IsNil() {
-						if err, ok := results[1].Interface().(error); ok {
-							panic(err)
+
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							if e, ok := r.(error); ok {
+								if parseContext.ErrorMode() == "warn" {
+									parseContext.AddWarning(e)
+									tag = nil
+								} else {
+									panic(r)
+								}
+							} else {
+								panic(r)
+							}
+						}
+					}()
+					results := tagClassValue.Call(args)
+					if len(results) == 2 {
+						// Check for error
+						if !results[1].IsNil() {
+							if err, ok := results[1].Interface().(error); ok {
+								if parseContext.ErrorMode() == "warn" {
+									parseContext.AddWarning(err)
+									tag = nil
+								} else {
+									panic(err)
+								}
+							}
+						} else {
+							tag = results[0].Interface()
 						}
 					}
-					tag = results[0].Interface()
-				}
+				}()
 			}
+		}
+
+		// If tag creation failed in warn mode, skip it (liquid tags are just lines of code)
+		if tag == nil && parseContext.ErrorMode() == "warn" {
+			continue
 		}
 
 		// If tag is still nil, fallback to generic tag
@@ -135,6 +163,10 @@ func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseC
 		if parseable, ok := tag.(interface{ Parse(*Tokenizer) error }); ok {
 			err := parseable.Parse(tokenizer)
 			if err != nil {
+				if parseContext.ErrorMode() == "warn" {
+					parseContext.AddWarning(err)
+					continue
+				}
 				return err
 			}
 		}
@@ -228,17 +260,46 @@ func (bb *BlockBody) parseForDocument(tokenizer *Tokenizer, parseContext ParseCo
 						reflect.ValueOf(markup),
 						reflect.ValueOf(parseContext),
 					}
-					results := tagClassValue.Call(args)
-					if len(results) == 2 {
-						// Check for error
-						if !results[1].IsNil() {
-							if err, ok := results[1].Interface().(error); ok {
-								panic(err)
+
+					func() {
+						defer func() {
+							if r := recover(); r != nil {
+								if e, ok := r.(error); ok {
+									if parseContext.ErrorMode() == "warn" {
+										parseContext.AddWarning(e)
+										tag = nil
+									} else {
+										panic(r)
+									}
+								} else {
+									panic(r)
+								}
+							}
+						}()
+						results := tagClassValue.Call(args)
+						if len(results) == 2 {
+							// Check for error
+							if !results[1].IsNil() {
+								if err, ok := results[1].Interface().(error); ok {
+									if parseContext.ErrorMode() == "warn" {
+										parseContext.AddWarning(err)
+										tag = nil
+									} else {
+										panic(err)
+									}
+								}
+							} else {
+								tag = results[0].Interface()
 							}
 						}
-						tag = results[0].Interface()
-					}
+					}()
 				}
+			}
+
+			// If tag creation failed in warn mode, treat as text
+			if tag == nil && parseContext.ErrorMode() == "warn" {
+				bb.nodelist = append(bb.nodelist, token)
+				continue
 			}
 
 			// If tag is still nil, fallback to generic tag
@@ -250,6 +311,12 @@ func (bb *BlockBody) parseForDocument(tokenizer *Tokenizer, parseContext ParseCo
 			if parseable, ok := tag.(interface{ Parse(*Tokenizer) error }); ok {
 				err := parseable.Parse(tokenizer)
 				if err != nil {
+					if parseContext.ErrorMode() == "warn" {
+						parseContext.AddWarning(err)
+						// If parsing failed, treat as text
+						bb.nodelist = append(bb.nodelist, token)
+						continue
+					}
 					return err
 				}
 			}
@@ -295,7 +362,7 @@ func (bb *BlockBody) whitespaceHandler(token string, parseContext ParseContextIn
 	parseContext.SetTrimWhitespace(hasTrailingDash)
 }
 
-func (bb *BlockBody) createVariable(token string, parseContext ParseContextInterface) *Variable {
+func (bb *BlockBody) createVariable(token string, parseContext ParseContextInterface) interface{} {
 	if strings.HasSuffix(token, "}}") {
 		// Extract markup from {{ markup }}
 		start := 2
@@ -314,7 +381,31 @@ func (bb *BlockBody) createVariable(token string, parseContext ParseContextInter
 		if markupEnd > 0 {
 			markup = token[start : start+markupEnd]
 		}
-		return NewVariable(markup, parseContext)
+
+		var variable *Variable
+		var err error
+
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					if e, ok := r.(error); ok {
+						err = e
+					} else {
+						panic(r)
+					}
+				}
+			}()
+			variable = NewVariable(markup, parseContext)
+		}()
+
+		if err != nil {
+			if parseContext.ErrorMode() == "warn" {
+				parseContext.AddWarning(err)
+				return token
+			}
+			panic(err)
+		}
+		return variable
 	}
 
 	// Missing variable terminator - raise error

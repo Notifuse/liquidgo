@@ -32,7 +32,14 @@ func NewIfTag(tagName, markup string, parseContext liquid.ParseContextInterface)
 	// Parse the initial condition
 	condition, err := parseIfCondition(markup, parseContext)
 	if err != nil {
-		return nil, err
+		// In warn mode, we add warning and continue with a dummy condition
+		if parseContext.ErrorMode() == "warn" {
+			parseContext.AddWarning(err)
+			// Use a condition that evaluates to false
+			condition = liquid.NewCondition(nil, "", nil)
+		} else {
+			return nil, err
+		}
 	}
 
 	// Create attachment for the first block
@@ -135,7 +142,7 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 
 		if endTagName == "" {
 			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
-			panic(liquid.NewSyntaxError("Tag was never closed: " + i.BlockName()))
+			panic(liquid.NewSyntaxError("'" + i.BlockName() + "' tag was never closed"))
 		}
 
 		// Handle elsif and else (Ruby: unknown_tag handles these)
@@ -201,7 +208,12 @@ func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) 
 		result, err := block.Evaluate(ctx)
 		if err != nil {
 			// Handle error
-			errorMsg := context.HandleError(err, nil)
+			// If the tag is blank (produces no output), suppress the error from output
+			// This matches Ruby Liquid's behavior for blank nodes
+			if i.Blank() {
+				return
+			}
+			errorMsg := context.HandleError(err, i.LineNumber())
 			*output += errorMsg
 			return
 		}
@@ -222,7 +234,14 @@ func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) 
 
 // Blank returns true if all blocks are blank.
 func (i *IfTag) Blank() bool {
-	return i.Block.Blank()
+	for _, block := range i.blocks {
+		if attachment, ok := block.Attachment().(interface{ Blank() bool }); ok {
+			if !attachment.Blank() {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // parseIfCondition parses a condition from markup.
@@ -327,19 +346,71 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 
 	matches := ifSyntax.FindStringSubmatch(expr)
 	if len(matches) == 0 {
+		// Validate expression syntax in strict/warn mode
+		if err := validateExpression(expr, parseContext); err != nil {
+			return nil, err
+		}
+
 		// Try as simple expression - use ParseConditionExpression to support filters
 		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
 		return liquid.NewCondition(parsedExpr, "", nil), nil
 	}
 
+	// Validate left expression syntax
+	if err := validateExpression(matches[1], parseContext); err != nil {
+		return nil, err
+	}
+
 	// Parse left side - use ParseConditionExpression to support filters
 	left := liquid.ParseConditionExpression(parseContext, matches[1], false)
 	operator := matches[2]
+
+	// Validate operator in strict mode
+	if operator != "" {
+		valid := false
+		switch operator {
+		case "==", "!=", "<>", "<", ">", ">=", "<=", "contains":
+			valid = true
+		}
+
+		if !valid {
+			// Check if we are in strict mode
+			if pc, ok := parseContext.(interface{ ErrorMode() string }); ok {
+				if pc.ErrorMode() == "strict" {
+					return nil, liquid.NewSyntaxError("Unexpected character = in \"" + matches[0] + "\"")
+				}
+			}
+		}
+	}
+
 	var right interface{}
 	if len(matches) > 3 && matches[3] != "" {
+		// Validate right expression syntax
+		if err := validateExpression(matches[3], parseContext); err != nil {
+			return nil, err
+		}
+
 		// Parse right side - use ParseConditionExpression to support filters
 		right = liquid.ParseConditionExpression(parseContext, matches[3], false)
 	}
 
 	return liquid.NewCondition(left, operator, right), nil
+}
+
+func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {
+	mode := parseContext.ErrorMode()
+	if mode == "strict" || mode == "warn" {
+		p := parseContext.NewParser(expr)
+		if err := p.Error(); err != nil {
+			if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
+				syntaxErr.Err.MarkupContext = "in \"" + expr + "\""
+				if parseContext.LineNumber() != nil {
+					ln := *parseContext.LineNumber()
+					syntaxErr.Err.LineNumber = &ln
+				}
+			}
+			return err
+		}
+	}
+	return nil
 }

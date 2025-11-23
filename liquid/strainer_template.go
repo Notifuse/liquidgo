@@ -183,7 +183,7 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		if len(args) == 0 {
 			continue
 		}
-		
+
 		// Build all arguments
 		for i := 0; i < expectedArgs; i++ {
 			if i < len(args) {

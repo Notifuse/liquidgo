@@ -33,7 +33,11 @@ type Tag struct {
 
 // NewTag creates a new tag instance.
 func NewTag(tagName, markup string, parseContext ParseContextInterface) *Tag {
-	lineNum := parseContext.LineNumber()
+	var lineNum *int
+	if parseContext.LineNumber() != nil {
+		ln := *parseContext.LineNumber()
+		lineNum = &ln
+	}
 	return &Tag{
 		tagName:      tagName,
 		markup:       markup,

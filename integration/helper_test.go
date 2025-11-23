@@ -252,7 +252,7 @@ func (s *StubFileSystem) ReadTemplateFile(templatePath string) (string, error) {
 	if value, ok := s.values[templatePath]; ok {
 		return value, nil
 	}
-	return "", fmt.Errorf("template not found: %s", templatePath)
+	return "", liquid.NewFileSystemError(fmt.Sprintf("template not found: %s", templatePath))
 }
 
 // FileReadCount returns the number of times ReadTemplateFile was called.

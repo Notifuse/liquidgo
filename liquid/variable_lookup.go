@@ -213,6 +213,12 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		// as commands and call them on the current object
 		// (This is lines 67-71 in Ruby)
 		if keyStr, ok := key.(string); ok {
+			// Check for "to_liquid" property
+			if keyStr == "to_liquid" {
+				obj = ToLiquid(obj)
+				continue
+			}
+
 			// Check if it's a command method AND the object responds to it
 			if vl.LookupCommand(i) {
 				// Command methods for arrays/slices (handle []interface{} first for fast path)
@@ -280,6 +286,14 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				dropResult := InvokeDropOn(obj, keyStr)
 				// Even if result is nil, we found the method, so use it
 				obj = dropResult
+				continue
+			}
+
+			// Check for LiquidMethodMissing
+			if dropWithMissing, ok := obj.(interface {
+				LiquidMethodMissing(string) interface{}
+			}); ok {
+				obj = dropWithMissing.LiquidMethodMissing(keyStr)
 				continue
 			}
 		}

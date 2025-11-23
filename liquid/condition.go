@@ -2,7 +2,6 @@ package liquid
 
 import (
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -162,19 +161,35 @@ func getConditionOperator(op string) ConditionOperator {
 		}
 	case "<":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return compareValues(left, right) < 0, nil
+			res, err := compareValues(left, right)
+			if err != nil {
+				return false, err
+			}
+			return res < 0, nil
 		}
 	case ">":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return compareValues(left, right) > 0, nil
+			res, err := compareValues(left, right)
+			if err != nil {
+				return false, err
+			}
+			return res > 0, nil
 		}
 	case ">=":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return compareValues(left, right) >= 0, nil
+			res, err := compareValues(left, right)
+			if err != nil {
+				return false, err
+			}
+			return res >= 0, nil
 		}
 	case "<=":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return compareValues(left, right) <= 0, nil
+			res, err := compareValues(left, right)
+			if err != nil {
+				return false, err
+			}
+			return res <= 0, nil
 		}
 	case "contains":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
@@ -229,28 +244,42 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 	}
 }
 
-func compareValues(left, right interface{}) int {
+func compareValues(left, right interface{}) (int, error) {
 	// Simple numeric comparison
 	leftNum, leftOk := toNumber(left)
 	rightNum, rightOk := toNumber(right)
 	if leftOk && rightOk {
 		if leftNum < rightNum {
-			return -1
+			return -1, nil
 		} else if leftNum > rightNum {
-			return 1
+			return 1, nil
 		}
-		return 0
+		return 0, nil
+	}
+
+	// If one is a number and the other is not, it's a type mismatch for comparison
+	if leftOk || rightOk {
+		// Format types nicely for error message
+		leftType := reflect.TypeOf(left).Name()
+		if leftType == "" {
+			leftType = reflect.TypeOf(left).String()
+		}
+		rightType := reflect.TypeOf(right).Name()
+		if rightType == "" {
+			rightType = reflect.TypeOf(right).String()
+		}
+		return 0, NewArgumentError("comparison of " + leftType + " with " + rightType + " failed")
 	}
 
 	// String comparison
 	leftStr := ToS(left, nil)
 	rightStr := ToS(right, nil)
 	if leftStr < rightStr {
-		return -1
+		return -1, nil
 	} else if leftStr > rightStr {
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 func toNumber(v interface{}) (float64, bool) {
@@ -261,10 +290,6 @@ func toNumber(v interface{}) (float64, bool) {
 		return float64(n), true
 	case float64:
 		return n, true
-	case string:
-		if num, err := strconv.ParseFloat(n, 64); err == nil {
-			return num, true
-		}
 	}
 	return 0, false
 }

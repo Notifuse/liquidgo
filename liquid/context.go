@@ -278,10 +278,18 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 	if _, ok := err.(*Error); !ok {
 		if _, ok := err.(*InternalError); !ok {
 			if _, ok := err.(*SyntaxError); !ok {
-				if _, ok := err.(*UndefinedVariable); !ok {
-					if _, ok := err.(*DisabledError); !ok {
-						if _, ok := err.(*MemoryError); !ok {
-							liquidErr = NewInternalError("internal error")
+				if _, ok := err.(*StandardError); !ok {
+					if _, ok := err.(*ArgumentError); !ok {
+						if _, ok := err.(*UndefinedVariable); !ok {
+							if _, ok := err.(*DisabledError); !ok {
+								if _, ok := err.(*MemoryError); !ok {
+									if _, ok := err.(*FileSystemError); !ok {
+										if _, ok := err.(*StackLevelError); !ok {
+											liquidErr = NewInternalError("internal")
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -297,6 +305,20 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 		}
 		if e.LineNumber == nil {
 			e.LineNumber = lineNumber
+		}
+	case *StandardError:
+		if e.Err.TemplateName == "" {
+			e.Err.TemplateName = c.templateName
+		}
+		if e.Err.LineNumber == nil {
+			e.Err.LineNumber = lineNumber
+		}
+	case *ArgumentError:
+		if e.Err.TemplateName == "" {
+			e.Err.TemplateName = c.templateName
+		}
+		if e.Err.LineNumber == nil {
+			e.Err.LineNumber = lineNumber
 		}
 	case *InternalError:
 		if e.Err.TemplateName == "" {
@@ -327,6 +349,20 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 			e.Err.LineNumber = lineNumber
 		}
 	case *MemoryError:
+		if e.Err.TemplateName == "" {
+			e.Err.TemplateName = c.templateName
+		}
+		if e.Err.LineNumber == nil {
+			e.Err.LineNumber = lineNumber
+		}
+	case *FileSystemError:
+		if e.Err.TemplateName == "" {
+			e.Err.TemplateName = c.templateName
+		}
+		if e.Err.LineNumber == nil {
+			e.Err.LineNumber = lineNumber
+		}
+	case *StackLevelError:
 		if e.Err.TemplateName == "" {
 			e.Err.TemplateName = c.templateName
 		}

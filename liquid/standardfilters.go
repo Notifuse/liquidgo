@@ -449,7 +449,7 @@ func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 // Abs returns the absolute value of a number.
 // Mirrors Ruby's abs from standardfilters.rb:792
 func (sf *StandardFilters) Abs(input interface{}) interface{} {
-	num := ToNumber(input)
+	num, _ := ToNumber(input)
 	switch v := num.(type) {
 	case int:
 		if v < 0 {
@@ -484,7 +484,7 @@ func (sf *StandardFilters) Times(input interface{}, operand interface{}) interfa
 // DividedBy divides two numbers.
 // Mirrors Ruby's divided_by from standardfilters.rb:837
 func (sf *StandardFilters) DividedBy(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum := ToNumber(operand)
+	operandNum, _ := ToNumber(operand)
 	var operandFloat float64
 	switch v := operandNum.(type) {
 	case int:
@@ -511,7 +511,7 @@ func (sf *StandardFilters) DividedBy(input interface{}, operand interface{}) (in
 // Modulo returns the remainder of division.
 // Mirrors Ruby's modulo from standardfilters.rb:850
 func (sf *StandardFilters) Modulo(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum := ToNumber(operand)
+	operandNum, _ := ToNumber(operand)
 	var operandFloat float64
 	switch v := operandNum.(type) {
 	case int:
@@ -538,10 +538,10 @@ func (sf *StandardFilters) Modulo(input interface{}, operand interface{}) (inter
 // Round rounds a number to the nearest integer or specified precision.
 // Mirrors Ruby's round from standardfilters.rb:863
 func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{}, error) {
-	num := ToNumber(input)
+	num, _ := ToNumber(input)
 	precision := 0
 	if n != nil {
-		precisionNum := ToNumber(n)
+		precisionNum, _ := ToNumber(n)
 		if p, ok := precisionNum.(int); ok {
 			precision = p
 		} else if p, ok := precisionNum.(float64); ok {
@@ -573,7 +573,7 @@ func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{},
 // Ceil rounds a number up to the nearest integer.
 // Mirrors Ruby's ceil from standardfilters.rb:879
 func (sf *StandardFilters) Ceil(input interface{}) (int, error) {
-	num := ToNumber(input)
+	num, _ := ToNumber(input)
 	switch v := num.(type) {
 	case int:
 		return v, nil
@@ -590,7 +590,7 @@ func (sf *StandardFilters) Ceil(input interface{}) (int, error) {
 // Floor rounds a number down to the nearest integer.
 // Mirrors Ruby's floor from standardfilters.rb:892
 func (sf *StandardFilters) Floor(input interface{}) (int, error) {
-	num := ToNumber(input)
+	num, _ := ToNumber(input)
 	switch v := num.(type) {
 	case int:
 		return v, nil
@@ -607,8 +607,8 @@ func (sf *StandardFilters) Floor(input interface{}) (int, error) {
 // AtLeast limits a number to a minimum value.
 // Mirrors Ruby's at_least from standardfilters.rb:905
 func (sf *StandardFilters) AtLeast(input interface{}, n interface{}) interface{} {
-	minValue := ToNumber(n)
-	result := ToNumber(input)
+	minValue, _ := ToNumber(n)
+	result, _ := ToNumber(input)
 
 	minFloat, _ := ToNumberValue(minValue)
 	resultFloat, _ := ToNumberValue(result)
@@ -622,8 +622,8 @@ func (sf *StandardFilters) AtLeast(input interface{}, n interface{}) interface{}
 // AtMost limits a number to a maximum value.
 // Mirrors Ruby's at_most from standardfilters.rb:920
 func (sf *StandardFilters) AtMost(input interface{}, n interface{}) interface{} {
-	maxValue := ToNumber(n)
-	result := ToNumber(input)
+	maxValue, _ := ToNumber(n)
+	result, _ := ToNumber(input)
 
 	maxFloat, _ := ToNumberValue(maxValue)
 	resultFloat, _ := ToNumberValue(result)
@@ -947,8 +947,8 @@ func nilSafeCasecmp(a, b interface{}) int {
 // applyOperation applies a math operation to two numbers.
 // Mirrors Ruby's apply_operation from standardfilters.rb:1003-1006
 func applyOperation(input, operand interface{}, operation string) interface{} {
-	inputNum := ToNumber(input)
-	operandNum := ToNumber(operand)
+	inputNum, _ := ToNumber(input)
+	operandNum, _ := ToNumber(operand)
 
 	var result interface{}
 
@@ -1430,7 +1430,7 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 	if property == nil {
 		// Sum items directly
 		iter.Each(func(item interface{}) {
-			num := ToNumber(item)
+			num, _ := ToNumber(item)
 			switch v := num.(type) {
 			case int:
 				sum += float64(v)
@@ -1452,7 +1452,7 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 				return
 			}
 
-			num := ToNumber(val)
+			num, _ := ToNumber(val)
 			switch v := num.(type) {
 			case int:
 				sum += float64(v)

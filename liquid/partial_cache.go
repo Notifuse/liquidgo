@@ -52,8 +52,12 @@ func (pc *PartialCache) Load(templateName string, context interface {
 
 	// Get template factory
 	templateFactory := registers.Get("template_factory")
-	var tf *TemplateFactory
-	if t, ok := templateFactory.(*TemplateFactory); ok {
+	var tf interface {
+		For(string) interface{}
+	}
+	if t, ok := templateFactory.(interface {
+		For(string) interface{}
+	}); ok {
 		tf = t
 	} else {
 		tf = NewTemplateFactory()
@@ -72,16 +76,39 @@ func (pc *PartialCache) Load(templateName string, context interface {
 	parseOptions := &TemplateOptions{}
 	if pc, ok := parseContext.(*ParseContext); ok {
 		parseOptions.Environment = pc.Environment()
+		if ln, ok := pc.GetOption("line_numbers").(bool); ok && ln {
+			parseOptions.LineNumbers = true
+		}
 	}
 	err = tmpl.Parse(source, parseOptions)
 	if err != nil {
 		// Set template name on error if available
-		if liquidErr, ok := err.(*Error); ok {
-			if tmpl.Name() == "" {
-				liquidErr.TemplateName = templateName
-			} else {
-				liquidErr.TemplateName = tmpl.Name()
-			}
+		name := tmpl.Name()
+		if name == "" {
+			name = templateName
+		}
+
+		switch e := err.(type) {
+		case *Error:
+			e.TemplateName = name
+		case *SyntaxError:
+			e.Err.TemplateName = name
+		case *StandardError:
+			e.Err.TemplateName = name
+		case *ArgumentError:
+			e.Err.TemplateName = name
+		case *InternalError:
+			e.Err.TemplateName = name
+		case *UndefinedVariable:
+			e.Err.TemplateName = name
+		case *DisabledError:
+			e.Err.TemplateName = name
+		case *MemoryError:
+			e.Err.TemplateName = name
+		case *FileSystemError:
+			e.Err.TemplateName = name
+		case *StackLevelError:
+			e.Err.TemplateName = name
 		}
 		return nil, err
 	}

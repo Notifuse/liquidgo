@@ -138,6 +138,10 @@ func (d *Document) parseBody(tokenizer *Tokenizer, parseContext ParseContextInte
 		if unknownTagName != "" {
 			err := d.UnknownTag(unknownTagName, unknownTagMarkup, tokenizer)
 			if err != nil {
+				if d.parseContext.ErrorMode() == "warn" {
+					d.parseContext.AddWarning(err)
+					return true
+				}
 				panic(err)
 			}
 			return true

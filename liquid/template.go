@@ -95,7 +95,17 @@ func NewTemplate(options *TemplateOptions) *Template {
 
 // Parse parses source code.
 // Returns self for easy chaining.
-func (t *Template) Parse(source string, options *TemplateOptions) error {
+func (t *Template) Parse(source string, options *TemplateOptions) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else {
+				panic(r)
+			}
+		}
+	}()
+
 	parseContext := t.configureOptions(options)
 
 	// Convert source to string
@@ -265,14 +275,50 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 
 	defer func() {
 		if r := recover(); r != nil {
-			if memErr, ok := r.(*MemoryError); ok {
-				errorMsg := context.HandleError(memErr, nil)
-				// Set output to error message (named return allows defer to modify it)
+			// Handle Liquid errors by converting them to error messages
+			var err error
+			var handled bool
+
+			switch e := r.(type) {
+			case *MemoryError:
+				errorMsg := context.HandleError(e, nil)
 				output = errorMsg
 				if output == "" {
 					output = "Liquid error: Memory limits exceeded"
 				}
-			} else {
+				handled = true
+			case *StandardError:
+				err = e
+			case *SyntaxError:
+				err = e
+			case *ArgumentError:
+				err = e
+			case *InternalError:
+				err = e
+			case *Error:
+				err = e
+			case error:
+				// Non-Liquid errors should be wrapped as InternalError
+				err = NewInternalError("internal")
+			default:
+				// Non-error panics should be wrapped as InternalError
+				err = NewInternalError("internal")
+			}
+
+			if !handled && err != nil {
+				// Get context to handle the error
+				if ctx, ok := context.(*Context); ok {
+					errorMsg := ctx.HandleError(err, nil)
+					output = errorMsg
+					if output == "" {
+						output = "Liquid error: internal"
+					}
+				} else {
+					// Fallback if we can't get context
+					output = "Liquid error: internal error"
+				}
+			} else if !handled {
+				// Re-panic non-Liquid panics
 				panic(r)
 			}
 		}

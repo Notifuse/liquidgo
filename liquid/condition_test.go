@@ -124,22 +124,22 @@ func TestElseCondition(t *testing.T) {
 
 // TestConditionToNumber tests number conversion in conditions
 func TestConditionToNumber(t *testing.T) {
-	// Test with string number
+	// Test with string number (should fail as conditions don't implicitly convert strings)
 	result, ok := toNumber("42")
-	if !ok || result != 42 {
-		t.Errorf("Expected 42, got %v, ok=%v", result, ok)
+	if ok {
+		t.Errorf("Expected ok=false for string number, got ok=true, result=%v", result)
 	}
 
-	// Test with float string
+	// Test with float string (should fail)
 	result2, ok2 := toNumber("3.14")
-	if !ok2 || result2 != 3.14 {
-		t.Errorf("Expected 3.14, got %v, ok=%v", result2, ok2)
+	if ok2 {
+		t.Errorf("Expected ok=false for float string, got ok=true, result=%v", result2)
 	}
 
 	// Test with actual number
 	result3, ok3 := toNumber(42)
-	if !ok3 || result3 != 42 {
-		t.Errorf("Expected 42, got %v, ok=%v", result3, ok3)
+	if !ok3 || result3 != 42.0 {
+		t.Errorf("Expected 42.0, got %v, ok=%v", result3, ok3)
 	}
 }
 
@@ -167,19 +167,28 @@ func TestConditionContainsOperator(t *testing.T) {
 // TestConditionCompareValues tests value comparison logic
 func TestConditionCompareValues(t *testing.T) {
 	// Test equal (compareValues returns int: -1, 0, 1)
-	result := compareValues(1, 1)
+	result, err := compareValues(1, 1)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result != 0 {
 		t.Error("Expected 1 == 1 to return 0")
 	}
 
 	// Test less than
-	result2 := compareValues(1, 2)
+	result2, err := compareValues(1, 2)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result2 >= 0 {
 		t.Error("Expected 1 < 2 to return negative")
 	}
 
 	// Test greater than
-	result3 := compareValues(2, 1)
+	result3, err := compareValues(2, 1)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result3 <= 0 {
 		t.Error("Expected 2 > 1 to return positive")
 	}
@@ -365,48 +374,69 @@ func TestConditionCheckMethodLiteral(t *testing.T) {
 // TestConditionCompareValuesEdgeCases tests compareValues with various edge case inputs
 func TestConditionCompareValuesEdgeCases(t *testing.T) {
 	// Test numeric comparison
-	result := compareValues(1, 2)
+	result, err := compareValues(1, 2)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result >= 0 {
 		t.Error("Expected 1 < 2 to return negative")
 	}
 
-	result2 := compareValues(2, 1)
+	result2, err := compareValues(2, 1)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result2 <= 0 {
 		t.Error("Expected 2 > 1 to return positive")
 	}
 
-	result3 := compareValues(1, 1)
+	result3, err := compareValues(1, 1)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result3 != 0 {
 		t.Error("Expected 1 == 1 to return 0")
 	}
 
 	// Test float comparison
-	result4 := compareValues(1.5, 2.5)
+	result4, err := compareValues(1.5, 2.5)
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result4 >= 0 {
 		t.Error("Expected 1.5 < 2.5 to return negative")
 	}
 
 	// Test string comparison
-	result5 := compareValues("a", "b")
+	result5, err := compareValues("a", "b")
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result5 >= 0 {
 		t.Error("Expected \"a\" < \"b\" to return negative")
 	}
 
-	result6 := compareValues("b", "a")
+	result6, err := compareValues("b", "a")
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result6 <= 0 {
 		t.Error("Expected \"b\" > \"a\" to return positive")
 	}
 
-	result7 := compareValues("a", "a")
+	result7, err := compareValues("a", "a")
+	if err != nil {
+		t.Errorf("compareValues returned error: %v", err)
+	}
 	if result7 != 0 {
 		t.Error("Expected \"a\" == \"a\" to return 0")
 	}
 
-	// Test mixed types (should convert to string)
-	result8 := compareValues(42, "hello")
-	// Should compare as strings
-	if result8 == 0 {
-		t.Error("Expected mixed type comparison to not return 0")
+	// Test mixed types (should return error now)
+	_, err = compareValues(42, "hello")
+	// Should return error for mixed type comparison
+	if err == nil {
+		t.Error("Expected mixed type comparison to return error")
 	}
 }
 
@@ -430,16 +460,16 @@ func TestConditionToNumberEdgeCases(t *testing.T) {
 		t.Errorf("Expected 3.14, got %v, ok=%v", result3, ok3)
 	}
 
-	// Test with string number
+	// Test with string number (should fail)
 	result4, ok4 := toNumber("42")
-	if !ok4 || result4 != 42.0 {
-		t.Errorf("Expected 42.0, got %v, ok=%v", result4, ok4)
+	if ok4 {
+		t.Errorf("Expected ok=false for string number, got ok=true, result=%v", result4)
 	}
 
-	// Test with string float
+	// Test with string float (should fail)
 	result5, ok5 := toNumber("3.14")
-	if !ok5 || result5 != 3.14 {
-		t.Errorf("Expected 3.14, got %v, ok=%v", result5, ok5)
+	if ok5 {
+		t.Errorf("Expected ok=false for string float, got ok=true, result=%v", result5)
 	}
 
 	// Test with invalid string

@@ -7,8 +7,8 @@ import (
 )
 
 // assignSyntax matches: variable_name = value
-// VariableSignature matches a single character, so we need to match multiple
-var assignSyntax = regexp.MustCompile(`([\w\-\.\[\]]+)\s*=\s*(.*)\s*`)
+// Using Ruby Liquid regex: /(#{VariableSignature}+)\s*=\s*(.*)\s*/om
+var assignSyntax = regexp.MustCompile(`^\s*([\w\-\.\[\]]+)\s*=\s*(.*)\s*$`)
 
 // AssignTag represents an assign tag that creates a new variable.
 type AssignTag struct {

@@ -204,8 +204,8 @@ func (pc *ParseContext) NewTokenizer(source string, lineNumbers bool, startLineN
 // SafeParseExpression safely parses an expression.
 // In strict/rigid mode, errors are propagated. In lax mode, errors return nil.
 func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
-	// In strict/rigid mode, we need to propagate errors
-	if pc.errorMode == "strict" || pc.errorMode == "rigid" {
+	// In strict/rigid/warn mode, we need to propagate errors
+	if pc.errorMode == "strict" || pc.errorMode == "rigid" || pc.errorMode == "warn" {
 		expr, err := parser.Expression()
 		if err != nil {
 			// Don't add markup context here - let ParserSwitching handle it

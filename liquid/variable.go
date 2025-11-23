@@ -29,6 +29,8 @@ type ParseContextInterface interface {
 	DecrementDepth()
 	NewBlockBody() *BlockBody
 	NewTokenizer(source string, lineNumbers bool, startLineNumber *int, forLiquidTag bool) *Tokenizer
+	ErrorMode() string
+	AddWarning(error)
 }
 
 // Variable represents a Liquid variable with optional filters.
@@ -42,10 +44,16 @@ type Variable struct {
 
 // NewVariable creates a new Variable from markup.
 func NewVariable(markup string, parseContext ParseContextInterface) *Variable {
+	var lineNum *int
+	if parseContext.LineNumber() != nil {
+		ln := *parseContext.LineNumber()
+		lineNum = &ln
+	}
+
 	v := &Variable{
 		markup:       markup,
 		parseContext: parseContext,
-		lineNumber:   parseContext.LineNumber(),
+		lineNumber:   lineNum,
 	}
 
 	// Use parser switching based on error mode
@@ -65,7 +73,7 @@ func NewVariable(markup string, parseContext ParseContextInterface) *Variable {
 
 	ps := &ParserSwitching{
 		parseContext:  psContext,
-		lineNumber:    parseContext.LineNumber(),
+		lineNumber:    lineNum,
 		markupContext: v.markupContext,
 	}
 
@@ -183,6 +191,9 @@ func (v *Variable) laxParse(markup string) {
 func (v *Variable) strictParse(markup string) error {
 	v.filters = [][]interface{}{}
 	p := v.parseContext.NewParser(markup)
+	if err := p.Error(); err != nil {
+		return err
+	}
 
 	if p.Look(":end_of_string", 0) {
 		return nil
@@ -216,6 +227,9 @@ func (v *Variable) strictParse(markup string) error {
 func (v *Variable) rigidParse(markup string) error {
 	v.filters = [][]interface{}{}
 	p := v.parseContext.NewParser(markup)
+	if err := p.Error(); err != nil {
+		return err
+	}
 
 	if p.Look(":end_of_string", 0) {
 		return nil
@@ -369,6 +383,45 @@ func (v *Variable) Render(context TagContext) interface{} {
 
 // RenderToOutputBuffer renders the variable to the output buffer.
 func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
+	// Catch panics from drop method invocations and convert to error messages
+	defer func() {
+		if r := recover(); r != nil {
+			// Get the context to handle errors
+			ctxInterface := context.Context()
+			ctx, ok := ctxInterface.(*Context)
+			if !ok {
+				// If we can't get the context, just output a generic error
+				*output += "Liquid error: internal"
+				return
+			}
+
+			// Convert panic to error
+			var err error
+			switch e := r.(type) {
+			case *StandardError:
+				err = e
+			case *SyntaxError:
+				err = e
+			case *ArgumentError:
+				err = e
+			case *InternalError:
+				err = e
+			case *Error:
+				err = e
+			case error:
+				// Non-Liquid errors should be wrapped as InternalError
+				err = NewInternalError("internal")
+			default:
+				// Non-error panics should be wrapped as InternalError
+				err = NewInternalError("internal")
+			}
+
+			// Handle the error and append the error message to output
+			errorMsg := ctx.HandleError(err, v.lineNumber)
+			*output += errorMsg
+		}
+	}()
+
 	val := v.Render(context)
 	*output += ToS(val, nil)
 }

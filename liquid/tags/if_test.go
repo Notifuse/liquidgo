@@ -523,8 +523,8 @@ func TestIfTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 			if !ok {
 				t.Fatalf("Expected SyntaxError panic, got %T: %v", r, r)
 			}
-			if syntaxErr.Error() != "Liquid syntax error: Tag was never closed: if" {
-				t.Errorf("Expected 'Tag was never closed: if', got: %v", syntaxErr.Error())
+			if syntaxErr.Error() != "Liquid syntax error: 'if' tag was never closed" {
+				t.Errorf("Expected 'Liquid syntax error: 'if' tag was never closed', got: %v", syntaxErr.Error())
 			}
 		} else {
 			t.Fatal("Expected panic for unclosed tag, but no panic occurred")

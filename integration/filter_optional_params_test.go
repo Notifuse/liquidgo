@@ -362,4 +362,3 @@ func TestFiltersWithNoOptionalParams(t *testing.T) {
 		})
 	}
 }
-

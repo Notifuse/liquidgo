@@ -136,36 +136,54 @@ func ToInteger(num interface{}) (int, error) {
 	}
 }
 
-// ToNumber converts a value to a number (int or float64).
-func ToNumber(obj interface{}) interface{} {
+// ToNumber converts a value to a number (int, int64, or float64).
+func ToNumber(obj interface{}) (interface{}, bool) {
 	switch v := obj.(type) {
 	case float32:
-		return float64(v)
+		return float64(v), true
 	case float64:
-		return v
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		return v
+		return v, true
+	case int:
+		return float64(v), true
+	case int8:
+		return float64(v), true
+	case int16:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case uint:
+		return float64(v), true
+	case uint8:
+		return float64(v), true
+	case uint16:
+		return float64(v), true
+	case uint32:
+		return float64(v), true
+	case uint64:
+		return float64(v), true
 	case string:
 		trimmed := strings.TrimSpace(v)
 		if DecimalRegex.MatchString(trimmed) {
 			f, err := strconv.ParseFloat(trimmed, 64)
 			if err != nil {
-				return 0
+				return 0, false
 			}
-			return f
+			return f, true
 		}
 		i, err := strconv.Atoi(trimmed)
 		if err != nil {
-			return 0
+			return 0, false
 		}
-		return i
+		return float64(i), true
 	default:
 		if toNumberer, ok := obj.(interface {
 			ToNumber() interface{}
 		}); ok {
-			return toNumberer.ToNumber()
+			return toNumberer.ToNumber(), true
 		}
-		return 0
+		return 0, false
 	}
 }
 

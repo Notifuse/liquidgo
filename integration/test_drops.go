@@ -171,9 +171,51 @@ func NewTemplateContextDrop() *TemplateContextDrop {
 	}
 }
 
-// LiquidMethodMissing returns the method name.
+// ContextProxyDrop is a proxy for context access.
+type ContextProxyDrop struct {
+	*liquid.Drop
+}
+
+// LiquidMethodMissing handles missing method calls by looking up in context.
+func (c *ContextProxyDrop) LiquidMethodMissing(method string) interface{} {
+	if c.Context() != nil {
+		return c.Context().Get(method)
+	}
+	return nil
+}
+
+// LiquidMethodMissing handles missing method calls by looking up in context.
 func (t *TemplateContextDrop) LiquidMethodMissing(method string) interface{} {
+	if method == "context" {
+		proxy := &ContextProxyDrop{Drop: liquid.NewDrop()}
+		proxy.SetContext(t.Context())
+		return proxy
+	}
+	if t.Context() != nil {
+		return t.Context().Get(method)
+	}
 	return method
+}
+
+// Scopes returns the number of scopes in the context.
+func (t *TemplateContextDrop) Scopes() interface{} {
+	if t.Context() != nil {
+		return len(t.Context().Scopes())
+	}
+	return 0
+}
+
+// LoopPos returns the current forloop index.
+func (t *TemplateContextDrop) LoopPos() interface{} {
+	if t.Context() != nil {
+		// Look up "forloop" variable
+		forloop := t.Context().Get("forloop")
+		if forloop != nil {
+			// Try to get "index" from forloop drop
+			return liquid.InvokeDropOn(forloop, "index")
+		}
+	}
+	return nil
 }
 
 // Foo returns a test value.

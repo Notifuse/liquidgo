@@ -80,11 +80,26 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 			dropMethodCache.Store(t, cache)
 		}
 
-		// Try capitalized version first (Go convention)
+		// Try snake_case to CamelCase conversion first (e.g., "standard_error" -> "StandardError")
+		camelName := snakeToCamel(methodOrKey)
+		if methodIdx, exists := cache.methods[camelName]; exists {
+			method := v.Method(methodIdx)
+			if method.IsValid() && method.Kind() == reflect.Func {
+				// Let panics propagate naturally - they'll be caught at template.Render level
+				results := method.Call([]reflect.Value{})
+				if len(results) > 0 {
+					return results[0].Interface()
+				}
+				return nil
+			}
+		}
+
+		// Try capitalized version (e.g., "standard_error" -> "Standard_error")
 		methodName := stringsTitle(methodOrKey)
 		if methodIdx, exists := cache.methods[methodName]; exists {
 			method := v.Method(methodIdx)
 			if method.IsValid() && method.Kind() == reflect.Func {
+				// Let panics propagate naturally - they'll be caught at template.Render level
 				results := method.Call([]reflect.Value{})
 				if len(results) > 0 {
 					return results[0].Interface()
@@ -97,6 +112,7 @@ func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 		if methodIdx, exists := cache.methods[methodOrKey]; exists {
 			method := v.Method(methodIdx)
 			if method.IsValid() && method.Kind() == reflect.Func {
+				// Let panics propagate naturally - they'll be caught at template.Render level
 				results := method.Call([]reflect.Value{})
 				if len(results) > 0 {
 					return results[0].Interface()
@@ -261,7 +277,6 @@ func GetInvokableMethods(drop interface{}) []string {
 		"Context":             true,
 		"InvokeDrop":          true,
 		"Key":                 true,
-		"ToLiquid":            true,
 		"String":              true,
 		"LiquidMethodMissing": true,
 		"Each":                true,

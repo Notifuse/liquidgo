@@ -99,7 +99,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 		} else {
 			msg = "include tag requires a string template name"
 		}
-		errorMsg := context.HandleError(liquid.NewArgumentError(msg), nil)
+		errorMsg := context.HandleError(liquid.NewArgumentError(msg), i.LineNumber())
 		*output += errorMsg
 		return
 	}
@@ -107,7 +107,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	// Load partial from cache
 	partial, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
 	if err != nil {
-		errorMsg := context.HandleError(err, nil)
+		errorMsg := context.HandleError(err, i.LineNumber())
 		*output += errorMsg
 		return
 	}
@@ -115,7 +115,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	// Get partial as Template
 	partialTemplate, ok := partial.(*liquid.Template)
 	if !ok {
-		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), nil)
+		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), i.LineNumber())
 		*output += errorMsg
 		return
 	}
@@ -142,7 +142,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	// Get context as *Context for state management
 	ctx, ok := context.(*liquid.Context)
 	if !ok {
-		errorMsg := context.HandleError(liquid.NewInternalError("context is not a liquid.Context"), nil)
+		errorMsg := context.HandleError(liquid.NewInternalError("context is not a liquid.Context"), i.LineNumber())
 		*output += errorMsg
 		return
 	}
