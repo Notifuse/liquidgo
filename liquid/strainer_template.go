@@ -111,12 +111,23 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 			// Use CamelCase version for lookup
 			method = camelMethod
 		} else {
-			// Fallback: try simple capitalization (for single-word filters)
-			capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
-			methodInvokable = st.filterMethods[capitalizedMethod]
-			if methodInvokable {
-				// Use capitalized version for lookup
-				method = capitalizedMethod
+			// Try case-insensitive match for acronyms (e.g., StripHtml -> StripHTML)
+			// This handles cases where the method uses uppercase acronyms like HTML, XML, etc.
+			for registeredMethod := range st.filterMethods {
+				if strings.EqualFold(registeredMethod, camelMethod) {
+					methodInvokable = true
+					method = registeredMethod
+					break
+				}
+			}
+			if !methodInvokable {
+				// Fallback: try simple capitalization (for single-word filters)
+				capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
+				methodInvokable = st.filterMethods[capitalizedMethod]
+				if methodInvokable {
+					// Use capitalized version for lookup
+					method = capitalizedMethod
+				}
 			}
 		}
 	}
@@ -201,7 +212,7 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 }
 
 // snakeToCamelCase converts snake_case to CamelCase.
-// e.g., find_index -> FindIndex, sort_natural -> SortNatural
+// e.g., find_index -> FindIndex, sort_natural -> SortNatural, strip_html -> StripHTML
 func snakeToCamelCase(s string) string {
 	if s == "" {
 		return ""
@@ -210,10 +221,29 @@ func snakeToCamelCase(s string) string {
 	// Split by underscore
 	parts := strings.Split(s, "_")
 
+	// Common acronyms that should be uppercase
+	acronyms := map[string]string{
+		"html": "HTML",
+		"xml":  "XML",
+		"json": "JSON",
+		"url":  "URL",
+		"id":   "ID",
+		"api":  "API",
+		"css":  "CSS",
+		"js":   "JS",
+	}
+
 	// Capitalize each part
 	for i, part := range parts {
 		if len(part) > 0 {
-			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+			lowerPart := strings.ToLower(part)
+			if acronym, ok := acronyms[lowerPart]; ok {
+				// Use uppercase acronym
+				parts[i] = acronym
+			} else {
+				// Capitalize first letter
+				parts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+			}
 		}
 	}
 
