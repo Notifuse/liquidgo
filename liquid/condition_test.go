@@ -440,6 +440,54 @@ func TestConditionCompareValuesEdgeCases(t *testing.T) {
 	}
 }
 
+// TestConditionCompareValuesNilComparisons tests nil comparisons (matching Shopify Liquid behavior)
+func TestConditionCompareValuesNilComparisons(t *testing.T) {
+	// Test nil < number (nil is less than any number)
+	result, err := compareValues(nil, 10)
+	if err != nil {
+		t.Errorf("compareValues(nil, 10) returned error: %v", err)
+	}
+	if result >= 0 {
+		t.Errorf("Expected compareValues(nil, 10) to return negative, got %d", result)
+	}
+
+	// Test number > nil (should return negative to make condition false)
+	result2, err := compareValues(10, nil)
+	if err != nil {
+		t.Errorf("compareValues(10, nil) returned error: %v", err)
+	}
+	if result2 >= 0 {
+		t.Errorf("Expected compareValues(10, nil) to return negative, got %d", result2)
+	}
+
+	// Test nil == nil (both are equal)
+	result3, err := compareValues(nil, nil)
+	if err != nil {
+		t.Errorf("compareValues(nil, nil) returned error: %v", err)
+	}
+	if result3 != 0 {
+		t.Errorf("Expected compareValues(nil, nil) to return 0, got %d", result3)
+	}
+
+	// Test nil with float
+	result4, err := compareValues(nil, 3.14)
+	if err != nil {
+		t.Errorf("compareValues(nil, 3.14) returned error: %v", err)
+	}
+	if result4 >= 0 {
+		t.Errorf("Expected compareValues(nil, 3.14) to return negative, got %d", result4)
+	}
+
+	// Test float with nil
+	result5, err := compareValues(3.14, nil)
+	if err != nil {
+		t.Errorf("compareValues(3.14, nil) returned error: %v", err)
+	}
+	if result5 >= 0 {
+		t.Errorf("Expected compareValues(3.14, nil) to return negative, got %d", result5)
+	}
+}
+
 // TestConditionToNumberEdgeCases tests toNumber with various edge case inputs
 func TestConditionToNumberEdgeCases(t *testing.T) {
 	// Test with int

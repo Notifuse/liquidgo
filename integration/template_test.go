@@ -679,3 +679,104 @@ func TestConditionBlogPostContains(t *testing.T) {
 		})
 	}
 }
+
+// TestNilComparisons tests nil comparisons matching Shopify Liquid behavior
+// Reference: reference-liquid/test/integration/tags/if_else_tag_test.rb:122-132
+func TestNilComparisons(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+		data     map[string]interface{}
+	}{
+		{
+			name:     "null less than number",
+			template: "{% if null < 10 %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "null less than or equal number",
+			template: "{% if null <= 10 %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "null greater than or equal number",
+			template: "{% if null >= 10 %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "null greater than number",
+			template: "{% if null > 10 %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "number less than null",
+			template: "{% if 10 < null %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "number less than or equal null",
+			template: "{% if 10 <= null %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "number greater than or equal null",
+			template: "{% if 10 >= null %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "number greater than null",
+			template: "{% if 10 > null %} NO {% endif %}",
+			expected: "",
+			data:     nil,
+		},
+		{
+			name:     "null less than or equal zero",
+			template: "{% if null <= 0 %} true {% else %} false {% endif %}",
+			expected: " false ",
+			data:     nil,
+		},
+		{
+			name:     "zero less than or equal null",
+			template: "{% if 0 <= null %} true {% else %} false {% endif %}",
+			expected: " false ",
+			data:     nil,
+		},
+		{
+			name:     "nil variable comparison",
+			template: "{% if pagination.total_pages > 1 %} YES {% else %} NO {% endif %}",
+			expected: " NO ",
+			data:     map[string]interface{}{"pagination": nil},
+		},
+		{
+			name:     "nil nested property comparison",
+			template: "{% if pagination.total_pages > 1 %} YES {% else %} NO {% endif %}",
+			expected: " NO ",
+			data:     map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpl, err := liquid.ParseTemplate(tt.template, &liquid.TemplateOptions{Environment: env})
+			if err != nil {
+				t.Fatalf("ParseTemplate() error = %v", err)
+			}
+
+			result := tmpl.Render(tt.data, &liquid.RenderOptions{})
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}

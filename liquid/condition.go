@@ -161,6 +161,10 @@ func getConditionOperator(op string) ConditionOperator {
 		}
 	case "<":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
+			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
+			if left == nil || right == nil {
+				return false, nil
+			}
 			res, err := compareValues(left, right)
 			if err != nil {
 				return false, err
@@ -169,6 +173,10 @@ func getConditionOperator(op string) ConditionOperator {
 		}
 	case ">":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
+			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
+			if left == nil || right == nil {
+				return false, nil
+			}
 			res, err := compareValues(left, right)
 			if err != nil {
 				return false, err
@@ -177,6 +185,10 @@ func getConditionOperator(op string) ConditionOperator {
 		}
 	case ">=":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
+			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
+			if left == nil || right == nil {
+				return false, nil
+			}
 			res, err := compareValues(left, right)
 			if err != nil {
 				return false, err
@@ -185,6 +197,10 @@ func getConditionOperator(op string) ConditionOperator {
 		}
 	case "<=":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
+			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
+			if left == nil || right == nil {
+				return false, nil
+			}
 			res, err := compareValues(left, right)
 			if err != nil {
 				return false, err
@@ -245,6 +261,32 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 }
 
 func compareValues(left, right interface{}) (int, error) {
+	// Handle nil comparisons gracefully (matching Shopify Liquid behavior)
+	// When comparing nil with a number, the comparison should evaluate to false
+	// To achieve this, we return -1 for nil comparisons, which makes:
+	// - "nil > number" → res > 0 → -1 > 0 → false ✓
+	// - "number > nil" → res > 0 → -1 > 0 → false ✓
+	// - "nil < number" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
+	// - "number < nil" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
+	if left == nil && right != nil {
+		// Check if right is a number
+		_, rightOk := toNumber(right)
+		if rightOk {
+			return -1, nil
+		}
+	}
+	if right == nil && left != nil {
+		// Check if left is a number
+		_, leftOk := toNumber(left)
+		if leftOk {
+			return -1, nil
+		}
+	}
+	if left == nil && right == nil {
+		// Both are nil, they're equal
+		return 0, nil
+	}
+
 	// Simple numeric comparison
 	leftNum, leftOk := toNumber(left)
 	rightNum, rightOk := toNumber(right)
@@ -257,7 +299,7 @@ func compareValues(left, right interface{}) (int, error) {
 		return 0, nil
 	}
 
-	// If one is a number and the other is not, it's a type mismatch for comparison
+	// If one is a number and the other is not (and neither is nil), it's a type mismatch for comparison
 	if leftOk || rightOk {
 		// Format types nicely for error message
 		leftType := "nil"
