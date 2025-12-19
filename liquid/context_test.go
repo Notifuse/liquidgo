@@ -197,6 +197,32 @@ func TestContextStrictVariables(t *testing.T) {
 	}()
 }
 
+func TestContextInvokeStrictFiltersUnknownPanics(t *testing.T) {
+	ctx := NewContext()
+	ctx.SetStrictFilters(true)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("Expected panic for undefined filter in strict mode")
+		} else {
+			if _, ok := r.(*UndefinedFilter); !ok {
+				t.Fatalf("Expected UndefinedFilter panic, got %T", r)
+			}
+		}
+	}()
+
+	ctx.Invoke("NonexistentFilter", "arg")
+}
+
+func TestContextInvokeNonStrictFiltersUnknownReturnsOriginal(t *testing.T) {
+	ctx := NewContext()
+
+	result := ctx.Invoke("NonexistentFilter", "arg")
+	if result != "arg" {
+		t.Errorf("Expected original object in non-strict mode, got %v", result)
+	}
+}
+
 func TestContextResourceLimits(t *testing.T) {
 	ctx := NewContext()
 	rl := ctx.ResourceLimits()

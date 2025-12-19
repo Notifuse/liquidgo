@@ -408,6 +408,8 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 				err = e
 			case *StackLevelError:
 				err = e
+			case *UndefinedFilter:
+				err = e
 			case *Error:
 				err = e
 			case error:

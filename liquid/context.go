@@ -297,11 +297,13 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 				if _, ok := err.(*StandardError); !ok {
 					if _, ok := err.(*ArgumentError); !ok {
 						if _, ok := err.(*UndefinedVariable); !ok {
-							if _, ok := err.(*DisabledError); !ok {
-								if _, ok := err.(*MemoryError); !ok {
-									if _, ok := err.(*FileSystemError); !ok {
-										if _, ok := err.(*StackLevelError); !ok {
-											liquidErr = NewInternalError("internal")
+							if _, ok := err.(*UndefinedFilter); !ok {
+								if _, ok := err.(*DisabledError); !ok {
+									if _, ok := err.(*MemoryError); !ok {
+										if _, ok := err.(*FileSystemError); !ok {
+											if _, ok := err.(*StackLevelError); !ok {
+												liquidErr = NewInternalError("internal")
+											}
 										}
 									}
 								}
@@ -396,7 +398,9 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
 	result, err := c.Strainer().Invoke(method, append([]interface{}{obj}, args...)...)
 	if err != nil {
-		// Handle error
+		if c.strictFilters {
+			panic(err)
+		}
 		return obj
 	}
 	return ToLiquid(result)
