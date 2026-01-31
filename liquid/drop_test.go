@@ -388,7 +388,6 @@ func TestTablerowloopDropInvokeDrop(t *testing.T) {
 	}
 }
 
-
 // TestDropInvokeDropOldWithMethod tests InvokeDropOld with method calls
 func TestDropInvokeDropOldWithMethod(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)

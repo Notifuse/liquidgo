@@ -150,7 +150,7 @@ func TestLiquidErrorInterface(t *testing.T) {
 		t.Run(fmt.Sprintf("%T", le), func(t *testing.T) {
 			baseErr := le.GetError()
 			if baseErr == nil {
-				t.Errorf("%T: GetError() returned nil", le)
+				t.Fatalf("%T: GetError() returned nil", le)
 			}
 			if baseErr.Message != "test" {
 				t.Errorf("%T: expected message 'test', got '%s'", le, baseErr.Message)
