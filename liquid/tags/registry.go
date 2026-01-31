@@ -66,9 +66,7 @@ func RegisterStandardTags(env *liquid.Environment) {
 	env.RegisterTag("tablerow", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
 		return NewTableRowTag(tagName, markup, parseContext)
 	}))
-	env.RegisterTag("snippet", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
-		return NewSnippetTag(tagName, markup, parseContext)
-	}))
+	// Note: snippet tag was removed in Shopify Liquid v5.11.0
 
 	// Include/render tags
 	env.RegisterTag("include", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {

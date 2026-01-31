@@ -226,35 +226,7 @@ func TestTablerowloopDropCol0(t *testing.T) {
 	}
 }
 
-func TestSnippetDropBasic(t *testing.T) {
-	sd := NewSnippetDrop("body content", "snippet_name", "snippet.liquid")
-	if sd == nil {
-		t.Fatal("Expected SnippetDrop, got nil")
-	}
-	if sd.Body() != "body content" {
-		t.Errorf("Expected body 'body content', got '%s'", sd.Body())
-	}
-	if sd.Name() != "snippet_name" {
-		t.Errorf("Expected name 'snippet_name', got '%s'", sd.Name())
-	}
-	if sd.Filename() != "snippet.liquid" {
-		t.Errorf("Expected filename 'snippet.liquid', got '%s'", sd.Filename())
-	}
-}
-
-func TestSnippetDropToPartial(t *testing.T) {
-	sd := NewSnippetDrop("body content", "snippet_name", "snippet.liquid")
-	if sd.ToPartial() != "body content" {
-		t.Errorf("Expected ToPartial to return body, got '%s'", sd.ToPartial())
-	}
-}
-
-func TestSnippetDropString(t *testing.T) {
-	sd := NewSnippetDrop("body", "name", "file")
-	if sd.String() != "SnippetDrop" {
-		t.Errorf("Expected String 'SnippetDrop', got '%s'", sd.String())
-	}
-}
+// Note: SnippetDrop tests removed - snippet tag was removed in Shopify Liquid v5.11.0
 
 func TestDropInvokeDropWithMethod(t *testing.T) {
 	fl := NewForloopDrop("items", 5, nil)
@@ -416,20 +388,6 @@ func TestTablerowloopDropInvokeDrop(t *testing.T) {
 	}
 }
 
-func TestSnippetDropInvokeDrop(t *testing.T) {
-	sd := NewSnippetDrop("body", "name", "file")
-
-	// Test InvokeDrop
-	result := sd.InvokeDrop("Body")
-	if result != "body" {
-		t.Errorf("Expected Body 'body', got %v", result)
-	}
-
-	result = sd.InvokeDrop("Name")
-	if result != "name" {
-		t.Errorf("Expected Name 'name', got %v", result)
-	}
-}
 
 // TestDropInvokeDropOldWithMethod tests InvokeDropOld with method calls
 func TestDropInvokeDropOldWithMethod(t *testing.T) {

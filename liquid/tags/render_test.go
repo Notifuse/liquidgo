@@ -98,13 +98,11 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
-	// Test with non-string template name
-	tag2, _ := NewRenderTag("render", "123", pc)
-	ctx2 := liquid.NewContext()
-	var output2 string
-	tag2.RenderToOutputBuffer(ctx2, &output2)
-	// Should handle error gracefully
-	_ = output2
+	// Test with non-string template name - should fail at parse time (Shopify Liquid v5.11.0)
+	_, err := NewRenderTag("render", "123", pc)
+	if err == nil {
+		t.Error("Expected error for non-string template name '123'")
+	}
 
 	// Test with with clause
 	tag3, err := NewRenderTag("render", "'template' with person", pc)
@@ -148,16 +146,11 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	tag6.RenderToOutputBuffer(ctx6, &output6)
 	_ = output6
 
-	// Test with variable template name
-	tag7, err := NewRenderTag("render", "template_var", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() with variable name error = %v", err)
+	// Test with variable template name - should fail at parse time (Shopify Liquid v5.11.0)
+	_, err = NewRenderTag("render", "template_var", pc)
+	if err == nil {
+		t.Error("Expected error for variable template name")
 	}
-	ctx7 := liquid.NewContext()
-	ctx7.Set("template_var", "template_name")
-	var output7 string
-	tag7.RenderToOutputBuffer(ctx7, &output7)
-	_ = output7
 }
 
 func TestRenderTagTemplateNameExpr(t *testing.T) {
@@ -189,85 +182,18 @@ func TestRenderTagAttributes(t *testing.T) {
 	}
 }
 
-func TestRenderTagRenderToOutputBufferWithTemplateObject(t *testing.T) {
+// Note: Tests for template objects with ToPartial were removed - this feature
+// was removed in Shopify Liquid v5.11.0. Render tag now only accepts string literals.
+
+func TestRenderTagRejectsVariableTemplateNames(t *testing.T) {
 	env := liquid.NewEnvironment()
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
-	// Create a template object that implements ToPartial()
-	template := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	if err := template.Parse("Hello {{ name }}", nil); err != nil {
-		t.Fatalf("template.Parse() error = %v", err)
+	// Variable template names should fail at parse time (Shopify Liquid v5.11.0)
+	_, err := NewRenderTag("render", "template_obj", pc)
+	if err == nil {
+		t.Error("Expected error for variable template name 'template_obj'")
 	}
-
-	// Create a mock object that implements ToPartial, Filename, and Name
-	type templateObject struct {
-		template *liquid.Template
-		filename string
-		name     string
-	}
-
-	obj := &templateObject{
-		template: template,
-		filename: "test.liquid",
-		name:     "test",
-	}
-
-	// Create render tag with variable that evaluates to template object
-	ctx := liquid.NewContext()
-	ctx.Set("template_obj", obj)
-
-	// We need to create a tag that evaluates to this object
-	// For now, test the path where template is not a string
-	tag, err := NewRenderTag("render", "template_obj", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() error = %v", err)
-	}
-
-	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
-	// Should handle error gracefully since template_obj doesn't implement ToPartial
-	_ = output
-}
-
-func TestRenderTagRenderToOutputBufferWithTemplateObjectToPartial(t *testing.T) {
-	env := liquid.NewEnvironment()
-	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-
-	// Create a template object that implements ToPartial() *Template, Filename(), and Name()
-	partialTemplate := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	if err := partialTemplate.Parse("Hello {{ name }}", nil); err != nil {
-		t.Fatalf("partialTemplate.Parse() error = %v", err)
-	}
-
-	// Create a mock object that implements all required interfaces
-	type templateObject struct {
-		partial  *liquid.Template
-		filename string
-		name     string
-	}
-
-	// Implement ToPartial() *Template
-	obj := &templateObject{
-		partial:  partialTemplate,
-		filename: "test.liquid",
-		name:     "test",
-	}
-
-	// Create render tag with variable that evaluates to template object
-	ctx := liquid.NewContext()
-	ctx.Set("template_obj", obj)
-
-	// Test with object that doesn't implement ToPartial (should fall through to error)
-	tag, err := NewRenderTag("render", "template_obj", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() error = %v", err)
-	}
-
-	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
-	// Should handle error gracefully since template_obj doesn't implement ToPartial() *Template
-	// May output error message or handle gracefully
-	_ = output
 }
 
 func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
@@ -598,25 +524,8 @@ func TestRenderTagRenderToOutputBufferErrorScenarios(t *testing.T) {
 }
 
 // TestRenderTagRenderToOutputBufferDynamicTemplateName tests dynamic template name resolution
-func TestRenderTagRenderToOutputBufferDynamicTemplateName(t *testing.T) {
-	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
-
-	// Test with variable expression for template name
-	tag, err := NewRenderTag("render", "template_name", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() error = %v", err)
-	}
-
-	ctx := liquid.NewContext()
-	ctx.Set("template_name", "test_template")
-
-	var output string
-	// Should resolve template name from variable
-	tag.RenderToOutputBuffer(ctx, &output)
-
-	// Output depends on whether template exists
-	t.Logf("Note: Dynamic template name resolution output: %q", output)
-}
+// Note: Dynamic template name test was removed - this feature was removed
+// in Shopify Liquid v5.11.0. Render tag now only accepts string literals.
 
 // TestRenderTagRenderToOutputBufferPartialLoadingFailure tests partial loading failure handling
 func TestRenderTagRenderToOutputBufferPartialLoadingFailure(t *testing.T) {
@@ -672,114 +581,8 @@ func TestRenderTagAttributeWithQuotedValue(t *testing.T) {
 	}
 }
 
-// TestRenderTagWithTemplateObjectImplementingToPartial tests ToPartial interface
-func TestRenderTagWithTemplateObjectImplementingToPartial(t *testing.T) {
-	env := liquid.NewEnvironment()
-	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-
-	// Create a partial template
-	partialTemplate := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	if err := partialTemplate.Parse("Hello {{ name }}", nil); err != nil {
-		t.Fatalf("partialTemplate.Parse() error = %v", err)
-	}
-
-	// Create a mock object that implements ToPartial(), Filename(), and Name()
-	type templateObject struct{}
-
-	obj := &templateObject{}
-
-	// Implement ToPartial() method
-	toPartialImpl := func() *liquid.Template {
-		return partialTemplate
-	}
-	_ = toPartialImpl
-
-	// Implement Filename() method
-	filenameImpl := func() string {
-		return "test.liquid"
-	}
-	_ = filenameImpl
-
-	// Implement Name() method
-	nameImpl := func() string {
-		return "test"
-	}
-	_ = nameImpl
-
-	// Create render tag
-	tag, err := NewRenderTag("render", "template_obj", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() error = %v", err)
-	}
-
-	ctx := liquid.NewContext()
-	ctx.Set("template_obj", obj)
-	ctx.Set("name", "World")
-
-	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
-
-	// The object doesn't actually implement the interface in Go, so it will fall through to error
-	// May output error message or handle gracefully
-	_ = output
-}
-
-// mockTemplateObjectWithToPartial implements the ToPartial, Filename, and Name interfaces
-type mockTemplateObjectWithToPartial struct {
-	partial  *liquid.Template
-	filename string
-	name     string
-}
-
-func (m *mockTemplateObjectWithToPartial) ToPartial() *liquid.Template {
-	return m.partial
-}
-
-func (m *mockTemplateObjectWithToPartial) Filename() string {
-	return m.filename
-}
-
-func (m *mockTemplateObjectWithToPartial) Name() string {
-	return m.name
-}
-
-// TestRenderTagWithActualToPartialImplementation tests with a real ToPartial implementation
-func TestRenderTagWithActualToPartialImplementation(t *testing.T) {
-	env := liquid.NewEnvironment()
-	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
-
-	// Create a partial template
-	partialTemplate := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
-	if err := partialTemplate.Parse("Hello {{ name }}", nil); err != nil {
-		t.Fatalf("partialTemplate.Parse() error = %v", err)
-	}
-
-	// Create mock object that actually implements the interfaces
-	obj := &mockTemplateObjectWithToPartial{
-		partial:  partialTemplate,
-		filename: "test.liquid",
-		name:     "test",
-	}
-
-	// Create render tag
-	tag, err := NewRenderTag("render", "template_obj", pc)
-	if err != nil {
-		t.Fatalf("NewRenderTag() error = %v", err)
-	}
-
-	ctx := liquid.NewContext()
-	ctx.Set("template_obj", obj)
-	ctx.Set("name", "World")
-
-	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
-
-	// Should render the template using ToPartial (note: parent context not accessible)
-	expected := "Hello "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
-	}
-}
+// Note: ToPartial tests were removed - this feature was removed in Shopify Liquid v5.11.0.
+// Render tag now only accepts string literals for template names.
 
 // mockIterableObject implements the iterable interface with Each and Count methods
 type mockIterableObject struct {
@@ -1103,3 +906,44 @@ func TestRenderTagOptionalCommas(t *testing.T) {
 
 // Note: Tests for render tag with typed slices are covered in integration tests
 // (see integration/comprehensive_test.go TestBlogPostTags/Render_tag)
+
+// Tests for Shopify Liquid v5.11.0 changes - render tag only accepts string literals
+func TestRenderTagRejectsVariableTemplateName(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	// Variable template name should fail at parse time
+	template := `{% render template_var %}`
+	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+	})
+
+	if err == nil {
+		t.Error("Expected error for variable template name, but parsing succeeded")
+	}
+}
+
+func TestRenderTagAcceptsStringLiteral(t *testing.T) {
+	env := liquid.NewEnvironment()
+	RegisterStandardTags(env)
+
+	// String literal should work (single quotes)
+	template := `{% render 'template' %}`
+	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+	})
+
+	if err != nil {
+		t.Errorf("Expected string literal to work, got: %v", err)
+	}
+
+	// String literal should work (double quotes)
+	template2 := `{% render "template" %}`
+	_, err2 := liquid.ParseTemplate(template2, &liquid.TemplateOptions{
+		Environment: env,
+	})
+
+	if err2 != nil {
+		t.Errorf("Expected double-quoted string literal to work, got: %v", err2)
+	}
+}

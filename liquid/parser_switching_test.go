@@ -272,3 +272,55 @@ func TestStrictParseWithErrorModeFallbackNonSyntaxError(t *testing.T) {
 		t.Error("Expected error for non-SyntaxError")
 	}
 }
+
+// Tests for strict2 mode (alias for rigid) - Shopify Liquid v5.11.0
+func TestStrict2ModeIsAliasForRigid(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "strict2"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	if !ps.RigidMode() {
+		t.Error("Expected strict2 to be treated as rigid mode (RigidMode() should return true)")
+	}
+}
+
+func TestParseWithSelectedParserStrict2(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "strict2"}
+	ps := &ParserSwitching{
+		parseContext: pc,
+		lineNumber:   intPtr(1),
+		markupContext: func(m string) string {
+			return "in \"" + m + "\""
+		},
+	}
+
+	rigidCalled := false
+	strictParse := func(m string) error { return nil }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { rigidCalled = true; return nil }
+
+	err := ps.ParseWithSelectedParser("test", strictParse, laxParse, rigidParse)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if !rigidCalled {
+		t.Error("Expected strict2 to route to rigid parser")
+	}
+}
+
+func TestStrictParseWithErrorModeFallbackStrict2Mode(t *testing.T) {
+	pc := &mockParseContextForSwitching{errorMode: "strict2"}
+	ps := &ParserSwitching{parseContext: pc}
+
+	rigidCalled := false
+	strictParse := func(m string) error { return nil }
+	laxParse := func(m string) error { return nil }
+	rigidParse := func(m string) error { rigidCalled = true; return nil }
+
+	err := ps.StrictParseWithErrorModeFallback("test", strictParse, laxParse, rigidParse)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if !rigidCalled {
+		t.Error("Expected strict2 to route to rigid parser in deprecated method")
+	}
+}

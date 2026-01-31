@@ -1,8 +1,33 @@
 package liquid
 
 import (
+	"sync"
 	"unicode/utf8"
 )
+
+// cloneStringMap creates a shallow copy of a map for thread-safe concurrent rendering.
+func cloneStringMap(m map[string]interface{}) map[string]interface{} {
+	if m == nil {
+		return make(map[string]interface{})
+	}
+	cloned := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		cloned[k] = v
+	}
+	return cloned
+}
+
+// cloneResourceLimits creates a new ResourceLimits with the same limits for thread-safe concurrent rendering.
+func cloneResourceLimits(rl *ResourceLimits) *ResourceLimits {
+	if rl == nil {
+		return NewResourceLimits(ResourceLimitsConfig{})
+	}
+	return NewResourceLimits(ResourceLimitsConfig{
+		RenderLengthLimit: rl.renderLengthLimit,
+		RenderScoreLimit:  rl.renderScoreLimit,
+		AssignScoreLimit:  rl.assignScoreLimit,
+	})
+}
 
 // Template represents a compiled Liquid template.
 // Templates are central to liquid. Interpreting templates is a two step process.
@@ -12,11 +37,16 @@ import (
 // After you have a compiled template you can then render it.
 // You can use a compiled template over and over again and keep it cached.
 //
+// Template is safe for concurrent use. When rendered concurrently, each render
+// gets its own isolated scope. State updates (errors, assigns) are synchronized
+// with a mutex.
+//
 // Example:
 //
 //	template := liquid.ParseTemplate(source)
 //	result := template.Render(map[string]interface{}{"user_name": "bob"})
 type Template struct {
+	mu              sync.Mutex // Protects concurrent access to mutable state
 	environment     *Environment
 	resourceLimits  *ResourceLimits
 	root            *Document
@@ -242,15 +272,18 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 
 	context := t.buildContext(assigns, options)
 
-	// If a Context was passed directly, use its resource limits
-	// Otherwise, set resource limits from template (in case they were updated)
-	if _, ok := assigns.(*Context); !ok {
+	// Track whether we should merge back state (only when we create the context, not when user passes one)
+	_, userProvidedContext := assigns.(*Context)
+
+	// Create a cloned ResourceLimits for this render to avoid race conditions
+	// when the same template is rendered concurrently
+	if !userProvidedContext {
 		if ctx, ok := context.(*Context); ok {
-			ctx.SetResourceLimits(t.resourceLimits)
+			ctx.SetResourceLimits(cloneResourceLimits(t.resourceLimits))
 		}
 	}
 
-	// Retrying a render resets resource usage
+	// Reset resource usage for this render
 	context.ResourceLimits().Reset()
 
 	// Handle profiling
@@ -287,15 +320,7 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 					output = "Liquid error: Memory limits exceeded"
 				}
 				handled = true
-			case *StandardError:
-				err = e
-			case *SyntaxError:
-				err = e
-			case *ArgumentError:
-				err = e
-			case *InternalError:
-				err = e
-			case *StackLevelError:
+			case LiquidError:
 				err = e
 			case *Error:
 				err = e
@@ -324,20 +349,32 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 				panic(r)
 			}
 		}
-		// Cast to *Context to access Errors
+		// Update template state with mutex protection for thread-safe concurrent rendering
 		if ctx, ok := context.(*Context); ok {
+			t.mu.Lock()
+			// Always capture errors from the render
 			t.errors = ctx.Errors()
-			// Update template's resource limits from context's resource limits
-			// (in case assign_score or render_score was updated during rendering)
-			// Note: ctx.ResourceLimits() and t.resourceLimits should be the same object,
-			// but we update anyway to ensure consistency
-			if ctx.ResourceLimits() != nil && t.resourceLimits != nil {
-				// Copy scores from context to template (they should be the same object, but ensure sync)
-				ctxRL := ctx.ResourceLimits()
-				t.resourceLimits.assignScore = ctxRL.AssignScore()
-				t.resourceLimits.renderScore = ctxRL.RenderScore()
-				t.resourceLimits.reachedLimit = ctxRL.Reached()
+			// Only merge back instance assigns and resource limits when we created the context,
+			// not when user passed their own Context
+			if !userProvidedContext {
+				// Merge back instance assigns from the render scope to persist across renders
+				if len(ctx.Scopes()) > 0 {
+					lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
+					for k, v := range lastScope {
+						if k != "__drop__" { // Don't persist internal drop reference
+							t.instanceAssigns[k] = v
+						}
+					}
+				}
+				// Update template's resource limits from context's resource limits
+				if ctx.ResourceLimits() != nil && t.resourceLimits != nil {
+					ctxRL := ctx.ResourceLimits()
+					t.resourceLimits.assignScore = ctxRL.AssignScore()
+					t.resourceLimits.renderScore = ctxRL.RenderScore()
+					t.resourceLimits.reachedLimit = ctxRL.Reached()
+				}
 			}
+			t.mu.Unlock()
 		}
 		// Update output in options if provided
 		if options != nil && options.Output != nil {
@@ -417,24 +454,33 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
 			if _, hasDropAlready := lastScope["__drop__"]; !hasDropAlready {
 				// If template has a __drop__ in instanceAssigns, copy it to this context
-				if drop, hasDrop := t.instanceAssigns["__drop__"]; hasDrop {
+				t.mu.Lock()
+				drop, hasDrop := t.instanceAssigns["__drop__"]
+				t.mu.Unlock()
+				if hasDrop {
 					lastScope["__drop__"] = drop
 				}
 			}
 		}
 	case map[string]interface{}:
+		t.mu.Lock()
+		outerScope := cloneStringMap(t.instanceAssigns)
+		t.mu.Unlock()
 		ctx = BuildContext(ContextConfig{
 			Environments:   []map[string]interface{}{v, t.assigns},
-			OuterScope:     t.instanceAssigns,
+			OuterScope:     outerScope,
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
 			RethrowErrors:  t.rethrowErrors,
 		})
 	case nil:
+		t.mu.Lock()
+		outerScope := cloneStringMap(t.instanceAssigns)
+		t.mu.Unlock()
 		ctx = BuildContext(ContextConfig{
 			Environments:   []map[string]interface{}{t.assigns},
-			OuterScope:     t.instanceAssigns,
+			OuterScope:     outerScope,
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
@@ -466,8 +512,10 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			// Make the drop available as the primary lookup source
 			// by putting it in the outer scope with a special key
 			ctx.Scopes()[len(ctx.Scopes())-1]["__drop__"] = dropToStore
-			// Also store in template's instance assigns for future renders
+			// Store in template's instance assigns for future renders (with mutex protection)
+			t.mu.Lock()
 			t.instanceAssigns["__drop__"] = dropToStore
+			t.mu.Unlock()
 		}
 	}
 

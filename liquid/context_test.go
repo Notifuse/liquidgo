@@ -590,6 +590,114 @@ func (e *testNonLiquidError) Error() string {
 	return e.message
 }
 
+// TestHandleErrorPreservesMissingTypes tests that previously missing error types
+// are now properly handled (not converted to InternalError)
+func TestHandleErrorPreservesMissingTypes(t *testing.T) {
+	missingTypes := []struct {
+		name   string
+		create func(string) error
+	}{
+		{"UndefinedFilter", func(msg string) error { return NewUndefinedFilter(msg) }},
+		{"UndefinedDropMethod", func(msg string) error { return NewUndefinedDropMethod(msg) }},
+		{"ZeroDivisionError", func(msg string) error { return NewZeroDivisionError(msg) }},
+		{"FloatDomainError", func(msg string) error { return NewFloatDomainError(msg) }},
+		{"MethodOverrideError", func(msg string) error { return NewMethodOverrideError(msg) }},
+		{"ContextError", func(msg string) error { return NewContextError(msg) }},
+		{"TemplateEncodingError", func(msg string) error { return NewTemplateEncodingError(msg) }},
+	}
+
+	for _, tt := range missingTypes {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext()
+			ctx.SetTemplateName("test.liquid")
+			lineNum := 10
+
+			err := tt.create("test error")
+			result := ctx.HandleError(err, &lineNum)
+
+			// Verify error message is rendered
+			if !strings.Contains(result, "test error") {
+				t.Errorf("%s: expected result to contain 'test error', got %q", tt.name, result)
+			}
+
+			// Verify error type is preserved (not converted to InternalError)
+			if len(ctx.Errors()) != 1 {
+				t.Fatalf("%s: expected 1 error, got %d", tt.name, len(ctx.Errors()))
+			}
+			if _, ok := ctx.Errors()[0].(*InternalError); ok {
+				t.Errorf("%s: error was incorrectly converted to InternalError", tt.name)
+			}
+		})
+	}
+}
+
+// TestHandleErrorSetsTemplateContext tests that template name and line number
+// are set via GetError() for all LiquidError types
+func TestHandleErrorSetsTemplateContext(t *testing.T) {
+	testTypes := []struct {
+		name   string
+		create func(string) LiquidError
+	}{
+		{"UndefinedFilter", func(msg string) LiquidError { return NewUndefinedFilter(msg) }},
+		{"ZeroDivisionError", func(msg string) LiquidError { return NewZeroDivisionError(msg) }},
+		{"MethodOverrideError", func(msg string) LiquidError { return NewMethodOverrideError(msg) }},
+	}
+
+	for _, tt := range testTypes {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext()
+			ctx.SetTemplateName("my_template.liquid")
+			lineNum := 25
+
+			err := tt.create("test")
+			ctx.HandleError(err, &lineNum)
+
+			baseErr := err.GetError()
+			if baseErr.TemplateName != "my_template.liquid" {
+				t.Errorf("expected TemplateName 'my_template.liquid', got '%s'", baseErr.TemplateName)
+			}
+			if baseErr.LineNumber == nil || *baseErr.LineNumber != 25 {
+				t.Errorf("expected LineNumber 25, got %v", baseErr.LineNumber)
+			}
+		})
+	}
+}
+
+// TestInvokePanicsInStrictMode tests that Invoke panics with UndefinedFilter
+// when strictFilters is true and filter is not found
+func TestInvokePanicsInStrictMode(t *testing.T) {
+	ctx := NewContext()
+	ctx.SetStrictFilters(true)
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic for undefined filter in strict mode")
+		}
+
+		err, ok := r.(*UndefinedFilter)
+		if !ok {
+			t.Fatalf("expected *UndefinedFilter, got %T", r)
+		}
+		if !strings.Contains(err.Error(), "undefined filter") {
+			t.Errorf("expected 'undefined filter' in message, got: %s", err.Error())
+		}
+	}()
+
+	ctx.Invoke("nonexistent_filter", "test input")
+}
+
+// TestInvokeReturnsInputInNonStrictMode verifies non-strict mode behavior unchanged
+func TestInvokeReturnsInputInNonStrictMode(t *testing.T) {
+	ctx := NewContext()
+	ctx.SetStrictFilters(false)
+
+	result := ctx.Invoke("nonexistent_filter", "test input")
+	if result != "test input" {
+		t.Errorf("expected 'test input', got %v", result)
+	}
+}
+
 // TestContextPop tests Pop method
 func TestContextPop(t *testing.T) {
 	ctx := NewContext()

@@ -235,12 +235,6 @@ This is documentation that should be blank
 {% enddoc -%}
 After doc
 
-=== SNIPPET TAG ===
-{% snippet my_snippet -%}
-Inline snippet content
-{% endsnippet -%}
-{% render my_snippet %}
-
 {% include 'footer' %}
 `
 
@@ -411,10 +405,6 @@ Sum: 15 | Doubled: 30
 
 === DOC TAG ===
 After doc
-
-=== SNIPPET TAG ===
-Inline snippet content
-
 
 --- End ---
 `

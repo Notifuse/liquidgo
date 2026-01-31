@@ -163,3 +163,62 @@ func TestVariableMarkupContext(t *testing.T) {
 	// Or we can just trust it's correct since unit tests usually test public API.
 	_ = v
 }
+
+// testPanicker is a drop that panics with a configurable error when triggered
+type testPanicker struct {
+	err error
+}
+
+func (p *testPanicker) ToLiquid() interface{} { return p }
+
+func (p *testPanicker) LiquidMethodMissing(method string) interface{} {
+	if method == "trigger" {
+		panic(p.err)
+	}
+	return nil
+}
+
+// TestRenderToOutputBufferPreservesLiquidErrorTypes tests that all LiquidError types
+// are preserved during panic recovery (not converted to InternalError)
+func TestRenderToOutputBufferPreservesLiquidErrorTypes(t *testing.T) {
+	errorTypes := []struct {
+		name   string
+		create func() error
+	}{
+		{"UndefinedFilter", func() error { return NewUndefinedFilter("test") }},
+		{"UndefinedVariable", func() error { return NewUndefinedVariable("test") }},
+		{"UndefinedDropMethod", func() error { return NewUndefinedDropMethod("test") }},
+		{"DisabledError", func() error { return NewDisabledError("test") }},
+		{"MemoryError", func() error { return NewMemoryError("test") }},
+		{"FileSystemError", func() error { return NewFileSystemError("test") }},
+		{"ZeroDivisionError", func() error { return NewZeroDivisionError("test") }},
+		{"FloatDomainError", func() error { return NewFloatDomainError("test") }},
+		{"MethodOverrideError", func() error { return NewMethodOverrideError("test") }},
+		{"ContextError", func() error { return NewContextError("test") }},
+		{"TemplateEncodingError", func() error { return NewTemplateEncodingError("test") }},
+	}
+
+	for _, tt := range errorTypes {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext()
+			ctx.Set("panicker", &testPanicker{err: tt.create()})
+
+			lineNum := 1
+			pc := &mockParseContext{lineNum: &lineNum}
+			v := NewVariable("panicker.trigger", pc)
+
+			output := ""
+			v.RenderToOutputBuffer(ctx, &output)
+
+			// Error should be in context
+			if len(ctx.Errors()) == 0 {
+				t.Fatalf("%s: expected error in context.Errors()", tt.name)
+			}
+
+			// Error type should be preserved
+			if _, ok := ctx.Errors()[0].(*InternalError); ok && tt.name != "InternalError" {
+				t.Errorf("%s: error was converted to InternalError", tt.name)
+			}
+		})
+	}
+}

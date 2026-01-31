@@ -290,101 +290,30 @@ func (c *Context) PopInterrupt() interface{} {
 func (c *Context) HandleError(err error, lineNumber *int) string {
 	liquidErr := err
 
-	// Ensure it's a Liquid error
-	if _, ok := err.(*Error); !ok {
-		if _, ok := err.(*InternalError); !ok {
-			if _, ok := err.(*SyntaxError); !ok {
-				if _, ok := err.(*StandardError); !ok {
-					if _, ok := err.(*ArgumentError); !ok {
-						if _, ok := err.(*UndefinedVariable); !ok {
-							if _, ok := err.(*DisabledError); !ok {
-								if _, ok := err.(*MemoryError); !ok {
-									if _, ok := err.(*FileSystemError); !ok {
-										if _, ok := err.(*StackLevelError); !ok {
-											liquidErr = NewInternalError("internal")
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Set template name and line number for errors that have Err field
-	switch e := liquidErr.(type) {
-	case *Error:
+	// Check if it's a LiquidError (has Err *Error field)
+	if le, ok := err.(LiquidError); ok {
+		e := le.GetError()
 		if e.TemplateName == "" {
 			e.TemplateName = c.templateName
 		}
 		if e.LineNumber == nil {
 			e.LineNumber = lineNumber
 		}
-	case *StandardError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
+	} else if e, ok := err.(*Error); ok {
+		// Handle base Error type
+		if e.TemplateName == "" {
+			e.TemplateName = c.templateName
 		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
+		if e.LineNumber == nil {
+			e.LineNumber = lineNumber
 		}
-	case *ArgumentError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *InternalError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *SyntaxError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *UndefinedVariable:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *DisabledError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *MemoryError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *FileSystemError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
-	case *StackLevelError:
-		if e.Err.TemplateName == "" {
-			e.Err.TemplateName = c.templateName
-		}
-		if e.Err.LineNumber == nil {
-			e.Err.LineNumber = lineNumber
-		}
+	} else {
+		// Unknown error type, wrap as InternalError
+		liquidErr = NewInternalError("internal")
+		le := liquidErr.(LiquidError)
+		e := le.GetError()
+		e.TemplateName = c.templateName
+		e.LineNumber = lineNumber
 	}
 
 	c.errors = append(c.errors, liquidErr)
@@ -396,7 +325,9 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
 	result, err := c.Strainer().Invoke(method, append([]interface{}{obj}, args...)...)
 	if err != nil {
-		// Handle error
+		if c.strictFilters {
+			panic(err)
+		}
 		return obj
 	}
 	return ToLiquid(result)

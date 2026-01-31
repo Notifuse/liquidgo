@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -121,5 +122,57 @@ func TestErrorStringWithoutPrefix(t *testing.T) {
 	}
 	if !strings.Contains(msg, "test error") {
 		t.Errorf("Expected error message to contain 'test error', got: %s", msg)
+	}
+}
+
+// TestLiquidErrorInterface tests that all error types implement LiquidError
+func TestLiquidErrorInterface(t *testing.T) {
+	errorTypes := []LiquidError{
+		NewArgumentError("test"),
+		NewContextError("test"),
+		NewFileSystemError("test"),
+		NewStandardError("test"),
+		NewSyntaxError("test"),
+		NewStackLevelError("test"),
+		NewMemoryError("test"),
+		NewZeroDivisionError("test"),
+		NewFloatDomainError("test"),
+		NewUndefinedVariable("test"),
+		NewUndefinedDropMethod("test"),
+		NewUndefinedFilter("test"),
+		NewMethodOverrideError("test"),
+		NewDisabledError("test"),
+		NewInternalError("test"),
+		NewTemplateEncodingError("test"),
+	}
+
+	for _, le := range errorTypes {
+		t.Run(fmt.Sprintf("%T", le), func(t *testing.T) {
+			baseErr := le.GetError()
+			if baseErr == nil {
+				t.Errorf("%T: GetError() returned nil", le)
+			}
+			if baseErr.Message != "test" {
+				t.Errorf("%T: expected message 'test', got '%s'", le, baseErr.Message)
+			}
+		})
+	}
+}
+
+// TestGetErrorReturnsMutableReference tests that GetError returns a mutable reference
+func TestGetErrorReturnsMutableReference(t *testing.T) {
+	err := NewArgumentError("test")
+	baseErr := err.GetError()
+
+	lineNum := 42
+	baseErr.LineNumber = &lineNum
+	baseErr.TemplateName = "test.liquid"
+
+	// Verify modifications are reflected in original error
+	if err.Err.LineNumber == nil || *err.Err.LineNumber != 42 {
+		t.Error("LineNumber modification not reflected")
+	}
+	if err.Err.TemplateName != "test.liquid" {
+		t.Error("TemplateName modification not reflected")
 	}
 }

@@ -398,15 +398,7 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 			// Convert panic to error
 			var err error
 			switch e := r.(type) {
-			case *StandardError:
-				err = e
-			case *SyntaxError:
-				err = e
-			case *ArgumentError:
-				err = e
-			case *InternalError:
-				err = e
-			case *StackLevelError:
+			case LiquidError:
 				err = e
 			case *Error:
 				err = e

@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	// renderSyntax matches: 'filename'|variable [with|for expression] [as alias] [attributes...]
-	// Note: QuotedFragment and QuotedString already have +, so we don't add another
-	renderSyntax = regexp.MustCompile(`(` + liquid.QuotedString.String() + `|` + liquid.VariableSegment.String() + `+)(\s+(with|for)\s+(` + liquid.QuotedFragment.String() + `))?(\s+(?:as)\s+(` + liquid.VariableSegment.String() + `+))?`)
+	// renderSyntax matches: 'filename' [with|for expression] [as alias] [attributes...]
+	// Note: As of Shopify Liquid v5.11.0, render tag only accepts string literals (not variables)
+	renderSyntax = regexp.MustCompile(`(` + liquid.QuotedString.String() + `)(\s+(with|for)\s+(` + liquid.QuotedFragment.String() + `))?(\s+(?:as)\s+(` + liquid.VariableSegment.String() + `+))?`)
 )
 
 // RenderTag represents a render tag that renders a partial template with isolated context.
@@ -105,71 +105,36 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 	var templateName string
 	var contextVariableName string
 
-	// Check if template responds to to_partial returning a string (for SnippetDrop)
-	if toPartialStr, ok := template.(interface{ ToPartial() string }); ok {
-		// Parse the body string as a template
-		body := toPartialStr.ToPartial()
-		if filename, ok := template.(interface{ Filename() string }); ok {
-			templateName = filename.Filename()
-		}
-		if name, ok := template.(interface{ Name() string }); ok {
-			contextVariableName = r.aliasName
-			if contextVariableName == "" {
-				contextVariableName = name.Name()
-			}
-		}
-
-		// Parse the body as a template
-		parsedTemplate, err := liquid.ParseTemplate(body, &liquid.TemplateOptions{
-			Environment: r.ParseContext().Environment(),
-		})
-		if err != nil {
-			errorMsg := context.HandleError(err, r.LineNumber())
-			*output += errorMsg
-			return
-		}
-		partial = parsedTemplate
-	} else if toPartial, ok := template.(interface{ ToPartial() *liquid.Template }); ok {
-		// Check if template responds to to_partial (for template objects)
-		partial = toPartial.ToPartial()
-		if filename, ok := template.(interface{ Filename() string }); ok {
-			templateName = filename.Filename()
-		}
-		if name, ok := template.(interface{ Name() string }); ok {
-			contextVariableName = r.aliasName
-			if contextVariableName == "" {
-				contextVariableName = name.Name()
-			}
-		}
-	} else if templateNameStr, ok := template.(string); ok {
-		// String template name - load from cache
-		partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
-		if err != nil {
-			errorMsg := context.HandleError(err, r.LineNumber())
-			*output += errorMsg
-			return
-		}
-		var ok bool
-		partial, ok = partialInterface.(*liquid.Template)
-		if !ok {
-			errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), r.LineNumber())
-			*output += errorMsg
-			return
-		}
-		templateName = partial.Name()
-		if templateName == "" {
-			templateName = templateNameStr
-		}
-		contextVariableName = r.aliasName
-		if contextVariableName == "" {
-			// Use last part of template name
-			parts := strings.Split(templateNameStr, "/")
-			contextVariableName = parts[len(parts)-1]
-		}
-	} else {
-		errorMsg := context.HandleError(liquid.NewArgumentError("render tag requires a string template name or template object"), r.LineNumber())
+	// As of Shopify Liquid v5.11.0, render tag only accepts string template names
+	templateNameStr, ok := template.(string)
+	if !ok {
+		errorMsg := context.HandleError(liquid.NewArgumentError("render tag requires a string template name"), r.LineNumber())
 		*output += errorMsg
 		return
+	}
+
+	// String template name - load from cache
+	partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
+	if err != nil {
+		errorMsg := context.HandleError(err, r.LineNumber())
+		*output += errorMsg
+		return
+	}
+	partial, ok = partialInterface.(*liquid.Template)
+	if !ok {
+		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), r.LineNumber())
+		*output += errorMsg
+		return
+	}
+	templateName = partial.Name()
+	if templateName == "" {
+		templateName = templateNameStr
+	}
+	contextVariableName = r.aliasName
+	if contextVariableName == "" {
+		// Use last part of template name
+		parts := strings.Split(templateNameStr, "/")
+		contextVariableName = parts[len(parts)-1]
 	}
 
 	// Render partial function

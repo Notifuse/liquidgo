@@ -54,6 +54,12 @@ func (e *Error) messagePrefix() string {
 	return b.String()
 }
 
+// LiquidError is the interface implemented by all Liquid error types.
+type LiquidError interface {
+	error
+	GetError() *Error
+}
+
 // ArgumentError represents an argument error.
 type ArgumentError struct {
 	Err *Error
@@ -69,6 +75,8 @@ func NewArgumentError(message string) *ArgumentError {
 func (e *ArgumentError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *ArgumentError) GetError() *Error { return e.Err }
 
 // ContextError represents a context error.
 type ContextError struct {
@@ -86,6 +94,8 @@ func (e *ContextError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *ContextError) GetError() *Error { return e.Err }
+
 // FileSystemError represents a file system error.
 type FileSystemError struct {
 	Err *Error
@@ -102,6 +112,8 @@ func (e *FileSystemError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *FileSystemError) GetError() *Error { return e.Err }
+
 // StandardError represents a standard error.
 type StandardError struct {
 	Err *Error
@@ -117,6 +129,8 @@ func NewStandardError(message string) *StandardError {
 func (e *StandardError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *StandardError) GetError() *Error { return e.Err }
 
 // SyntaxError represents a syntax error.
 type SyntaxError struct {
@@ -157,6 +171,8 @@ func (e *SyntaxError) Error() string {
 	return b.String()
 }
 
+func (e *SyntaxError) GetError() *Error { return e.Err }
+
 // StackLevelError represents a stack level error.
 type StackLevelError struct {
 	Err *Error
@@ -172,6 +188,8 @@ func NewStackLevelError(message string) *StackLevelError {
 func (e *StackLevelError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *StackLevelError) GetError() *Error { return e.Err }
 
 // MemoryError represents a memory error.
 type MemoryError struct {
@@ -189,6 +207,8 @@ func (e *MemoryError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *MemoryError) GetError() *Error { return e.Err }
+
 // ZeroDivisionError represents a zero division error.
 type ZeroDivisionError struct {
 	Err *Error
@@ -204,6 +224,8 @@ func NewZeroDivisionError(message string) *ZeroDivisionError {
 func (e *ZeroDivisionError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *ZeroDivisionError) GetError() *Error { return e.Err }
 
 // FloatDomainError represents a float domain error.
 type FloatDomainError struct {
@@ -221,6 +243,8 @@ func (e *FloatDomainError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *FloatDomainError) GetError() *Error { return e.Err }
+
 // UndefinedVariable represents an undefined variable error.
 type UndefinedVariable struct {
 	Err *Error
@@ -236,6 +260,8 @@ func NewUndefinedVariable(message string) *UndefinedVariable {
 func (e *UndefinedVariable) Error() string {
 	return e.Err.Error()
 }
+
+func (e *UndefinedVariable) GetError() *Error { return e.Err }
 
 // UndefinedDropMethod represents an undefined drop method error.
 type UndefinedDropMethod struct {
@@ -253,6 +279,8 @@ func (e *UndefinedDropMethod) Error() string {
 	return e.Err.Error()
 }
 
+func (e *UndefinedDropMethod) GetError() *Error { return e.Err }
+
 // UndefinedFilter represents an undefined filter error.
 type UndefinedFilter struct {
 	Err *Error
@@ -268,6 +296,8 @@ func NewUndefinedFilter(message string) *UndefinedFilter {
 func (e *UndefinedFilter) Error() string {
 	return e.Err.Error()
 }
+
+func (e *UndefinedFilter) GetError() *Error { return e.Err }
 
 // MethodOverrideError represents a method override error.
 type MethodOverrideError struct {
@@ -285,6 +315,8 @@ func (e *MethodOverrideError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *MethodOverrideError) GetError() *Error { return e.Err }
+
 // DisabledError represents a disabled error.
 type DisabledError struct {
 	Err *Error
@@ -300,6 +332,8 @@ func NewDisabledError(message string) *DisabledError {
 func (e *DisabledError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *DisabledError) GetError() *Error { return e.Err }
 
 // InternalError represents an internal error.
 type InternalError struct {
@@ -317,6 +351,8 @@ func (e *InternalError) Error() string {
 	return e.Err.Error()
 }
 
+func (e *InternalError) GetError() *Error { return e.Err }
+
 // TemplateEncodingError represents a template encoding error.
 type TemplateEncodingError struct {
 	Err *Error
@@ -332,3 +368,5 @@ func NewTemplateEncodingError(message string) *TemplateEncodingError {
 func (e *TemplateEncodingError) Error() string {
 	return e.Err.Error()
 }
+
+func (e *TemplateEncodingError) GetError() *Error { return e.Err }

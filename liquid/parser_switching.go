@@ -18,7 +18,7 @@ func (p *ParserSwitching) ParseWithSelectedParser(markup string, strictParse, la
 	errorMode := p.parseContext.ErrorMode()
 
 	switch errorMode {
-	case "rigid":
+	case "rigid", "strict2":
 		return p.rigidParseWithErrorContext(markup, rigidParse)
 	case "strict":
 		return p.strictParseWithErrorContext(markup, strictParse)
@@ -41,7 +41,8 @@ func (p *ParserSwitching) ParseWithSelectedParser(markup string, strictParse, la
 
 // StrictParseWithErrorModeFallback is deprecated. Use ParseWithSelectedParser instead.
 func (p *ParserSwitching) StrictParseWithErrorModeFallback(markup string, strictParse, laxParse, rigidParse func(string) error) error {
-	if p.parseContext.ErrorMode() == "rigid" {
+	mode := p.parseContext.ErrorMode()
+	if mode == "rigid" || mode == "strict2" {
 		return p.rigidParseWithErrorContext(markup, rigidParse)
 	}
 
@@ -50,7 +51,7 @@ func (p *ParserSwitching) StrictParseWithErrorModeFallback(markup string, strict
 		if syntaxErr, ok := err.(*SyntaxError); ok {
 			errorMode := p.parseContext.ErrorMode()
 			switch errorMode {
-			case "rigid", "strict":
+			case "rigid", "strict2", "strict":
 				return err
 			case "warn":
 				p.parseContext.AddWarning(syntaxErr)
@@ -62,9 +63,10 @@ func (p *ParserSwitching) StrictParseWithErrorModeFallback(markup string, strict
 	return nil
 }
 
-// RigidMode returns true if error mode is rigid.
+// RigidMode returns true if error mode is rigid or strict2.
 func (p *ParserSwitching) RigidMode() bool {
-	return p.parseContext.ErrorMode() == "rigid"
+	mode := p.parseContext.ErrorMode()
+	return mode == "rigid" || mode == "strict2"
 }
 
 func (p *ParserSwitching) rigidParseWithErrorContext(markup string, rigidParse func(string) error) error {

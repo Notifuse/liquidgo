@@ -1,7 +1,9 @@
 package liquid
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -838,5 +840,43 @@ func TestTemplateRenderToOutputBufferTemplateNameSetting(t *testing.T) {
 	// Template name should be set
 	if ctx.TemplateName() != "test_template.liquid" {
 		t.Errorf("Expected template name 'test_template.liquid', got %q", ctx.TemplateName())
+	}
+}
+
+// TestTemplateConcurrentRender tests that the same template can be rendered
+// concurrently without race conditions.
+// This test reproduces the issue from https://github.com/Notifuse/liquidgo/issues/2
+func TestTemplateConcurrentRender(t *testing.T) {
+	env := NewEnvironment()
+	template := NewTemplate(&TemplateOptions{Environment: env})
+	err := template.Parse("Hello {{ name }}", nil)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	// Pre-populate instanceAssigns to ensure cloning works
+	template.InstanceAssigns()["preset"] = "value"
+
+	var wg sync.WaitGroup
+	errors := make(chan error, 100)
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			assigns := map[string]interface{}{"name": fmt.Sprintf("user%d", id)}
+			result := template.Render(assigns, nil)
+			expected := fmt.Sprintf("Hello user%d", id)
+			if result != expected {
+				errors <- fmt.Errorf("expected %q, got %q", expected, result)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	for err := range errors {
+		t.Error(err)
 	}
 }

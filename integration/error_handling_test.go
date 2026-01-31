@@ -1023,3 +1023,147 @@ func TestErrorHandling_InternalErrorIsRaisedWithTemplateName(t *testing.T) {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 }
+
+// TestErrorHandling_StrictFiltersWithUndefinedFilter tests that strict_filters mode
+// raises an UndefinedFilter error when an unknown filter is used.
+func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+
+	tmpl, err := liquid.ParseTemplate(`{{ "hello" | unknown_filter }}`, &liquid.TemplateOptions{
+		Environment: env,
+		LineNumbers: true,
+	})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	// Test with strict_filters = true
+	t.Run("strict_filters_true", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: true,
+		})
+
+		// Should contain error message about undefined filter
+		if !strings.Contains(output, "undefined filter") {
+			t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+		}
+		if !strings.Contains(output, "unknown_filter") {
+			t.Errorf("Expected output to contain 'unknown_filter', got %q", output)
+		}
+	})
+
+	// Test with strict_filters = false (default)
+	t.Run("strict_filters_false", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: false,
+		})
+
+		// Should pass through the input unchanged (no error)
+		if output != "hello" {
+			t.Errorf("Expected 'hello' (pass-through), got %q", output)
+		}
+	})
+}
+
+// TestErrorHandling_StrictFiltersWithDefinedFilter tests that strict_filters mode
+// works correctly with defined filters.
+func TestErrorHandling_StrictFiltersWithDefinedFilter(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+
+	tmpl, err := liquid.ParseTemplate(`{{ "HELLO" | downcase }}`, &liquid.TemplateOptions{
+		Environment: env,
+	})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	// Should work in both modes
+	t.Run("strict_filters_true", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: true,
+		})
+		if output != "hello" {
+			t.Errorf("Expected 'hello', got %q", output)
+		}
+	})
+
+	t.Run("strict_filters_false", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: false,
+		})
+		if output != "hello" {
+			t.Errorf("Expected 'hello', got %q", output)
+		}
+	})
+}
+
+// TestErrorHandling_StrictFiltersErrorIncludesLineNumber tests that UndefinedFilter
+// errors in strict mode include line numbers when available.
+func TestErrorHandling_StrictFiltersErrorIncludesLineNumber(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+
+	template := `Line 1
+Line 2
+{{ "test" | bad_filter }}
+Line 4`
+
+	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
+		Environment: env,
+		LineNumbers: true,
+	})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	output := tmpl.Render(nil, &liquid.RenderOptions{
+		StrictFilters: true,
+	})
+
+	// Should contain line number in error
+	if !strings.Contains(output, "line 3") {
+		t.Errorf("Expected output to contain 'line 3', got %q", output)
+	}
+	if !strings.Contains(output, "undefined filter") {
+		t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+	}
+}
+
+// TestErrorHandling_StrictFiltersWithFilterChain tests strict mode with chained filters
+// where one filter is undefined.
+func TestErrorHandling_StrictFiltersWithFilterChain(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+
+	tmpl, err := liquid.ParseTemplate(`{{ "hello" | upcase | unknown_filter | downcase }}`, &liquid.TemplateOptions{
+		Environment: env,
+	})
+	if err != nil {
+		t.Fatalf("ParseTemplate() error = %v", err)
+	}
+
+	t.Run("strict_mode_stops_at_undefined", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: true,
+		})
+
+		// Should contain error about undefined filter
+		if !strings.Contains(output, "undefined filter") {
+			t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+		}
+	})
+
+	t.Run("non_strict_mode_passes_through", func(t *testing.T) {
+		output := tmpl.Render(nil, &liquid.RenderOptions{
+			StrictFilters: false,
+		})
+
+		// In non-strict mode, unknown filter passes through its input
+		// upcase("hello") = "HELLO", unknown_filter("HELLO") = "HELLO", downcase("HELLO") = "hello"
+		if output != "hello" {
+			t.Errorf("Expected 'hello', got %q", output)
+		}
+	})
+}

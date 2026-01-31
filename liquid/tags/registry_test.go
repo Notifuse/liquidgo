@@ -13,10 +13,11 @@ func TestRegisterStandardTags(t *testing.T) {
 	RegisterStandardTags(env)
 
 	// Verify all standard tags are registered
+	// Note: snippet tag was removed in Shopify Liquid v5.11.0
 	testTags := []string{
 		"assign", "echo", "increment", "decrement", "break", "continue", "cycle",
 		"comment", "doc", "capture", "if", "unless", "for", "ifchanged",
-		"case", "tablerow", "snippet", "include", "render",
+		"case", "tablerow", "include", "render",
 	}
 	for _, tagName := range testTags {
 		tagConstructor := env.TagForName(tagName)
