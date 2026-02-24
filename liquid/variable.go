@@ -370,6 +370,17 @@ func (v *Variable) Render(context TagContext) interface{} {
 			evaluatedArgs[i] = context.Evaluate(arg)
 		}
 
+		// Evaluate keyword arguments if present (filter[2] is a map[string]interface{})
+		if len(filter) > 2 {
+			if kwargs, ok := filter[2].(map[string]interface{}); ok && len(kwargs) > 0 {
+				evaluatedKwargs := make(map[string]interface{}, len(kwargs))
+				for k, v := range kwargs {
+					evaluatedKwargs[k] = context.Evaluate(v)
+				}
+				evaluatedArgs = append(evaluatedArgs, evaluatedKwargs)
+			}
+		}
+
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
 	}
