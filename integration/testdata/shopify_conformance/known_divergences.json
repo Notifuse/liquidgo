@@ -282,76 +282,6 @@
    "strict/ruby": "output: -1 10"
   }
  },
- "test/integration/tags/raw_tag_test.rb:16": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:17": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:18": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:19": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "output: {{% endraw %}Hello{% raw %}}",
-   "strict/ruby": "output: {{% endraw %}Hello{% raw %}}"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:23": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:25": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:27": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:28": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:29": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
- "test/integration/tags/raw_tag_test.rb:30": {
-  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
-  }
- },
  "test/integration/tags/standard_tag_test.rb:285": {
   "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
   "actual": {
@@ -364,13 +294,6 @@
   "actual": {
    "lax/ruby": "output: ",
    "strict/ruby": "output: "
-  }
- },
- "test/integration/tags/standard_tag_test.rb:42": {
-  "reason": "bug: raw inside comment is not parsed as in Ruby",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 1): tag raw was never closed",
-   "strict/ruby": "error: parse: Liquid syntax error (line 1): tag raw was never closed"
   }
  },
  "test/integration/variable_test.rb:134": {

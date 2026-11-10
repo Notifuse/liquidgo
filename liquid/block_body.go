@@ -10,7 +10,25 @@ var (
 	blockBodyLiquidTagToken      = regexp.MustCompile(`^\s*(` + TagName.String() + `)\s*(.*?)$`)
 	blockBodyFullToken           = regexp.MustCompile(`(?s)^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
 	blockBodyWhitespaceOrNothing = regexp.MustCompile(`^\s*$`)
+	// blockBodyFullTokenPossiblyInvalid is Ruby's BlockBody::FullTokenPossiblyInvalid: a
+	// token ending with a tag, with any text before it ("{% invalid {% endraw %}").
+	blockBodyFullTokenPossiblyInvalid = regexp.MustCompile(`(?s)^(.*)` + TagStart.String() + `-?\s*(\w+)\s*(.*)?-?` + TagEnd.String() + `$`)
 )
+
+// MatchTagPossiblyInvalid reports whether token ends with a tag, and returns the text
+// before that tag and its name. raw, comment and doc use it to find their closing tag.
+func MatchTagPossiblyInvalid(token string) (before, tagName string, ok bool) {
+	m := blockBodyFullTokenPossiblyInvalid.FindStringSubmatch(token)
+	if m == nil {
+		return "", "", false
+	}
+	return m[1], m[2], true
+}
+
+// TrimsAfter reports whether a tag token ends with whitespace control ("-%}").
+func TrimsAfter(token string) bool {
+	return len(token) >= 3 && token[len(token)-3] == '-'
+}
 
 const (
 	blockBodyTAGSTART = "{%"

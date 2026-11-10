@@ -2,7 +2,6 @@ package tags
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
@@ -37,42 +36,24 @@ func NewRawTag(tagName, markup string, parseContext liquid.ParseContextInterface
 	}, nil
 }
 
-// Parse parses the raw tag body.
+// Parse parses the raw tag body, up to the first tag named endraw, as Ruby: text before
+// that tag in the same token belongs to the body, and the body is kept as written.
 func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
 	r.body = ""
 	blockDelimiter := r.BlockDelimiter()
 
-	for {
+	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
-		if token == "" {
-			// Tag never closed
-			return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
+		if before, tagName, ok := liquid.MatchTagPossiblyInvalid(token); ok && tagName == blockDelimiter {
+			r.ParseContext().SetTrimWhitespace(liquid.TrimsAfter(token))
+			r.body += before
+			return nil
 		}
-
-		// Check if this is the end tag
-		if strings.HasPrefix(token, "{%") && strings.HasSuffix(token, "%}") {
-			// Extract tag name from token
-			// Token format: {% endraw %} or {%- endraw -%}
-			tokenContent := strings.TrimPrefix(token, "{%")
-			tokenContent = strings.TrimSuffix(tokenContent, "%}")
-			tokenContent = strings.TrimSpace(tokenContent)
-
-			// Check if it matches the block delimiter
-			if tokenContent == blockDelimiter || strings.HasPrefix(tokenContent, blockDelimiter+" ") {
-				// This is the end tag
-				// Check for whitespace control
-				if len(token) > 2 && token[2] == '-' {
-					// Trim whitespace from body
-					r.body = strings.TrimRight(r.body, " \t\n\r")
-				}
-				return nil
-			}
-		}
-
-		if token != "" {
-			r.body += token
-		}
+		r.body += token
 	}
+
+	// Tag never closed
+	return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
 }
 
 // RenderToOutputBuffer renders the raw tag.
