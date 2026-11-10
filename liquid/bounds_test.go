@@ -117,8 +117,11 @@ func TestToDateZones(t *testing.T) {
 			t.Errorf("ToDate(%q) offset = %d, want %d", in, off, offset)
 		}
 	}
-	if got := ToDate("2024-03-05 14:30:00 XYZ"); got != nil {
-		t.Errorf("an unknown zone abbreviation should not be read as UTC, got %v", got)
+	for _, in := range []string{"2024-03-05 14:30:00 XYZ", "Tue, 05 Mar 2024 14:30:00 SGT"} {
+		got := ToDate(in)
+		if got == nil || got.Format("2006-01-02 15:04 -0700") != "2024-03-05 14:30 +0000" {
+			t.Errorf("ToDate(%q) = %v, want the time as written, in UTC", in, got)
+		}
 	}
 }
 
@@ -197,5 +200,25 @@ func TestTruncateWordsRubySplit(t *testing.T) {
 		if strings.Join(got, "|") != strings.Join(tt.want, "|") || len(got) != len(tt.want) {
 			t.Errorf("split(%q, %d) = %q, want %q", tt.in, tt.limit, got, tt.want)
 		}
+	}
+}
+
+func TestStrftimeLongFlagRun(t *testing.T) {
+	when := time.Date(2024, 3, 5, 14, 30, 7, 0, time.UTC)
+	format := "%" + strings.Repeat("-_0^#", 100000) + "d"
+	start := time.Now()
+	if got := strftime(&when, format); got != "5" {
+		t.Errorf("got %q, want 5", got)
+	}
+	if d := time.Since(start); d > time.Second {
+		t.Errorf("a long run of flags took %v", d)
+	}
+}
+
+// A range ending at the int maximum stops instead of wrapping around.
+func TestRangeEndingAtMaxIntStops(t *testing.T) {
+	got := SliceCollection(&Range{Start: math.MaxInt - 2, End: math.MaxInt}, 0, nil)
+	if len(got) != 3 {
+		t.Errorf("got %d elements, want 3", len(got))
 	}
 }

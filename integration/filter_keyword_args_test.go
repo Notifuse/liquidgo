@@ -20,6 +20,7 @@ func TestFilterKeywordArguments(t *testing.T) {
 		{`{{ "a" | upcase: 1 }}`, ""},
 		{`{{ "a" | upcase: foo: 1 }}`, ""},
 		{`{{ "<b>" | escape: 1 }}`, ""},
+		{`{{ "abc" | upcase: locale: "fr" }}`, ""},
 		{`{{ "<b>" | escape: 1 | append: "!" }}`, "!"},
 		// as in Ruby, keyword arguments fill the next positional parameter as a hash
 		{`{{ "abcdefgh" | truncate: 5, omission: "!" }}`, `{"omission"=>"!"}`},

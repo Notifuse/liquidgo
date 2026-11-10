@@ -46,7 +46,7 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 
 	// Handle Range objects specially (convert to array)
 	if r, ok := collection.(*Range); ok {
-		for i := r.Start; i <= r.End; i++ {
+		for i := r.Start; i <= r.End && i >= r.Start; i++ { // i >= r.Start stops at an int overflow
 			if to != nil && *to <= (i-r.Start) {
 				break
 			}
@@ -265,13 +265,14 @@ var zoneAbbreviations = map[string]float64{
 	"NZST": 12, "NZDT": 13,
 }
 
-// withZoneAbbreviation gives t the offset of its zone abbreviation, or nil when the
-// abbreviation is unknown.
+// withZoneAbbreviation gives t the offset of its zone abbreviation. An unknown
+// abbreviation (SGT, HKT...) keeps the time as written, read as UTC like a date without
+// a zone (Ruby reads it in the server's zone).
 func withZoneAbbreviation(t time.Time) *time.Time {
 	name, _ := t.Zone()
 	hours, ok := zoneAbbreviations[name]
 	if !ok {
-		return nil
+		hours = 0
 	}
 	offset := int(hours * 3600)
 	var loc *time.Location

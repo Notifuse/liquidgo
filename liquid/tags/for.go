@@ -250,7 +250,7 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) []interface{} {
 	if r, ok := collection.(*liquid.Range); ok {
 		// Convert range to array
 		arr := []interface{}{}
-		for i := r.Start; i <= r.End; i++ {
+		for i := r.Start; i <= r.End && i >= r.Start; i++ { // i >= r.Start stops at an int overflow
 			arr = append(arr, i)
 		}
 		collection = arr

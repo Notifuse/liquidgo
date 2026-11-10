@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -212,7 +213,10 @@ func toFloat(v interface{}) (float64, bool) {
 func conformanceOutcome(c conformanceCase, mode, typing string) (ok bool, actual string) {
 	out, value, err := runConformance(c, mode, typing)
 	if c.Raises != "" {
-		if _, crashed := err.(goPanic); crashed {
+		// a Go panic, raw or wrapped as an internal error, is a bug and never the error
+		// a Shopify case raises (none of them expects Liquid::InternalError)
+		var internal *liquid.InternalError
+		if _, crashed := err.(goPanic); crashed || errors.As(err, &internal) {
 			return false, "error: " + err.Error()
 		}
 		if err != nil {

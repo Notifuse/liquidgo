@@ -26,16 +26,16 @@ Several outputs change: see the list below before upgrading.
   `%-d`, `%F`, `%T`, `%s`, `%u`, `%k`, `%l`, `%D`, `%R`, `%U`, `%V` and the other directives work. A
   float Unix timestamp (JSON) and more text formats are read.
 - **`date`** reads zone names (`PST`, `EDT`, `CET`...) with their offset, whatever the server's
-  zone; an unknown zone name is no longer read as UTC, and the date is left as written.
+  zone; an unknown zone name (`SGT`) keeps the time as written, read as UTC.
 - **`join`** without a separator uses `" "`; **`escape_once`** keeps existing entities;
   **`strip_html`** removes a tag written over several lines; **`sort`** compares numeric strings as
   strings.
 - **Filter keyword arguments** reach the filter: `default: "x", allow_false: true` works.
 - **`raw`, `comment`, `doc`** end at their first closing tag as in Ruby: `{%- raw -%}...{%- endraw -%}`
-  works, the raw body is no longer trimmed.
+  works, and the raw body is never trimmed: `{% raw -%} a{% endraw %}` keeps the space before `a`.
 - **Robustness**: a huge `date` width (`%5000d`) is copied as written, a huge `round` precision
   returns at once, and a length beyond the integer range in `truncate`, `truncatewords` or `slice`
-  no longer crashes the render.
+  no longer crashes the render; a `for` range ending at the integer maximum stops.
 
 ### Changed
 - **`contains` on a list** compares elements for equality, as Ruby's `Array#include?`:
@@ -44,9 +44,11 @@ Several outputs change: see the list below before upgrading.
 - **`.size` on a map without a `size` key** gives its number of keys, as in Ruby: a template that
   tests an optional `size` field (`{% if item.size %}`) now sees a number when the field is missing.
   Test `item["size"]` instead. A `size` key still wins when it is present.
-- **A filter given too many arguments** renders nothing (`{{ x | escape: 1 }}`), instead of
-  passing its input through unfiltered. Keyword arguments fill the filter's next parameter as a
-  map, as in Ruby: `truncate: 5, omission: "!"` uses the map as the ellipsis.
+- **A filter given too many arguments** renders nothing: `{{ x | escape: 1 }}` rendered
+  `Liquid error: internal`, and a keyword argument the filter does not take was ignored
+  (`{{ "abc" | upcase: locale: "fr" }}` rendered `ABC`); both now render an empty string. Keyword
+  arguments fill the filter's next parameter as a map, as in Ruby: `truncate: 5, omission: "!"`
+  uses the map as the ellipsis.
 - **`truncate` and `truncatewords`** with a length that is not an integer (`"7.0"`) keep the input.
 - **`truncatewords`** splits on ASCII whitespace only (a non-breaking space is part of a word), and
   a text ending in whitespace gets the ellipsis, as in Ruby (`"a b " | truncatewords: 2` is `a b...`).

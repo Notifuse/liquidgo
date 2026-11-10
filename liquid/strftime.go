@@ -28,7 +28,8 @@ func strftime(t *time.Time, format string) string {
 		for ; i < len(format) && strings.IndexByte("-_0^#:", format[i]) >= 0; i++ {
 			if format[i] == ':' {
 				d.colons++
-			} else {
+			} else if !d.has(format[i]) {
+				// each flag is kept once, so a long run of flags stays linear
 				d.flags += string(format[i])
 			}
 		}

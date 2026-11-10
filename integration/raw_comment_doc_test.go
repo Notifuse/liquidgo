@@ -12,6 +12,7 @@ func TestRawCommentDocDelimiters(t *testing.T) {
 	}{
 		{"raw with whitespace control", "> {%- raw -%} inner {%- endraw -%} <", "> inner <"},
 		{"raw body is never trimmed", "> {%- raw -%} inner {%- endraw %} <", "> inner  <"},
+		{"raw -%} keeps the body", "{% raw -%} a{% endraw %}", " a"},
 		{"raw around a variable", "> {%- raw -%}{{ test }}{%- endraw -%} <", ">{{ test }}<"},
 		{"raw with an unclosed tag inside", "{% raw %} Foobar {% invalid {% endraw %}", " Foobar {% invalid "},
 		{"raw with an unclosed variable inside", "{% raw %} Foobar {{ invalid {% endraw %}{{ 1 }}", " Foobar {{ invalid 1"},
