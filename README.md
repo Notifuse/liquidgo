@@ -28,7 +28,7 @@ Liquid is a template engine written with specific requirements:
 
 ## Why Liquid Go?
 
-- ✅ **Full feature parity** with Ruby Liquid 5.10.0
+- ✅ **Full feature parity** with Ruby Liquid 5.11.0
 - ⚡ **High performance** - 3-10x faster than Ruby implementation
 - 🔒 **Secure** - Safe for user-generated templates
 - 📦 **Zero dependencies** - Pure Go implementation
@@ -467,6 +467,14 @@ go test ./integration/...
 cd performance && go test -bench=.
 ```
 
+### Shopify conformance suite
+
+`integration/shopify_conformance_test.go` replays the test cases of the Shopify Liquid Ruby test
+suite (extracted by `scripts/extract_shopify_conformance.py`) in each error mode, with Ruby
+numbers and with JSON-decoded numbers. Every remaining difference is listed, with its reason, in
+`integration/testdata/shopify_conformance/known_divergences.json`; see
+[its README](integration/testdata/shopify_conformance/README.md).
+
 ## Project Structure
 
 ```
@@ -482,9 +490,30 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.10.0**
+Current version: **5.11.0**, port revision 1 (`liquid.Version`, `liquid.PortRevision`).
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.
+
+### Deliberate differences from Shopify Liquid
+
+A few behaviours differ on purpose, because Go applications usually pass data decoded from JSON,
+where every number is a `float64`, and render text meant for people (emails, pages):
+
+- **An empty string is falsy**: `{% if "" %}` is false, so `{% if contact.first_name %}` skips an
+  empty name. In Ruby, only `nil` and `false` are falsy.
+- **Whole floats render without `.0`**: `{{ 2.0 }}` renders `2`, and `{{ 100 | plus: 1 }}` with a
+  JSON number renders `101`, not `101.0`. A JSON integer stays a float in arithmetic, so
+  `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`).
+- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}` and an invalid `base64_decode`
+  render an empty string instead of `Liquid error: ...`.
+- **`blank`** compares as before (`false == blank` is false).
+- **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
+- **Arrays render with brackets**: `{{ list }}` renders `[1, 2, 3]` where Ruby concatenates the
+  elements; use `join`.
+- **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.
+- **`decrement`** counters live in their own namespace, separate from `assign`.
+- Some malformed markup that Ruby's lax parser tolerates (`{{ 'a' | split$$$:' ' }}`,
+  `{{ false - }}`) renders differently.
 
 ## Documentation
 

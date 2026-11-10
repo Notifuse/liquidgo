@@ -14,9 +14,8 @@ The cases are extracted, not executed, by `scripts/extract_shopify_conformance.p
 
 The Ruby context of each call is kept: `modes` comes from `with_error_modes` or `error_mode:`
 (`null` means the Ruby default: the case runs in `lax`, `strict` and `strict2`, as Ruby runs its
-suite), and
-`raises` names the error a case inside `assert_raises` must produce. Cases inside any other Ruby
-block are left out.
+suite), and `raises` names the error a case inside `assert_raises` must produce. Cases inside any
+other Ruby block are left out.
 
 Each case also runs a second time with every integer turned into a `float64`, as
 `encoding/json` decodes numbers (variant `json`, next to `ruby`).
