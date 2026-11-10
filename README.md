@@ -504,8 +504,11 @@ where every number is a `float64`, and render text meant for people (emails, pag
 - **Whole floats render without `.0`**: `{{ 2.0 }}` renders `2`, and `{{ 100 | plus: 1 }}` with a
   JSON number renders `101`, not `101.0`. A JSON integer stays a float in arithmetic, so
   `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`).
-- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}` and an invalid `base64_decode`
-  render an empty string instead of `Liquid error: ...`.
+- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode` and a
+  filter given too many arguments render an empty string instead of `Liquid error: ...`; a
+  `truncate` or `truncatewords` length that is not an integer keeps the input.
+- **Template-controlled sizes are bounded**: a `date` directive wider than 1024 (`%5000d`) is
+  copied as written, and a `round` precision beyond ±400 digits is not computed.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **Arrays render with brackets**: `{{ list }}` renders `[1, 2, 3]` where Ruby concatenates the

@@ -10,7 +10,7 @@ import (
 // each directive %[flags][width]conversion is replaced by its value and any other text
 // is copied as written. Flags: "-" no padding, "_" pad with spaces, "0" pad with zeros,
 // "^" upper case, "#" change case, ":" (for %z) separate hours and minutes. An unknown
-// directive is copied as written.
+// directive, or one wider than maxStrftimeWidth, is copied as written.
 func strftime(t *time.Time, format string) string {
 	if t == nil {
 		return ""
@@ -33,8 +33,15 @@ func strftime(t *time.Time, format string) string {
 			}
 		}
 		d.width = -1
-		for widthStart := i; i < len(format) && format[i] >= '0' && format[i] <= '9'; i++ {
-			d.width, _ = strconv.Atoi(format[widthStart : i+1])
+		widthStart := i
+		for i < len(format) && format[i] >= '0' && format[i] <= '9' {
+			i++
+		}
+		oversized := false
+		if i > widthStart {
+			width, err := strconv.Atoi(format[widthStart:i])
+			oversized = err != nil || width > maxStrftimeWidth
+			d.width = width
 		}
 		if i >= len(format) {
 			b.WriteString(format[start:])
@@ -42,7 +49,10 @@ func strftime(t *time.Time, format string) string {
 		}
 		d.conversion = format[i]
 		i++
-		if s, ok := d.format(t); ok {
+		if oversized {
+			// a width this large would make one directive allocate without bound
+			b.WriteString(format[start:i])
+		} else if s, ok := d.format(t); ok {
 			b.WriteString(s)
 		} else {
 			b.WriteString(format[start:i])
@@ -50,6 +60,9 @@ func strftime(t *time.Time, format string) string {
 	}
 	return b.String()
 }
+
+// maxStrftimeWidth bounds the width of a directive, which a template author controls.
+const maxStrftimeWidth = 1024
 
 type strftimeDirective struct {
 	flags      string
@@ -86,14 +99,8 @@ func (d strftimeDirective) number(n int64, defaultWidth int, defaultPad byte) st
 	if negative {
 		width--
 	}
-	if pad != 0 {
-		for len(s) < width {
-			if pad == '0' {
-				s = "0" + s
-			} else {
-				s = " " + s
-			}
-		}
+	if pad != 0 && len(s) < width {
+		s = strings.Repeat(string(pad), width-len(s)) + s
 	}
 	if negative {
 		s = "-" + s

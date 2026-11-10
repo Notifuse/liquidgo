@@ -25,6 +25,7 @@ func TestSmallFilterFixes(t *testing.T) {
 		{`{{ list | sort | join: "," }}`, "1,2,3"},
 		{`{{ h.size }}`, "2"},
 		{`{{ hs.size }}`, "big"},
+		{`{% if h["size"] %}sized{% else %}none{% endif %}`, "none"},
 		{`{{ typed.size }}`, "1"},
 		{`{% if h.size == 2 %}two{% endif %}`, "two"},
 	}

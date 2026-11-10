@@ -18,6 +18,11 @@ func TestTextFiltersCountCharacters(t *testing.T) {
 		{`{{ "Bonjour" | slice: -3, 2 }}`, "ou"},
 		{`{{ "un deux trois" | truncatewords: 0 }}`, "un..."},
 		{`{{ "a,b,," | split: "," | size }}`, "2"},
+		{`{{ 12345 | slice: 0, 2 }}`, "12"},
+		{"{{ \"un\u00a0deux trois\" | truncatewords: 1 }}", "un\u00a0deux..."},
+		{`{{ "un deux " | truncatewords: 2 }}`, "un deux..."},
+		{`{{ "abcdef" | truncate: "7.0" }}`, "abcdef"},
+		{`{{ 2024 | date: "%s" }}`, "2024"}, // a timestamp: 1970 in UTC
 	}
 	for _, tt := range tests {
 		t.Run(tt.template, func(t *testing.T) {

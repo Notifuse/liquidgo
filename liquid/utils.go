@@ -104,7 +104,7 @@ func ToInteger(num interface{}) (int, error) {
 		return v, nil
 	}
 
-	// Handle other numeric types
+	// Handle other numeric types; values beyond the int range saturate
 	switch v := num.(type) {
 	case int8:
 		return int(v), nil
@@ -113,19 +113,21 @@ func ToInteger(num interface{}) (int, error) {
 	case int32:
 		return int(v), nil
 	case int64:
-		return int(v), nil
+		return saturateInt64(v), nil
 	case uint:
-		return int(v), nil
+		return saturateUint64(uint64(v)), nil
 	case uint8:
 		return int(v), nil
 	case uint16:
 		return int(v), nil
 	case uint32:
-		return int(v), nil
+		return saturateUint64(uint64(v)), nil
 	case uint64:
-		return int(v), nil
+		return saturateUint64(v), nil
+	case float32:
+		return saturateFloat(float64(v)), nil
 	case float64:
-		return int(v), nil
+		return saturateFloat(v), nil
 	case string:
 		i, err := strconv.Atoi(v)
 		if err != nil {
@@ -135,6 +137,37 @@ func ToInteger(num interface{}) (int, error) {
 	default:
 		return 0, NewArgumentError("invalid integer")
 	}
+}
+
+func saturateInt64(v int64) int {
+	switch {
+	case v > int64(math.MaxInt):
+		return math.MaxInt
+	case v < int64(math.MinInt):
+		return math.MinInt
+	}
+	return int(v)
+}
+
+func saturateUint64(v uint64) int {
+	if v > uint64(math.MaxInt) {
+		return math.MaxInt
+	}
+	return int(v)
+}
+
+// saturateFloat truncates toward zero, as Ruby's Float#to_i, and saturates at the int
+// range (Go's conversion of an out-of-range float is undefined). NaN gives 0.
+func saturateFloat(v float64) int {
+	switch {
+	case math.IsNaN(v):
+		return 0
+	case v >= float64(math.MaxInt):
+		return math.MaxInt
+	case v <= float64(math.MinInt):
+		return math.MinInt
+	}
+	return int(v)
 }
 
 // ToNumber converts a value to a number (int, int64, or float64).
@@ -192,6 +225,7 @@ func ToNumber(obj interface{}) (interface{}, bool) {
 // A format without a zone is read as UTC.
 var toDateLayouts = []string{
 	time.RFC3339Nano,
+	"2006-01-02T15:04:05Z0700",
 	"2006-01-02T15:04:05",
 	"2006-01-02T15:04",
 	"2006-01-02 15:04:05Z07:00",
@@ -217,6 +251,37 @@ var toDateLayouts = []string{
 	"2 January 2006 15:04",
 	"2 January 2006",
 	"2 Jan 2006",
+}
+
+// zoneAbbreviations are the offsets, in hours, of the zone names ToDate reads, as in
+// Ruby's Date zone table. Go's time.Parse reads an abbreviation with the server's local
+// zone, or with a zero offset when it does not know it, so ToDate looks it up here.
+var zoneAbbreviations = map[string]float64{
+	"UTC": 0, "UT": 0, "GMT": 0, "Z": 0, "WET": 0,
+	"EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6, "PST": -8, "PDT": -7,
+	"AKST": -9, "AKDT": -8, "HST": -10,
+	"BST": 1, "WEST": 1, "CET": 1, "CEST": 2, "EET": 2, "EEST": 3, "MSK": 3,
+	"IST": 5.5, "AWST": 8, "JST": 9, "KST": 9, "ACST": 9.5, "AEST": 10, "AEDT": 11,
+	"NZST": 12, "NZDT": 13,
+}
+
+// withZoneAbbreviation gives t the offset of its zone abbreviation, or nil when the
+// abbreviation is unknown.
+func withZoneAbbreviation(t time.Time) *time.Time {
+	name, _ := t.Zone()
+	hours, ok := zoneAbbreviations[name]
+	if !ok {
+		return nil
+	}
+	offset := int(hours * 3600)
+	var loc *time.Location
+	if offset == 0 {
+		loc = time.UTC
+	} else {
+		loc = time.FixedZone(name, offset)
+	}
+	zoned := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), loc)
+	return &zoned
 }
 
 // ToDate converts a value to a time.Time, as Ruby Liquid's Utils.to_date: a time, a
@@ -249,7 +314,12 @@ func ToDate(obj interface{}) *time.Time {
 			return &t
 		}
 		for _, layout := range toDateLayouts {
-			if t, err := time.Parse(layout, trimmed); err == nil {
+			// in UTC, which defines no abbreviation but UTC, so that the server's own zone
+			// never decides what "EDT" means
+			if t, err := time.ParseInLocation(layout, trimmed, time.UTC); err == nil {
+				if strings.Contains(layout, "MST") {
+					return withZoneAbbreviation(t)
+				}
 				return &t
 			}
 		}

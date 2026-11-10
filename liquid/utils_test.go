@@ -187,7 +187,7 @@ func TestUtilsToInteger(t *testing.T) {
 		{"int64", int64(42), 42, false},
 		{"int32", int32(42), 42, false},
 		{"float64", 42.0, 42, false},
-		{"float32", float32(42.0), 42, true}, // float32 not directly supported
+		{"float32", float32(42.0), 42, false},
 		{"nil", nil, 0, true},
 		{"bool true", true, 0, true},   // bool not directly supported
 		{"bool false", false, 0, true}, // bool not directly supported

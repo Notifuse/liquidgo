@@ -18,6 +18,10 @@ var (
 // MatchTagPossiblyInvalid reports whether token ends with a tag, and returns the text
 // before that tag and its name. raw, comment and doc use it to find their closing tag.
 func MatchTagPossiblyInvalid(token string) (before, tagName string, ok bool) {
+	// most tokens of a raw or comment body are text; skip the regexp for them
+	if !strings.HasSuffix(token, "%}") {
+		return "", "", false
+	}
 	m := blockBodyFullTokenPossiblyInvalid.FindStringSubmatch(token)
 	if m == nil {
 		return "", "", false

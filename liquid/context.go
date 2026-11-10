@@ -321,14 +321,16 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 	return ToS(result, nil)
 }
 
-// Invoke invokes a filter method.
+// Invoke invokes a filter method. A call the filter cannot take (too many arguments)
+// gives nil, as a filter that fails does, rather than passing its input through: a
+// filter such as escape must not be skipped silently.
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
 	result, err := c.Strainer().Invoke(method, append([]interface{}{obj}, args...)...)
 	if err != nil {
 		if c.strictFilters {
 			panic(err)
 		}
-		return obj
+		return nil
 	}
 	return ToLiquid(result)
 }

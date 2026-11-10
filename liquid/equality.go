@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 // maxEqualityDepth bounds the recursion of liquidEqual, so that self-referencing data
@@ -40,6 +41,8 @@ func asNumber(v interface{}) (number, bool) {
 		return number{kind: signedNumber, i: n}, true
 	case float64:
 		return number{kind: floatNumber, f: n}, true
+	case float32:
+		return number{kind: floatNumber, f: float32Decimal(float64(n))}, true
 	case json.Number:
 		if i, err := n.Int64(); err == nil {
 			return number{kind: signedNumber, i: i}, true
@@ -55,10 +58,22 @@ func asNumber(v interface{}) (number, bool) {
 		return number{kind: signedNumber, i: rv.Int()}, true
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		return number{kind: unsignedNumber, u: rv.Uint()}, true
-	case reflect.Float32, reflect.Float64:
+	case reflect.Float32:
+		return number{kind: floatNumber, f: float32Decimal(rv.Float())}, true
+	case reflect.Float64:
 		return number{kind: floatNumber, f: rv.Float()}, true
 	}
 	return number{}, false
+}
+
+// float32Decimal reads a float32 through its shortest decimal, as arithmetic does, so
+// that float32(0.1) is 0.1 and not 0.10000000149011612.
+func float32Decimal(f float64) float64 {
+	d, err := strconv.ParseFloat(strconv.FormatFloat(f, 'g', -1, 32), 64)
+	if err != nil {
+		return f
+	}
+	return d
 }
 
 func (n number) float64() float64 {
@@ -99,13 +114,17 @@ func compareNumbers(a, b number) (cmp int, ok bool) {
 		}
 		return compareOrdered(a.u, uint64(b.i)), true
 	}
-	if math.IsNaN(a.float64()) || math.IsNaN(b.float64()) {
+	x, y := a.float64(), b.float64()
+	if math.IsNaN(x) || math.IsNaN(y) {
 		return 0, false
+	}
+	if a.kind == floatNumber && b.kind == floatNumber {
+		return compareOrdered(x, y), true
 	}
 	return a.bigFloat().Cmp(b.bigFloat()), true
 }
 
-func compareOrdered[T int64 | uint64](a, b T) int {
+func compareOrdered[T int64 | uint64 | float64](a, b T) int {
 	switch {
 	case a < b:
 		return -1
@@ -164,8 +183,16 @@ func liquidEqualDepth(left, right interface{}, depth int) (equal bool) {
 		}
 		return true
 	case lk == reflect.Map && rk == reflect.Map:
-		if lv.Len() != rv.Len() || !lv.Type().Key().AssignableTo(rv.Type().Key()) {
+		if lv.Len() != rv.Len() {
 			return false
+		}
+		// look the keys of one map up in the other, whichever direction the key types allow,
+		// so that the comparison is symmetric
+		if !lv.Type().Key().AssignableTo(rv.Type().Key()) {
+			if !rv.Type().Key().AssignableTo(lv.Type().Key()) {
+				return false
+			}
+			lv, rv = rv, lv
 		}
 		iter := lv.MapRange()
 		for iter.Next() {

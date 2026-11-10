@@ -25,17 +25,34 @@ Several outputs change: see the list below before upgrading.
 - **`date`** follows Ruby's strftime: literal text in the format is kept (`"%d %B %Y, 2pm"`), and
   `%-d`, `%F`, `%T`, `%s`, `%u`, `%k`, `%l`, `%D`, `%R`, `%U`, `%V` and the other directives work. A
   float Unix timestamp (JSON) and more text formats are read.
+- **`date`** reads zone names (`PST`, `EDT`, `CET`...) with their offset, whatever the server's
+  zone; an unknown zone name is no longer read as UTC, and the date is left as written.
 - **`join`** without a separator uses `" "`; **`escape_once`** keeps existing entities;
   **`strip_html`** removes a tag written over several lines; **`sort`** compares numeric strings as
-  strings; **`.size`** on a map gives its number of keys.
+  strings.
 - **Filter keyword arguments** reach the filter: `default: "x", allow_false: true` works.
 - **`raw`, `comment`, `doc`** end at their first closing tag as in Ruby: `{%- raw -%}...{%- endraw -%}`
   works, the raw body is no longer trimmed.
+- **Robustness**: a huge `date` width (`%5000d`) is copied as written, a huge `round` precision
+  returns at once, and a length beyond the integer range in `truncate`, `truncatewords` or `slice`
+  no longer crashes the render.
 
 ### Changed
 - **`contains` on a list** compares elements for equality, as Ruby's `Array#include?`:
   `["vip_gold"] contains "vip"` and `[1, 2] contains "1"` are now false. To search a property of
   list items, map it first: `{% assign titles = posts | map: "title" %}{% if titles contains "x" %}`.
+- **`.size` on a map without a `size` key** gives its number of keys, as in Ruby: a template that
+  tests an optional `size` field (`{% if item.size %}`) now sees a number when the field is missing.
+  Test `item["size"]` instead. A `size` key still wins when it is present.
+- **A filter given too many arguments** renders nothing (`{{ x | escape: 1 }}`), instead of
+  passing its input through unfiltered. Keyword arguments fill the filter's next parameter as a
+  map, as in Ruby: `truncate: 5, omission: "!"` uses the map as the ellipsis.
+- **`truncate` and `truncatewords`** with a length that is not an integer (`"7.0"`) keep the input.
+- **`truncatewords`** splits on ASCII whitespace only (a non-breaking space is part of a word), and
+  a text ending in whitespace gets the ellipsis, as in Ruby (`"a b " | truncatewords: 2` is `a b...`).
+- **`slice` on a number** slices its text (`12345 | slice: 0, 2` is `12`).
+- **`date` on a small number** reads it as a Unix timestamp, as Ruby does: `2024 | date: "%Y"` is
+  `1970`. `%c` pads the day with a space (`Tue Mar  5`).
 - `Version` is `5.11.0` (it said `5.10.0`), with a new `PortRevision` constant.
 
 ## [5.11.0]

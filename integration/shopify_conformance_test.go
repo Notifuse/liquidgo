@@ -117,7 +117,12 @@ func hasInteger(v interface{}) bool {
 func runConformance(c conformanceCase, mode, typing string) (out string, value interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("panic: %v", r)
+			// a Liquid error is what a raises case expects; any other panic is a bug
+			if le, ok := r.(liquid.LiquidError); ok {
+				err = le
+			} else {
+				err = goPanic{r}
+			}
 		}
 	}()
 	fs := NewStubFileSystem(c.Partials)
@@ -143,6 +148,11 @@ func runConformance(c conformanceCase, mode, typing string) (out string, value i
 	}
 	return out, value, nil
 }
+
+// goPanic is a panic that is not a Liquid error, such as an index out of range.
+type goPanic struct{ value interface{} }
+
+func (p goPanic) Error() string { return fmt.Sprintf("panic: %v", p.value) }
 
 // rubyEqual compares a liquidgo value with a Ruby literal the way Ruby's == would:
 // numbers by value whatever their type, arrays and hashes element by element.
@@ -202,6 +212,9 @@ func toFloat(v interface{}) (float64, bool) {
 func conformanceOutcome(c conformanceCase, mode, typing string) (ok bool, actual string) {
 	out, value, err := runConformance(c, mode, typing)
 	if c.Raises != "" {
+		if _, crashed := err.(goPanic); crashed {
+			return false, "error: " + err.Error()
+		}
 		if err != nil {
 			return true, "error"
 		}
@@ -259,6 +272,15 @@ func conformanceVariants(c conformanceCase) []string {
 	return variants
 }
 
+func containsString(list []string, s string) bool {
+	for _, e := range list {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}
+
 func TestShopifyConformance(t *testing.T) {
 	cases, known := loadConformance(t)
 	ids := map[string]bool{}
@@ -268,7 +290,16 @@ func TestShopifyConformance(t *testing.T) {
 		if pinned.Skip {
 			continue
 		}
-		for _, variant := range conformanceVariants(c) {
+		variants := conformanceVariants(c)
+		if len(variants) == 0 {
+			t.Errorf("%s runs in no variant: check its modes", c.ID)
+		}
+		for variant := range pinned.Actual {
+			if !containsString(variants, variant) {
+				t.Errorf("%s: pinned variant %s is not run", c.ID, variant)
+			}
+		}
+		for _, variant := range variants {
 			parts := strings.SplitN(variant, "/", 2)
 			ok, actual := conformanceOutcome(c, parts[0], parts[1])
 			want, isPinned := pinned.Actual[variant]

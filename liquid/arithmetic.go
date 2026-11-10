@@ -161,6 +161,9 @@ func arithmetic(a, b liquidNumber, op byte) liquidNumber {
 		}
 	}
 	if a.kind == integerNumber && b.kind == integerNumber {
+		if r, ok := int64Arithmetic(a.i, b.i, op); ok {
+			return integerOf(r)
+		}
 		x, y := big.NewInt(a.i), big.NewInt(b.i)
 		switch op {
 		case '+':
@@ -199,6 +202,46 @@ func arithmetic(a, b liquidNumber, op byte) liquidNumber {
 		// floor modulo: x - y * floor(x / y)
 		q := floorRat(new(big.Rat).Quo(x, y))
 		return decimalOf(new(big.Rat).Sub(x, new(big.Rat).Mul(y, new(big.Rat).SetInt(q))))
+	}
+}
+
+// int64Arithmetic is the fast path of integer arithmetic; ok is false when the result
+// does not fit an int64, and the caller then computes it with big.Int.
+func int64Arithmetic(x, y int64, op byte) (r int64, ok bool) {
+	switch op {
+	case '+':
+		r = x + y
+		return r, (r > x) == (y > 0)
+	case '-':
+		r = x - y
+		return r, (r < x) == (y > 0)
+	case '*':
+		if x == 0 || y == 0 {
+			return 0, true
+		}
+		if y == -1 {
+			return -x, x != math.MinInt64
+		}
+		r = x * y
+		return r, r/y == x
+	case '/':
+		if y == -1 && x == math.MinInt64 {
+			return 0, false
+		}
+		r = x / y
+		if x%y != 0 && (x < 0) != (y < 0) {
+			r--
+		}
+		return r, true
+	default:
+		if y == -1 {
+			return 0, true
+		}
+		r = x % y
+		if r != 0 && (r < 0) != (y < 0) {
+			r += y
+		}
+		return r, true
 	}
 }
 

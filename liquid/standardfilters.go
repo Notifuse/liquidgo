@@ -232,15 +232,19 @@ func sliceBounds(n, offset, length int) (start, end int, ok bool) {
 }
 
 // Truncate shortens a string to length characters, the ellipsis included (50 by
-// default). A length of 0 or less leaves only the ellipsis.
+// default). A length of 0 or less leaves only the ellipsis, and a length that is not an
+// integer leaves the input unchanged.
 func (sf *StandardFilters) Truncate(input interface{}, length interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
 	}
-	runes := []rune(ToS(input, nil))
+	inputStr := ToS(input, nil)
 	lengthInt := 50
 	if length != nil {
-		lengthInt, _ = ToInteger(length)
+		var err error
+		if lengthInt, err = ToInteger(length); err != nil {
+			return inputStr
+		}
 	}
 
 	truncateStr := "..."
@@ -248,20 +252,23 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
+	runes := []rune(inputStr)
 	if len(runes) <= lengthInt {
-		return string(runes)
+		return inputStr
 	}
 
-	l := lengthInt - utf8.RuneCountInString(truncateStr)
-	if l < 0 {
-		l = 0
+	// compared before subtracting, so that a length near the int minimum cannot wrap
+	l := 0
+	if ellipsis := utf8.RuneCountInString(truncateStr); lengthInt > ellipsis {
+		l = lengthInt - ellipsis
 	}
 
 	return string(runes[:l]) + truncateStr
 }
 
 // TruncateWords shortens a string to a number of words (15 by default, at least 1).
-// Words are separated by ASCII whitespace, as in Ruby's split(" ").
+// Words are separated by ASCII whitespace, as in Ruby's split(" "). A count that is not
+// an integer leaves the input unchanged.
 func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
@@ -269,7 +276,10 @@ func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, t
 	inputStr := ToS(input, nil)
 	wordsInt := 15
 	if words != nil {
-		wordsInt, _ = ToInteger(words)
+		var err error
+		if wordsInt, err = ToInteger(words); err != nil {
+			return inputStr
+		}
 	}
 	if wordsInt <= 0 {
 		wordsInt = 1
@@ -280,13 +290,48 @@ func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, t
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	wordList := splitASCIIWhitespace(inputStr)
+	// Ruby gives up on a count beyond a 32-bit integer and keeps the input
+	if wordsInt >= math.MaxInt32 {
+		return inputStr
+	}
+	wordList := splitASCIIWhitespaceLimit(inputStr, wordsInt+1)
 	if len(wordList) <= wordsInt {
 		return inputStr
 	}
 
-	result := strings.Join(wordList[:wordsInt], " ")
+	result := strings.Join(wordList[:len(wordList)-1], " ")
 	return result + truncateStr
+}
+
+// splitASCIIWhitespaceLimit is Ruby's split(" ", limit): at most limit fields, the
+// last one holding the rest of the string. As in Ruby, a string ending in whitespace
+// has an empty last field, so "a b " | truncatewords: 2 is "a b...".
+func splitASCIIWhitespaceLimit(s string, limit int) []string {
+	var fields []string
+	beg, end, skip := 0, 0, true
+	count := 1
+	for i := 0; i < len(s); i++ {
+		c := rune(s[i])
+		switch {
+		case skip && isASCIIWhitespace(c):
+			beg = i + 1
+		case skip:
+			end, skip = i+1, false
+			if limit <= count {
+				return append(fields, s[beg:])
+			}
+		case isASCIIWhitespace(c):
+			fields = append(fields, s[beg:end])
+			skip, beg = true, i+1
+			count++
+		default:
+			end = i + 1
+		}
+	}
+	if len(s) > 0 {
+		fields = append(fields, s[beg:])
+	}
+	return fields
 }
 
 func isASCIIWhitespace(r rune) bool {
@@ -337,16 +382,17 @@ func (sf *StandardFilters) Rstrip(input interface{}) string {
 	return strings.TrimRight(ToS(input, nil), " \t\n\r")
 }
 
+var (
+	stripHTMLBlocks = regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	stripHTMLTags   = regexp.MustCompile(`(?s)<.*?>`)
+)
+
 // StripHTML strips HTML tags from a string.
 func (sf *StandardFilters) StripHTML(input interface{}) string {
 	s := ToS(input, nil)
 
-	// First remove script/style/comment blocks
-	stripHTMLBlocks := regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	// First remove script/style/comment blocks, then all HTML tags
 	result := stripHTMLBlocks.ReplaceAllString(s, "")
-
-	// Then remove all HTML tags
-	stripHTMLTags := regexp.MustCompile(`(?s)<.*?>`)
 	result = stripHTMLTags.ReplaceAllString(result, "")
 
 	return result
@@ -583,7 +629,7 @@ func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{},
 		if d.kind == specialNumber {
 			return nil, NewFloatDomainError(ToS(d.f, nil))
 		}
-		digits = int(floorRat(d.rat()).Int64())
+		digits = clampRoundDigits(floorRat(d.rat()))
 	}
 
 	num := toLiquidNumber(input)
@@ -593,11 +639,35 @@ func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{},
 	if num.kind == integerNumber && digits >= 0 {
 		return num.value(), nil
 	}
+	// beyond a float64's range of digits the result is known without computing 10^digits
+	if digits > maxRoundDigits {
+		return num.value(), nil
+	}
+	if digits < -maxRoundDigits {
+		if num.kind == integerNumber {
+			return 0, nil
+		}
+		return 0.0, nil
+	}
 	rounded := decimalOf(roundRat(num.rat(), digits))
 	if digits == 0 || num.kind == integerNumber {
 		return decimalOfInteger(floorRat(rounded.r)).value(), nil
 	}
 	return rounded.value(), nil
+}
+
+// maxRoundDigits bounds the precision of round: a float64 has no digit beyond 10^±340,
+// so a larger precision keeps the number and a smaller one gives 0.
+const maxRoundDigits = 400
+
+func clampRoundDigits(d *big.Int) int {
+	switch {
+	case d.Cmp(big.NewInt(maxRoundDigits)) > 0:
+		return maxRoundDigits + 1
+	case d.Cmp(big.NewInt(-maxRoundDigits)) < 0:
+		return -maxRoundDigits - 1
+	}
+	return int(d.Int64())
 }
 
 // Ceil rounds a number up to the nearest integer.
