@@ -3,7 +3,7 @@ package tags
 import (
 	"strings"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // DecrementTag represents a decrement tag that creates a counter variable.

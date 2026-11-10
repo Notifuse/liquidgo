@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Notifuse/liquidgo/liquid"
-	"github.com/Notifuse/liquidgo/liquid/tags"
+	"github.com/Notifuse/liquidgo/v5/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 // TestSnippetTagReturnsUnknownTagError verifies that the snippet tag

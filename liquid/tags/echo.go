@@ -1,7 +1,7 @@
 package tags
 
 import (
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // EchoTag represents an echo tag that outputs an expression.

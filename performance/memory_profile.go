@@ -7,7 +7,7 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/Notifuse/liquidgo/performance"
+	"github.com/Notifuse/liquidgo/v5/performance"
 )
 
 type memStats struct {

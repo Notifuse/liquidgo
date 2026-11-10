@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Paginate implements the paginate block tag

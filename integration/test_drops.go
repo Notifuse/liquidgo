@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // ThingWithToLiquid is a test type that implements ToLiquid.

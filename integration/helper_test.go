@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/Notifuse/liquidgo/liquid"
-	"github.com/Notifuse/liquidgo/liquid/tags"
+	"github.com/Notifuse/liquidgo/v5/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 // TemplateResultOptions contains options for assertTemplateResult.

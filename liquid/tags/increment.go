@@ -3,7 +3,7 @@ package tags
 import (
 	"strings"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // IncrementTag represents an increment tag that creates a counter variable.

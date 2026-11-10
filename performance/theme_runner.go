@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Notifuse/liquidgo/liquid"
-	"github.com/Notifuse/liquidgo/liquid/tags"
-	"github.com/Notifuse/liquidgo/performance/shopify"
+	"github.com/Notifuse/liquidgo/v5/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid/tags"
+	"github.com/Notifuse/liquidgo/v5/performance/shopify"
 )
 
 // FileSystem implements liquid.FileSystem for template loading

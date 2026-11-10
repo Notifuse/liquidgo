@@ -3,7 +3,7 @@ package tags
 import (
 	"testing"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 func TestCaptureTag(t *testing.T) {

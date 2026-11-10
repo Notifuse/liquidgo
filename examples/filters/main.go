@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Notifuse/liquidgo/liquid"
-	"github.com/Notifuse/liquidgo/liquid/tags"
+	"github.com/Notifuse/liquidgo/v5/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 // MyFilters provides custom filter methods for templates.

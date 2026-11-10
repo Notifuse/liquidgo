@@ -1,7 +1,7 @@
 package tags
 
 import (
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // IfchangedTag represents an ifchanged block tag that only renders when content changes.

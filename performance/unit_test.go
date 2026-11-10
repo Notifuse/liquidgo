@@ -3,7 +3,7 @@ package performance
 import (
 	"testing"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Test data for expression benchmarks
