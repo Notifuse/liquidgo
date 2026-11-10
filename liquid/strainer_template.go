@@ -204,6 +204,11 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 			minRequired = numIn - 1 // Variadic param is optional
 		}
 
+		// Too many arguments: Ruby raises ArgumentError; reflect.Call would panic
+		if !isVariadic && len(args) > numIn {
+			return nil, NewArgumentError(fmt.Sprintf("wrong number of arguments (given %d, expected %d)", len(args), numIn))
+		}
+
 		// Build call arguments - convert all args to reflect.Value
 		callArgs := make([]reflect.Value, len(args))
 		for i := 0; i < len(args); i++ {

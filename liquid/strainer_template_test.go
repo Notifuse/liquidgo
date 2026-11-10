@@ -208,3 +208,14 @@ func TestStrainerTemplateInvokeErrorHandling(t *testing.T) {
 		t.Errorf("Expected 'arg' in non-strict mode, got %v", result)
 	}
 }
+
+func TestStrainerTemplateInvokeTooManyArguments(t *testing.T) {
+	stc := NewStrainerTemplateClass()
+	_ = stc.AddFilter(&StandardFilters{})
+	st := NewStrainerTemplate(stc, &mockContext{}, false)
+
+	_, err := st.Invoke("upcase", "a", 1)
+	if err == nil || err.Error() != "Liquid error: wrong number of arguments (given 2, expected 1)" {
+		t.Errorf("Invoke(upcase, a, 1) error = %v, want a wrong number of arguments error", err)
+	}
+}

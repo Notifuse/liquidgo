@@ -365,9 +365,21 @@ func (v *Variable) Render(context TagContext) interface{} {
 		}
 
 		// Evaluate filter arguments
-		evaluatedArgs := make([]interface{}, len(filterArgs))
+		evaluatedArgs := make([]interface{}, len(filterArgs), len(filterArgs)+1)
 		for i, arg := range filterArgs {
 			evaluatedArgs[i] = context.Evaluate(arg)
+		}
+
+		// Keyword arguments are passed as one trailing map, as in Ruby
+		// (default: "x", allow_false: true calls default(input, "x", {"allow_false" => true}))
+		if len(filter) > 2 {
+			if keywordArgs, ok := filter[2].(map[string]interface{}); ok && len(keywordArgs) > 0 {
+				evaluated := make(map[string]interface{}, len(keywordArgs))
+				for key, arg := range keywordArgs {
+					evaluated[key] = context.Evaluate(arg)
+				}
+				evaluatedArgs = append(evaluatedArgs, evaluated)
+			}
 		}
 
 		// Invoke filter

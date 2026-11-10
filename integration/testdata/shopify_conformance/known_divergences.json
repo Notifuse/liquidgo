@@ -266,13 +266,6 @@
    "strict/ruby": "output: 0"
   }
  },
- "test/integration/standard_filter_test.rb:849": {
-  "reason": "bug: filter keyword arguments (allow_false) are ignored",
-  "actual": {
-   "lax/ruby": "output: bar",
-   "strict/ruby": "output: bar"
-  }
- },
  "test/integration/tags/increment_tag_test.rb:20": {
   "reason": "deliberate: decrement counters live in their own namespace, separate from assign",
   "actual": {
