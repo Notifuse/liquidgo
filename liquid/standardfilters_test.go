@@ -319,10 +319,10 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("string negative offset", func(t *testing.T) {
+	t.Run("string negative offset counts from the end", func(t *testing.T) {
 		got := sf.Slice("hello", -1, 3)
-		if got != "" {
-			t.Errorf("Slice() with negative offset = %v, want empty string", got)
+		if got != "o" {
+			t.Errorf("Slice() with negative offset = %v, want 'o'", got)
 		}
 	})
 
@@ -340,11 +340,11 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("array negative offset", func(t *testing.T) {
+	t.Run("array negative offset counts from the end", func(t *testing.T) {
 		got := sf.Slice([]interface{}{1, 2, 3}, -1, 2)
 		gotArr, ok := got.([]interface{})
-		if !ok || len(gotArr) != 0 {
-			t.Errorf("Slice() with negative offset = %v, want empty array", got)
+		if !ok || len(gotArr) != 1 || gotArr[0] != 3 {
+			t.Errorf("Slice() with negative offset = %v, want [3]", got)
 		}
 	})
 
@@ -364,10 +364,10 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("non-string non-array", func(t *testing.T) {
+	t.Run("non-string non-array is sliced as text", func(t *testing.T) {
 		got := sf.Slice(42, 1, 2)
-		if got != "" {
-			t.Errorf("Slice() with non-string non-array = %v, want empty string", got)
+		if got != "2" {
+			t.Errorf("Slice() with non-string non-array = %v, want '2'", got)
 		}
 	})
 
@@ -407,18 +407,17 @@ func TestStandardFiltersTruncate(t *testing.T) {
 		}
 	})
 
-	t.Run("length zero or negative", func(t *testing.T) {
-		// With length 0, it defaults to 50, but "hello world" is shorter, so returns full string
+	t.Run("length zero or negative leaves the ellipsis", func(t *testing.T) {
 		result := sf.Truncate("hello world", 0, nil)
-		if result != "hello world" {
-			t.Errorf("Truncate() with length 0 = %v, want 'hello world' (string shorter than default 50)", result)
+		if result != "..." {
+			t.Errorf("Truncate() with length 0 = %v, want '...'", result)
 		}
 
-		// Test with a longer string to see default length behavior
+		// Without a length, the default is 50
 		longStr := strings.Repeat("a", 100)
-		result2 := sf.Truncate(longStr, 0, nil)
+		result2 := sf.Truncate(longStr, nil, nil)
 		if len(result2) != 50 {
-			t.Errorf("Truncate() with length 0 and long string = %v (len=%d), expected length 50", result2, len(result2))
+			t.Errorf("Truncate() without a length = %v (len=%d), expected length 50", result2, len(result2))
 		}
 	})
 

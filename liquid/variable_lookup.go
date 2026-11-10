@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 var (
@@ -349,7 +350,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				if str, ok := obj.(string); ok {
 					switch keyStr {
 					case "size":
-						obj = len(str)
+						obj = utf8.RuneCountInString(str)
 						continue
 					case "empty":
 						obj = str == ""

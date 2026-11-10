@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // StandardFilters provides standard filter implementations.
@@ -25,7 +27,7 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 	}
 	switch v := input.(type) {
 	case string:
-		return len(v)
+		return utf8.RuneCountInString(v)
 	case []interface{}:
 		return len(v)
 	case map[string]interface{}:
@@ -57,10 +59,11 @@ func (sf *StandardFilters) Upcase(input interface{}) string {
 // Capitalize capitalizes the first word in a string and downcases the remaining characters.
 func (sf *StandardFilters) Capitalize(input interface{}) string {
 	s := ToS(input, nil)
-	if len(s) == 0 {
+	first, size := utf8.DecodeRuneInString(s)
+	if size == 0 {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+	return string(unicode.ToTitle(first)) + strings.ToLower(s[size:])
 }
 
 // Escape escapes special characters in HTML.
@@ -133,7 +136,9 @@ func (sf *StandardFilters) Base64URLSafeDecode(input interface{}) (string, error
 	return string(decoded), nil
 }
 
-// Slice returns a substring or series of array items.
+// Slice returns a substring or series of array items, as Ruby's slice(offset, length):
+// a negative offset counts from the end, and an offset or length out of range gives an
+// empty result. Anything that is not a list is sliced as text, by characters.
 func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length interface{}) interface{} {
 	offsetInt, _ := ToInteger(offset)
 	lengthInt := 1
@@ -141,58 +146,61 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 		lengthInt, _ = ToInteger(length)
 	}
 
-	switch v := input.(type) {
-	case []interface{}:
-		if offsetInt < 0 || offsetInt >= len(v) {
-			return []interface{}{}
-		}
-		end := offsetInt + lengthInt
-		if end > len(v) {
-			end = len(v)
-		}
-		return v[offsetInt:end]
-	case string:
-		if offsetInt < 0 || offsetInt >= len(v) {
-			return ""
-		}
-		end := offsetInt + lengthInt
-		if end > len(v) {
-			end = len(v)
-		}
-		return v[offsetInt:end]
-	default:
-		// Use reflection to handle typed slices/arrays
-		if input != nil {
-			val := reflect.ValueOf(input)
-			if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
-				if offsetInt < 0 || offsetInt >= val.Len() {
-					return []interface{}{}
-				}
-				end := offsetInt + lengthInt
-				if end > val.Len() {
-					end = val.Len()
-				}
-				// Convert slice to []interface{}
-				result := make([]interface{}, end-offsetInt)
-				for i := offsetInt; i < end; i++ {
-					result[i-offsetInt] = val.Index(i).Interface()
-				}
-				return result
+	if input != nil {
+		if items, ok := input.([]interface{}); ok {
+			start, end, ok := sliceBounds(len(items), offsetInt, lengthInt)
+			if !ok {
+				return []interface{}{}
 			}
+			return items[start:end]
 		}
+		val := reflect.ValueOf(input)
+		if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+			start, end, ok := sliceBounds(val.Len(), offsetInt, lengthInt)
+			if !ok {
+				return []interface{}{}
+			}
+			result := make([]interface{}, end-start)
+			for i := start; i < end; i++ {
+				result[i-start] = val.Index(i).Interface()
+			}
+			return result
+		}
+	}
+
+	runes := []rune(ToS(input, nil))
+	start, end, ok := sliceBounds(len(runes), offsetInt, lengthInt)
+	if !ok {
 		return ""
 	}
+	return string(runes[start:end])
 }
 
-// Truncate truncates a string down to a given number of characters.
+// sliceBounds applies Ruby's slice(offset, length) rules to a sequence of size n.
+func sliceBounds(n, offset, length int) (start, end int, ok bool) {
+	if offset < 0 {
+		offset += n
+	}
+	if offset < 0 || offset > n || length < 0 {
+		return 0, 0, false
+	}
+	end = n
+	if length < n-offset {
+		end = offset + length
+	}
+	return offset, end, true
+}
+
+// Truncate shortens a string to length characters, the ellipsis included (50 by
+// default). A length of 0 or less leaves only the ellipsis.
 func (sf *StandardFilters) Truncate(input interface{}, length interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
 	}
-	inputStr := ToS(input, nil)
-	lengthInt, _ := ToInteger(length)
-	if lengthInt <= 0 {
-		lengthInt = 50
+	runes := []rune(ToS(input, nil))
+	lengthInt := 50
+	if length != nil {
+		lengthInt, _ = ToInteger(length)
 	}
 
 	truncateStr := "..."
@@ -200,27 +208,31 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	if len(inputStr) <= lengthInt {
-		return inputStr
+	if len(runes) <= lengthInt {
+		return string(runes)
 	}
 
-	l := lengthInt - len(truncateStr)
+	l := lengthInt - utf8.RuneCountInString(truncateStr)
 	if l < 0 {
 		l = 0
 	}
 
-	return inputStr[:l] + truncateStr
+	return string(runes[:l]) + truncateStr
 }
 
-// TruncateWords truncates a string down to a given number of words.
+// TruncateWords shortens a string to a number of words (15 by default, at least 1).
+// Words are separated by ASCII whitespace, as in Ruby's split(" ").
 func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
 	}
 	inputStr := ToS(input, nil)
-	wordsInt, _ := ToInteger(words)
+	wordsInt := 15
+	if words != nil {
+		wordsInt, _ = ToInteger(words)
+	}
 	if wordsInt <= 0 {
-		wordsInt = 15
+		wordsInt = 1
 	}
 
 	truncateStr := "..."
@@ -228,7 +240,7 @@ func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, t
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	wordList := strings.Fields(inputStr)
+	wordList := splitASCIIWhitespace(inputStr)
 	if len(wordList) <= wordsInt {
 		return inputStr
 	}
@@ -237,11 +249,32 @@ func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, t
 	return result + truncateStr
 }
 
-// Split splits a string into an array of substrings based on a separator.
+func isASCIIWhitespace(r rune) bool {
+	return r == ' ' || r == '\t' || r == '\n' || r == '\v' || r == '\f' || r == '\r'
+}
+
+// splitASCIIWhitespace splits like Ruby's split(" "): on runs of ASCII whitespace,
+// ignoring leading and trailing whitespace.
+func splitASCIIWhitespace(s string) []string {
+	return strings.FieldsFunc(s, isASCIIWhitespace)
+}
+
+// Split splits a string into an array of substrings based on a separator, as Ruby's
+// split: " " splits on runs of whitespace, "" splits into characters, and trailing
+// empty strings are dropped.
 func (sf *StandardFilters) Split(input interface{}, pattern interface{}) []interface{} {
 	inputStr := ToS(input, nil)
 	patternStr := ToS(pattern, nil)
-	parts := strings.Split(inputStr, patternStr)
+	var parts []string
+	if patternStr == " " {
+		parts = splitASCIIWhitespace(inputStr)
+	} else if inputStr != "" {
+		parts = strings.Split(inputStr, patternStr)
+		// Ruby drops trailing empty strings
+		for len(parts) > 0 && parts[len(parts)-1] == "" {
+			parts = parts[:len(parts)-1]
+		}
+	}
 	result := make([]interface{}, len(parts))
 	for i, part := range parts {
 		result[i] = part

@@ -193,63 +193,11 @@
    "lax/ruby": "output: X"
   }
  },
- "test/integration/standard_filter_test.rb:100": {
-  "reason": "bug: slice with a negative offset on a string returns \"\"",
-  "actual": {
-   "lax/json": "value: \"\"",
-   "lax/ruby": "value: \"\"",
-   "strict/json": "value: \"\"",
-   "strict/ruby": "value: \"\""
-  }
- },
- "test/integration/standard_filter_test.rb:101": {
-  "reason": "bug: slice with a negative offset on a string returns \"\"",
-  "actual": {
-   "lax/json": "value: \"\"",
-   "lax/ruby": "value: \"\"",
-   "strict/json": "value: \"\"",
-   "strict/ruby": "value: \"\""
-  }
- },
- "test/integration/standard_filter_test.rb:151": {
-  "reason": "bug: truncate: 0 returns the whole string instead of the ellipsis",
-  "actual": {
-   "lax/json": "value: \"1234567890\"",
-   "lax/ruby": "value: \"1234567890\"",
-   "strict/json": "value: \"1234567890\"",
-   "strict/ruby": "value: \"1234567890\""
-  }
- },
- "test/integration/standard_filter_test.rb:153": {
-  "reason": "bug: truncate counts bytes, not characters, and cuts a UTF-8 character",
-  "actual": {
-   "lax/json": "value: \"\\xe6\\xb5...\"",
-   "lax/ruby": "value: \"\\xe6\\xb5...\"",
-   "strict/json": "value: \"\\xe6\\xb5...\"",
-   "strict/ruby": "value: \"\\xe6\\xb5...\""
-  }
- },
- "test/integration/standard_filter_test.rb:163": {
-  "reason": "bug: split on nil returns [\"\"] instead of []",
-  "actual": {
-   "lax/ruby": "value: []interface {}{\"\"}",
-   "strict/ruby": "value: []interface {}{\"\"}"
-  }
- },
  "test/integration/standard_filter_test.rb:182": {
   "reason": "bug: escape_once re-escapes existing entities",
   "actual": {
    "lax/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\"",
    "strict/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\""
-  }
- },
- "test/integration/standard_filter_test.rb:272": {
-  "reason": "bug: truncatewords: 0 returns the whole string instead of the first word",
-  "actual": {
-   "lax/json": "value: \"one two three four\"",
-   "lax/ruby": "value: \"one two three four\"",
-   "strict/json": "value: \"one two three four\"",
-   "strict/ruby": "value: \"one two three four\""
   }
  },
  "test/integration/standard_filter_test.rb:282": {
@@ -385,15 +333,6 @@
   "actual": {
    "lax/ruby": "output: bar",
    "strict/ruby": "output: bar"
-  }
- },
- "test/integration/standard_filter_test.rb:99": {
-  "reason": "bug: slice with a negative offset on a string returns \"\"",
-  "actual": {
-   "lax/json": "value: \"\"",
-   "lax/ruby": "value: \"\"",
-   "strict/json": "value: \"\"",
-   "strict/ruby": "value: \"\""
   }
  },
  "test/integration/tags/increment_tag_test.rb:20": {
