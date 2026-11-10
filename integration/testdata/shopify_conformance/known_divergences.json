@@ -1,0 +1,596 @@
+{
+ "test/integration/context_test.rb:225": {
+  "reason": "bug: a JSON number (float64) is not equal to an integer literal",
+  "actual": {
+   "lax/json": "output: ",
+   "strict/json": "output: "
+  }
+ },
+ "test/integration/filter_test.rb:66": {
+  "reason": "bug: join without a separator uses \", \" instead of \" \"",
+  "actual": {
+   "lax/json": "output: 1, 2, 3, 4",
+   "lax/ruby": "output: 1, 2, 3, 4",
+   "strict/json": "output: 1, 2, 3, 4",
+   "strict/ruby": "output: 1, 2, 3, 4"
+  }
+ },
+ "test/integration/filter_test.rb:70": {
+  "reason": "bug: join without a separator uses \", \" instead of \" \"",
+  "actual": {
+   "lax/json": "output: 1, 2, 3, 4",
+   "lax/ruby": "output: 1, 2, 3, 4",
+   "strict/json": "output: 1, 2, 3, 4",
+   "strict/ruby": "output: 1, 2, 3, 4"
+  }
+ },
+ "test/integration/filter_test.rb:76": {
+  "reason": "minor: sort on a scalar returns a one-element array, which renders as [3]",
+  "actual": {
+   "lax/json": "output: [3]",
+   "lax/ruby": "output: [3]",
+   "strict/json": "output: [3]",
+   "strict/ruby": "output: [3]"
+  }
+ },
+ "test/integration/filter_test.rb:77": {
+  "reason": "bug: join without a separator uses \", \" instead of \" \"",
+  "actual": {
+   "lax/ruby": "output: are, flower",
+   "strict/ruby": "output: are, flower"
+  }
+ },
+ "test/integration/hash_rendering_test.rb:11": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:15": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:33": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:37": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:41": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:45": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:49": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:53": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:57": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:61": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:65": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:69": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:77": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/parsing_quirks_test.rb:103": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: hi there"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:104": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:137": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:138": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:139": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:140": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:141": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:142": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:143": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:145": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:146": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:147": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:148": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:149": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:150": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:151": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:97": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:99": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: X"
+  }
+ },
+ "test/integration/standard_filter_test.rb:100": {
+  "reason": "bug: slice with a negative offset on a string returns \"\"",
+  "actual": {
+   "lax/json": "value: \"\"",
+   "lax/ruby": "value: \"\"",
+   "strict/json": "value: \"\"",
+   "strict/ruby": "value: \"\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:101": {
+  "reason": "bug: slice with a negative offset on a string returns \"\"",
+  "actual": {
+   "lax/json": "value: \"\"",
+   "lax/ruby": "value: \"\"",
+   "strict/json": "value: \"\"",
+   "strict/ruby": "value: \"\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:151": {
+  "reason": "bug: truncate: 0 returns the whole string instead of the ellipsis",
+  "actual": {
+   "lax/json": "value: \"1234567890\"",
+   "lax/ruby": "value: \"1234567890\"",
+   "strict/json": "value: \"1234567890\"",
+   "strict/ruby": "value: \"1234567890\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:153": {
+  "reason": "bug: truncate counts bytes, not characters, and cuts a UTF-8 character",
+  "actual": {
+   "lax/json": "value: \"\\xe6\\xb5...\"",
+   "lax/ruby": "value: \"\\xe6\\xb5...\"",
+   "strict/json": "value: \"\\xe6\\xb5...\"",
+   "strict/ruby": "value: \"\\xe6\\xb5...\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:163": {
+  "reason": "bug: split on nil returns [\"\"] instead of []",
+  "actual": {
+   "lax/ruby": "value: []interface {}{\"\"}",
+   "strict/ruby": "value: []interface {}{\"\"}"
+  }
+ },
+ "test/integration/standard_filter_test.rb:182": {
+  "reason": "bug: escape_once re-escapes existing entities",
+  "actual": {
+   "lax/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\"",
+   "strict/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:272": {
+  "reason": "bug: truncatewords: 0 returns the whole string instead of the first word",
+  "actual": {
+   "lax/json": "value: \"one two three four\"",
+   "lax/ruby": "value: \"one two three four\"",
+   "strict/json": "value: \"one two three four\"",
+   "strict/ruby": "value: \"one two three four\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:282": {
+  "reason": "bug: strip_html keeps a tag written over several lines",
+  "actual": {
+   "lax/ruby": "value: \"<div\\nclass='multiline'>test\"",
+   "strict/ruby": "value: \"<div\\nclass='multiline'>test\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:291": {
+  "reason": "bug: join without a separator uses \", \" instead of \" \"",
+  "actual": {
+   "lax/json": "value: \"1, 2, 3, 4\"",
+   "lax/ruby": "value: \"1, 2, 3, 4\"",
+   "strict/json": "value: \"1, 2, 3, 4\"",
+   "strict/ruby": "value: \"1, 2, 3, 4\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:424": {
+  "reason": "bug: sort compares numeric strings as numbers instead of as strings",
+  "actual": {
+   "lax/ruby": "value: []interface {}{\"2\", \"10\"}",
+   "strict/ruby": "value: []interface {}{\"2\", \"10\"}"
+  }
+ },
+ "test/integration/standard_filter_test.rb:425": {
+  "reason": "bug: sort compares numeric strings as numbers instead of as strings",
+  "actual": {
+   "lax/ruby": "value: []interface {}{map[string]interface {}{\"a\":\"2\"}, map[string]interface {}{\"a\":\"10\"}}",
+   "strict/ruby": "value: []interface {}{map[string]interface {}{\"a\":\"2\"}, map[string]interface {}{\"a\":\"10\"}}"
+  }
+ },
+ "test/integration/standard_filter_test.rb:487": {
+  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
+  "actual": {
+   "lax/ruby": "output: [<nil>]",
+   "strict/ruby": "output: [<nil>]"
+  }
+ },
+ "test/integration/standard_filter_test.rb:488": {
+  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
+  "actual": {
+   "lax/ruby": "output: [<nil>]",
+   "strict/ruby": "output: [<nil>]"
+  }
+ },
+ "test/integration/standard_filter_test.rb:614": {
+  "reason": "minor: date does not parse the \"Fri Jul 16 01:00:00 2004\" format",
+  "actual": {
+   "lax/ruby": "value: \"Fri Jul 16 01:00:00 2004\"",
+   "strict/ruby": "value: \"Fri Jul 16 01:00:00 2004\""
+  }
+ },
+ "test/integration/standard_filter_test.rb:695": {
+  "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
+  "actual": {
+   "lax/ruby": "output: 2",
+   "strict/ruby": "output: 2"
+  }
+ },
+ "test/integration/standard_filter_test.rb:723": {
+  "reason": "bug: arithmetic filters use float64 instead of exact decimals, and \"6-3\" | plus: 0 is 0",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:724": {
+  "reason": "bug: arithmetic filters use float64 instead of exact decimals, and \"6-3\" | plus: 0 is 0",
+  "actual": {
+   "lax/ruby": "output: 7.249999999999999",
+   "strict/ruby": "output: 7.249999999999999"
+  }
+ },
+ "test/integration/standard_filter_test.rb:725": {
+  "reason": "bug: arithmetic filters use float64 instead of exact decimals, and \"6-3\" | plus: 0 is 0",
+  "actual": {
+   "lax/ruby": "output: -7.249999999999999",
+   "strict/ruby": "output: -7.249999999999999"
+  }
+ },
+ "test/integration/standard_filter_test.rb:726": {
+  "reason": "bug: arithmetic filters use float64 instead of exact decimals, and \"6-3\" | plus: 0 is 0",
+  "actual": {
+   "lax/ruby": "output: 7.249999999999999",
+   "strict/ruby": "output: 7.249999999999999"
+  }
+ },
+ "test/integration/standard_filter_test.rb:732": {
+  "reason": "bug: divided_by on two integers does not floor",
+  "actual": {
+   "lax/ruby": "output: 4.666666666666667",
+   "strict/ruby": "output: 4.666666666666667"
+  }
+ },
+ "test/integration/standard_filter_test.rb:739": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: "
+  }
+ },
+ "test/integration/standard_filter_test.rb:748": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: "
+  }
+ },
+ "test/integration/standard_filter_test.rb:759": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:770": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:780": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:849": {
+  "reason": "bug: filter keyword arguments (allow_false) are ignored",
+  "actual": {
+   "lax/ruby": "output: bar",
+   "strict/ruby": "output: bar"
+  }
+ },
+ "test/integration/standard_filter_test.rb:99": {
+  "reason": "bug: slice with a negative offset on a string returns \"\"",
+  "actual": {
+   "lax/json": "value: \"\"",
+   "lax/ruby": "value: \"\"",
+   "strict/json": "value: \"\"",
+   "strict/ruby": "value: \"\""
+  }
+ },
+ "test/integration/tags/increment_tag_test.rb:20": {
+  "reason": "deliberate: decrement counters live in their own namespace, separate from assign",
+  "actual": {
+   "lax/json": "output: -1 10",
+   "lax/ruby": "output: -1 10",
+   "strict/json": "output: -1 10",
+   "strict/ruby": "output: -1 10"
+  }
+ },
+ "test/integration/tags/inline_comment_test.rb:20": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 11): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 11): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/inline_comment_test.rb:36": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 7): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 7): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/inline_comment_test.rb:48": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 5): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 5): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/liquid_tag_test.rb:118": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/liquid_tag_test.rb:15": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/json": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
+   "lax/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
+   "strict/json": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/liquid_tag_test.rb:26": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/json": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
+   "lax/ruby": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
+   "strict/json": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/liquid_tag_test.rb:85": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 4): Unknown tag '{%- liquid\n    echo \"good\"\n  %}'",
+   "strict/ruby": "error: parse: Liquid syntax error (line 4): Unknown tag '{%- liquid\n    echo \"good\"\n  %}'"
+  }
+ },
+ "test/integration/tags/liquid_tag_test.rb:9": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/json": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
+   "lax/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
+   "strict/json": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:16": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:17": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:18": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:19": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "output: {{% endraw %}Hello{% raw %}}",
+   "strict/ruby": "output: {{% endraw %}Hello{% raw %}}"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:23": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:25": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:27": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:28": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:29": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/raw_tag_test.rb:30": {
+  "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): Liquid syntax error: raw tag was never closed"
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:285": {
+  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: "
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:289": {
+  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: "
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:355": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag"
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:42": {
+  "reason": "bug: raw inside comment is not parsed as in Ruby",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 1): tag raw was never closed",
+   "strict/ruby": "error: parse: Liquid syntax error (line 1): tag raw was never closed"
+  }
+ },
+ "test/integration/variable_test.rb:134": {
+  "reason": "minor: a nested array containing nil renders [[<nil>]] instead of \"\"",
+  "actual": {
+   "lax/ruby": "output: [[<nil>]]",
+   "strict/ruby": "output: [[<nil>]]"
+  }
+ },
+ "test/unit/tags/comment_tag_unit_test.rb:192": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag"
+  }
+ },
+ "test/unit/tags/comment_tag_unit_test.rb:7": {
+  "reason": "bug: a tag spanning several lines is not recognised",
+  "actual": {
+   "lax/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
+   "strict/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag"
+  }
+ }
+}
