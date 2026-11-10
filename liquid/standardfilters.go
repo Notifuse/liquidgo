@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"html"
 	"math"
+	"math/big"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -521,189 +522,122 @@ func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 // Abs returns the absolute value of a number.
 // Mirrors Ruby's abs from standardfilters.rb:792
 func (sf *StandardFilters) Abs(input interface{}) interface{} {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		if v < 0 {
-			return -v
+	n := toLiquidNumber(input)
+	switch n.kind {
+	case integerNumber:
+		if n.i < 0 {
+			return arithmetic(integerOf(0), n, '-').value()
 		}
-		return v
-	case float64:
-		return math.Abs(v)
-	default:
-		return 0
+		return n.value()
+	case decimalNumber:
+		return decimalOf(new(big.Rat).Abs(n.r)).value()
 	}
+	return math.Abs(n.f)
 }
 
 // Plus adds two numbers.
 // Mirrors Ruby's plus from standardfilters.rb:804
 func (sf *StandardFilters) Plus(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "+")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '+').value()
 }
 
 // Minus subtracts two numbers.
 // Mirrors Ruby's minus from standardfilters.rb:815
 func (sf *StandardFilters) Minus(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "-")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '-').value()
 }
 
 // Times multiplies two numbers.
 // Mirrors Ruby's times from standardfilters.rb:826
 func (sf *StandardFilters) Times(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "*")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '*').value()
 }
 
-// DividedBy divides two numbers.
+// DividedBy divides two numbers: two integers give the floored integer quotient.
 // Mirrors Ruby's divided_by from standardfilters.rb:837
 func (sf *StandardFilters) DividedBy(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum, _ := ToNumber(operand)
-	var operandFloat float64
-	switch v := operandNum.(type) {
-	case int:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = float64(v)
-	case float64:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = v
-	default:
+	divisor := toLiquidNumber(operand)
+	if divisor.isZero() {
 		return nil, NewZeroDivisionError("divided by 0")
 	}
-
-	if operandFloat == 0 {
-		return nil, NewZeroDivisionError("divided by 0")
-	}
-
-	return applyOperation(input, operand, "/"), nil
+	return arithmetic(toLiquidNumber(input), divisor, '/').value(), nil
 }
 
-// Modulo returns the remainder of division.
+// Modulo returns the remainder of division, with the sign of the divisor (Ruby %).
 // Mirrors Ruby's modulo from standardfilters.rb:850
 func (sf *StandardFilters) Modulo(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum, _ := ToNumber(operand)
-	var operandFloat float64
-	switch v := operandNum.(type) {
-	case int:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = float64(v)
-	case float64:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = v
-	default:
+	divisor := toLiquidNumber(operand)
+	if divisor.isZero() {
 		return nil, NewZeroDivisionError("divided by 0")
 	}
-
-	if operandFloat == 0 {
-		return nil, NewZeroDivisionError("divided by 0")
-	}
-
-	return applyOperation(input, operand, "%"), nil
+	return arithmetic(toLiquidNumber(input), divisor, '%').value(), nil
 }
 
-// Round rounds a number to the nearest integer or specified precision.
+// Round rounds a number to the nearest integer or to n decimal places, half away from
+// zero on the exact decimal value (1.005 | round: 2 is 1.01).
 // Mirrors Ruby's round from standardfilters.rb:863
 func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{}, error) {
-	num, _ := ToNumber(input)
-	precision := 0
+	digits := 0
 	if n != nil {
-		precisionNum, _ := ToNumber(n)
-		if p, ok := precisionNum.(int); ok {
-			precision = p
-		} else if p, ok := precisionNum.(float64); ok {
-			precision = int(p)
+		d := toLiquidNumber(n)
+		if d.kind == specialNumber {
+			return nil, NewFloatDomainError(ToS(d.f, nil))
 		}
+		digits = int(floorRat(d.rat()).Int64())
 	}
 
-	var result interface{}
-	switch v := num.(type) {
-	case int:
-		result = v
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return nil, NewFloatDomainError("Infinity")
-		}
-		if precision == 0 {
-			result = int(math.Round(v))
-		} else {
-			multiplier := math.Pow(10, float64(precision))
-			result = math.Round(v*multiplier) / multiplier
-		}
-	default:
-		result = 0
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return nil, NewFloatDomainError(ToS(num.f, nil))
 	}
-
-	return result, nil
+	if num.kind == integerNumber && digits >= 0 {
+		return num.value(), nil
+	}
+	rounded := decimalOf(roundRat(num.rat(), digits))
+	if digits == 0 || num.kind == integerNumber {
+		return decimalOfInteger(floorRat(rounded.r)).value(), nil
+	}
+	return rounded.value(), nil
 }
 
 // Ceil rounds a number up to the nearest integer.
 // Mirrors Ruby's ceil from standardfilters.rb:879
 func (sf *StandardFilters) Ceil(input interface{}) (int, error) {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		return v, nil
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return 0, NewFloatDomainError("Infinity")
-		}
-		return int(math.Ceil(v)), nil
-	default:
-		return 0, nil
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
+	return int(ceilRat(num.rat()).Int64()), nil
 }
 
 // Floor rounds a number down to the nearest integer.
 // Mirrors Ruby's floor from standardfilters.rb:892
 func (sf *StandardFilters) Floor(input interface{}) (int, error) {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		return v, nil
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return 0, NewFloatDomainError("Infinity")
-		}
-		return int(math.Floor(v)), nil
-	default:
-		return 0, nil
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
+	return int(floorRat(num.rat()).Int64()), nil
 }
 
 // AtLeast limits a number to a minimum value.
 // Mirrors Ruby's at_least from standardfilters.rb:905
 func (sf *StandardFilters) AtLeast(input interface{}, n interface{}) interface{} {
-	minValue, _ := ToNumber(n)
-	result, _ := ToNumber(input)
-
-	minFloat, _ := ToNumberValue(minValue)
-	resultFloat, _ := ToNumberValue(result)
-
-	if minFloat > resultFloat {
-		return minValue
+	minValue, result := toLiquidNumber(n), toLiquidNumber(input)
+	if compareLiquidNumbers(minValue, result) > 0 {
+		return minValue.value()
 	}
-	return result
+	return result.value()
 }
 
 // AtMost limits a number to a maximum value.
 // Mirrors Ruby's at_most from standardfilters.rb:920
 func (sf *StandardFilters) AtMost(input interface{}, n interface{}) interface{} {
-	maxValue, _ := ToNumber(n)
-	result, _ := ToNumber(input)
-
-	maxFloat, _ := ToNumberValue(maxValue)
-	resultFloat, _ := ToNumberValue(result)
-
-	if maxFloat < resultFloat {
-		return maxValue
+	maxValue, result := toLiquidNumber(n), toLiquidNumber(input)
+	if compareLiquidNumbers(maxValue, result) < 0 {
+		return maxValue.value()
 	}
-	return result
+	return result.value()
 }
 
 // Default returns a default value if input is nil, false, or empty.
@@ -1010,73 +944,6 @@ func nilSafeCasecmp(a, b interface{}) int {
 		return 1
 	}
 	return 0
-}
-
-// applyOperation applies a math operation to two numbers.
-// Mirrors Ruby's apply_operation from standardfilters.rb:1003-1006
-func applyOperation(input, operand interface{}, operation string) interface{} {
-	inputNum, _ := ToNumber(input)
-	operandNum, _ := ToNumber(operand)
-
-	var result interface{}
-
-	// Convert to float64 for calculation
-	var inputFloat, operandFloat float64
-	switch v := inputNum.(type) {
-	case int:
-		inputFloat = float64(v)
-	case float64:
-		inputFloat = v
-	default:
-		inputFloat = 0
-	}
-
-	switch v := operandNum.(type) {
-	case int:
-		operandFloat = float64(v)
-	case float64:
-		operandFloat = v
-	default:
-		operandFloat = 0
-	}
-
-	// Determine if we should return int or float
-	_, inputIsInt := inputNum.(int)
-	_, operandIsInt := operandNum.(int)
-
-	switch operation {
-	case "+":
-		result = inputFloat + operandFloat
-	case "-":
-		result = inputFloat - operandFloat
-	case "*":
-		result = inputFloat * operandFloat
-	case "/":
-		if operandFloat == 0 {
-			return 0 // Handle division by zero
-		}
-		result = inputFloat / operandFloat
-		// For division, if operand is int, result should be int
-		if operandIsInt && inputIsInt {
-			return int(inputFloat / operandFloat)
-		}
-	case "%":
-		if operandFloat == 0 {
-			return 0 // Handle modulo by zero
-		}
-		result = math.Mod(inputFloat, operandFloat)
-	default:
-		result = inputFloat
-	}
-
-	// Return int if both inputs are ints (except for division)
-	if inputIsInt && operandIsInt && operation != "/" {
-		if f, ok := result.(float64); ok {
-			return int(f)
-		}
-	}
-
-	return result
 }
 
 // raisePropertyError creates an ArgumentError for invalid properties.
@@ -1492,21 +1359,14 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 		return 0
 	}
 
-	var sum float64
-	hasFloat := false
+	sum := integerOf(0)
+	add := func(v interface{}) {
+		sum = arithmetic(sum, toLiquidNumber(v), '+')
+	}
 
 	if property == nil {
 		// Sum items directly
-		iter.Each(func(item interface{}) {
-			num, _ := ToNumber(item)
-			switch v := num.(type) {
-			case int:
-				sum += float64(v)
-			case float64:
-				sum += v
-				hasFloat = true
-			}
-		})
+		iter.Each(add)
 	} else {
 		// Sum by property
 		propStr := ToS(property, nil)
@@ -1514,29 +1374,11 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 			if !supportsIndexing(item) {
 				return
 			}
-
-			val := getProperty(item, propStr)
-			if val == nil {
-				return
-			}
-
-			num, _ := ToNumber(val)
-			switch v := num.(type) {
-			case int:
-				sum += float64(v)
-			case float64:
-				sum += v
-				hasFloat = true
-			}
+			add(getProperty(item, propStr))
 		})
 	}
 
-	// Return int if no floats were encountered
-	if !hasFloat && sum == float64(int(sum)) {
-		return int(sum)
-	}
-
-	return sum
+	return sum.value()
 }
 
 // Helper functions for array filters

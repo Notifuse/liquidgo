@@ -741,12 +741,12 @@ func TestAbs(t *testing.T) {
 		input    interface{}
 		expected interface{}
 	}{
-		{17, float64(17)},
-		{-17, float64(17)},
+		{17, 17},
+		{-17, 17},
 		{17.42, 17.42},
 		{-17.42, 17.42},
-		{"17", 17.0},
-		{"-17", 17.0},
+		{"17", 17},
+		{"-17", 17},
 	}
 
 	for _, tt := range tests {
@@ -761,7 +761,7 @@ func TestPlus(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Plus(1, 1)
-	if result != float64(2) {
+	if result != 2 {
 		t.Errorf("Plus(1, 1) = %v, want 2", result)
 	}
 
@@ -775,7 +775,7 @@ func TestMinus(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Minus(5, 1)
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("Minus(5, 1) = %v, want 4", result)
 	}
 
@@ -790,7 +790,7 @@ func TestTimes(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Times(3, 4)
-	if result != float64(12) {
+	if result != 12 {
 		t.Errorf("Times(3, 4) = %v, want 12", result)
 	}
 
@@ -807,7 +807,7 @@ func TestDividedBy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DividedBy(12, 3) error = %v", err)
 	}
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("DividedBy(12, 3) = %v, want 4", result)
 	}
 
@@ -834,7 +834,7 @@ func TestModulo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Modulo(3, 2) error = %v", err)
 	}
-	if result != float64(1) {
+	if result != 1 {
 		t.Errorf("Modulo(3, 2) = %v, want 1", result)
 	}
 
@@ -917,17 +917,17 @@ func TestAtMost(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.AtMost(5, 4)
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("AtMost(5, 4) = %v, want 4", result)
 	}
 
 	result = sf.AtMost(5, 5)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtMost(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtMost(5, 6)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtMost(5, 6) = %v, want 5", result)
 	}
 }
@@ -936,17 +936,17 @@ func TestAtLeast(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.AtLeast(5, 4)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtLeast(5, 4) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 5)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtLeast(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 6)
-	if result != float64(6) {
+	if result != 6 {
 		t.Errorf("AtLeast(5, 6) = %v, want 6", result)
 	}
 }
@@ -1275,7 +1275,7 @@ func TestSum(t *testing.T) {
 	input := []interface{}{1, 2}
 	result := sf.Sum(input, nil)
 
-	if result != float64(3) {
+	if result != 3 {
 		t.Errorf("Sum([1, 2]) = %v, want 3", result)
 	}
 
@@ -1287,12 +1287,12 @@ func TestSum(t *testing.T) {
 	}
 
 	result2 := sf.Sum(input2, "quantity")
-	if result2 != float64(3) {
+	if result2 != 3 {
 		t.Errorf("Sum(input, 'quantity') = %v, want 3", result2)
 	}
 
 	result3 := sf.Sum(input2, "weight")
-	if result3 != float64(7) {
+	if result3 != 7 {
 		t.Errorf("Sum(input, 'weight') = %v, want 7", result3)
 	}
 }
