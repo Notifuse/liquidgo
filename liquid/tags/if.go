@@ -293,49 +293,89 @@ type conditionPart struct {
 	nextOp string // "and" or "or" - the operator that follows this expression
 }
 
-// splitByBooleanOperators splits markup by 'and' and 'or' operators
+// splitByBooleanOperators splits markup on the and/or operators, as Ruby's
+// If::ExpressionsAndOperators: an operator is a bare "and" or "or" word that starts a
+// fragment, and a quoted string is part of its fragment, spaces and operators included.
+// Each expression is kept as written.
 func splitByBooleanOperators(markup string) []conditionPart {
 	var parts []conditionPart
-	var currentExpr strings.Builder
-	words := strings.Fields(markup)
-
-	for i := 0; i < len(words); i++ {
-		word := words[i]
-		// Check if word is a boolean operator
-		isBoolOp := false
-		for _, op := range ifBooleanOperators {
-			if word == op {
-				isBoolOp = true
-				break
-			}
+	start, end := -1, 0
+	for i := 0; i < len(markup); {
+		if isConditionSpace(markup[i]) {
+			i++
+			continue
 		}
-
-		if isBoolOp {
-			// Found an operator
-			if currentExpr.Len() > 0 {
-				parts = append(parts, conditionPart{
-					expr:   strings.TrimSpace(currentExpr.String()),
-					nextOp: word,
-				})
-				currentExpr.Reset()
+		if op := booleanOperatorAt(markup, i); op != "" {
+			if start >= 0 {
+				parts = append(parts, conditionPart{expr: markup[start:end], nextOp: op})
+				start = -1
 			}
-		} else {
-			if currentExpr.Len() > 0 {
-				currentExpr.WriteString(" ")
-			}
-			currentExpr.WriteString(word)
+			i += len(op)
+			continue
 		}
+		if start < 0 {
+			start = i
+		}
+		i = conditionFragmentEnd(markup, i)
+		end = i
 	}
-
-	// Add the last expression
-	if currentExpr.Len() > 0 {
-		parts = append(parts, conditionPart{
-			expr:   strings.TrimSpace(currentExpr.String()),
-			nextOp: "",
-		})
+	if start >= 0 {
+		parts = append(parts, conditionPart{expr: markup[start:end]})
 	}
-
 	return parts
+}
+
+// booleanOperatorAt returns "and" or "or" when that whole word starts at markup[i].
+func booleanOperatorAt(markup string, i int) string {
+	for _, op := range ifBooleanOperators {
+		j := i + len(op)
+		if strings.HasPrefix(markup[i:], op) &&
+			(i == 0 || !isConditionWordChar(markup[i-1])) &&
+			(j == len(markup) || !isConditionWordChar(markup[j])) {
+			return op
+		}
+	}
+	return ""
+}
+
+// conditionFragmentEnd returns the end of the fragment starting at markup[i]: up to the
+// next space, a closed quoted string counting as one piece.
+func conditionFragmentEnd(markup string, i int) int {
+	for i < len(markup) && !isConditionSpace(markup[i]) {
+		if c := markup[i]; c == '"' || c == '\'' {
+			if j := strings.IndexByte(markup[i+1:], c); j >= 0 {
+				i += j + 2
+				continue
+			}
+		}
+		i++
+	}
+	return i
+}
+
+// withoutQuotedStrings returns expr with its closed quoted strings removed, to look for
+// syntax characters (|, parentheses) outside of them.
+func withoutQuotedStrings(expr string) string {
+	var b strings.Builder
+	for i := 0; i < len(expr); {
+		if c := expr[i]; c == '"' || c == '\'' {
+			if j := strings.IndexByte(expr[i+1:], c); j >= 0 {
+				i += j + 2
+				continue
+			}
+		}
+		b.WriteByte(expr[i])
+		i++
+	}
+	return b.String()
+}
+
+func isConditionSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'
+}
+
+func isConditionWordChar(c byte) bool {
+	return c == '_' || c >= 0x80 || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
 }
 
 // parseSingleCondition parses a single condition (without and/or)
@@ -343,7 +383,7 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 	// Check if expression contains filter syntax (pipe character)
 	// If so, treat entire expression as a simple expression (don't split by operators)
 	// This allows filters in conditions like: {% if posts | has: 'author', 'Alice' %}
-	if strings.Contains(expr, "|") {
+	if strings.Contains(withoutQuotedStrings(expr), "|") {
 		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
 		return liquid.NewCondition(parsedExpr, "", nil), nil
 	}
@@ -405,7 +445,7 @@ func validateExpression(expr string, parseContext liquid.ParseContextInterface) 
 	mode := parseContext.ErrorMode()
 	if mode == "strict" || mode == "warn" {
 		// Check for parentheses which are not allowed in Liquid conditions
-		if strings.Contains(expr, "(") || strings.Contains(expr, ")") {
+		if strings.ContainsAny(withoutQuotedStrings(expr), "()") {
 			return liquid.NewSyntaxError("Liquid syntax error: parentheses are not allowed in Liquid conditions")
 		}
 
