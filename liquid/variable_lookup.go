@@ -346,6 +346,11 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 						}
 					}
 				}
+				// size on a map without a "size" key is its number of keys (Ruby Hash#size)
+				if keyStr == "size" && obj != nil && reflect.ValueOf(obj).Kind() == reflect.Map {
+					obj = reflect.ValueOf(obj).Len()
+					continue
+				}
 				// Command methods for strings
 				if str, ok := obj.(string); ok {
 					switch keyStr {

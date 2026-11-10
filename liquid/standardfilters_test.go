@@ -457,8 +457,8 @@ func TestStandardFiltersJoin(t *testing.T) {
 
 	t.Run("array with default separator", func(t *testing.T) {
 		result := sf.Join([]interface{}{"a", "b", "c"}, nil)
-		if result != "a, b, c" {
-			t.Errorf("Join() with nil separator = %v, want 'a, b, c'", result)
+		if result != "a b c" {
+			t.Errorf("Join() with nil separator = %v, want 'a b c'", result)
 		}
 	})
 

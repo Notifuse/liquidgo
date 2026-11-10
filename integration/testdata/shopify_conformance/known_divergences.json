@@ -1,22 +1,4 @@
 {
- "test/integration/filter_test.rb:66": {
-  "reason": "bug: join without a separator uses \", \" instead of \" \"",
-  "actual": {
-   "lax/json": "output: 1, 2, 3, 4",
-   "lax/ruby": "output: 1, 2, 3, 4",
-   "strict/json": "output: 1, 2, 3, 4",
-   "strict/ruby": "output: 1, 2, 3, 4"
-  }
- },
- "test/integration/filter_test.rb:70": {
-  "reason": "bug: join without a separator uses \", \" instead of \" \"",
-  "actual": {
-   "lax/json": "output: 1, 2, 3, 4",
-   "lax/ruby": "output: 1, 2, 3, 4",
-   "strict/json": "output: 1, 2, 3, 4",
-   "strict/ruby": "output: 1, 2, 3, 4"
-  }
- },
  "test/integration/filter_test.rb:76": {
   "reason": "minor: sort on a scalar returns a one-element array, which renders as [3]",
   "actual": {
@@ -24,13 +6,6 @@
    "lax/ruby": "output: [3]",
    "strict/json": "output: [3]",
    "strict/ruby": "output: [3]"
-  }
- },
- "test/integration/filter_test.rb:77": {
-  "reason": "bug: join without a separator uses \", \" instead of \" \"",
-  "actual": {
-   "lax/ruby": "output: are, flower",
-   "strict/ruby": "output: are, flower"
   }
  },
  "test/integration/hash_rendering_test.rb:11": {
@@ -191,43 +166,6 @@
   "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
    "lax/ruby": "output: X"
-  }
- },
- "test/integration/standard_filter_test.rb:182": {
-  "reason": "bug: escape_once re-escapes existing entities",
-  "actual": {
-   "lax/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\"",
-   "strict/ruby": "value: \"&amp;lt;strong&amp;gt;Hulk&lt;/strong&gt;\""
-  }
- },
- "test/integration/standard_filter_test.rb:282": {
-  "reason": "bug: strip_html keeps a tag written over several lines",
-  "actual": {
-   "lax/ruby": "value: \"<div\\nclass='multiline'>test\"",
-   "strict/ruby": "value: \"<div\\nclass='multiline'>test\""
-  }
- },
- "test/integration/standard_filter_test.rb:291": {
-  "reason": "bug: join without a separator uses \", \" instead of \" \"",
-  "actual": {
-   "lax/json": "value: \"1, 2, 3, 4\"",
-   "lax/ruby": "value: \"1, 2, 3, 4\"",
-   "strict/json": "value: \"1, 2, 3, 4\"",
-   "strict/ruby": "value: \"1, 2, 3, 4\""
-  }
- },
- "test/integration/standard_filter_test.rb:424": {
-  "reason": "bug: sort compares numeric strings as numbers instead of as strings",
-  "actual": {
-   "lax/ruby": "value: []interface {}{\"2\", \"10\"}",
-   "strict/ruby": "value: []interface {}{\"2\", \"10\"}"
-  }
- },
- "test/integration/standard_filter_test.rb:425": {
-  "reason": "bug: sort compares numeric strings as numbers instead of as strings",
-  "actual": {
-   "lax/ruby": "value: []interface {}{map[string]interface {}{\"a\":\"2\"}, map[string]interface {}{\"a\":\"10\"}}",
-   "strict/ruby": "value: []interface {}{map[string]interface {}{\"a\":\"2\"}, map[string]interface {}{\"a\":\"10\"}}"
   }
  },
  "test/integration/standard_filter_test.rb:487": {

@@ -80,10 +80,49 @@ func (sf *StandardFilters) H(input interface{}) string {
 }
 
 // EscapeOnce escapes a string without changing characters that have already been escaped.
+// As Ruby's /["><']|&(?!([a-zA-Z]+|(#\d+));)/: an & starting a named entity (&amp;) or a
+// decimal one (&#39;) is kept; any other & is escaped.
 func (sf *StandardFilters) EscapeOnce(input interface{}) string {
 	s := ToS(input, nil)
-	// Simple implementation - just escape
-	return html.EscapeString(s)
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '"':
+			b.WriteString("&quot;")
+		case '\'':
+			b.WriteString("&#39;")
+		case '<':
+			b.WriteString("&lt;")
+		case '>':
+			b.WriteString("&gt;")
+		case '&':
+			if isEntityAt(s, i+1) {
+				b.WriteByte('&')
+			} else {
+				b.WriteString("&amp;")
+			}
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
+
+// isEntityAt reports whether s[i:] starts with letters or #digits followed by ";".
+func isEntityAt(s string, i int) bool {
+	j := i
+	if j < len(s) && s[j] == '#' {
+		j++
+		for j < len(s) && s[j] >= '0' && s[j] <= '9' {
+			j++
+		}
+		return j > i+1 && j < len(s) && s[j] == ';'
+	}
+	for j < len(s) && ((s[j] >= 'a' && s[j] <= 'z') || (s[j] >= 'A' && s[j] <= 'Z')) {
+		j++
+	}
+	return j > i && j < len(s) && s[j] == ';'
 }
 
 // URLEncode converts URL-unsafe characters to percent-encoded equivalent.
@@ -306,7 +345,7 @@ func (sf *StandardFilters) StripHTML(input interface{}) string {
 	result := stripHTMLBlocks.ReplaceAllString(s, "")
 
 	// Then remove all HTML tags
-	stripHTMLTags := regexp.MustCompile(`<.*?>`)
+	stripHTMLTags := regexp.MustCompile(`(?s)<.*?>`)
 	result = stripHTMLTags.ReplaceAllString(result, "")
 
 	return result
@@ -346,7 +385,7 @@ func (sf *StandardFilters) Last(input interface{}) interface{} {
 
 // Join joins array elements with a separator.
 func (sf *StandardFilters) Join(input interface{}, separator interface{}) string {
-	sep := ", "
+	sep := " "
 	if separator != nil {
 		sep = ToS(separator, nil)
 	}
@@ -903,16 +942,12 @@ func nilSafeCompare(a, b interface{}) int {
 		return -1 // nil goes last
 	}
 
-	// Try numeric comparison first
-	aNum, aOk := ToNumberValue(a)
-	bNum, bOk := ToNumberValue(b)
+	// Numbers compare as numbers; strings, numeric strings included, as strings (Ruby <=>)
+	aNum, aOk := asNumber(a)
+	bNum, bOk := asNumber(b)
 	if aOk && bOk {
-		if aNum < bNum {
-			return -1
-		} else if aNum > bNum {
-			return 1
-		}
-		return 0
+		cmp, _ := compareNumbers(aNum, bNum)
+		return cmp
 	}
 
 	// String comparison
