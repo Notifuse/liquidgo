@@ -8,7 +8,7 @@ import (
 
 var (
 	blockBodyLiquidTagToken      = regexp.MustCompile(`^\s*(` + TagName.String() + `)\s*(.*?)$`)
-	blockBodyFullToken           = regexp.MustCompile(`^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
+	blockBodyFullToken           = regexp.MustCompile(`(?s)^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
 	blockBodyWhitespaceOrNothing = regexp.MustCompile(`^\s*$`)
 )
 
@@ -47,11 +47,9 @@ func (bb *BlockBody) Parse(tokenizer *Tokenizer, parseContext ParseContextInterf
 }
 
 func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseContextInterface, unknownTagHandler func(string, string) bool) error {
-	for {
+	// An empty line is a token too: stop only when the tokenizer is exhausted.
+	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
-		if token == "" {
-			break
-		}
 
 		if token == "" || blockBodyWhitespaceOrNothing.MatchString(token) {
 			continue

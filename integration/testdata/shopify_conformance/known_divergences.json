@@ -140,45 +140,45 @@
   }
  },
  "test/integration/parsing_quirks_test.rb:145": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:146": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:147": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:148": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:149": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:150": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:151": {
-  "reason": "bug: a tag spanning several lines is not recognised",
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 2): errors.syntax.unknown_tag"
+   "lax/ruby": "output: "
   }
  },
  "test/integration/parsing_quirks_test.rb:97": {
@@ -405,68 +405,6 @@
    "strict/ruby": "output: -1 10"
   }
  },
- "test/integration/tags/inline_comment_test.rb:20": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 11): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 11): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/inline_comment_test.rb:36": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 7): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 7): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/inline_comment_test.rb:48": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 5): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 5): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/liquid_tag_test.rb:118": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/liquid_tag_test.rb:15": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/json": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
-   "lax/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
-   "strict/json": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/liquid_tag_test.rb:26": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/json": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
-   "lax/ruby": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
-   "strict/json": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 12): errors.syntax.unknown_tag"
-  }
- },
- "test/integration/tags/liquid_tag_test.rb:85": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 4): Unknown tag '{%- liquid\n    echo \"good\"\n  %}'",
-   "strict/ruby": "error: parse: Liquid syntax error (line 4): Unknown tag '{%- liquid\n    echo \"good\"\n  %}'"
-  }
- },
- "test/integration/tags/liquid_tag_test.rb:9": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/json": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
-   "lax/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
-   "strict/json": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag"
-  }
- },
  "test/integration/tags/raw_tag_test.rb:16": {
   "reason": "bug: raw does not end at the first {% endraw %} (whitespace control, text before endraw)",
   "actual": {
@@ -551,13 +489,6 @@
    "strict/ruby": "output: "
   }
  },
- "test/integration/tags/standard_tag_test.rb:355": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 3): errors.syntax.unknown_tag"
-  }
- },
  "test/integration/tags/standard_tag_test.rb:42": {
   "reason": "bug: raw inside comment is not parsed as in Ruby",
   "actual": {
@@ -570,20 +501,6 @@
   "actual": {
    "lax/ruby": "output: [[<nil>]]",
    "strict/ruby": "output: [[<nil>]]"
-  }
- },
- "test/unit/tags/comment_tag_unit_test.rb:192": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 6): errors.syntax.unknown_tag"
-  }
- },
- "test/unit/tags/comment_tag_unit_test.rb:7": {
-  "reason": "bug: a tag spanning several lines is not recognised",
-  "actual": {
-   "lax/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag",
-   "strict/ruby": "error: parse: Liquid syntax error (line 8): errors.syntax.unknown_tag"
   }
  }
 }

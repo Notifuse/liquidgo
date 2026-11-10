@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	variableFilterMarkupRegex        = regexp.MustCompile(`\|\s*(.*)`)
+	variableFilterMarkupRegex        = regexp.MustCompile(`(?s)\|\s*(.*)`)
 	variableFilterParser             = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
 	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
 	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
-	variableMarkupWithQuotedFragment = regexp.MustCompile(`^([^\|]+)(.*)$`)
+	variableMarkupWithQuotedFragment = regexp.MustCompile(`(?s)^([^\|]+)(.*)$`)
 )
 
 // ParseContextInterface interface for parsing expressions
