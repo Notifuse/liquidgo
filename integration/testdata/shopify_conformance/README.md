@@ -13,7 +13,8 @@ The cases are extracted, not executed, by `scripts/extract_shopify_conformance.p
   (`kind: "filter"`, compared on the returned value, the way Ruby's `==` compares it).
 
 The Ruby context of each call is kept: `modes` comes from `with_error_modes` or `error_mode:`
-(`null` means the Ruby default, run here in `lax` and `strict`; liquidgo has no `strict2`), and
+(`null` means the Ruby default: the case runs in `lax`, `strict` and `strict2`, as Ruby runs its
+suite), and
 `raises` names the error a case inside `assert_raises` must produce. Cases inside any other Ruby
 block are left out.
 

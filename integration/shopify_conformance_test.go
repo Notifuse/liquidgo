@@ -46,16 +46,15 @@ type knownDivergence struct {
 	Actual map[string]string `json:"actual,omitempty"`
 }
 
-// conformanceModes returns the liquidgo error modes a case runs in. Ruby runs the suite
-// in lax, strict and strict2; liquidgo has no strict2 parser, so a case that declares
-// only strict2 is not run.
+// conformanceModes returns the error modes a case runs in: the modes it declares, or
+// lax, strict and strict2, the three modes Ruby runs its whole suite in.
 func conformanceModes(c conformanceCase) []string {
 	if c.Modes == nil {
-		return []string{"lax", "strict"}
+		return []string{"lax", "strict", "strict2"}
 	}
 	var modes []string
 	for _, m := range c.Modes {
-		if m == "lax" || m == "strict" || m == "warn" {
+		if m == "lax" || m == "strict" || m == "strict2" || m == "warn" {
 			modes = append(modes, m)
 		}
 	}
