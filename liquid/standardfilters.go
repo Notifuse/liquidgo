@@ -1574,8 +1574,8 @@ func valuesEqual(a, b interface{}) bool {
 		return false
 	}
 
-	// Direct comparison
-	if a == b {
+	// Liquid equality: numbers by value, lists and maps element by element
+	if liquidEqual(a, b) {
 		return true
 	}
 

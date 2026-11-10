@@ -225,7 +225,7 @@ func (c *Condition) equalVariables(left, right interface{}) bool {
 		return checkMethodLiteral(ml, left)
 	}
 
-	return left == right
+	return liquidEqual(left, right)
 }
 
 func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
@@ -270,15 +270,13 @@ func compareValues(left, right interface{}) (int, error) {
 	// - "number < nil" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
 	if left == nil && right != nil {
 		// Check if right is a number
-		_, rightOk := toNumber(right)
-		if rightOk {
+		if _, rightOk := asNumber(right); rightOk {
 			return -1, nil
 		}
 	}
 	if right == nil && left != nil {
 		// Check if left is a number
-		_, leftOk := toNumber(left)
-		if leftOk {
+		if _, leftOk := asNumber(left); leftOk {
 			return -1, nil
 		}
 	}
@@ -287,16 +285,12 @@ func compareValues(left, right interface{}) (int, error) {
 		return 0, nil
 	}
 
-	// Simple numeric comparison
-	leftNum, leftOk := toNumber(left)
-	rightNum, rightOk := toNumber(right)
+	// Numeric comparison, exact across Go numeric types (NaN compares as 0, as before)
+	leftNum, leftOk := asNumber(left)
+	rightNum, rightOk := asNumber(right)
 	if leftOk && rightOk {
-		if leftNum < rightNum {
-			return -1, nil
-		} else if leftNum > rightNum {
-			return 1, nil
-		}
-		return 0, nil
+		cmp, _ := compareNumbers(leftNum, rightNum)
+		return cmp, nil
 	}
 
 	// If one is a number and the other is not (and neither is nil), it's a type mismatch for comparison
@@ -328,18 +322,6 @@ func compareValues(left, right interface{}) (int, error) {
 		return 1, nil
 	}
 	return 0, nil
-}
-
-func toNumber(v interface{}) (float64, bool) {
-	switch n := v.(type) {
-	case int:
-		return float64(n), true
-	case int64:
-		return float64(n), true
-	case float64:
-		return n, true
-	}
-	return 0, false
 }
 
 func containsOperator(left, right interface{}) bool {

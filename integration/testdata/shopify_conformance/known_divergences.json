@@ -1,11 +1,4 @@
 {
- "test/integration/context_test.rb:225": {
-  "reason": "bug: a JSON number (float64) is not equal to an integer literal",
-  "actual": {
-   "lax/json": "output: ",
-   "strict/json": "output: "
-  }
- },
  "test/integration/filter_test.rb:66": {
   "reason": "bug: join without a separator uses \", \" instead of \" \"",
   "actual": {
