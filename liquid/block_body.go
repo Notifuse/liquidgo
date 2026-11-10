@@ -8,9 +8,31 @@ import (
 
 var (
 	blockBodyLiquidTagToken      = regexp.MustCompile(`^\s*(` + TagName.String() + `)\s*(.*?)$`)
-	blockBodyFullToken           = regexp.MustCompile(`^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
+	blockBodyFullToken           = regexp.MustCompile(`(?s)^` + TagStart.String() + `-?(\s*)(` + TagName.String() + `)(\s*)(.*?)-?` + TagEnd.String() + `$`)
 	blockBodyWhitespaceOrNothing = regexp.MustCompile(`^\s*$`)
+	// blockBodyFullTokenPossiblyInvalid is Ruby's BlockBody::FullTokenPossiblyInvalid: a
+	// token ending with a tag, with any text before it ("{% invalid {% endraw %}").
+	blockBodyFullTokenPossiblyInvalid = regexp.MustCompile(`(?s)^(.*)` + TagStart.String() + `-?\s*(\w+)\s*(.*)?-?` + TagEnd.String() + `$`)
 )
+
+// MatchTagPossiblyInvalid reports whether token ends with a tag, and returns the text
+// before that tag and its name. raw, comment and doc use it to find their closing tag.
+func MatchTagPossiblyInvalid(token string) (before, tagName string, ok bool) {
+	// most tokens of a raw or comment body are text; skip the regexp for them
+	if !strings.HasSuffix(token, "%}") {
+		return "", "", false
+	}
+	m := blockBodyFullTokenPossiblyInvalid.FindStringSubmatch(token)
+	if m == nil {
+		return "", "", false
+	}
+	return m[1], m[2], true
+}
+
+// TrimsAfter reports whether a tag token ends with whitespace control ("-%}").
+func TrimsAfter(token string) bool {
+	return len(token) >= 3 && token[len(token)-3] == '-'
+}
 
 const (
 	blockBodyTAGSTART = "{%"
@@ -47,11 +69,9 @@ func (bb *BlockBody) Parse(tokenizer *Tokenizer, parseContext ParseContextInterf
 }
 
 func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseContextInterface, unknownTagHandler func(string, string) bool) error {
-	for {
+	// An empty line is a token too: stop only when the tokenizer is exhausted.
+	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
-		if token == "" {
-			break
-		}
 
 		if token == "" || blockBodyWhitespaceOrNothing.MatchString(token) {
 			continue

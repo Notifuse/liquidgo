@@ -75,6 +75,12 @@ func (t *Tokenizer) Shift() string {
 	return token
 }
 
+// Exhausted reports whether every token has been shifted. Shift also returns "" for an
+// empty line of a liquid tag, so "" alone does not mean the end.
+func (t *Tokenizer) Exhausted() bool {
+	return t.offset >= len(t.tokens)
+}
+
 // LineNumber returns the current line number.
 func (t *Tokenizer) LineNumber() *int {
 	return t.lineNumber

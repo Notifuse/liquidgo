@@ -10,7 +10,7 @@ import (
 
 var (
 	cycleSimpleSyntax   = regexp.MustCompile(`^` + liquid.QuotedFragment.String())
-	cycleNamedSyntax    = regexp.MustCompile(`^(` + liquid.QuotedFragment.String() + `)\s*\:\s*(.*)`)
+	cycleNamedSyntax    = regexp.MustCompile(`(?s)^(` + liquid.QuotedFragment.String() + `)\s*\:\s*(.*)`)
 	cycleUnnamedPattern = regexp.MustCompile(`\w+:0x[0-9a-fA-F]{8}`)
 )
 

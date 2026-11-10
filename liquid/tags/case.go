@@ -11,7 +11,7 @@ var (
 	// caseSyntax matches: variable
 	caseSyntax = regexp.MustCompile(`^(` + liquid.QuotedFragment.String() + `)$`)
 	// whenSyntax matches: value [or value2] or value1, value2, value3
-	whenSyntax = regexp.MustCompile(`(` + liquid.QuotedFragment.String() + `)(?:(?:\s+or\s+|\s*,\s*)(` + liquid.QuotedFragment.String() + `.*))?`)
+	whenSyntax = regexp.MustCompile(`(?s)(` + liquid.QuotedFragment.String() + `)(?:(?:\s+or\s+|\s*,\s*)(` + liquid.QuotedFragment.String() + `.*))?`)
 )
 
 // CaseBlock represents a case condition block (when or else).

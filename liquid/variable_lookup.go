@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 var (
@@ -345,11 +346,16 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 						}
 					}
 				}
+				// size on a map without a "size" key is its number of keys (Ruby Hash#size)
+				if keyStr == "size" && obj != nil && reflect.ValueOf(obj).Kind() == reflect.Map {
+					obj = reflect.ValueOf(obj).Len()
+					continue
+				}
 				// Command methods for strings
 				if str, ok := obj.(string); ok {
 					switch keyStr {
 					case "size":
-						obj = len(str)
+						obj = utf8.RuneCountInString(str)
 						continue
 					case "empty":
 						obj = str == ""

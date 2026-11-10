@@ -1,0 +1,7605 @@
+[
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/assign_test.rb:48",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/assign_test.rb:48",
+  "template": "{% assign foo = ('X' | downcase) %}",
+  "test": "test_assign_uses_error_mode"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/blank_test.rb:39",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/blank_test.rb:39",
+  "template": "{% if true %} {% elsif false %} {% else %} {% endif %}",
+  "test": "test_if_else_are_blank"
+ },
+ {
+  "assigns": {},
+  "expected": "test string",
+  "id": "test/integration/capture_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/capture_test.rb:9",
+  "template": "{% capture 'var' %}test string{% endcapture %}{{var}}",
+  "test": "test_captures_block_content_in_variable"
+ },
+ {
+  "assigns": {},
+  "expected": "true",
+  "id": "test/integration/context_test.rb:123",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:123",
+  "template": "{% if does_not_exist == nil %}true{% endif %}",
+  "test": "test_variables_not_existing"
+ },
+ {
+  "assigns": {
+   "oh-my": "godz"
+  },
+  "expected": "godz",
+  "id": "test/integration/context_test.rb:162",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:162",
+  "template": "{{ oh-my }}",
+  "test": "test_hyphenated_variable"
+ },
+ {
+  "assigns": {
+   "expect": true
+  },
+  "expected": "pass",
+  "id": "test/integration/context_test.rb:220",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:220",
+  "template": "{% if true == expect %}pass{% endif %}",
+  "test": "test_keywords"
+ },
+ {
+  "assigns": {
+   "expect": false
+  },
+  "expected": "pass",
+  "id": "test/integration/context_test.rb:221",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:221",
+  "template": "{% if false == expect %}pass{% endif %}",
+  "test": "test_keywords"
+ },
+ {
+  "assigns": {
+   "expect": 100
+  },
+  "expected": "pass",
+  "id": "test/integration/context_test.rb:225",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:225",
+  "template": "{% if 100 == expect %}pass{% endif %}",
+  "test": "test_digits"
+ },
+ {
+  "assigns": {
+   "expect": {
+    "__f": 100.0
+   }
+  },
+  "expected": "pass",
+  "id": "test/integration/context_test.rb:226",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:226",
+  "template": "{% if 100.00 == expect %}pass{% endif %}",
+  "test": "test_digits"
+ },
+ {
+  "assigns": {},
+  "expected": "hello!",
+  "id": "test/integration/context_test.rb:230",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:230",
+  "template": "{{ \"hello!\" }}",
+  "test": "test_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "hello!",
+  "id": "test/integration/context_test.rb:231",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:231",
+  "template": "{{ 'hello!' }}",
+  "test": "test_strings"
+ },
+ {
+  "assigns": {
+   "foo": "baz"
+  },
+  "expected": "baz",
+  "id": "test/integration/context_test.rb:299",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:299",
+  "template": "{{ [\"foo\"] }}",
+  "test": "test_access_variable_with_hash_notation"
+ },
+ {
+  "assigns": {
+   "bar": "foo",
+   "foo": "baz"
+  },
+  "expected": "baz",
+  "id": "test/integration/context_test.rb:300",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:300",
+  "template": "{{ [bar] }}",
+  "test": "test_access_variable_with_hash_notation"
+ },
+ {
+  "assigns": {
+   "hash": {
+    "first": "Hello"
+   }
+  },
+  "expected": "Hello",
+  "id": "test/integration/context_test.rb:319",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:319",
+  "template": "{{ hash[\"first\"] }}",
+  "test": "test_hash_notation_only_for_hash_access"
+ },
+ {
+  "assigns": {},
+  "expected": "1..5",
+  "id": "test/integration/context_test.rb:370",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/context_test.rb:370",
+  "template": "{{ (1..5) }}",
+  "test": "test_ranges"
+ },
+ {
+  "assigns": {},
+  "expected": "true",
+  "id": "test/integration/expression_test.rb:8",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:8",
+  "template": "{{ true }}",
+  "test": "test_keyword_literals"
+ },
+ {
+  "assigns": {},
+  "expected": "single quoted",
+  "id": "test/integration/expression_test.rb:13",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:13",
+  "template": "{{'single quoted'}}",
+  "test": "test_string"
+ },
+ {
+  "assigns": {},
+  "expected": "double quoted",
+  "id": "test/integration/expression_test.rb:14",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:14",
+  "template": "{{\"double quoted\"}}",
+  "test": "test_string"
+ },
+ {
+  "assigns": {},
+  "expected": "spaced",
+  "id": "test/integration/expression_test.rb:15",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:15",
+  "template": "{{ 'spaced' }}",
+  "test": "test_string"
+ },
+ {
+  "assigns": {},
+  "expected": "spaced2",
+  "id": "test/integration/expression_test.rb:16",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:16",
+  "template": "{{ 'spaced2' }}",
+  "test": "test_string"
+ },
+ {
+  "assigns": {},
+  "expected": "emoji🔥",
+  "id": "test/integration/expression_test.rb:17",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:17",
+  "template": "{{ 'emoji🔥' }}",
+  "test": "test_string"
+ },
+ {
+  "assigns": {},
+  "expected": "456",
+  "id": "test/integration/expression_test.rb:21",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:21",
+  "template": "{{ 456 }}",
+  "test": "test_int"
+ },
+ {
+  "assigns": {},
+  "expected": "-17.42",
+  "id": "test/integration/expression_test.rb:27",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:27",
+  "template": "{{ -17.42 }}",
+  "test": "test_float"
+ },
+ {
+  "assigns": {},
+  "expected": "2.5",
+  "id": "test/integration/expression_test.rb:28",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:28",
+  "template": "{{ 2.5 }}",
+  "test": "test_float"
+ },
+ {
+  "assigns": {},
+  "expected": "3..4",
+  "id": "test/integration/expression_test.rb:46",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/expression_test.rb:46",
+  "template": "{{ ( 3 .. 4 ) }}",
+  "test": "test_range"
+ },
+ {
+  "assigns": {
+   "var": "abcd"
+  },
+  "expected": "4",
+  "id": "test/integration/filter_test.rb:62",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:62",
+  "template": "{{var | size}}",
+  "test": "test_size"
+ },
+ {
+  "assigns": {
+   "var": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "expected": "1 2 3 4",
+  "id": "test/integration/filter_test.rb:66",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:66",
+  "template": "{{var | join}}",
+  "test": "test_join"
+ },
+ {
+  "assigns": {
+   "numbers": [
+    2,
+    1,
+    4,
+    3
+   ]
+  },
+  "expected": "1 2 3 4",
+  "id": "test/integration/filter_test.rb:70",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:70",
+  "template": "{{numbers | sort | join}}",
+  "test": "test_sort"
+ },
+ {
+  "assigns": {
+   "value": 3
+  },
+  "expected": "3",
+  "id": "test/integration/filter_test.rb:76",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:76",
+  "template": "{{value | sort}}",
+  "test": "test_sort"
+ },
+ {
+  "assigns": {
+   "arrays": [
+    "flower",
+    "are"
+   ]
+  },
+  "expected": "are flower",
+  "id": "test/integration/filter_test.rb:77",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:77",
+  "template": "{{arrays | sort | join}}",
+  "test": "test_sort"
+ },
+ {
+  "assigns": {
+   "var": "<b>bla blub</a>"
+  },
+  "expected": "bla blub",
+  "id": "test/integration/filter_test.rb:126",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:126",
+  "template": "{{ var | strip_html }}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "var": "blub"
+  },
+  "expected": "Blub",
+  "id": "test/integration/filter_test.rb:138",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:138",
+  "template": "{{ var | capitalize }}",
+  "test": "test_capitalize"
+ },
+ {
+  "assigns": {
+   "var": 1000
+  },
+  "expected": "1000",
+  "id": "test/integration/filter_test.rb:142",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/filter_test.rb:142",
+  "template": "{{ var | xyzzy }}",
+  "test": "test_nonexistent_filter_is_ignored"
+ },
+ {
+  "assigns": {
+   "my_hash": {}
+  },
+  "expected": "{}",
+  "id": "test/integration/hash_rendering_test.rb:7",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:7",
+  "template": "{{ my_hash }}",
+  "test": "test_render_empty_hash"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "key1": "value1",
+    "key2": "value2"
+   }
+  },
+  "expected": "{\"key1\"=>\"value1\", \"key2\"=>\"value2\"}",
+  "id": "test/integration/hash_rendering_test.rb:11",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:11",
+  "template": "{{ my_hash }}",
+  "test": "test_render_hash_with_string_keys_and_values"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "key1": 1,
+    "key2": 2
+   }
+  },
+  "expected": "{:key1=>1, :key2=>2}",
+  "id": "test/integration/hash_rendering_test.rb:15",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:15",
+  "template": "{{ my_hash }}",
+  "test": "test_render_hash_with_symbol_keys_and_integer_values"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "outer": {
+     "inner": "value"
+    }
+   }
+  },
+  "expected": "{\"outer\"=>{\"inner\"=>\"value\"}}",
+  "id": "test/integration/hash_rendering_test.rb:19",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:19",
+  "template": "{{ my_hash }}",
+  "test": "test_render_nested_hash"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "numbers": [
+     1,
+     2,
+     3
+    ]
+   }
+  },
+  "expected": "{\"numbers\"=>[1, 2, 3]}",
+  "id": "test/integration/hash_rendering_test.rb:23",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:23",
+  "template": "{{ my_hash }}",
+  "test": "test_render_hash_with_array_values"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"key\"=>\"value\", \"anotherkey\"=>\"anothervalue\"}",
+  "id": "test/integration/hash_rendering_test.rb:33",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:33",
+  "template": "{{ my_hash | downcase }}",
+  "test": "test_hash_with_downcase_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"KEY\"=>\"VALUE\", \"ANOTHERKEY\"=>\"ANOTHERVALUE\"}",
+  "id": "test/integration/hash_rendering_test.rb:37",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:37",
+  "template": "{{ my_hash | upcase }}",
+  "test": "test_hash_with_upcase_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"Key\"=>\"Value\", \"AnotherKey\"=>\"AnotherValue\"}",
+  "id": "test/integration/hash_rendering_test.rb:41",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:41",
+  "template": "{{ my_hash | strip }}",
+  "test": "test_hash_with_strip_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{&quot;Key&quot;=&gt;&quot;Value&quot;, &quot;AnotherKey&quot;=&gt;&quot;AnotherValue&quot;}",
+  "id": "test/integration/hash_rendering_test.rb:45",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:45",
+  "template": "{{ my_hash | escape }}",
+  "test": "test_hash_with_escape_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "%7B%22Key%22%3D%3E%22Value%22%2C+%22AnotherKey%22%3D%3E%22AnotherValue%22%7D",
+  "id": "test/integration/hash_rendering_test.rb:49",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:49",
+  "template": "{{ my_hash | url_encode }}",
+  "test": "test_hash_with_url_encode_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"Key\"=>\"Value\", \"AnotherKey\"=>\"AnotherValue\"}",
+  "id": "test/integration/hash_rendering_test.rb:53",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:53",
+  "template": "{{ my_hash | strip_html }}",
+  "test": "test_hash_with_strip_html_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"Key\"=>\"Value\", ...",
+  "id": "test/integration/hash_rendering_test.rb:57",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:57",
+  "template": "{{ my_hash | truncate: 20 }}",
+  "test": "test_hash_with_truncate__20_filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"Key\"=>\"Value\", \"AnotherKey\"=>\"AnotherValue\"}",
+  "id": "test/integration/hash_rendering_test.rb:61",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:61",
+  "template": "{{ my_hash | replace: 'key', 'replaced_key' }}",
+  "test": "test_hash_with_replace___key____replaced_key__filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "{\"Key\"=>\"Value\", \"AnotherKey\"=>\"AnotherValue\"} appended text",
+  "id": "test/integration/hash_rendering_test.rb:65",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:65",
+  "template": "{{ my_hash | append: ' appended text' }}",
+  "test": "test_hash_with_append____appended_text__filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "AnotherKey": "AnotherValue",
+    "Key": "Value"
+   }
+  },
+  "expected": "prepended text {\"Key\"=>\"Value\", \"AnotherKey\"=>\"AnotherValue\"}",
+  "id": "test/integration/hash_rendering_test.rb:69",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:69",
+  "template": "{{ my_hash | prepend: 'prepended text ' }}",
+  "test": "test_hash_with_prepend___prepended_text___filter"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "numbers": []
+   }
+  },
+  "expected": "{\"numbers\"=>[]}",
+  "id": "test/integration/hash_rendering_test.rb:73",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:73",
+  "template": "{{ my_hash }}",
+  "test": "test_render_hash_with_array_values_empty"
+ },
+ {
+  "assigns": {
+   "my_hash": {
+    "numbers": [
+     {
+      "foo": 42
+     }
+    ]
+   }
+  },
+  "expected": "{\"numbers\"=>[{:foo=>42}]}",
+  "id": "test/integration/hash_rendering_test.rb:77",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/hash_rendering_test.rb:77",
+  "template": "{{ my_hash }}",
+  "test": "test_render_hash_with_array_values_hash"
+ },
+ {
+  "assigns": {
+   "best_cars": "bmw"
+  },
+  "expected": " bmw ",
+  "id": "test/integration/output_test.rb:41",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/output_test.rb:41",
+  "template": " {{best_cars}} ",
+  "test": "test_variable"
+ },
+ {
+  "assigns": {},
+  "expected": "hi",
+  "id": "test/integration/parsing_quirks_test.rb:97",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:97",
+  "template": "{{ 'hi there' | split$$$:' ' | first }}",
+  "test": "test_unanchored_filter_arguments"
+ },
+ {
+  "assigns": {},
+  "expected": "x",
+  "id": "test/integration/parsing_quirks_test.rb:99",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:99",
+  "template": "{{ 'X' | downcase) }}",
+  "test": "test_unanchored_filter_arguments"
+ },
+ {
+  "assigns": {},
+  "expected": "here",
+  "id": "test/integration/parsing_quirks_test.rb:103",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:103",
+  "template": "{{ 'hi there' | split:\"t\"\" | reverse | first}}",
+  "test": "test_unanchored_filter_arguments"
+ },
+ {
+  "assigns": {},
+  "expected": "hi ",
+  "id": "test/integration/parsing_quirks_test.rb:104",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:104",
+  "template": "{{ 'hi there' | split:\"t\"\" | remove:\"i\" | first}}",
+  "test": "test_unanchored_filter_arguments"
+ },
+ {
+  "assigns": {},
+  "expected": "bar",
+  "id": "test/integration/parsing_quirks_test.rb:110",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:110",
+  "template": "{% assign 123foo = 'bar' %}{{ 123foo }}",
+  "test": "test_invalid_variables_work"
+ },
+ {
+  "assigns": {},
+  "expected": "123",
+  "id": "test/integration/parsing_quirks_test.rb:111",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:111",
+  "template": "{% assign 123 = 'bar' %}{{ 123 }}",
+  "test": "test_invalid_variables_work"
+ },
+ {
+  "assigns": {},
+  "expected": "12345",
+  "id": "test/integration/parsing_quirks_test.rb:117",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:117",
+  "template": "{% for i in (1...5) %}{{ i }}{% endfor %}",
+  "test": "test_extra_dots_in_ranges"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/parsing_quirks_test.rb:122",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:122",
+  "template": "{{}}",
+  "test": "test_blank_variable_markup"
+ },
+ {
+  "assigns": {
+   "containsallshipments": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/parsing_quirks_test.rb:132",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:132",
+  "template": "{% if containsallshipments == true %} YES {% endif %}",
+  "test": "test_contains_in_id"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:137",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:137",
+  "template": "{{ false - }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:138",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:138",
+  "template": "{{ false > }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:139",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:139",
+  "template": "{{ false < }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:140",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:140",
+  "template": "{{ false = }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:141",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:141",
+  "template": "{{ false ! }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:142",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:142",
+  "template": "{{ false 1 }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:143",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:143",
+  "template": "{{ false a }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:145",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:145",
+  "template": "{% liquid assign foo = false -\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:146",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:146",
+  "template": "{% liquid assign foo = false >\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:147",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:147",
+  "template": "{% liquid assign foo = false <\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:148",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:148",
+  "template": "{% liquid assign foo = false =\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:149",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:149",
+  "template": "{% liquid assign foo = false !\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:150",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:150",
+  "template": "{% liquid assign foo = false 1\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/parsing_quirks_test.rb:151",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/parsing_quirks_test.rb:151",
+  "template": "{% liquid assign foo = false a\n%}{{ foo }}",
+  "test": "test_incomplete_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:487",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:487",
+  "template": "{{ \"foo\" | map: \"__id__\" }}",
+  "test": "test_map_doesnt_call_arbitrary_stuff"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:488",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:488",
+  "template": "{{ \"foo\" | map: \"inspect\" }}",
+  "test": "test_map_doesnt_call_arbitrary_stuff"
+ },
+ {
+  "assigns": {},
+  "expected": "2 2 2 2",
+  "id": "test/integration/standard_filter_test.rb:640",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:640",
+  "template": "{{ '1 1 1 1' | replace: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "2 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:645",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:645",
+  "template": "{{ '1 1 1 1' | replace_first: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "1 1 1 2",
+  "id": "test/integration/standard_filter_test.rb:650",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:650",
+  "template": "{{ '1 1 1 1' | replace_last: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "   ",
+  "id": "test/integration/standard_filter_test.rb:655",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:655",
+  "template": "{{ '1 1 1 1' | remove: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": " 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:658",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:658",
+  "template": "{{ '1 1 1 1' | remove_first: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": "1 1 1 ",
+  "id": "test/integration/standard_filter_test.rb:661",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:661",
+  "template": "{{ '1 1 1 1' | remove_last: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/standard_filter_test.rb:665",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:665",
+  "template": "{{ 'foo|bar' | remove: '|' }}",
+  "test": "test_pipes_in_string_arguments"
+ },
+ {
+  "assigns": {
+   "source": " ab c  "
+  },
+  "expected": "ab c",
+  "id": "test/integration/standard_filter_test.rb:669",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:669",
+  "template": "{{ source | strip }}",
+  "test": "test_strip"
+ },
+ {
+  "assigns": {
+   "source": " \tab c  \n \t"
+  },
+  "expected": "ab c",
+  "id": "test/integration/standard_filter_test.rb:670",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:670",
+  "template": "{{ source | strip }}",
+  "test": "test_strip"
+ },
+ {
+  "assigns": {
+   "source": " ab c  "
+  },
+  "expected": "ab c  ",
+  "id": "test/integration/standard_filter_test.rb:674",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:674",
+  "template": "{{ source | lstrip }}",
+  "test": "test_lstrip"
+ },
+ {
+  "assigns": {
+   "source": " \tab c  \n \t"
+  },
+  "expected": "ab c  \n \t",
+  "id": "test/integration/standard_filter_test.rb:675",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:675",
+  "template": "{{ source | lstrip }}",
+  "test": "test_lstrip"
+ },
+ {
+  "assigns": {
+   "source": " ab c  "
+  },
+  "expected": " ab c",
+  "id": "test/integration/standard_filter_test.rb:679",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:679",
+  "template": "{{ source | rstrip }}",
+  "test": "test_rstrip"
+ },
+ {
+  "assigns": {
+   "source": " \tab c  \n \t"
+  },
+  "expected": " \tab c",
+  "id": "test/integration/standard_filter_test.rb:680",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:680",
+  "template": "{{ source | rstrip }}",
+  "test": "test_rstrip"
+ },
+ {
+  "assigns": {
+   "source": "a\nb\nc"
+  },
+  "expected": "abc",
+  "id": "test/integration/standard_filter_test.rb:684",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:684",
+  "template": "{{ source | strip_newlines }}",
+  "test": "test_strip_newlines"
+ },
+ {
+  "assigns": {
+   "source": "a\r\nb\nc"
+  },
+  "expected": "abc",
+  "id": "test/integration/standard_filter_test.rb:685",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:685",
+  "template": "{{ source | strip_newlines }}",
+  "test": "test_strip_newlines"
+ },
+ {
+  "assigns": {
+   "source": "a\nb\nc"
+  },
+  "expected": "a<br />\nb<br />\nc",
+  "id": "test/integration/standard_filter_test.rb:689",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:689",
+  "template": "{{ source | newline_to_br }}",
+  "test": "test_newlines_to_br"
+ },
+ {
+  "assigns": {
+   "source": "a\r\nb\nc"
+  },
+  "expected": "a<br />\nb<br />\nc",
+  "id": "test/integration/standard_filter_test.rb:690",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:690",
+  "template": "{{ source | newline_to_br }}",
+  "test": "test_newlines_to_br"
+ },
+ {
+  "assigns": {},
+  "expected": "2",
+  "id": "test/integration/standard_filter_test.rb:694",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:694",
+  "template": "{{ 1 | plus:1 }}",
+  "test": "test_plus"
+ },
+ {
+  "assigns": {},
+  "expected": "2.0",
+  "id": "test/integration/standard_filter_test.rb:695",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:695",
+  "template": "{{ '1' | plus:'1.0' }}",
+  "test": "test_plus"
+ },
+ {
+  "assigns": {
+   "input": 5,
+   "operand": 1
+  },
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:701",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:701",
+  "template": "{{ input | minus:operand }}",
+  "test": "test_minus"
+ },
+ {
+  "assigns": {},
+  "expected": "2.3",
+  "id": "test/integration/standard_filter_test.rb:702",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:702",
+  "template": "{{ '4.3' | minus:'2' }}",
+  "test": "test_minus"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:708",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:708",
+  "template": "{{ 17 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:709",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:709",
+  "template": "{{ -17 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:710",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:710",
+  "template": "{{ '17' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:711",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:711",
+  "template": "{{ '-17' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:712",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:712",
+  "template": "{{ 0 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:713",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:713",
+  "template": "{{ '0' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:714",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:714",
+  "template": "{{ 17.42 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:715",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:715",
+  "template": "{{ -17.42 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:716",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:716",
+  "template": "{{ '17.42' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:717",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:717",
+  "template": "{{ '-17.42' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "12",
+  "id": "test/integration/standard_filter_test.rb:721",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:721",
+  "template": "{{ 3 | times:4 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:722",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:722",
+  "template": "{{ 'foo' | times:4 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "6",
+  "id": "test/integration/standard_filter_test.rb:723",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:723",
+  "template": "{{ '2.1' | times:3 | replace: '.','-' | plus:0}}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "7.25",
+  "id": "test/integration/standard_filter_test.rb:724",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:724",
+  "template": "{{ 0.0725 | times:100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "-7.25",
+  "id": "test/integration/standard_filter_test.rb:725",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:725",
+  "template": "{{ \"-0.0725\" | times:100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "7.25",
+  "id": "test/integration/standard_filter_test.rb:726",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:726",
+  "template": "{{ \"-0.0725\" | times: -100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:731",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:731",
+  "template": "{{ 12 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:732",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:732",
+  "template": "{{ 14 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:734",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:734",
+  "template": "{{ 15 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "0.5",
+  "id": "test/integration/standard_filter_test.rb:737",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:737",
+  "template": "{{ 2.0 | divided_by:4 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:739",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::ZeroDivisionError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:739",
+  "template": "{{ 1 | modulo: 0 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:746",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:746",
+  "template": "{{ 3 | modulo:2 }}",
+  "test": "test_modulo"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:748",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::ZeroDivisionError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:748",
+  "template": "{{ 1 | modulo: 0 }}",
+  "test": "test_modulo"
+ },
+ {
+  "assigns": {
+   "input": {
+    "__f": 4.6
+   }
+  },
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:755",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:755",
+  "template": "{{ input | round }}",
+  "test": "test_round"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:756",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:756",
+  "template": "{{ '4.3' | round }}",
+  "test": "test_round"
+ },
+ {
+  "assigns": {
+   "input": {
+    "__f": 4.5612
+   }
+  },
+  "expected": "4.56",
+  "id": "test/integration/standard_filter_test.rb:757",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:757",
+  "template": "{{ input | round: 2 }}",
+  "test": "test_round"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:759",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::FloatDomainError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:759",
+  "template": "{{ 1.0 | divided_by: 0.0 | round }}",
+  "test": "test_round"
+ },
+ {
+  "assigns": {
+   "input": {
+    "__f": 4.6
+   }
+  },
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:767",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:767",
+  "template": "{{ input | ceil }}",
+  "test": "test_ceil"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:768",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:768",
+  "template": "{{ '4.3' | ceil }}",
+  "test": "test_ceil"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:770",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::FloatDomainError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:770",
+  "template": "{{ 1.0 | divided_by: 0.0 | ceil }}",
+  "test": "test_ceil"
+ },
+ {
+  "assigns": {
+   "input": {
+    "__f": 4.6
+   }
+  },
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:777",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:777",
+  "template": "{{ input | floor }}",
+  "test": "test_floor"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:778",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:778",
+  "template": "{{ '4.3' | floor }}",
+  "test": "test_floor"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:780",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::FloatDomainError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:780",
+  "template": "{{ 1.0 | divided_by: 0.0 | floor }}",
+  "test": "test_floor"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:787",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:787",
+  "template": "{{ 5 | at_most:4 }}",
+  "test": "test_at_most"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:788",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:788",
+  "template": "{{ 5 | at_most:5 }}",
+  "test": "test_at_most"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:789",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:789",
+  "template": "{{ 5 | at_most:6 }}",
+  "test": "test_at_most"
+ },
+ {
+  "assigns": {},
+  "expected": "4.5",
+  "id": "test/integration/standard_filter_test.rb:791",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:791",
+  "template": "{{ 4.5 | at_most:5 }}",
+  "test": "test_at_most"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:798",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:798",
+  "template": "{{ 5 | at_least:4 }}",
+  "test": "test_at_least"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:799",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:799",
+  "template": "{{ 5 | at_least:5 }}",
+  "test": "test_at_least"
+ },
+ {
+  "assigns": {},
+  "expected": "6",
+  "id": "test/integration/standard_filter_test.rb:800",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:800",
+  "template": "{{ 5 | at_least:6 }}",
+  "test": "test_at_least"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:802",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:802",
+  "template": "{{ 4.5 | at_least:5 }}",
+  "test": "test_at_least"
+ },
+ {
+  "assigns": {},
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:837",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:837",
+  "template": "{{ false | default: 'bar' }}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/standard_filter_test.rb:849",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:849",
+  "template": "{{ false | default: 'bar', allow_false: true }}",
+  "test": "test_default_handle_false"
+ },
+ {
+  "assigns": {},
+  "expected": "a",
+  "id": "test/integration/standard_filter_test.rb:855",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:855",
+  "template": "{{ 'a' | to_number }}",
+  "test": "test_cannot_access_private_methods"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:859",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:859",
+  "template": "{{ '' | date: '%D' }}",
+  "test": "test_date_raises_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "abc",
+  "id": "test/integration/standard_filter_test.rb:860",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:860",
+  "template": "{{ 'abc' | date: '%D' }}",
+  "test": "test_date_raises_nothing"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": 3,
+  "id": "test/integration/standard_filter_test.rb:78",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:78",
+  "template": "{% assign __result = in | size %}",
+  "test": "test_size"
+ },
+ {
+  "assigns": {
+   "in": []
+  },
+  "expected": 0,
+  "id": "test/integration/standard_filter_test.rb:79",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:79",
+  "template": "{% assign __result = in | size %}",
+  "test": "test_size"
+ },
+ {
+  "assigns": {
+   "in": null
+  },
+  "expected": 0,
+  "id": "test/integration/standard_filter_test.rb:80",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:80",
+  "template": "{% assign __result = in | size %}",
+  "test": "test_size"
+ },
+ {
+  "assigns": {
+   "in": "Testing"
+  },
+  "expected": "testing",
+  "id": "test/integration/standard_filter_test.rb:84",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:84",
+  "template": "{% assign __result = in | downcase %}",
+  "test": "test_downcase"
+ },
+ {
+  "assigns": {
+   "in": null
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:85",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:85",
+  "template": "{% assign __result = in | downcase %}",
+  "test": "test_downcase"
+ },
+ {
+  "assigns": {
+   "in": "Testing"
+  },
+  "expected": "TESTING",
+  "id": "test/integration/standard_filter_test.rb:89",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:89",
+  "template": "{% assign __result = in | upcase %}",
+  "test": "test_upcase"
+ },
+ {
+  "assigns": {
+   "in": null
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:90",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:90",
+  "template": "{% assign __result = in | upcase %}",
+  "test": "test_upcase"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 1,
+   "p1": 3
+  },
+  "expected": "oob",
+  "id": "test/integration/standard_filter_test.rb:94",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:94",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 1,
+   "p1": 1000
+  },
+  "expected": "oobar",
+  "id": "test/integration/standard_filter_test.rb:95",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:95",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 1,
+   "p1": 0
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:96",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:96",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 1,
+   "p1": 1
+  },
+  "expected": "o",
+  "id": "test/integration/standard_filter_test.rb:97",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:97",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 3,
+   "p1": 3
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:98",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:98",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": -2,
+   "p1": 2
+  },
+  "expected": "ar",
+  "id": "test/integration/standard_filter_test.rb:99",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:99",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": -2,
+   "p1": 1000
+  },
+  "expected": "ar",
+  "id": "test/integration/standard_filter_test.rb:100",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:100",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": -1
+  },
+  "expected": "r",
+  "id": "test/integration/standard_filter_test.rb:101",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:101",
+  "template": "{% assign __result = in | slice: p0 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": null,
+   "p0": 0
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:102",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:102",
+  "template": "{% assign __result = in | slice: p0 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": 100,
+   "p1": 10
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:103",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:103",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": -100,
+   "p1": 10
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:104",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:104",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "foobar",
+   "p0": "1",
+   "p1": "3"
+  },
+  "expected": "oob",
+  "id": "test/integration/standard_filter_test.rb:105",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:105",
+  "template": "{% assign __result = in | slice: p0, p1 %}",
+  "test": "test_slice"
+ },
+ {
+  "assigns": {
+   "in": "1234567890",
+   "p0": 7
+  },
+  "expected": "1234...",
+  "id": "test/integration/standard_filter_test.rb:149",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:149",
+  "template": "{% assign __result = in | truncate: p0 %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "1234567890",
+   "p0": 20
+  },
+  "expected": "1234567890",
+  "id": "test/integration/standard_filter_test.rb:150",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:150",
+  "template": "{% assign __result = in | truncate: p0 %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "1234567890",
+   "p0": 0
+  },
+  "expected": "...",
+  "id": "test/integration/standard_filter_test.rb:151",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:151",
+  "template": "{% assign __result = in | truncate: p0 %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "1234567890"
+  },
+  "expected": "1234567890",
+  "id": "test/integration/standard_filter_test.rb:152",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:152",
+  "template": "{% assign __result = in | truncate %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "测试测试测试测试",
+   "p0": 5
+  },
+  "expected": "测试...",
+  "id": "test/integration/standard_filter_test.rb:153",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:153",
+  "template": "{% assign __result = in | truncate: p0 %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "1234567890",
+   "p0": 5,
+   "p1": 1
+  },
+  "expected": "12341",
+  "id": "test/integration/standard_filter_test.rb:154",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:154",
+  "template": "{% assign __result = in | truncate: p0, p1 %}",
+  "test": "test_truncate"
+ },
+ {
+  "assigns": {
+   "in": "12~34",
+   "p0": "~"
+  },
+  "expected": [
+   "12",
+   "34"
+  ],
+  "id": "test/integration/standard_filter_test.rb:160",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:160",
+  "template": "{% assign __result = in | split: p0 %}",
+  "test": "test_split"
+ },
+ {
+  "assigns": {
+   "in": "A? ~ ~ ~ ,Z",
+   "p0": "~ ~ ~"
+  },
+  "expected": [
+   "A? ",
+   " ,Z"
+  ],
+  "id": "test/integration/standard_filter_test.rb:161",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:161",
+  "template": "{% assign __result = in | split: p0 %}",
+  "test": "test_split"
+ },
+ {
+  "assigns": {
+   "in": "A?Z",
+   "p0": "~"
+  },
+  "expected": [
+   "A?Z"
+  ],
+  "id": "test/integration/standard_filter_test.rb:162",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:162",
+  "template": "{% assign __result = in | split: p0 %}",
+  "test": "test_split"
+ },
+ {
+  "assigns": {
+   "in": null,
+   "p0": " "
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:163",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:163",
+  "template": "{% assign __result = in | split: p0 %}",
+  "test": "test_split"
+ },
+ {
+  "assigns": {
+   "in": "A1Z",
+   "p0": 1
+  },
+  "expected": [
+   "A",
+   "Z"
+  ],
+  "id": "test/integration/standard_filter_test.rb:164",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:164",
+  "template": "{% assign __result = in | split: p0 %}",
+  "test": "test_split"
+ },
+ {
+  "assigns": {
+   "in": "<strong>"
+  },
+  "expected": "&lt;strong&gt;",
+  "id": "test/integration/standard_filter_test.rb:168",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:168",
+  "template": "{% assign __result = in | escape %}",
+  "test": "test_escape"
+ },
+ {
+  "assigns": {
+   "in": 1
+  },
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:169",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:169",
+  "template": "{% assign __result = in | escape %}",
+  "test": "test_escape"
+ },
+ {
+  "assigns": {
+   "in": "<strong>"
+  },
+  "expected": "&lt;strong&gt;",
+  "id": "test/integration/standard_filter_test.rb:175",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:175",
+  "template": "{% assign __result = in | h %}",
+  "test": "test_h"
+ },
+ {
+  "assigns": {
+   "in": 1
+  },
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:176",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:176",
+  "template": "{% assign __result = in | h %}",
+  "test": "test_h"
+ },
+ {
+  "assigns": {
+   "in": "&lt;strong&gt;Hulk</strong>"
+  },
+  "expected": "&lt;strong&gt;Hulk&lt;/strong&gt;",
+  "id": "test/integration/standard_filter_test.rb:182",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:182",
+  "template": "{% assign __result = in | escape_once %}",
+  "test": "test_escape_once"
+ },
+ {
+  "assigns": {
+   "in": "foo+1@example.com"
+  },
+  "expected": "foo%2B1%40example.com",
+  "id": "test/integration/standard_filter_test.rb:241",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:241",
+  "template": "{% assign __result = in | url_encode %}",
+  "test": "test_url_encode"
+ },
+ {
+  "assigns": {
+   "in": 1
+  },
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:242",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:242",
+  "template": "{% assign __result = in | url_encode %}",
+  "test": "test_url_encode"
+ },
+ {
+  "assigns": {
+   "in": "foo+bar"
+  },
+  "expected": "foo bar",
+  "id": "test/integration/standard_filter_test.rb:248",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:248",
+  "template": "{% assign __result = in | url_decode %}",
+  "test": "test_url_decode"
+ },
+ {
+  "assigns": {
+   "in": "foo%20bar"
+  },
+  "expected": "foo bar",
+  "id": "test/integration/standard_filter_test.rb:249",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:249",
+  "template": "{% assign __result = in | url_decode %}",
+  "test": "test_url_decode"
+ },
+ {
+  "assigns": {
+   "in": "foo%2B1%40example.com"
+  },
+  "expected": "foo+1@example.com",
+  "id": "test/integration/standard_filter_test.rb:250",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:250",
+  "template": "{% assign __result = in | url_decode %}",
+  "test": "test_url_decode"
+ },
+ {
+  "assigns": {
+   "in": 1
+  },
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:251",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:251",
+  "template": "{% assign __result = in | url_decode %}",
+  "test": "test_url_decode"
+ },
+ {
+  "assigns": {
+   "in": "one two three",
+   "p0": 4
+  },
+  "expected": "one two three",
+  "id": "test/integration/standard_filter_test.rb:261",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:261",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three",
+   "p0": 2
+  },
+  "expected": "one two...",
+  "id": "test/integration/standard_filter_test.rb:262",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:262",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three"
+  },
+  "expected": "one two three",
+  "id": "test/integration/standard_filter_test.rb:263",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:263",
+  "template": "{% assign __result = in | truncatewords %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221; x 16&#8221; x 10.5&#8221; high) with cover.",
+   "p0": 15
+  },
+  "expected": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221;...",
+  "id": "test/integration/standard_filter_test.rb:264",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:264",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "测试测试测试测试",
+   "p0": 5
+  },
+  "expected": "测试测试测试测试",
+  "id": "test/integration/standard_filter_test.rb:268",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:268",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three",
+   "p0": 2,
+   "p1": 1
+  },
+  "expected": "one two1",
+  "id": "test/integration/standard_filter_test.rb:269",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:269",
+  "template": "{% assign __result = in | truncatewords: p0, p1 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one  two\tthree\nfour",
+   "p0": 3
+  },
+  "expected": "one two three...",
+  "id": "test/integration/standard_filter_test.rb:270",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:270",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three four",
+   "p0": 2
+  },
+  "expected": "one two...",
+  "id": "test/integration/standard_filter_test.rb:271",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:271",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three four",
+   "p0": 0
+  },
+  "expected": "one...",
+  "id": "test/integration/standard_filter_test.rb:272",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:272",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "<div>test</div>"
+  },
+  "expected": "test",
+  "id": "test/integration/standard_filter_test.rb:278",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:278",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<div id='test'>test</div>"
+  },
+  "expected": "test",
+  "id": "test/integration/standard_filter_test.rb:279",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:279",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<script type='text/javascript'>document.write('some stuff');</script>"
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:280",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:280",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<style type='text/css'>foo bar</style>"
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:281",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:281",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<div\nclass='multiline'>test</div>"
+  },
+  "expected": "test",
+  "id": "test/integration/standard_filter_test.rb:282",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:282",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<!-- foo bar \n test -->test"
+  },
+  "expected": "test",
+  "id": "test/integration/standard_filter_test.rb:283",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:283",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": null
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:284",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:284",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": "<<<script </script>script>foo;</script>"
+  },
+  "expected": "foo;",
+  "id": "test/integration/standard_filter_test.rb:287",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:287",
+  "template": "{% assign __result = in | strip_html %}",
+  "test": "test_strip_html"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "expected": "1 2 3 4",
+  "id": "test/integration/standard_filter_test.rb:291",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:291",
+  "template": "{% assign __result = in | join %}",
+  "test": "test_join"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "p0": " - "
+  },
+  "expected": "1 - 2 - 3 - 4",
+  "id": "test/integration/standard_filter_test.rb:292",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:292",
+  "template": "{% assign __result = in | join: p0 %}",
+  "test": "test_join"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "p0": 1
+  },
+  "expected": "1121314",
+  "id": "test/integration/standard_filter_test.rb:293",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:293",
+  "template": "{% assign __result = in | join: p0 %}",
+  "test": "test_join"
+ },
+ {
+  "assigns": {
+   "in": [
+    4,
+    3,
+    2,
+    1
+   ]
+  },
+  "expected": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "id": "test/integration/standard_filter_test.rb:307",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:307",
+  "template": "{% assign __result = in | sort %}",
+  "test": "test_sort"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": 4
+    },
+    {
+     "a": 3
+    },
+    {
+     "a": 1
+    },
+    {
+     "a": 2
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": 1
+   },
+   {
+    "a": 2
+   },
+   {
+    "a": 3
+   },
+   {
+    "a": 4
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:308",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:308",
+  "template": "{% assign __result = in | sort: p0 %}",
+  "test": "test_sort"
+ },
+ {
+  "assigns": {
+   "in": [
+    null,
+    4,
+    3,
+    2,
+    1
+   ]
+  },
+  "expected": [
+   1,
+   2,
+   3,
+   4,
+   null
+  ],
+  "id": "test/integration/standard_filter_test.rb:312",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:312",
+  "template": "{% assign __result = in | sort %}",
+  "test": "test_sort_with_nils"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": 4
+    },
+    {
+     "a": 3
+    },
+    {},
+    {
+     "a": 1
+    },
+    {
+     "a": 2
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": 1
+   },
+   {
+    "a": 2
+   },
+   {
+    "a": 3
+   },
+   {
+    "a": 4
+   },
+   {}
+  ],
+  "id": "test/integration/standard_filter_test.rb:313",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:313",
+  "template": "{% assign __result = in | sort: p0 %}",
+  "test": "test_sort_with_nils"
+ },
+ {
+  "assigns": {
+   "in": [
+    "c",
+    "D",
+    "a",
+    "B"
+   ]
+  },
+  "expected": [
+   "a",
+   "B",
+   "c",
+   "D"
+  ],
+  "id": "test/integration/standard_filter_test.rb:335",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:335",
+  "template": "{% assign __result = in | sort_natural %}",
+  "test": "test_sort_natural"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": "D"
+    },
+    {
+     "a": "c"
+    },
+    {
+     "a": "a"
+    },
+    {
+     "a": "B"
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": "a"
+   },
+   {
+    "a": "B"
+   },
+   {
+    "a": "c"
+   },
+   {
+    "a": "D"
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:336",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:336",
+  "template": "{% assign __result = in | sort_natural: p0 %}",
+  "test": "test_sort_natural"
+ },
+ {
+  "assigns": {
+   "in": [
+    null,
+    "c",
+    "D",
+    "a",
+    "B"
+   ]
+  },
+  "expected": [
+   "a",
+   "B",
+   "c",
+   "D",
+   null
+  ],
+  "id": "test/integration/standard_filter_test.rb:340",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:340",
+  "template": "{% assign __result = in | sort_natural %}",
+  "test": "test_sort_natural_with_nils"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": "D"
+    },
+    {
+     "a": "c"
+    },
+    {},
+    {
+     "a": "a"
+    },
+    {
+     "a": "B"
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": "a"
+   },
+   {
+    "a": "B"
+   },
+   {
+    "a": "c"
+   },
+   {
+    "a": "D"
+   },
+   {}
+  ],
+  "id": "test/integration/standard_filter_test.rb:341",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:341",
+  "template": "{% assign __result = in | sort_natural: p0 %}",
+  "test": "test_sort_natural_with_nils"
+ },
+ {
+  "assigns": {
+   "in": [
+    "X",
+    "Y",
+    "Z",
+    "a",
+    "b",
+    "c"
+   ]
+  },
+  "expected": [
+   "a",
+   "b",
+   "c",
+   "X",
+   "Y",
+   "Z"
+  ],
+  "id": "test/integration/standard_filter_test.rb:382",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:382",
+  "template": "{% assign __result = in | sort_natural %}",
+  "test": "test_sort_natural_case_check"
+ },
+ {
+  "assigns": {
+   "in": [],
+   "p0": "a"
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:386",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:386",
+  "template": "{% assign __result = in | sort: p0 %}",
+  "test": "test_sort_empty_array"
+ },
+ {
+  "assigns": {
+   "in": [],
+   "p0": "a"
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:402",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:402",
+  "template": "{% assign __result = in | sort_natural: p0 %}",
+  "test": "test_sort_natural_empty_array"
+ },
+ {
+  "assigns": {
+   "in": [
+    10,
+    2
+   ]
+  },
+  "expected": [
+   2,
+   10
+  ],
+  "id": "test/integration/standard_filter_test.rb:422",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:422",
+  "template": "{% assign __result = in | sort %}",
+  "test": "test_numerical_vs_lexicographical_sort"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": 10
+    },
+    {
+     "a": 2
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": 2
+   },
+   {
+    "a": 10
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:423",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:423",
+  "template": "{% assign __result = in | sort: p0 %}",
+  "test": "test_numerical_vs_lexicographical_sort"
+ },
+ {
+  "assigns": {
+   "in": [
+    "10",
+    "2"
+   ]
+  },
+  "expected": [
+   "10",
+   "2"
+  ],
+  "id": "test/integration/standard_filter_test.rb:424",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:424",
+  "template": "{% assign __result = in | sort %}",
+  "test": "test_numerical_vs_lexicographical_sort"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": "10"
+    },
+    {
+     "a": "2"
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": "10"
+   },
+   {
+    "a": "2"
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:425",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:425",
+  "template": "{% assign __result = in | sort: p0 %}",
+  "test": "test_numerical_vs_lexicographical_sort"
+ },
+ {
+  "assigns": {
+   "in": "foo"
+  },
+  "expected": [
+   "foo"
+  ],
+  "id": "test/integration/standard_filter_test.rb:429",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:429",
+  "template": "{% assign __result = in | uniq %}",
+  "test": "test_uniq"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    1,
+    3,
+    2,
+    3,
+    1,
+    4,
+    3,
+    2,
+    1
+   ]
+  },
+  "expected": [
+   1,
+   3,
+   2,
+   4
+  ],
+  "id": "test/integration/standard_filter_test.rb:430",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:430",
+  "template": "{% assign __result = in | uniq %}",
+  "test": "test_uniq"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": 1
+    },
+    {
+     "a": 3
+    },
+    {
+     "a": 1
+    },
+    {
+     "a": 2
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   {
+    "a": 1
+   },
+   {
+    "a": 3
+   },
+   {
+    "a": 2
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:431",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:431",
+  "template": "{% assign __result = in | uniq: p0 %}",
+  "test": "test_uniq"
+ },
+ {
+  "assigns": {
+   "in": [],
+   "p0": "a"
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:438",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:438",
+  "template": "{% assign __result = in | uniq: p0 %}",
+  "test": "test_uniq_empty_array"
+ },
+ {
+  "assigns": {
+   "in": [],
+   "p0": "a"
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:454",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:454",
+  "template": "{% assign __result = in | compact: p0 %}",
+  "test": "test_compact_empty_array"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "expected": [
+   4,
+   3,
+   2,
+   1
+  ],
+  "id": "test/integration/standard_filter_test.rb:470",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:470",
+  "template": "{% assign __result = in | reverse %}",
+  "test": "test_reverse"
+ },
+ {
+  "assigns": {
+   "in": [
+    {
+     "a": 1
+    },
+    {
+     "a": 2
+    },
+    {
+     "a": 3
+    },
+    {
+     "a": 4
+    }
+   ],
+   "p0": "a"
+  },
+  "expected": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "id": "test/integration/standard_filter_test.rb:478",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:478",
+  "template": "{% assign __result = in | map: p0 %}",
+  "test": "test_map"
+ },
+ {
+  "assigns": {
+   "in": "2006-05-05 10:00:00",
+   "p0": "%B"
+  },
+  "expected": "May",
+  "id": "test/integration/standard_filter_test.rb:603",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:603",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-06-05 10:00:00",
+   "p0": "%B"
+  },
+  "expected": "June",
+  "id": "test/integration/standard_filter_test.rb:604",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:604",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": "%B"
+  },
+  "expected": "July",
+  "id": "test/integration/standard_filter_test.rb:605",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:605",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": ""
+  },
+  "expected": "2006-07-05 10:00:00",
+  "id": "test/integration/standard_filter_test.rb:607",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:607",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": ""
+  },
+  "expected": "2006-07-05 10:00:00",
+  "id": "test/integration/standard_filter_test.rb:608",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:608",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": ""
+  },
+  "expected": "2006-07-05 10:00:00",
+  "id": "test/integration/standard_filter_test.rb:609",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:609",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": null
+  },
+  "expected": "2006-07-05 10:00:00",
+  "id": "test/integration/standard_filter_test.rb:610",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:610",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": "%m/%d/%Y"
+  },
+  "expected": "07/05/2006",
+  "id": "test/integration/standard_filter_test.rb:612",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:612",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "Fri Jul 16 01:00:00 2004",
+   "p0": "%m/%d/%Y"
+  },
+  "expected": "07/16/2004",
+  "id": "test/integration/standard_filter_test.rb:614",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:614",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "",
+   "p0": "%B"
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:621",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:621",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": 1,
+  "id": "test/integration/standard_filter_test.rb:630",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:630",
+  "template": "{% assign __result = in | first %}",
+  "test": "test_first_last"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": 3,
+  "id": "test/integration/standard_filter_test.rb:631",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:631",
+  "template": "{% assign __result = in | last %}",
+  "test": "test_first_last"
+ },
+ {
+  "assigns": {
+   "in": "a a a a",
+   "p0": "a",
+   "p1": "b"
+  },
+  "expected": "b b b b",
+  "id": "test/integration/standard_filter_test.rb:637",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:637",
+  "template": "{% assign __result = in | replace: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 1,
+   "p1": 2
+  },
+  "expected": "2 2 2 2",
+  "id": "test/integration/standard_filter_test.rb:638",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:638",
+  "template": "{% assign __result = in | replace: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 2,
+   "p1": 3
+  },
+  "expected": "1 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:639",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:639",
+  "template": "{% assign __result = in | replace: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "a a a a",
+   "p0": "a",
+   "p1": "b"
+  },
+  "expected": "b a a a",
+  "id": "test/integration/standard_filter_test.rb:642",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:642",
+  "template": "{% assign __result = in | replace_first: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 1,
+   "p1": 2
+  },
+  "expected": "2 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:643",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:643",
+  "template": "{% assign __result = in | replace_first: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 2,
+   "p1": 3
+  },
+  "expected": "1 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:644",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:644",
+  "template": "{% assign __result = in | replace_first: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "a a a a",
+   "p0": "a",
+   "p1": "b"
+  },
+  "expected": "a a a b",
+  "id": "test/integration/standard_filter_test.rb:647",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:647",
+  "template": "{% assign __result = in | replace_last: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 1,
+   "p1": 2
+  },
+  "expected": "1 1 1 2",
+  "id": "test/integration/standard_filter_test.rb:648",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:648",
+  "template": "{% assign __result = in | replace_last: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "1 1 1 1",
+   "p0": 2,
+   "p1": 3
+  },
+  "expected": "1 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:649",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:649",
+  "template": "{% assign __result = in | replace_last: p0, p1 %}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {
+   "in": "a a a a",
+   "p0": "a"
+  },
+  "expected": "   ",
+  "id": "test/integration/standard_filter_test.rb:654",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:654",
+  "template": "{% assign __result = in | remove: p0 %}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {
+   "in": "a b a a",
+   "p0": "a "
+  },
+  "expected": "b a a",
+  "id": "test/integration/standard_filter_test.rb:657",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:657",
+  "template": "{% assign __result = in | remove_first: p0 %}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {
+   "in": "a a b a",
+   "p0": " a"
+  },
+  "expected": "a a b",
+  "id": "test/integration/standard_filter_test.rb:660",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:660",
+  "template": "{% assign __result = in | remove_last: p0 %}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2
+   ],
+   "p0": [
+    3,
+    4
+   ]
+  },
+  "expected": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "id": "test/integration/standard_filter_test.rb:815",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:815",
+  "template": "{% assign __result = in | concat: p0 %}",
+  "test": "test_concat"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2
+   ],
+   "p0": [
+    "a"
+   ]
+  },
+  "expected": [
+   1,
+   2,
+   "a"
+  ],
+  "id": "test/integration/standard_filter_test.rb:816",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:816",
+  "template": "{% assign __result = in | concat: p0 %}",
+  "test": "test_concat"
+ },
+ {
+  "assigns": {
+   "in": [
+    1,
+    2
+   ],
+   "p0": [
+    10
+   ]
+  },
+  "expected": [
+   1,
+   2,
+   10
+  ],
+  "id": "test/integration/standard_filter_test.rb:817",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:817",
+  "template": "{% assign __result = in | concat: p0 %}",
+  "test": "test_concat"
+ },
+ {
+  "assigns": {
+   "in": "foo",
+   "p0": "bar"
+  },
+  "expected": "foo",
+  "id": "test/integration/standard_filter_test.rb:831",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:831",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": null,
+   "p0": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:832",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:832",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": "",
+   "p0": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:833",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:833",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": false,
+   "p0": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:834",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:834",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": [],
+   "p0": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:835",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:835",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": {},
+   "p0": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:836",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:836",
+  "template": "{% assign __result = in | default: p0 %}",
+  "test": "test_default"
+ },
+ {
+  "assigns": {
+   "in": {
+    "a": "ok"
+   },
+   "p0": "a",
+   "p1": "ok"
+  },
+  "expected": [
+   {
+    "a": "ok"
+   }
+  ],
+  "id": "test/integration/standard_filter_test.rb:1122",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:1122",
+  "template": "{% assign __result = in | where: p0, p1 %}",
+  "test": "test_where_non_array_map_input"
+ },
+ {
+  "assigns": {
+   "in": {
+    "a": "not ok"
+   },
+   "p0": "a",
+   "p1": "ok"
+  },
+  "expected": [],
+  "id": "test/integration/standard_filter_test.rb:1123",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:1123",
+  "template": "{% assign __result = in | where: p0, p1 %}",
+  "test": "test_where_non_array_map_input"
+ },
+ {
+  "assigns": {},
+  "expected": "ab c",
+  "id": "test/integration/trim_mode_test.rb:502",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/trim_mode_test.rb:502",
+  "template": "{{ \"a\" -}}{{ \"b\" }} c",
+  "test": "test_right_trim_followed_by_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/trim_mode_test.rb:533",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/trim_mode_test.rb:533",
+  "template": "\n{%- raw %}{% endraw %}",
+  "test": "test_pre_trim_blank_preceding_text"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/trim_mode_test.rb:534",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/trim_mode_test.rb:534",
+  "template": "\n{%- if true %}{% endif %}",
+  "test": "test_pre_trim_blank_preceding_text"
+ },
+ {
+  "assigns": {},
+  "expected": "BC",
+  "id": "test/integration/trim_mode_test.rb:535",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/trim_mode_test.rb:535",
+  "template": "{{ 'B' }} \n{%- if true %}C{% endif %}",
+  "test": "test_pre_trim_blank_preceding_text"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/trim_mode_test.rb:556",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/trim_mode_test.rb:556",
+  "template": "foo {{-}} bar",
+  "test": "test_trim_blank"
+ },
+ {
+  "assigns": {
+   "test": "worked"
+  },
+  "expected": "worked",
+  "id": "test/integration/variable_test.rb:10",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:10",
+  "template": "{{test}}",
+  "test": "test_simple_variable"
+ },
+ {
+  "assigns": {
+   "test": "worked wonderfully"
+  },
+  "expected": "worked wonderfully",
+  "id": "test/integration/variable_test.rb:11",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:11",
+  "template": "{{test}}",
+  "test": "test_simple_variable"
+ },
+ {
+  "assigns": {
+   "test": "worked"
+  },
+  "expected": "  worked  ",
+  "id": "test/integration/variable_test.rb:52",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:52",
+  "template": "  {{ test }}  ",
+  "test": "test_simple_with_whitespaces"
+ },
+ {
+  "assigns": {
+   "test": "worked wonderfully"
+  },
+  "expected": "  worked wonderfully  ",
+  "id": "test/integration/variable_test.rb:53",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:53",
+  "template": "  {{ test }}  ",
+  "test": "test_simple_with_whitespaces"
+ },
+ {
+  "assigns": {
+   "a": {
+    "b": "result"
+   }
+  },
+  "expected": "result",
+  "id": "test/integration/variable_test.rb:57",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:57",
+  "template": "{{ a[ 'b' ] }}",
+  "test": "test_expression_with_whitespace_in_square_brackets"
+ },
+ {
+  "assigns": {
+   "a": {
+    "c": "result"
+   },
+   "b": "c"
+  },
+  "expected": "result",
+  "id": "test/integration/variable_test.rb:58",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:58",
+  "template": "{{ a[ [ 'b' ] ] }}",
+  "test": "test_expression_with_whitespace_in_square_brackets"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/variable_test.rb:62",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:62",
+  "template": "{{ test }}",
+  "test": "test_ignore_unknown"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/variable_test.rb:66",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:66",
+  "template": "{% assign foo = blank %}{{ foo }}",
+  "test": "test_using_blank_as_variable_name"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/variable_test.rb:70",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:70",
+  "template": "{% assign foo = empty %}{{ foo }}",
+  "test": "test_using_empty_as_variable_name"
+ },
+ {
+  "assigns": {
+   "test": {
+    "test": "worked"
+   }
+  },
+  "expected": "worked",
+  "id": "test/integration/variable_test.rb:74",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:74",
+  "template": "{{ test.test }}",
+  "test": "test_hash_scoping"
+ },
+ {
+  "assigns": {
+   "test": {
+    "test": "worked"
+   }
+  },
+  "expected": "worked",
+  "id": "test/integration/variable_test.rb:75",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:75",
+  "template": "{{ test . test }}",
+  "test": "test_hash_scoping"
+ },
+ {
+  "assigns": {
+   "foo": false
+  },
+  "expected": "false",
+  "id": "test/integration/variable_test.rb:79",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:79",
+  "template": "{{ foo }}",
+  "test": "test_false_renders_as_false"
+ },
+ {
+  "assigns": {},
+  "expected": "false",
+  "id": "test/integration/variable_test.rb:80",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:80",
+  "template": "{{ false }}",
+  "test": "test_false_renders_as_false"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/variable_test.rb:84",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:84",
+  "template": "{{ nil }}",
+  "test": "test_nil_renders_as_empty_string"
+ },
+ {
+  "assigns": {},
+  "expected": "cat",
+  "id": "test/integration/variable_test.rb:85",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:85",
+  "template": "{{ nil | append: 'cat' }}",
+  "test": "test_nil_renders_as_empty_string"
+ },
+ {
+  "assigns": {
+   "test": "worked"
+  },
+  "expected": "worked",
+  "id": "test/integration/variable_test.rb:126",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:126",
+  "template": "{{\ntest\n}}",
+  "test": "test_multiline_variable"
+ },
+ {
+  "assigns": {
+   "foo": "bar"
+  },
+  "expected": "bar",
+  "id": "test/integration/variable_test.rb:130",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:130",
+  "template": "{{ foo }}",
+  "test": "test_render_symbol"
+ },
+ {
+  "assigns": {
+   "foo": [
+    [
+     null
+    ]
+   ]
+  },
+  "expected": "",
+  "id": "test/integration/variable_test.rb:134",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:134",
+  "template": "{{ foo }}",
+  "test": "test_nested_array"
+ },
+ {
+  "assigns": {
+   "foo": "bar",
+   "key": "foo"
+  },
+  "expected": "bar",
+  "id": "test/integration/variable_test.rb:138",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:138",
+  "template": "{{ [key] }}",
+  "test": "test_dynamic_find_var"
+ },
+ {
+  "assigns": {
+   "foo": "bar",
+   "key": "foo"
+  },
+  "expected": "bar",
+  "id": "test/integration/variable_test.rb:142",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/variable_test.rb:142",
+  "template": "{{ [key] }}",
+  "test": "test_raw_value_variable"
+ },
+ {
+  "assigns": {
+   "variable-name": "bar"
+  },
+  "expected": "BAR",
+  "id": "test/integration/tags/echo_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/echo_test.rb:9",
+  "template": "{%- echo variable-name | upcase -%}\n",
+  "test": "test_echo_outputs_its_input"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "expected": " yo  yo  yo  yo ",
+  "id": "test/integration/tags/for_tag_test.rb:15",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:15",
+  "template": "{%for item in array%} yo {%endfor%}",
+  "test": "test_for"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2
+   ]
+  },
+  "expected": "yoyo",
+  "id": "test/integration/tags/for_tag_test.rb:16",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:16",
+  "template": "{%for item in array%}yo{%endfor%}",
+  "test": "test_for"
+ },
+ {
+  "assigns": {
+   "array": [
+    1
+   ]
+  },
+  "expected": " yo ",
+  "id": "test/integration/tags/for_tag_test.rb:17",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:17",
+  "template": "{%for item in array%} yo {%endfor%}",
+  "test": "test_for"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2
+   ]
+  },
+  "expected": "",
+  "id": "test/integration/tags/for_tag_test.rb:18",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:18",
+  "template": "{%for item in array%}{%endfor%}",
+  "test": "test_for"
+ },
+ {
+  "assigns": {},
+  "expected": " 1  2  3 ",
+  "id": "test/integration/tags/for_tag_test.rb:42",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:42",
+  "template": "{%for item in (1..3) %} {{item}} {%endfor%}",
+  "test": "test_for_with_range"
+ },
+ {
+  "assigns": {
+   "a": "invalid integer"
+  },
+  "expected": " 0  1  2  3 ",
+  "id": "test/integration/tags/for_tag_test.rb:48",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:48",
+  "template": "{% for item in (a..3) %} {{item}} {% endfor %}",
+  "test": "test_for_with_range"
+ },
+ {
+  "assigns": {
+   "foobar": 3
+  },
+  "expected": " 1  2  3 ",
+  "id": "test/integration/tags/for_tag_test.rb:52",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:52",
+  "template": "{%for item in (1..foobar) %} {{item}} {%endfor%}",
+  "test": "test_for_with_variable_range"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": " 1  2  3 ",
+  "id": "test/integration/tags/for_tag_test.rb:66",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:66",
+  "template": "{%for item in array%} {{item}} {%endfor%}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "123",
+  "id": "test/integration/tags/for_tag_test.rb:67",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:67",
+  "template": "{%for item in array%}{{item}}{%endfor%}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "123",
+  "id": "test/integration/tags/for_tag_test.rb:68",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:68",
+  "template": "{% for item in array %}{{item}}{% endfor %}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    "a",
+    "b",
+    "c",
+    "d"
+   ]
+  },
+  "expected": "abcd",
+  "id": "test/integration/tags/for_tag_test.rb:69",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:69",
+  "template": "{%for item in array%}{{item}}{%endfor%}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    "a",
+    " ",
+    "b",
+    " ",
+    "c"
+   ]
+  },
+  "expected": "a b c",
+  "id": "test/integration/tags/for_tag_test.rb:70",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:70",
+  "template": "{%for item in array%}{{item}}{%endfor%}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    "a",
+    "",
+    "b",
+    "",
+    "c"
+   ]
+  },
+  "expected": "abc",
+  "id": "test/integration/tags/for_tag_test.rb:71",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:71",
+  "template": "{%for item in array%}{{item}}{%endfor%}",
+  "test": "test_for_with_variable"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "+++",
+  "id": "test/integration/tags/for_tag_test.rb:99",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:99",
+  "template": "{%for item in array%}+{%else%}-{%endfor%}",
+  "test": "test_for_else"
+ },
+ {
+  "assigns": {
+   "array": []
+  },
+  "expected": "-",
+  "id": "test/integration/tags/for_tag_test.rb:100",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:100",
+  "template": "{%for item in array%}+{%else%}-{%endfor%}",
+  "test": "test_for_else"
+ },
+ {
+  "assigns": {
+   "array": null
+  },
+  "expected": "-",
+  "id": "test/integration/tags/for_tag_test.rb:101",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:101",
+  "template": "{%for item in array%}+{%else%}-{%endfor%}",
+  "test": "test_for_else"
+ },
+ {
+  "assigns": {},
+  "expected": "oo",
+  "id": "test/integration/tags/for_tag_test.rb:381",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:381",
+  "template": "{% for a in (1..2) %}o{% for b in empty %}{% endfor %}{% endfor %}",
+  "test": "test_inner_for_over_empty_input"
+ },
+ {
+  "assigns": {
+   "characters": ""
+  },
+  "expected": "",
+  "id": "test/integration/tags/for_tag_test.rb:385",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/for_tag_test.rb:385",
+  "template": "{% for char in characters %}I WILL NOT BE OUTPUT{% endfor %}",
+  "test": "test_blank_string_not_iterable"
+ },
+ {
+  "assigns": {},
+  "expected": "  ",
+  "id": "test/integration/tags/if_else_tag_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:9",
+  "template": " {% if false %} this text should not go into the output {% endif %} ",
+  "test": "test_if"
+ },
+ {
+  "assigns": {},
+  "expected": "  you rock ?",
+  "id": "test/integration/tags/if_else_tag_test.rb:14",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:14",
+  "template": "{% if false %} you suck {% endif %} {% if true %} you rock {% endif %}?",
+  "test": "test_if"
+ },
+ {
+  "assigns": {},
+  "expected": " NO ",
+  "id": "test/integration/tags/if_else_tag_test.rb:18",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:18",
+  "template": "{% assign v = false %}{% if v %} YES {% else %} NO {% endif %}",
+  "test": "test_literal_comparisons"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:19",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:19",
+  "template": "{% assign v = nil %}{% if v == nil %} YES {% else %} NO {% endif %}",
+  "test": "test_literal_comparisons"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:23",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:23",
+  "template": "{% if false %} NO {% else %} YES {% endif %}",
+  "test": "test_if_else"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:24",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:24",
+  "template": "{% if true %} YES {% else %} NO {% endif %}",
+  "test": "test_if_else"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:25",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:25",
+  "template": "{% if \"foo\" %} YES {% else %} NO {% endif %}",
+  "test": "test_if_else"
+ },
+ {
+  "assigns": {
+   "var": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:29",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:29",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_boolean"
+ },
+ {
+  "assigns": {
+   "a": true,
+   "b": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:33",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:33",
+  "template": "{% if a or b %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": true,
+   "b": false
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:34",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:34",
+  "template": "{% if a or b %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": false,
+   "b": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:35",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:35",
+  "template": "{% if a or b %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": false,
+   "b": false
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:36",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:36",
+  "template": "{% if a or b %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": false,
+   "b": false,
+   "c": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:38",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:38",
+  "template": "{% if a or b or c %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": false,
+   "b": false,
+   "c": false
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:39",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:39",
+  "template": "{% if a or b or c %} YES {% endif %}",
+  "test": "test_if_or"
+ },
+ {
+  "assigns": {
+   "a": true,
+   "b": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:43",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:43",
+  "template": "{% if a == true or b == true %} YES {% endif %}",
+  "test": "test_if_or_with_operators"
+ },
+ {
+  "assigns": {
+   "a": true,
+   "b": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:44",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:44",
+  "template": "{% if a == true or b == false %} YES {% endif %}",
+  "test": "test_if_or_with_operators"
+ },
+ {
+  "assigns": {
+   "a": true,
+   "b": true
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:45",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:45",
+  "template": "{% if a == false or b == false %} YES {% endif %}",
+  "test": "test_if_or_with_operators"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:69",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:69",
+  "template": "{% if true and true %} YES {% endif %}",
+  "test": "test_if_and"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:70",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:70",
+  "template": "{% if false and true %} YES {% endif %}",
+  "test": "test_if_and"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:71",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:71",
+  "template": "{% if true and false %} YES {% endif %}",
+  "test": "test_if_and"
+ },
+ {
+  "assigns": {
+   "foo": {}
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:75",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:75",
+  "template": "{% if foo.bar %} NO {% endif %}",
+  "test": "test_hash_miss_generates_false"
+ },
+ {
+  "assigns": {
+   "var": false
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:79",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:79",
+  "template": "{% if var %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": null
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:80",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:80",
+  "template": "{% if var %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": false
+   }
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:81",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:81",
+  "template": "{% if foo.bar %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {}
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:82",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:82",
+  "template": "{% if foo.bar %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": null
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:83",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:83",
+  "template": "{% if foo.bar %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": true
+  },
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:84",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:84",
+  "template": "{% if foo.bar %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": "text"
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:86",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:86",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:87",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:87",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": 1
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:88",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:88",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": {}
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:89",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:89",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": []
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:90",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:90",
+  "template": "{% if var %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:91",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:91",
+  "template": "{% if \"foo\" %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": true
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:92",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:92",
+  "template": "{% if foo.bar %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": "text"
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:93",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:93",
+  "template": "{% if foo.bar %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": 1
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:94",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:94",
+  "template": "{% if foo.bar %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": {}
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:95",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:95",
+  "template": "{% if foo.bar %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": []
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:96",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:96",
+  "template": "{% if foo.bar %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": false
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:98",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:98",
+  "template": "{% if var %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": null
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:99",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:99",
+  "template": "{% if var %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": true
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:100",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:100",
+  "template": "{% if var %} YES {% else %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "var": "text"
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:101",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:101",
+  "template": "{% if \"foo\" %} YES {% else %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": false
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:103",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:103",
+  "template": "{% if foo.bar %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": true
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:104",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:104",
+  "template": "{% if foo.bar %} YES {% else %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "bar": "text"
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:105",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:105",
+  "template": "{% if foo.bar %} YES {% else %} NO {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {
+    "notbar": true
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:106",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:106",
+  "template": "{% if foo.bar %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "foo": {}
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:107",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:107",
+  "template": "{% if foo.bar %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {
+   "notfoo": {
+    "bar": true
+   }
+  },
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:108",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:108",
+  "template": "{% if foo.bar %} NO {% else %} YES {% endif %}",
+  "test": "test_if_from_variable"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:112",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:112",
+  "template": "{% if false %}{% if false %} NO {% endif %}{% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:113",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:113",
+  "template": "{% if false %}{% if true %} NO {% endif %}{% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:114",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:114",
+  "template": "{% if true %}{% if false %} NO {% endif %}{% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:115",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:115",
+  "template": "{% if true %}{% if true %} YES {% endif %}{% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:117",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:117",
+  "template": "{% if true %}{% if true %} YES {% else %} NO {% endif %}{% else %} NO {% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:118",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:118",
+  "template": "{% if true %}{% if false %} NO {% else %} YES {% endif %}{% else %} NO {% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/if_else_tag_test.rb:119",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:119",
+  "template": "{% if false %}{% if true %} NO {% else %} NONO {% endif %}{% else %} YES {% endif %}",
+  "test": "test_nested_if"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:123",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:123",
+  "template": "{% if null < 10 %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:124",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:124",
+  "template": "{% if null <= 10 %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:125",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:125",
+  "template": "{% if null >= 10 %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:126",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:126",
+  "template": "{% if null > 10 %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:128",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:128",
+  "template": "{% if 10 < null %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:129",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:129",
+  "template": "{% if 10 <= null %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:130",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:130",
+  "template": "{% if 10 >= null %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:131",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:131",
+  "template": "{% if 10 > null %} NO {% endif %}",
+  "test": "test_comparisons_on_null"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/tags/if_else_tag_test.rb:135",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:135",
+  "template": "{% if 0 == 0 %}0{% elsif 1 == 1%}1{% else %}2{% endif %}",
+  "test": "test_else_if"
+ },
+ {
+  "assigns": {},
+  "expected": "1",
+  "id": "test/integration/tags/if_else_tag_test.rb:136",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:136",
+  "template": "{% if 0 != 0 %}0{% elsif 1 == 1%}1{% else %}2{% endif %}",
+  "test": "test_else_if"
+ },
+ {
+  "assigns": {},
+  "expected": "2",
+  "id": "test/integration/tags/if_else_tag_test.rb:137",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:137",
+  "template": "{% if 0 != 0 %}0{% elsif 1 != 1%}1{% else %}2{% endif %}",
+  "test": "test_else_if"
+ },
+ {
+  "assigns": {},
+  "expected": "elsif",
+  "id": "test/integration/tags/if_else_tag_test.rb:139",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:139",
+  "template": "{% if false %}if{% elsif true %}elsif{% endif %}",
+  "test": "test_else_if"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:143",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "SyntaxError",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:143",
+  "template": "{% if jerry == 1 %}",
+  "test": "test_syntax_error_no_variable"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/if_else_tag_test.rb:147",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "SyntaxError",
+  "render_errors": false,
+  "source": "test/integration/tags/if_else_tag_test.rb:147",
+  "template": "{% if %}",
+  "test": "test_syntax_error_no_expression"
+ },
+ {
+  "assigns": {},
+  "expected": "1",
+  "id": "test/integration/tags/include_tag_test.rb:375",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/include_tag_test.rb:375",
+  "template": "{% for i in (1..3) %}{{ i }}{% break %}{{ i }}{% endfor %}",
+  "test": "test_break_through_include"
+ },
+ {
+  "assigns": {},
+  "expected": "0 1",
+  "id": "test/integration/tags/increment_tag_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/increment_tag_test.rb:9",
+  "template": "{%increment port %} {{ port }}",
+  "test": "test_inc"
+ },
+ {
+  "assigns": {},
+  "expected": " 0 1 2",
+  "id": "test/integration/tags/increment_tag_test.rb:10",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/increment_tag_test.rb:10",
+  "template": "{{port}} {%increment port %} {%increment port%} {{port}}",
+  "test": "test_inc"
+ },
+ {
+  "assigns": {
+   "port": 10
+  },
+  "expected": "-1 -1",
+  "id": "test/integration/tags/increment_tag_test.rb:20",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/increment_tag_test.rb:20",
+  "template": "{%decrement port %} {{ port }}",
+  "test": "test_dec"
+ },
+ {
+  "assigns": {},
+  "expected": " -1 -2 -2",
+  "id": "test/integration/tags/increment_tag_test.rb:21",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/increment_tag_test.rb:21",
+  "template": "{{port}} {%decrement port %} {%decrement port%} {{port}}",
+  "test": "test_dec"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:9",
+  "template": "{%- # this is an inline comment -%}",
+  "test": "test_inline_comment_returns_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:10",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:10",
+  "template": "{%-# this is an inline comment -%}",
+  "test": "test_inline_comment_returns_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:11",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:11",
+  "template": "{% # this is an inline comment %}",
+  "test": "test_inline_comment_returns_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:12",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:12",
+  "template": "{%# this is an inline comment %}",
+  "test": "test_inline_comment_returns_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:16",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:16",
+  "template": "{%#this is an inline comment%}",
+  "test": "test_inline_comment_does_not_require_a_space_after_the_pound_sign"
+ },
+ {
+  "assigns": {},
+  "expected": "Hey there, how are you doing today?",
+  "id": "test/integration/tags/inline_comment_test.rb:20",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:20",
+  "template": "{%- liquid\n  # This is how you'd write a block comment in a liquid tag.\n  # It looks a lot like what you'd have in ruby.\n\n  # You can use it as inline documentation in your\n  # liquid blocks to explain why you're doing something.\n  echo \"Hey there, \"\n\n  # It won't affect the output.\n  echo \"how are you doing today?\"\n-%}\n",
+  "test": "test_liquid_inline_comment_returns_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:36",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:36",
+  "template": "{%-\n  # That kind of block comment is also allowed.\n  # It would only be a stylistic difference.\n\n  # Much like JavaScript's /* */ comments and their\n  # leading * on new lines.\n-%}\n",
+  "test": "test_inline_comment_can_be_written_on_multiple_lines"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/inline_comment_test.rb:48",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:48",
+  "template": "{%- liquid\n  ######################################\n  # We support comments like this too. #\n  ######################################\n-%}\n",
+  "test": "test_inline_comment_multiple_pound_signs"
+ },
+ {
+  "assigns": {},
+  "expected": " -%}",
+  "id": "test/integration/tags/inline_comment_test.rb:67",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/inline_comment_test.rb:67",
+  "template": "{%- # {% echo 'hello world' %} -%}",
+  "test": "test_inline_comment_does_not_support_nested_tags"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "1 2 3",
+  "id": "test/integration/tags/liquid_tag_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:9",
+  "template": "{%- liquid\n  echo array | join: \" \"\n-%}\n",
+  "test": "test_liquid_tag"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "1 2 3",
+  "id": "test/integration/tags/liquid_tag_test.rb:15",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:15",
+  "template": "{%- liquid\n  for value in array\n    echo value\n    unless forloop.last\n      echo \" \"\n    endunless\n  endfor\n-%}\n",
+  "test": "test_liquid_tag"
+ },
+ {
+  "assigns": {
+   "array": [
+    1,
+    2,
+    3
+   ]
+  },
+  "expected": "4 8 12 6",
+  "id": "test/integration/tags/liquid_tag_test.rb:26",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:26",
+  "template": "{%- liquid\n  for value in array\n    assign double_value = value | times: 2\n    echo double_value | times: 2\n    unless forloop.last\n      echo \" \"\n    endunless\n  endfor\n\n  echo \" \"\n  echo double_value\n-%}\n",
+  "test": "test_liquid_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "abc",
+  "id": "test/integration/tags/liquid_tag_test.rb:41",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:41",
+  "template": "{%- liquid echo \"a\" -%}\nb\n{%- liquid echo \"c\" -%}\n",
+  "test": "test_liquid_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "good",
+  "id": "test/integration/tags/liquid_tag_test.rb:85",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:85",
+  "template": "{%- if true %}\n  {%- liquid\n    echo \"good\"\n  %}\n{%- endif -%}\n",
+  "test": "test_nested_liquid_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "{% liquid echo 'test' %}\n",
+  "id": "test/integration/tags/liquid_tag_test.rb:112",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:112",
+  "template": "{% raw %}{% liquid echo 'test' %}{% endraw %}\n",
+  "test": "test_liquid_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": "good",
+  "id": "test/integration/tags/liquid_tag_test.rb:118",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:118",
+  "template": "{%- liquid\n  liquid\n    if true\n      echo \"good\"\n    endif\n-%}\n",
+  "test": "test_nested_liquid_tags"
+ },
+ {
+  "assigns": {},
+  "expected": "good",
+  "id": "test/integration/tags/liquid_tag_test.rb:129",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:129",
+  "template": "{%- liquid liquid liquid echo \"good\" -%}\n",
+  "test": "test_nested_liquid_tags_on_same_line"
+ },
+ {
+  "assigns": {
+   "liquid": "liquid"
+  },
+  "expected": "liquid",
+  "id": "test/integration/tags/liquid_tag_test.rb:135",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/liquid_tag_test.rb:135",
+  "template": "{%- liquid liquid liquid echo liquid -%}\n",
+  "test": "test_nested_liquid_liquid_is_not_skipped_if_used_in_non_tag_position"
+ },
+ {
+  "assigns": {},
+  "expected": ">{{ test }}<",
+  "id": "test/integration/tags/raw_tag_test.rb:16",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:16",
+  "template": "> {%- raw -%}{{ test }}{%- endraw -%} <",
+  "test": "test_output_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": "> inner  <",
+  "id": "test/integration/tags/raw_tag_test.rb:17",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:17",
+  "template": "> {%- raw -%} inner {%- endraw %} <",
+  "test": "test_output_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": "> inner <",
+  "id": "test/integration/tags/raw_tag_test.rb:18",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:18",
+  "template": "> {%- raw -%} inner {%- endraw -%} <",
+  "test": "test_output_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": "{Hello}",
+  "id": "test/integration/tags/raw_tag_test.rb:19",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:19",
+  "template": "{% raw %}{{% endraw %}Hello{% raw %}}{% endraw %}",
+  "test": "test_output_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {% invalid ",
+  "id": "test/integration/tags/raw_tag_test.rb:23",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:23",
+  "template": "{% raw %} Foobar {% invalid {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar invalid %} ",
+  "id": "test/integration/tags/raw_tag_test.rb:24",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:24",
+  "template": "{% raw %} Foobar invalid %} {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {{ invalid ",
+  "id": "test/integration/tags/raw_tag_test.rb:25",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:25",
+  "template": "{% raw %} Foobar {{ invalid {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar invalid }} ",
+  "id": "test/integration/tags/raw_tag_test.rb:26",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:26",
+  "template": "{% raw %} Foobar invalid }} {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {% invalid {% {% endraw ",
+  "id": "test/integration/tags/raw_tag_test.rb:27",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:27",
+  "template": "{% raw %} Foobar {% invalid {% {% endraw {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {% {% {% ",
+  "id": "test/integration/tags/raw_tag_test.rb:28",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:28",
+  "template": "{% raw %} Foobar {% {% {% {% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " test {% raw %} {% endraw %}",
+  "id": "test/integration/tags/raw_tag_test.rb:29",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:29",
+  "template": "{% raw %} test {% raw %} {% {% endraw %}endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {{ invalid 1",
+  "id": "test/integration/tags/raw_tag_test.rb:30",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:30",
+  "template": "{% raw %} Foobar {{ invalid {% endraw %}{{ 1 }}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": " Foobar {% foo {% bar %}",
+  "id": "test/integration/tags/raw_tag_test.rb:31",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/raw_tag_test.rb:31",
+  "template": "{% raw %} Foobar {% foo {% bar %}{% endraw %}",
+  "test": "test_open_tag_in_raw"
+ },
+ {
+  "assigns": {},
+  "expected": "blah",
+  "id": "test/integration/tags/standard_tag_test.rb:14",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:14",
+  "template": "blah",
+  "test": "test_no_transform"
+ },
+ {
+  "assigns": {},
+  "expected": "<blah>",
+  "id": "test/integration/tags/standard_tag_test.rb:15",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:15",
+  "template": "<blah>",
+  "test": "test_no_transform"
+ },
+ {
+  "assigns": {},
+  "expected": "|,.:",
+  "id": "test/integration/tags/standard_tag_test.rb:16",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:16",
+  "template": "|,.:",
+  "test": "test_no_transform"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:17",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:17",
+  "template": "",
+  "test": "test_no_transform"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:30",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:30",
+  "template": "{%comment%}{%endcomment%}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:31",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:31",
+  "template": "{%comment%}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:32",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:32",
+  "template": "{% comment %}{%endcomment%}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:33",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:33",
+  "template": "{% comment %}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:34",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:34",
+  "template": "{%comment%}comment{%endcomment%}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:35",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:35",
+  "template": "{% comment %}comment{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:36",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:36",
+  "template": "{% comment %} 1 {% comment %} 2 {% endcomment %} 3 {% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:38",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:38",
+  "template": "{%comment%}{%blabla%}{%endcomment%}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:39",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:39",
+  "template": "{% comment %}{% blabla %}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:40",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:40",
+  "template": "{%comment%}{% endif %}{%endcomment%}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:41",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:41",
+  "template": "{% comment %}{% endwhatever %}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:42",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:42",
+  "template": "{% comment %}{% raw %} {{%%%%}}  }} { {% endcomment %} {% comment {% endraw %} {% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:43",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:43",
+  "template": "{% comment %}{% \" %}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:44",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:44",
+  "template": "{% comment %}{%%}{% endcomment %}",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/tags/standard_tag_test.rb:46",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:46",
+  "template": "foo{%comment%}comment{%endcomment%}bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/tags/standard_tag_test.rb:47",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:47",
+  "template": "foo{% comment %}comment{% endcomment %}bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/tags/standard_tag_test.rb:48",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:48",
+  "template": "foo{%comment%} comment {%endcomment%}bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/tags/standard_tag_test.rb:49",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:49",
+  "template": "foo{% comment %} comment {% endcomment %}bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foo  bar",
+  "id": "test/integration/tags/standard_tag_test.rb:51",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:51",
+  "template": "foo {%comment%} {%endcomment%} bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foo  bar",
+  "id": "test/integration/tags/standard_tag_test.rb:52",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:52",
+  "template": "foo {%comment%}comment{%endcomment%} bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foo  bar",
+  "id": "test/integration/tags/standard_tag_test.rb:53",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:53",
+  "template": "foo {%comment%} comment {%endcomment%} bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/tags/standard_tag_test.rb:55",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:55",
+  "template": "foo{%comment%}\n                                     {%endcomment%}bar",
+  "test": "test_has_a_block_which_does_nothing"
+ },
+ {
+  "assigns": {
+   "a": []
+  },
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:149",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:149",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {
+   "a": [
+    1
+   ]
+  },
+  "expected": "1",
+  "id": "test/integration/tags/standard_tag_test.rb:150",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:150",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {
+   "a": [
+    1,
+    1
+   ]
+  },
+  "expected": "2",
+  "id": "test/integration/tags/standard_tag_test.rb:151",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:151",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {
+   "a": [
+    1,
+    1,
+    1
+   ]
+  },
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:152",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:152",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {
+   "a": [
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:153",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:153",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {
+   "a": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:154",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:154",
+  "template": "{% case a.size %}{% when 1 %}1{% when 2 %}2{% endcase %}",
+  "test": "test_case_on_size"
+ },
+ {
+  "assigns": {},
+  "expected": "variable",
+  "id": "test/integration/tags/standard_tag_test.rb:267",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:267",
+  "template": "{% assign a = \"variable\"%}{{a}}",
+  "test": "test_assign"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:276",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:276",
+  "template": "{% assign a = \"\"%}{{a}}",
+  "test": "test_assign_an_empty_string"
+ },
+ {
+  "assigns": {},
+  "expected": "variable",
+  "id": "test/integration/tags/standard_tag_test.rb:280",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:280",
+  "template": "{%for i in (1..2) %}{% assign a = \"variable\"%}{% endfor %}{{a}}",
+  "test": "test_assign_is_global"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:285",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "SyntaxError",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:285",
+  "template": "{% case false %}{% when %}true{% endcase %}",
+  "test": "test_case_detects_bad_syntax"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:289",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "SyntaxError",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:289",
+  "template": "{% case false %}{% huh %}true{% endcase %}",
+  "test": "test_case_detects_bad_syntax"
+ },
+ {
+  "assigns": {},
+  "expected": "one",
+  "id": "test/integration/tags/standard_tag_test.rb:294",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:294",
+  "template": "{%cycle \"one\", \"two\"%}",
+  "test": "test_cycle"
+ },
+ {
+  "assigns": {},
+  "expected": "one two",
+  "id": "test/integration/tags/standard_tag_test.rb:295",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:295",
+  "template": "{%cycle \"one\", \"two\"%} {%cycle \"one\", \"two\"%}",
+  "test": "test_cycle"
+ },
+ {
+  "assigns": {},
+  "expected": " two",
+  "id": "test/integration/tags/standard_tag_test.rb:296",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:296",
+  "template": "{%cycle \"\", \"two\"%} {%cycle \"\", \"two\"%}",
+  "test": "test_cycle"
+ },
+ {
+  "assigns": {},
+  "expected": "one two one",
+  "id": "test/integration/tags/standard_tag_test.rb:298",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:298",
+  "template": "{%cycle \"one\", \"two\"%} {%cycle \"one\", \"two\"%} {%cycle \"one\", \"two\"%}",
+  "test": "test_cycle"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:340",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:340",
+  "template": "{% if true == empty %}?{% endif %}",
+  "test": "test_illegal_symbols"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:341",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:341",
+  "template": "{% if true == null %}?{% endif %}",
+  "test": "test_illegal_symbols"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:342",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:342",
+  "template": "{% if empty == true %}?{% endif %}",
+  "test": "test_illegal_symbols"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/integration/tags/standard_tag_test.rb:343",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:343",
+  "template": "{% if null == true %}?{% endif %}",
+  "test": "test_illegal_symbols"
+ },
+ {
+  "assigns": {},
+  "expected": "0 1 2 3",
+  "id": "test/integration/tags/standard_tag_test.rb:355",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/standard_tag_test.rb:355",
+  "template": "0{%\nfor i in (1..3)\n%} {{\ni\n}}{%\nendfor\n%}",
+  "test": "test_multiline_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "  ",
+  "id": "test/integration/tags/unless_else_tag_test.rb:9",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:9",
+  "template": " {% unless true %} this text should not go into the output {% endunless %} ",
+  "test": "test_unless"
+ },
+ {
+  "assigns": {},
+  "expected": "  you rock ?",
+  "id": "test/integration/tags/unless_else_tag_test.rb:14",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:14",
+  "template": "{% unless true %} you suck {% endunless %} {% unless false %} you rock {% endunless %}?",
+  "test": "test_unless"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/unless_else_tag_test.rb:18",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:18",
+  "template": "{% unless true %} NO {% else %} YES {% endunless %}",
+  "test": "test_unless_else"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/unless_else_tag_test.rb:19",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:19",
+  "template": "{% unless false %} YES {% else %} NO {% endunless %}",
+  "test": "test_unless_else"
+ },
+ {
+  "assigns": {},
+  "expected": " YES ",
+  "id": "test/integration/tags/unless_else_tag_test.rb:20",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:20",
+  "template": "{% unless \"foo\" %} NO {% else %} YES {% endunless %}",
+  "test": "test_unless_else"
+ },
+ {
+  "assigns": {
+   "choices": [
+    1,
+    null,
+    false
+   ]
+  },
+  "expected": "23",
+  "id": "test/integration/tags/unless_else_tag_test.rb:24",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:24",
+  "template": "{% for i in choices %}{% unless i %}{{ forloop.index }}{% endunless %}{% endfor %}",
+  "test": "test_unless_in_loop"
+ },
+ {
+  "assigns": {
+   "choices": [
+    1,
+    null,
+    false
+   ]
+  },
+  "expected": " TRUE  2  3 ",
+  "id": "test/integration/tags/unless_else_tag_test.rb:28",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/tags/unless_else_tag_test.rb:28",
+  "template": "{% for i in choices %}{% unless i %} {{ forloop.index }} {% else %} TRUE {% endunless %}{% endfor %}",
+  "test": "test_unless_else_in_loop"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:7",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:7",
+  "template": "{% liquid\n  if 1 != 1\n  comment\n  else\n    echo 123\n  endcomment\n  endif\n%}",
+  "test": "test_comment_inside_liquid_tag"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:20",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:20",
+  "template": "{% comment %}\n  {% if true %}\n  {% if ... %}\n  {%- for ? -%}\n  {% while true %}\n  {%\n    unless if\n  %}\n  {% endcase %}\n{% endcomment %}",
+  "test": "test_does_not_parse_nodes_inside_a_comment"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:35",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:35",
+  "template": "{% comment %}\n  {% if true %}\n{% endcomment %}",
+  "test": "test_allows_unclosed_tags"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:43",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:43",
+  "template": "{% comment %}\n  {% assign a = 123 {% comment %}\n{% endcomment %}",
+  "test": "test_open_tags_in_comment"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:50",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::SyntaxError",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:50",
+  "template": "{% comment %}\n  {% assign foo = \"1\"\n{% endcomment %}",
+  "test": "test_open_tags_in_comment"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:58",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::SyntaxError",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:58",
+  "template": "{% comment %}\n  {% comment %}\n    {% invalid\n  {% endcomment %}\n{% endcomment %}",
+  "test": "test_open_tags_in_comment"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:68",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::SyntaxError",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:68",
+  "template": "{% comment %}\n{% {{ {%- endcomment %}",
+  "test": "test_open_tags_in_comment"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:76",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:76",
+  "template": "{% comment %}\n  {% comment %}\n    {% comment %}{%    endcomment     %}\n  {% endcomment %}\n{% endcomment %}",
+  "test": "test_child_comment_tags_need_to_be_closed"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:85",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::SyntaxError",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:85",
+  "template": "{% comment %}\n  {% comment %}\n    {% comment %}\n  {% endcomment %}\n{% endcomment %}",
+  "test": "test_child_comment_tags_need_to_be_closed"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:96",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:96",
+  "template": "{% comment %}\n  {% raw %}\n    {% endcomment %}\n  {% endraw %}\n{% endcomment %}",
+  "test": "test_child_raw_tags_need_to_be_closed"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:173",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:173",
+  "template": "{% comment %}123{% endcomment xyz %}",
+  "test": "test_delimiter_can_have_extra_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:174",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:174",
+  "template": "{% comment %}123{% endcomment\txyz %}",
+  "test": "test_delimiter_can_have_extra_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:175",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:175",
+  "template": "{% comment %}123{% endcomment\nxyz %}",
+  "test": "test_delimiter_can_have_extra_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:176",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:176",
+  "template": "{% comment %}123{% endcomment\n   xyz  endcomment %}",
+  "test": "test_delimiter_can_have_extra_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:177",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:177",
+  "template": "{%comment}{% assign a = 1 %}{%endcomment}{% endif %}",
+  "test": "test_delimiter_can_have_extra_strings"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:181",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:181",
+  "template": "      {%- comment -%}123{%- endcomment -%}Hello!",
+  "test": "test_with_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:182",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:182",
+  "template": "{%- comment -%}123{%- endcomment -%}     Hello!",
+  "test": "test_with_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:183",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:183",
+  "template": "      {%- comment -%}123{%- endcomment -%}     Hello!",
+  "test": "test_with_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:185",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:185",
+  "template": "{%- comment %}Whitespace control!{% endcomment -%}\nHello!",
+  "test": "test_with_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!World!",
+  "id": "test/unit/tags/comment_tag_unit_test.rb:192",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/comment_tag_unit_test.rb:192",
+  "template": "Hello!\n{%- liquid\n  comment\n   this is inside a liquid tag\n  endcomment\n-%}\nWorld!",
+  "test": "test_dont_override_liquid_tag_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:166",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:166",
+  "template": "      {%- doc -%}123{%- enddoc -%}Hello!",
+  "test": "test_doc_tag_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:167",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:167",
+  "template": "{%- doc -%}123{%- enddoc -%}     Hello!",
+  "test": "test_doc_tag_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:168",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:168",
+  "template": "      {%- doc -%}123{%- enddoc -%}     Hello!",
+  "test": "test_doc_tag_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "Hello!",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:169",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:169",
+  "template": "{%- doc %}Whitespace control!{% enddoc -%}\nHello!",
+  "test": "test_doc_tag_whitespace_control"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:176",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:176",
+  "template": "{%- if true -%}\n  {%- doc -%}\n    {%- docEXTRA -%}wut{% enddocEXTRA -%}xyz\n  {%- enddoc -%}\n{%- endif -%}",
+  "test": "test_doc_tag_delimiter_handling"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:184",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:184",
+  "template": "{% doc %}123{% enddoc xyz %}",
+  "test": "test_doc_tag_delimiter_handling"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:185",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:185",
+  "template": "{% doc %}123{% enddoc\txyz %}",
+  "test": "test_doc_tag_delimiter_handling"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:186",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:186",
+  "template": "{% doc %}123{% enddoc\nxyz %}",
+  "test": "test_doc_tag_delimiter_handling"
+ },
+ {
+  "assigns": {},
+  "expected": "",
+  "id": "test/unit/tags/doc_tag_unit_test.rb:187",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/unit/tags/doc_tag_unit_test.rb:187",
+  "template": "{% doc %}123{% enddoc\n   xyz  enddoc %}",
+  "test": "test_doc_tag_delimiter_handling"
+ }
+]

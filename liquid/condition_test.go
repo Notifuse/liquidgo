@@ -563,8 +563,14 @@ func TestContainsOperatorTypedSlices(t *testing.T) {
 		{
 			name:     "[]int contains element",
 			left:     []int{10, 20, 30},
-			right:    "20",
+			right:    20,
 			expected: true,
+		},
+		{
+			name:     "[]int does not contain the element's text (Ruby include?)",
+			left:     []int{10, 20, 30},
+			right:    "20",
+			expected: false,
 		},
 		{
 			name:     "[]int does not contain element",
@@ -579,9 +585,9 @@ func TestContainsOperatorTypedSlices(t *testing.T) {
 			right:    "green",
 			expected: true,
 		},
-		// Substring matching for structs
+		// No substring matching inside elements (Ruby include? compares elements)
 		{
-			name: "[]struct contains substring",
+			name: "[]struct does not match a substring",
 			left: []struct {
 				Name string
 			}{
@@ -589,7 +595,7 @@ func TestContainsOperatorTypedSlices(t *testing.T) {
 				{Name: "Second Item"},
 			},
 			right:    "First",
-			expected: true,
+			expected: false,
 		},
 		// String contains (existing functionality)
 		{

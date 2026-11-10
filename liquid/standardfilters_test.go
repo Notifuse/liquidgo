@@ -319,10 +319,10 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("string negative offset", func(t *testing.T) {
+	t.Run("string negative offset counts from the end", func(t *testing.T) {
 		got := sf.Slice("hello", -1, 3)
-		if got != "" {
-			t.Errorf("Slice() with negative offset = %v, want empty string", got)
+		if got != "o" {
+			t.Errorf("Slice() with negative offset = %v, want 'o'", got)
 		}
 	})
 
@@ -340,11 +340,11 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("array negative offset", func(t *testing.T) {
+	t.Run("array negative offset counts from the end", func(t *testing.T) {
 		got := sf.Slice([]interface{}{1, 2, 3}, -1, 2)
 		gotArr, ok := got.([]interface{})
-		if !ok || len(gotArr) != 0 {
-			t.Errorf("Slice() with negative offset = %v, want empty array", got)
+		if !ok || len(gotArr) != 1 || gotArr[0] != 3 {
+			t.Errorf("Slice() with negative offset = %v, want [3]", got)
 		}
 	})
 
@@ -364,10 +364,10 @@ func TestStandardFiltersSlice(t *testing.T) {
 		}
 	})
 
-	t.Run("non-string non-array", func(t *testing.T) {
+	t.Run("non-string non-array is sliced as text", func(t *testing.T) {
 		got := sf.Slice(42, 1, 2)
-		if got != "" {
-			t.Errorf("Slice() with non-string non-array = %v, want empty string", got)
+		if got != "2" {
+			t.Errorf("Slice() with non-string non-array = %v, want '2'", got)
 		}
 	})
 
@@ -407,18 +407,17 @@ func TestStandardFiltersTruncate(t *testing.T) {
 		}
 	})
 
-	t.Run("length zero or negative", func(t *testing.T) {
-		// With length 0, it defaults to 50, but "hello world" is shorter, so returns full string
+	t.Run("length zero or negative leaves the ellipsis", func(t *testing.T) {
 		result := sf.Truncate("hello world", 0, nil)
-		if result != "hello world" {
-			t.Errorf("Truncate() with length 0 = %v, want 'hello world' (string shorter than default 50)", result)
+		if result != "..." {
+			t.Errorf("Truncate() with length 0 = %v, want '...'", result)
 		}
 
-		// Test with a longer string to see default length behavior
+		// Without a length, the default is 50
 		longStr := strings.Repeat("a", 100)
-		result2 := sf.Truncate(longStr, 0, nil)
+		result2 := sf.Truncate(longStr, nil, nil)
 		if len(result2) != 50 {
-			t.Errorf("Truncate() with length 0 and long string = %v (len=%d), expected length 50", result2, len(result2))
+			t.Errorf("Truncate() without a length = %v (len=%d), expected length 50", result2, len(result2))
 		}
 	})
 
@@ -458,8 +457,8 @@ func TestStandardFiltersJoin(t *testing.T) {
 
 	t.Run("array with default separator", func(t *testing.T) {
 		result := sf.Join([]interface{}{"a", "b", "c"}, nil)
-		if result != "a, b, c" {
-			t.Errorf("Join() with nil separator = %v, want 'a, b, c'", result)
+		if result != "a b c" {
+			t.Errorf("Join() with nil separator = %v, want 'a b c'", result)
 		}
 	})
 
@@ -742,12 +741,12 @@ func TestAbs(t *testing.T) {
 		input    interface{}
 		expected interface{}
 	}{
-		{17, float64(17)},
-		{-17, float64(17)},
+		{17, 17},
+		{-17, 17},
 		{17.42, 17.42},
 		{-17.42, 17.42},
-		{"17", 17.0},
-		{"-17", 17.0},
+		{"17", 17},
+		{"-17", 17},
 	}
 
 	for _, tt := range tests {
@@ -762,7 +761,7 @@ func TestPlus(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Plus(1, 1)
-	if result != float64(2) {
+	if result != 2 {
 		t.Errorf("Plus(1, 1) = %v, want 2", result)
 	}
 
@@ -776,7 +775,7 @@ func TestMinus(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Minus(5, 1)
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("Minus(5, 1) = %v, want 4", result)
 	}
 
@@ -791,7 +790,7 @@ func TestTimes(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.Times(3, 4)
-	if result != float64(12) {
+	if result != 12 {
 		t.Errorf("Times(3, 4) = %v, want 12", result)
 	}
 
@@ -808,7 +807,7 @@ func TestDividedBy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DividedBy(12, 3) error = %v", err)
 	}
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("DividedBy(12, 3) = %v, want 4", result)
 	}
 
@@ -835,7 +834,7 @@ func TestModulo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Modulo(3, 2) error = %v", err)
 	}
-	if result != float64(1) {
+	if result != 1 {
 		t.Errorf("Modulo(3, 2) = %v, want 1", result)
 	}
 
@@ -918,17 +917,17 @@ func TestAtMost(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.AtMost(5, 4)
-	if result != float64(4) {
+	if result != 4 {
 		t.Errorf("AtMost(5, 4) = %v, want 4", result)
 	}
 
 	result = sf.AtMost(5, 5)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtMost(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtMost(5, 6)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtMost(5, 6) = %v, want 5", result)
 	}
 }
@@ -937,17 +936,17 @@ func TestAtLeast(t *testing.T) {
 	sf := &StandardFilters{}
 
 	result := sf.AtLeast(5, 4)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtLeast(5, 4) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 5)
-	if result != float64(5) {
+	if result != 5 {
 		t.Errorf("AtLeast(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 6)
-	if result != float64(6) {
+	if result != 6 {
 		t.Errorf("AtLeast(5, 6) = %v, want 6", result)
 	}
 }
@@ -1276,7 +1275,7 @@ func TestSum(t *testing.T) {
 	input := []interface{}{1, 2}
 	result := sf.Sum(input, nil)
 
-	if result != float64(3) {
+	if result != 3 {
 		t.Errorf("Sum([1, 2]) = %v, want 3", result)
 	}
 
@@ -1288,12 +1287,12 @@ func TestSum(t *testing.T) {
 	}
 
 	result2 := sf.Sum(input2, "quantity")
-	if result2 != float64(3) {
+	if result2 != 3 {
 		t.Errorf("Sum(input, 'quantity') = %v, want 3", result2)
 	}
 
 	result3 := sf.Sum(input2, "weight")
-	if result3 != float64(7) {
+	if result3 != 7 {
 		t.Errorf("Sum(input, 'weight') = %v, want 7", result3)
 	}
 }

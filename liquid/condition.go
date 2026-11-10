@@ -225,7 +225,7 @@ func (c *Condition) equalVariables(left, right interface{}) bool {
 		return checkMethodLiteral(ml, left)
 	}
 
-	return left == right
+	return liquidEqual(left, right)
 }
 
 func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
@@ -270,15 +270,13 @@ func compareValues(left, right interface{}) (int, error) {
 	// - "number < nil" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
 	if left == nil && right != nil {
 		// Check if right is a number
-		_, rightOk := toNumber(right)
-		if rightOk {
+		if _, rightOk := asNumber(right); rightOk {
 			return -1, nil
 		}
 	}
 	if right == nil && left != nil {
 		// Check if left is a number
-		_, leftOk := toNumber(left)
-		if leftOk {
+		if _, leftOk := asNumber(left); leftOk {
 			return -1, nil
 		}
 	}
@@ -287,16 +285,12 @@ func compareValues(left, right interface{}) (int, error) {
 		return 0, nil
 	}
 
-	// Simple numeric comparison
-	leftNum, leftOk := toNumber(left)
-	rightNum, rightOk := toNumber(right)
+	// Numeric comparison, exact across Go numeric types (NaN compares as 0, as before)
+	leftNum, leftOk := asNumber(left)
+	rightNum, rightOk := asNumber(right)
 	if leftOk && rightOk {
-		if leftNum < rightNum {
-			return -1, nil
-		} else if leftNum > rightNum {
-			return 1, nil
-		}
-		return 0, nil
+		cmp, _ := compareNumbers(leftNum, rightNum)
+		return cmp, nil
 	}
 
 	// If one is a number and the other is not (and neither is nil), it's a type mismatch for comparison
@@ -330,18 +324,9 @@ func compareValues(left, right interface{}) (int, error) {
 	return 0, nil
 }
 
-func toNumber(v interface{}) (float64, bool) {
-	switch n := v.(type) {
-	case int:
-		return float64(n), true
-	case int64:
-		return float64(n), true
-	case float64:
-		return n, true
-	}
-	return 0, false
-}
-
+// containsOperator implements contains as Ruby's include?: a substring for a string
+// (the right side converted to text), an element equal to the right side for a list,
+// a key for a map.
 func containsOperator(left, right interface{}) bool {
 	if left == nil || right == nil {
 		return false
@@ -349,60 +334,35 @@ func containsOperator(left, right interface{}) bool {
 
 	rightStr := ToS(right, nil)
 
-	// Check if left is a string
 	if leftStr, ok := left.(string); ok {
 		return strings.Contains(leftStr, rightStr)
 	}
 
-	// Check if left is a slice/array
-	if arr, ok := left.([]interface{}); ok {
-		for _, item := range arr {
-			itemStr := ToS(item, nil)
-			// Check for exact match or substring match
-			if itemStr == rightStr || strings.Contains(itemStr, rightStr) {
+	v := reflect.ValueOf(left)
+	switch v.Kind() {
+	case reflect.String:
+		return strings.Contains(v.String(), rightStr)
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			if liquidEqual(v.Index(i).Interface(), right) {
 				return true
 			}
 		}
-	} else if left != nil {
-		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
-		// This matches Ruby's duck-typing behavior: arrays respond to include?
-		v := reflect.ValueOf(left)
-		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-			for i := 0; i < v.Len(); i++ {
-				item := v.Index(i).Interface()
-				itemStr := ToS(item, nil)
-				// Check for exact match or substring match
-				if itemStr == rightStr || strings.Contains(itemStr, rightStr) {
-					return true
-				}
-			}
-			return false
+		return false
+	case reflect.Map:
+		if m, ok := left.(map[string]interface{}); ok {
+			_, exists := m[rightStr]
+			return exists
 		}
-	}
-
-	// Check if left is a map
-	if m, ok := left.(map[string]interface{}); ok {
-		_, exists := m[rightStr]
-		return exists
-	}
-
-	// Use reflection to check typed maps (map[string]string, map[string]int, etc.)
-	if left != nil {
-		v := reflect.ValueOf(left)
-		if v.Kind() == reflect.Map {
-			// For maps, check if the key exists
-			keyVal := reflect.ValueOf(rightStr)
-			mapKey := v.MapIndex(keyVal)
-			if mapKey.IsValid() {
+		keyVal := reflect.ValueOf(rightStr)
+		if keyVal.Type().AssignableTo(v.Type().Key()) && v.MapIndex(keyVal).IsValid() {
+			return true
+		}
+		// Also try to find the key by iterating (in case key types don't match exactly)
+		iter := v.MapRange()
+		for iter.Next() {
+			if ToS(iter.Key().Interface(), nil) == rightStr {
 				return true
-			}
-			// Also try to find the key by iterating (in case key types don't match exactly)
-			iter := v.MapRange()
-			for iter.Next() {
-				keyStr := ToS(iter.Key().Interface(), nil)
-				if keyStr == rightStr {
-					return true
-				}
 			}
 		}
 	}

@@ -4,12 +4,15 @@ import (
 	"encoding/base64"
 	"html"
 	"math"
+	"math/big"
 	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // StandardFilters provides standard filter implementations.
@@ -25,7 +28,7 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 	}
 	switch v := input.(type) {
 	case string:
-		return len(v)
+		return utf8.RuneCountInString(v)
 	case []interface{}:
 		return len(v)
 	case map[string]interface{}:
@@ -57,10 +60,11 @@ func (sf *StandardFilters) Upcase(input interface{}) string {
 // Capitalize capitalizes the first word in a string and downcases the remaining characters.
 func (sf *StandardFilters) Capitalize(input interface{}) string {
 	s := ToS(input, nil)
-	if len(s) == 0 {
+	first, size := utf8.DecodeRuneInString(s)
+	if size == 0 {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+	return string(unicode.ToTitle(first)) + strings.ToLower(s[size:])
 }
 
 // Escape escapes special characters in HTML.
@@ -77,10 +81,49 @@ func (sf *StandardFilters) H(input interface{}) string {
 }
 
 // EscapeOnce escapes a string without changing characters that have already been escaped.
+// As Ruby's /["><']|&(?!([a-zA-Z]+|(#\d+));)/: an & starting a named entity (&amp;) or a
+// decimal one (&#39;) is kept; any other & is escaped.
 func (sf *StandardFilters) EscapeOnce(input interface{}) string {
 	s := ToS(input, nil)
-	// Simple implementation - just escape
-	return html.EscapeString(s)
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '"':
+			b.WriteString("&quot;")
+		case '\'':
+			b.WriteString("&#39;")
+		case '<':
+			b.WriteString("&lt;")
+		case '>':
+			b.WriteString("&gt;")
+		case '&':
+			if isEntityAt(s, i+1) {
+				b.WriteByte('&')
+			} else {
+				b.WriteString("&amp;")
+			}
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
+
+// isEntityAt reports whether s[i:] starts with letters or #digits followed by ";".
+func isEntityAt(s string, i int) bool {
+	j := i
+	if j < len(s) && s[j] == '#' {
+		j++
+		for j < len(s) && s[j] >= '0' && s[j] <= '9' {
+			j++
+		}
+		return j > i+1 && j < len(s) && s[j] == ';'
+	}
+	for j < len(s) && ((s[j] >= 'a' && s[j] <= 'z') || (s[j] >= 'A' && s[j] <= 'Z')) {
+		j++
+	}
+	return j > i && j < len(s) && s[j] == ';'
 }
 
 // URLEncode converts URL-unsafe characters to percent-encoded equivalent.
@@ -133,7 +176,9 @@ func (sf *StandardFilters) Base64URLSafeDecode(input interface{}) (string, error
 	return string(decoded), nil
 }
 
-// Slice returns a substring or series of array items.
+// Slice returns a substring or series of array items, as Ruby's slice(offset, length):
+// a negative offset counts from the end, and an offset or length out of range gives an
+// empty result. Anything that is not a list is sliced as text, by characters.
 func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length interface{}) interface{} {
 	offsetInt, _ := ToInteger(offset)
 	lengthInt := 1
@@ -141,58 +186,65 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 		lengthInt, _ = ToInteger(length)
 	}
 
-	switch v := input.(type) {
-	case []interface{}:
-		if offsetInt < 0 || offsetInt >= len(v) {
-			return []interface{}{}
-		}
-		end := offsetInt + lengthInt
-		if end > len(v) {
-			end = len(v)
-		}
-		return v[offsetInt:end]
-	case string:
-		if offsetInt < 0 || offsetInt >= len(v) {
-			return ""
-		}
-		end := offsetInt + lengthInt
-		if end > len(v) {
-			end = len(v)
-		}
-		return v[offsetInt:end]
-	default:
-		// Use reflection to handle typed slices/arrays
-		if input != nil {
-			val := reflect.ValueOf(input)
-			if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
-				if offsetInt < 0 || offsetInt >= val.Len() {
-					return []interface{}{}
-				}
-				end := offsetInt + lengthInt
-				if end > val.Len() {
-					end = val.Len()
-				}
-				// Convert slice to []interface{}
-				result := make([]interface{}, end-offsetInt)
-				for i := offsetInt; i < end; i++ {
-					result[i-offsetInt] = val.Index(i).Interface()
-				}
-				return result
+	if input != nil {
+		if items, ok := input.([]interface{}); ok {
+			start, end, ok := sliceBounds(len(items), offsetInt, lengthInt)
+			if !ok {
+				return []interface{}{}
 			}
+			return items[start:end]
 		}
+		val := reflect.ValueOf(input)
+		if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+			start, end, ok := sliceBounds(val.Len(), offsetInt, lengthInt)
+			if !ok {
+				return []interface{}{}
+			}
+			result := make([]interface{}, end-start)
+			for i := start; i < end; i++ {
+				result[i-start] = val.Index(i).Interface()
+			}
+			return result
+		}
+	}
+
+	runes := []rune(ToS(input, nil))
+	start, end, ok := sliceBounds(len(runes), offsetInt, lengthInt)
+	if !ok {
 		return ""
 	}
+	return string(runes[start:end])
 }
 
-// Truncate truncates a string down to a given number of characters.
+// sliceBounds applies Ruby's slice(offset, length) rules to a sequence of size n.
+func sliceBounds(n, offset, length int) (start, end int, ok bool) {
+	if offset < 0 {
+		offset += n
+	}
+	if offset < 0 || offset > n || length < 0 {
+		return 0, 0, false
+	}
+	end = n
+	if length < n-offset {
+		end = offset + length
+	}
+	return offset, end, true
+}
+
+// Truncate shortens a string to length characters, the ellipsis included (50 by
+// default). A length of 0 or less leaves only the ellipsis, and a length that is not an
+// integer leaves the input unchanged.
 func (sf *StandardFilters) Truncate(input interface{}, length interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
 	}
 	inputStr := ToS(input, nil)
-	lengthInt, _ := ToInteger(length)
-	if lengthInt <= 0 {
-		lengthInt = 50
+	lengthInt := 50
+	if length != nil {
+		var err error
+		if lengthInt, err = ToInteger(length); err != nil {
+			return inputStr
+		}
 	}
 
 	truncateStr := "..."
@@ -200,27 +252,37 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	if len(inputStr) <= lengthInt {
+	runes := []rune(inputStr)
+	if len(runes) <= lengthInt {
 		return inputStr
 	}
 
-	l := lengthInt - len(truncateStr)
-	if l < 0 {
-		l = 0
+	// compared before subtracting, so that a length near the int minimum cannot wrap
+	l := 0
+	if ellipsis := utf8.RuneCountInString(truncateStr); lengthInt > ellipsis {
+		l = lengthInt - ellipsis
 	}
 
-	return inputStr[:l] + truncateStr
+	return string(runes[:l]) + truncateStr
 }
 
-// TruncateWords truncates a string down to a given number of words.
+// TruncateWords shortens a string to a number of words (15 by default, at least 1).
+// Words are separated by ASCII whitespace, as in Ruby's split(" "). A count that is not
+// an integer leaves the input unchanged.
 func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, truncateString interface{}) string {
 	if input == nil {
 		return ""
 	}
 	inputStr := ToS(input, nil)
-	wordsInt, _ := ToInteger(words)
+	wordsInt := 15
+	if words != nil {
+		var err error
+		if wordsInt, err = ToInteger(words); err != nil {
+			return inputStr
+		}
+	}
 	if wordsInt <= 0 {
-		wordsInt = 15
+		wordsInt = 1
 	}
 
 	truncateStr := "..."
@@ -228,20 +290,76 @@ func (sf *StandardFilters) TruncateWords(input interface{}, words interface{}, t
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	wordList := strings.Fields(inputStr)
+	// Ruby gives up on a count beyond a 32-bit integer and keeps the input
+	if wordsInt >= math.MaxInt32 {
+		return inputStr
+	}
+	wordList := splitASCIIWhitespaceLimit(inputStr, wordsInt+1)
 	if len(wordList) <= wordsInt {
 		return inputStr
 	}
 
-	result := strings.Join(wordList[:wordsInt], " ")
+	result := strings.Join(wordList[:len(wordList)-1], " ")
 	return result + truncateStr
 }
 
-// Split splits a string into an array of substrings based on a separator.
+// splitASCIIWhitespaceLimit is Ruby's split(" ", limit): at most limit fields, the
+// last one holding the rest of the string. As in Ruby, a string ending in whitespace
+// has an empty last field, so "a b " | truncatewords: 2 is "a b...".
+func splitASCIIWhitespaceLimit(s string, limit int) []string {
+	var fields []string
+	beg, end, skip := 0, 0, true
+	count := 1
+	for i := 0; i < len(s); i++ {
+		c := rune(s[i])
+		switch {
+		case skip && isASCIIWhitespace(c):
+			beg = i + 1
+		case skip:
+			end, skip = i+1, false
+			if limit <= count {
+				return append(fields, s[beg:])
+			}
+		case isASCIIWhitespace(c):
+			fields = append(fields, s[beg:end])
+			skip, beg = true, i+1
+			count++
+		default:
+			end = i + 1
+		}
+	}
+	if len(s) > 0 {
+		fields = append(fields, s[beg:])
+	}
+	return fields
+}
+
+func isASCIIWhitespace(r rune) bool {
+	return r == ' ' || r == '\t' || r == '\n' || r == '\v' || r == '\f' || r == '\r'
+}
+
+// splitASCIIWhitespace splits like Ruby's split(" "): on runs of ASCII whitespace,
+// ignoring leading and trailing whitespace.
+func splitASCIIWhitespace(s string) []string {
+	return strings.FieldsFunc(s, isASCIIWhitespace)
+}
+
+// Split splits a string into an array of substrings based on a separator, as Ruby's
+// split: " " splits on runs of whitespace, "" splits into characters, and trailing
+// empty strings are dropped.
 func (sf *StandardFilters) Split(input interface{}, pattern interface{}) []interface{} {
 	inputStr := ToS(input, nil)
 	patternStr := ToS(pattern, nil)
-	parts := strings.Split(inputStr, patternStr)
+	var parts []string
+	if patternStr == " " {
+		parts = splitASCIIWhitespace(inputStr)
+	} else if inputStr != "" {
+		parts = strings.Split(inputStr, patternStr)
+		// Ruby drops trailing empty strings
+		for len(parts) > 0 && parts[len(parts)-1] == "" {
+			parts = parts[:len(parts)-1]
+		}
+	}
 	result := make([]interface{}, len(parts))
 	for i, part := range parts {
 		result[i] = part
@@ -264,16 +382,17 @@ func (sf *StandardFilters) Rstrip(input interface{}) string {
 	return strings.TrimRight(ToS(input, nil), " \t\n\r")
 }
 
+var (
+	stripHTMLBlocks = regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	stripHTMLTags   = regexp.MustCompile(`(?s)<.*?>`)
+)
+
 // StripHTML strips HTML tags from a string.
 func (sf *StandardFilters) StripHTML(input interface{}) string {
 	s := ToS(input, nil)
 
-	// First remove script/style/comment blocks
-	stripHTMLBlocks := regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	// First remove script/style/comment blocks, then all HTML tags
 	result := stripHTMLBlocks.ReplaceAllString(s, "")
-
-	// Then remove all HTML tags
-	stripHTMLTags := regexp.MustCompile(`<.*?>`)
 	result = stripHTMLTags.ReplaceAllString(result, "")
 
 	return result
@@ -313,7 +432,7 @@ func (sf *StandardFilters) Last(input interface{}) interface{} {
 
 // Join joins array elements with a separator.
 func (sf *StandardFilters) Join(input interface{}, separator interface{}) string {
-	sep := ", "
+	sep := " "
 	if separator != nil {
 		sep = ToS(separator, nil)
 	}
@@ -449,189 +568,146 @@ func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 // Abs returns the absolute value of a number.
 // Mirrors Ruby's abs from standardfilters.rb:792
 func (sf *StandardFilters) Abs(input interface{}) interface{} {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		if v < 0 {
-			return -v
+	n := toLiquidNumber(input)
+	switch n.kind {
+	case integerNumber:
+		if n.i < 0 {
+			return arithmetic(integerOf(0), n, '-').value()
 		}
-		return v
-	case float64:
-		return math.Abs(v)
-	default:
-		return 0
+		return n.value()
+	case decimalNumber:
+		return decimalOf(new(big.Rat).Abs(n.r)).value()
 	}
+	return math.Abs(n.f)
 }
 
 // Plus adds two numbers.
 // Mirrors Ruby's plus from standardfilters.rb:804
 func (sf *StandardFilters) Plus(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "+")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '+').value()
 }
 
 // Minus subtracts two numbers.
 // Mirrors Ruby's minus from standardfilters.rb:815
 func (sf *StandardFilters) Minus(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "-")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '-').value()
 }
 
 // Times multiplies two numbers.
 // Mirrors Ruby's times from standardfilters.rb:826
 func (sf *StandardFilters) Times(input interface{}, operand interface{}) interface{} {
-	return applyOperation(input, operand, "*")
+	return arithmetic(toLiquidNumber(input), toLiquidNumber(operand), '*').value()
 }
 
-// DividedBy divides two numbers.
+// DividedBy divides two numbers: two integers give the floored integer quotient.
 // Mirrors Ruby's divided_by from standardfilters.rb:837
 func (sf *StandardFilters) DividedBy(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum, _ := ToNumber(operand)
-	var operandFloat float64
-	switch v := operandNum.(type) {
-	case int:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = float64(v)
-	case float64:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = v
-	default:
+	divisor := toLiquidNumber(operand)
+	if divisor.isZero() {
 		return nil, NewZeroDivisionError("divided by 0")
 	}
-
-	if operandFloat == 0 {
-		return nil, NewZeroDivisionError("divided by 0")
-	}
-
-	return applyOperation(input, operand, "/"), nil
+	return arithmetic(toLiquidNumber(input), divisor, '/').value(), nil
 }
 
-// Modulo returns the remainder of division.
+// Modulo returns the remainder of division, with the sign of the divisor (Ruby %).
 // Mirrors Ruby's modulo from standardfilters.rb:850
 func (sf *StandardFilters) Modulo(input interface{}, operand interface{}) (interface{}, error) {
-	operandNum, _ := ToNumber(operand)
-	var operandFloat float64
-	switch v := operandNum.(type) {
-	case int:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = float64(v)
-	case float64:
-		if v == 0 {
-			return nil, NewZeroDivisionError("divided by 0")
-		}
-		operandFloat = v
-	default:
+	divisor := toLiquidNumber(operand)
+	if divisor.isZero() {
 		return nil, NewZeroDivisionError("divided by 0")
 	}
-
-	if operandFloat == 0 {
-		return nil, NewZeroDivisionError("divided by 0")
-	}
-
-	return applyOperation(input, operand, "%"), nil
+	return arithmetic(toLiquidNumber(input), divisor, '%').value(), nil
 }
 
-// Round rounds a number to the nearest integer or specified precision.
+// Round rounds a number to the nearest integer or to n decimal places, half away from
+// zero on the exact decimal value (1.005 | round: 2 is 1.01).
 // Mirrors Ruby's round from standardfilters.rb:863
 func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{}, error) {
-	num, _ := ToNumber(input)
-	precision := 0
+	digits := 0
 	if n != nil {
-		precisionNum, _ := ToNumber(n)
-		if p, ok := precisionNum.(int); ok {
-			precision = p
-		} else if p, ok := precisionNum.(float64); ok {
-			precision = int(p)
+		d := toLiquidNumber(n)
+		if d.kind == specialNumber {
+			return nil, NewFloatDomainError(ToS(d.f, nil))
 		}
+		digits = clampRoundDigits(floorRat(d.rat()))
 	}
 
-	var result interface{}
-	switch v := num.(type) {
-	case int:
-		result = v
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return nil, NewFloatDomainError("Infinity")
-		}
-		if precision == 0 {
-			result = int(math.Round(v))
-		} else {
-			multiplier := math.Pow(10, float64(precision))
-			result = math.Round(v*multiplier) / multiplier
-		}
-	default:
-		result = 0
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return nil, NewFloatDomainError(ToS(num.f, nil))
 	}
+	if num.kind == integerNumber && digits >= 0 {
+		return num.value(), nil
+	}
+	// beyond a float64's range of digits the result is known without computing 10^digits
+	if digits > maxRoundDigits {
+		return num.value(), nil
+	}
+	if digits < -maxRoundDigits {
+		if num.kind == integerNumber {
+			return 0, nil
+		}
+		return 0.0, nil
+	}
+	rounded := decimalOf(roundRat(num.rat(), digits))
+	if digits == 0 || num.kind == integerNumber {
+		return decimalOfInteger(floorRat(rounded.r)).value(), nil
+	}
+	return rounded.value(), nil
+}
 
-	return result, nil
+// maxRoundDigits bounds the precision of round: a float64 has no digit beyond 10^±340,
+// so a larger precision keeps the number and a smaller one gives 0.
+const maxRoundDigits = 400
+
+func clampRoundDigits(d *big.Int) int {
+	switch {
+	case d.Cmp(big.NewInt(maxRoundDigits)) > 0:
+		return maxRoundDigits + 1
+	case d.Cmp(big.NewInt(-maxRoundDigits)) < 0:
+		return -maxRoundDigits - 1
+	}
+	return int(d.Int64())
 }
 
 // Ceil rounds a number up to the nearest integer.
 // Mirrors Ruby's ceil from standardfilters.rb:879
 func (sf *StandardFilters) Ceil(input interface{}) (int, error) {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		return v, nil
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return 0, NewFloatDomainError("Infinity")
-		}
-		return int(math.Ceil(v)), nil
-	default:
-		return 0, nil
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
+	return int(ceilRat(num.rat()).Int64()), nil
 }
 
 // Floor rounds a number down to the nearest integer.
 // Mirrors Ruby's floor from standardfilters.rb:892
 func (sf *StandardFilters) Floor(input interface{}) (int, error) {
-	num, _ := ToNumber(input)
-	switch v := num.(type) {
-	case int:
-		return v, nil
-	case float64:
-		if math.IsInf(v, 0) || math.IsNaN(v) {
-			return 0, NewFloatDomainError("Infinity")
-		}
-		return int(math.Floor(v)), nil
-	default:
-		return 0, nil
+	num := toLiquidNumber(input)
+	if num.kind == specialNumber {
+		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
+	return int(floorRat(num.rat()).Int64()), nil
 }
 
 // AtLeast limits a number to a minimum value.
 // Mirrors Ruby's at_least from standardfilters.rb:905
 func (sf *StandardFilters) AtLeast(input interface{}, n interface{}) interface{} {
-	minValue, _ := ToNumber(n)
-	result, _ := ToNumber(input)
-
-	minFloat, _ := ToNumberValue(minValue)
-	resultFloat, _ := ToNumberValue(result)
-
-	if minFloat > resultFloat {
-		return minValue
+	minValue, result := toLiquidNumber(n), toLiquidNumber(input)
+	if compareLiquidNumbers(minValue, result) > 0 {
+		return minValue.value()
 	}
-	return result
+	return result.value()
 }
 
 // AtMost limits a number to a maximum value.
 // Mirrors Ruby's at_most from standardfilters.rb:920
 func (sf *StandardFilters) AtMost(input interface{}, n interface{}) interface{} {
-	maxValue, _ := ToNumber(n)
-	result, _ := ToNumber(input)
-
-	maxFloat, _ := ToNumberValue(maxValue)
-	resultFloat, _ := ToNumberValue(result)
-
-	if maxFloat < resultFloat {
-		return maxValue
+	maxValue, result := toLiquidNumber(n), toLiquidNumber(input)
+	if compareLiquidNumbers(maxValue, result) < 0 {
+		return maxValue.value()
 	}
-	return result
+	return result.value()
 }
 
 // Default returns a default value if input is nil, false, or empty.
@@ -870,16 +946,12 @@ func nilSafeCompare(a, b interface{}) int {
 		return -1 // nil goes last
 	}
 
-	// Try numeric comparison first
-	aNum, aOk := ToNumberValue(a)
-	bNum, bOk := ToNumberValue(b)
+	// Numbers compare as numbers; strings, numeric strings included, as strings (Ruby <=>)
+	aNum, aOk := asNumber(a)
+	bNum, bOk := asNumber(b)
 	if aOk && bOk {
-		if aNum < bNum {
-			return -1
-		} else if aNum > bNum {
-			return 1
-		}
-		return 0
+		cmp, _ := compareNumbers(aNum, bNum)
+		return cmp
 	}
 
 	// String comparison
@@ -942,73 +1014,6 @@ func nilSafeCasecmp(a, b interface{}) int {
 		return 1
 	}
 	return 0
-}
-
-// applyOperation applies a math operation to two numbers.
-// Mirrors Ruby's apply_operation from standardfilters.rb:1003-1006
-func applyOperation(input, operand interface{}, operation string) interface{} {
-	inputNum, _ := ToNumber(input)
-	operandNum, _ := ToNumber(operand)
-
-	var result interface{}
-
-	// Convert to float64 for calculation
-	var inputFloat, operandFloat float64
-	switch v := inputNum.(type) {
-	case int:
-		inputFloat = float64(v)
-	case float64:
-		inputFloat = v
-	default:
-		inputFloat = 0
-	}
-
-	switch v := operandNum.(type) {
-	case int:
-		operandFloat = float64(v)
-	case float64:
-		operandFloat = v
-	default:
-		operandFloat = 0
-	}
-
-	// Determine if we should return int or float
-	_, inputIsInt := inputNum.(int)
-	_, operandIsInt := operandNum.(int)
-
-	switch operation {
-	case "+":
-		result = inputFloat + operandFloat
-	case "-":
-		result = inputFloat - operandFloat
-	case "*":
-		result = inputFloat * operandFloat
-	case "/":
-		if operandFloat == 0 {
-			return 0 // Handle division by zero
-		}
-		result = inputFloat / operandFloat
-		// For division, if operand is int, result should be int
-		if operandIsInt && inputIsInt {
-			return int(inputFloat / operandFloat)
-		}
-	case "%":
-		if operandFloat == 0 {
-			return 0 // Handle modulo by zero
-		}
-		result = math.Mod(inputFloat, operandFloat)
-	default:
-		result = inputFloat
-	}
-
-	// Return int if both inputs are ints (except for division)
-	if inputIsInt && operandIsInt && operation != "/" {
-		if f, ok := result.(float64); ok {
-			return int(f)
-		}
-	}
-
-	return result
 }
 
 // raisePropertyError creates an ArgumentError for invalid properties.
@@ -1424,21 +1429,14 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 		return 0
 	}
 
-	var sum float64
-	hasFloat := false
+	sum := integerOf(0)
+	add := func(v interface{}) {
+		sum = arithmetic(sum, toLiquidNumber(v), '+')
+	}
 
 	if property == nil {
 		// Sum items directly
-		iter.Each(func(item interface{}) {
-			num, _ := ToNumber(item)
-			switch v := num.(type) {
-			case int:
-				sum += float64(v)
-			case float64:
-				sum += v
-				hasFloat = true
-			}
-		})
+		iter.Each(add)
 	} else {
 		// Sum by property
 		propStr := ToS(property, nil)
@@ -1446,29 +1444,11 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) interfac
 			if !supportsIndexing(item) {
 				return
 			}
-
-			val := getProperty(item, propStr)
-			if val == nil {
-				return
-			}
-
-			num, _ := ToNumber(val)
-			switch v := num.(type) {
-			case int:
-				sum += float64(v)
-			case float64:
-				sum += v
-				hasFloat = true
-			}
+			add(getProperty(item, propStr))
 		})
 	}
 
-	// Return int if no floats were encountered
-	if !hasFloat && sum == float64(int(sum)) {
-		return int(sum)
-	}
-
-	return sum
+	return sum.value()
 }
 
 // Helper functions for array filters
@@ -1574,8 +1554,8 @@ func valuesEqual(a, b interface{}) bool {
 		return false
 	}
 
-	// Direct comparison
-	if a == b {
+	// Liquid equality: numbers by value, lists and maps element by element
+	if liquidEqual(a, b) {
 		return true
 	}
 

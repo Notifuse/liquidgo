@@ -2,14 +2,12 @@ package tags
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
 var (
-	docNoUnexpectedArgs         = regexp.MustCompile(`^\s*$`)
-	docFullTokenPossiblyInvalid = regexp.MustCompile(`^{%-?(\s*)(\w+)(\s*)(.*?)-?%}$`)
+	docNoUnexpectedArgs = regexp.MustCompile(`^\s*$`)
 )
 
 // DocTag represents a doc block tag that stores documentation without rendering it.
@@ -60,23 +58,9 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 	blockDelimiter := d.BlockDelimiter()
 	tagName := d.TagName()
 
-	for {
+	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
-		if token == "" {
-			break
-		}
-
-		// Extract tag name from token
-		var foundTagName string
-		var leadingWhitespace string
-
-		if strings.HasPrefix(token, "{%") {
-			matches := docFullTokenPossiblyInvalid.FindStringSubmatch(token)
-			if len(matches) > 0 {
-				leadingWhitespace = matches[1]
-				foundTagName = matches[2]
-			}
-		}
+		before, foundTagName, _ := liquid.MatchTagPossiblyInvalid(token)
 
 		// Raise error if nested doc tag found
 		if foundTagName == tagName {
@@ -90,20 +74,12 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 		}
 
 		if foundTagName == blockDelimiter {
-			// Handle whitespace trimming
-			if len(token) >= 3 && token[len(token)-3] == '-' {
-				d.ParseContext().SetTrimWhitespace(true)
-			}
-			// Include leading whitespace in body if present
-			if leadingWhitespace != "" {
-				d.body += leadingWhitespace
-			}
+			d.ParseContext().SetTrimWhitespace(liquid.TrimsAfter(token))
+			d.body += before
 			return nil
 		}
 
-		if token != "" {
-			d.body += token
-		}
+		d.body += token
 	}
 
 	// Tag never closed

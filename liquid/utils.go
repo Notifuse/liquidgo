@@ -2,6 +2,7 @@ package liquid
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -45,7 +46,7 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 
 	// Handle Range objects specially (convert to array)
 	if r, ok := collection.(*Range); ok {
-		for i := r.Start; i <= r.End; i++ {
+		for i := r.Start; i <= r.End && i >= r.Start; i++ { // i >= r.Start stops at an int overflow
 			if to != nil && *to <= (i-r.Start) {
 				break
 			}
@@ -103,7 +104,7 @@ func ToInteger(num interface{}) (int, error) {
 		return v, nil
 	}
 
-	// Handle other numeric types
+	// Handle other numeric types; values beyond the int range saturate
 	switch v := num.(type) {
 	case int8:
 		return int(v), nil
@@ -112,19 +113,21 @@ func ToInteger(num interface{}) (int, error) {
 	case int32:
 		return int(v), nil
 	case int64:
-		return int(v), nil
+		return saturateInt64(v), nil
 	case uint:
-		return int(v), nil
+		return saturateUint64(uint64(v)), nil
 	case uint8:
 		return int(v), nil
 	case uint16:
 		return int(v), nil
 	case uint32:
-		return int(v), nil
+		return saturateUint64(uint64(v)), nil
 	case uint64:
-		return int(v), nil
+		return saturateUint64(v), nil
+	case float32:
+		return saturateFloat(float64(v)), nil
 	case float64:
-		return int(v), nil
+		return saturateFloat(v), nil
 	case string:
 		i, err := strconv.Atoi(v)
 		if err != nil {
@@ -134,6 +137,37 @@ func ToInteger(num interface{}) (int, error) {
 	default:
 		return 0, NewArgumentError("invalid integer")
 	}
+}
+
+func saturateInt64(v int64) int {
+	switch {
+	case v > int64(math.MaxInt):
+		return math.MaxInt
+	case v < int64(math.MinInt):
+		return math.MinInt
+	}
+	return int(v)
+}
+
+func saturateUint64(v uint64) int {
+	if v > uint64(math.MaxInt) {
+		return math.MaxInt
+	}
+	return int(v)
+}
+
+// saturateFloat truncates toward zero, as Ruby's Float#to_i, and saturates at the int
+// range (Go's conversion of an out-of-range float is undefined). NaN gives 0.
+func saturateFloat(v float64) int {
+	switch {
+	case math.IsNaN(v):
+		return 0
+	case v >= float64(math.MaxInt):
+		return math.MaxInt
+	case v <= float64(math.MinInt):
+		return math.MinInt
+	}
+	return int(v)
 }
 
 // ToNumber converts a value to a number (int, int64, or float64).
@@ -187,70 +221,131 @@ func ToNumber(obj interface{}) (interface{}, bool) {
 	}
 }
 
-// ToDate converts a value to a time.Time.
+// toDateLayouts are the text formats ToDate reads, standing in for Ruby's Time.parse.
+// A format without a zone is read as UTC.
+var toDateLayouts = []string{
+	time.RFC3339Nano,
+	"2006-01-02T15:04:05Z0700",
+	"2006-01-02T15:04:05",
+	"2006-01-02T15:04",
+	"2006-01-02 15:04:05Z07:00",
+	"2006-01-02 15:04:05 -0700",
+	"2006-01-02 15:04:05 -07:00",
+	"2006-01-02 15:04:05 MST",
+	"2006-01-02 15:04:05",
+	"2006-01-02 15:04",
+	"2006-01-02",
+	"2006/01/02 15:04:05",
+	"2006/01/02",
+	time.ANSIC,
+	time.UnixDate,
+	time.RubyDate,
+	time.RFC1123,
+	time.RFC1123Z,
+	time.RFC850,
+	time.RFC822,
+	time.RFC822Z,
+	"January 2, 2006 15:04",
+	"January 2, 2006",
+	"Jan 2, 2006",
+	"2 January 2006 15:04",
+	"2 January 2006",
+	"2 Jan 2006",
+}
+
+// zoneAbbreviations are the offsets, in hours, of the zone names ToDate reads, as in
+// Ruby's Date zone table. Go's time.Parse reads an abbreviation with the server's local
+// zone, or with a zero offset when it does not know it, so ToDate looks it up here.
+var zoneAbbreviations = map[string]float64{
+	"UTC": 0, "UT": 0, "GMT": 0, "Z": 0, "WET": 0,
+	"EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6, "PST": -8, "PDT": -7,
+	"AKST": -9, "AKDT": -8, "HST": -10,
+	"BST": 1, "WEST": 1, "CET": 1, "CEST": 2, "EET": 2, "EEST": 3, "MSK": 3,
+	"IST": 5.5, "AWST": 8, "JST": 9, "KST": 9, "ACST": 9.5, "AEST": 10, "AEDT": 11,
+	"NZST": 12, "NZDT": 13,
+}
+
+// withZoneAbbreviation gives t the offset of its zone abbreviation. An unknown
+// abbreviation (SGT, HKT...) keeps the time as written, read as UTC like a date without
+// a zone (Ruby reads it in the server's zone).
+func withZoneAbbreviation(t time.Time) *time.Time {
+	name, _ := t.Zone()
+	hours, ok := zoneAbbreviations[name]
+	if !ok {
+		hours = 0
+	}
+	offset := int(hours * 3600)
+	var loc *time.Location
+	if offset == 0 {
+		loc = time.UTC
+	} else {
+		loc = time.FixedZone(name, offset)
+	}
+	zoned := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), loc)
+	return &zoned
+}
+
+// ToDate converts a value to a time.Time, as Ruby Liquid's Utils.to_date: a time, a
+// Unix timestamp (number or digits), "now"/"today", or a date in a common text format.
+// Unlike Ruby, a float timestamp is accepted too, since decoded JSON numbers are floats.
 func ToDate(obj interface{}) *time.Time {
-	// Handle time.Time directly
-	if t, ok := obj.(time.Time); ok {
-		return &t
-	}
-
-	// Handle *time.Time pointer (NEW - fixes the bug)
-	if t, ok := obj.(*time.Time); ok {
-		if t == nil {
-			return nil
-		}
-		return t
-	}
-
 	switch v := obj.(type) {
+	case time.Time:
+		return &v
+	case *time.Time:
+		return v
+	case nil, bool:
+		return nil
 	case string:
 		if v == "" {
 			return nil
 		}
-		lower := strings.ToLower(v)
+		trimmed := strings.TrimSpace(v)
+		lower := strings.ToLower(trimmed)
 		if lower == "now" || lower == "today" {
 			now := time.Now()
 			return &now
 		}
-		if UnixTimestampRegex.MatchString(v) {
-			ts, err := strconv.ParseInt(v, 10, 64)
+		if UnixTimestampRegex.MatchString(trimmed) {
+			ts, err := strconv.ParseInt(trimmed, 10, 64)
 			if err != nil {
 				return nil
 			}
 			t := time.Unix(ts, 0)
 			return &t
 		}
-		// Try parsing as RFC3339 or common formats
-		t, err := time.Parse(time.RFC3339, v)
-		if err != nil {
-			// Try other common formats
-			formats := []string{
-				time.RFC1123,
-				time.RFC1123Z,
-				"2006-01-02",
-				"2006-01-02 15:04:05",
-			}
-			for _, format := range formats {
-				if t, err := time.Parse(format, v); err == nil {
-					return &t
+		for _, layout := range toDateLayouts {
+			// in UTC, which defines no abbreviation but UTC, so that the server's own zone
+			// never decides what "EDT" means
+			if t, err := time.ParseInLocation(layout, trimmed, time.UTC); err == nil {
+				if strings.Contains(layout, "MST") {
+					return withZoneAbbreviation(t)
 				}
+				return &t
 			}
-			return nil
 		}
-		return &t
-	case int, int64:
-		var ts int64
-		switch vv := v.(type) {
-		case int:
-			ts = int64(vv)
-		case int64:
-			ts = vv
-		}
-		t := time.Unix(ts, 0)
-		return &t
-	default:
 		return nil
 	}
+	if n, ok := asNumber(obj); ok {
+		var t time.Time
+		switch n.kind {
+		case signedNumber:
+			t = time.Unix(n.i, 0)
+		case unsignedNumber:
+			if n.u > math.MaxInt64 {
+				return nil
+			}
+			t = time.Unix(int64(n.u), 0)
+		default:
+			if math.IsNaN(n.f) || math.IsInf(n.f, 0) || math.Abs(n.f) > 1e15 {
+				return nil
+			}
+			sec := math.Floor(n.f)
+			t = time.Unix(int64(sec), int64((n.f-sec)*1e9))
+		}
+		return &t
+	}
+	return nil
 }
 
 // ToLiquidValue converts an object to its liquid representation.

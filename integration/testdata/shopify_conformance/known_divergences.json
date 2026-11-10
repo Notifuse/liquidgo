@@ -1,0 +1,272 @@
+{
+ "test/integration/filter_test.rb:76": {
+  "reason": "minor: sort on a scalar returns a one-element array, which renders as [3]",
+  "actual": {
+   "lax/json": "output: [3]",
+   "lax/ruby": "output: [3]",
+   "strict/json": "output: [3]",
+   "strict/ruby": "output: [3]",
+   "strict2/json": "output: [3]",
+   "strict2/ruby": "output: [3]"
+  }
+ },
+ "test/integration/hash_rendering_test.rb:11": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:15": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:33": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:37": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:41": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:45": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:49": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:53": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:57": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:61": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:65": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:69": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/hash_rendering_test.rb:77": {
+  "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
+  "skip": true
+ },
+ "test/integration/parsing_quirks_test.rb:103": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: hi there"
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:104": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:137": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:138": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:139": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:140": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:141": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:142": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:143": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:145": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:146": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:147": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:148": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:149": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:150": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:151": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:97": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: "
+  }
+ },
+ "test/integration/parsing_quirks_test.rb:99": {
+  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
+  "actual": {
+   "lax/ruby": "output: X"
+  }
+ },
+ "test/integration/standard_filter_test.rb:487": {
+  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
+  "actual": {
+   "lax/ruby": "output: [<nil>]",
+   "strict/ruby": "output: [<nil>]",
+   "strict2/ruby": "output: [<nil>]"
+  }
+ },
+ "test/integration/standard_filter_test.rb:488": {
+  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
+  "actual": {
+   "lax/ruby": "output: [<nil>]",
+   "strict/ruby": "output: [<nil>]",
+   "strict2/ruby": "output: [<nil>]"
+  }
+ },
+ "test/integration/standard_filter_test.rb:695": {
+  "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
+  "actual": {
+   "lax/ruby": "output: 2",
+   "strict/ruby": "output: 2",
+   "strict2/ruby": "output: 2"
+  }
+ },
+ "test/integration/standard_filter_test.rb:739": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
+  }
+ },
+ "test/integration/standard_filter_test.rb:748": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
+  }
+ },
+ "test/integration/standard_filter_test.rb:759": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0",
+   "strict2/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:770": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0",
+   "strict2/ruby": "output: 0"
+  }
+ },
+ "test/integration/standard_filter_test.rb:780": {
+  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
+  "actual": {
+   "lax/ruby": "output: 0",
+   "strict/ruby": "output: 0",
+   "strict2/ruby": "output: 0"
+  }
+ },
+ "test/integration/tags/increment_tag_test.rb:20": {
+  "reason": "deliberate: decrement counters live in their own namespace, separate from assign",
+  "actual": {
+   "lax/json": "output: -1 10",
+   "lax/ruby": "output: -1 10",
+   "strict/json": "output: -1 10",
+   "strict/ruby": "output: -1 10",
+   "strict2/json": "output: -1 10",
+   "strict2/ruby": "output: -1 10"
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:285": {
+  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
+  }
+ },
+ "test/integration/tags/standard_tag_test.rb:289": {
+  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
+  "actual": {
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
+  }
+ },
+ "test/integration/variable_test.rb:134": {
+  "reason": "minor: a nested array containing nil renders [[<nil>]] instead of \"\"",
+  "actual": {
+   "lax/ruby": "output: [[<nil>]]",
+   "strict/ruby": "output: [[<nil>]]",
+   "strict2/ruby": "output: [[<nil>]]"
+  }
+ }
+}

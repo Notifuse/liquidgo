@@ -9,7 +9,7 @@ import (
 
 var (
 	commentLiquidTagToken      = regexp.MustCompile(`^\s*(\w+)\s*(.*?)$`)
-	commentFullToken           = regexp.MustCompile(`^{%-?(\s*)(\w+)(\s*)(.*?)-?%}$`)
+	commentFullToken           = regexp.MustCompile(`(?s)^{%-?(\s*)(\w+)(\s*)(.*?)-?%}$`)
 	commentWhitespaceOrNothing = regexp.MustCompile(`^\s*$`)
 )
 
@@ -57,11 +57,9 @@ func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 
 	commentTagDepth := 1
 
-	for {
+	// An empty line of a liquid tag is a token too: stop only when the tokenizer is exhausted.
+	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
-		if token == "" {
-			break
-		}
 
 		// Extract tag name from token
 		var tagName string
@@ -113,23 +111,12 @@ func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 	return c.RaiseTagNeverClosed()
 }
 
-// parseRawTagBody parses the body of a raw tag within a comment.
+// parseRawTagBody skips the body of a raw tag within a comment, up to the first tag
+// named endraw (Ruby's FullTokenPossiblyInvalid).
 func (c *CommentTag) parseRawTagBody(tokenizer *liquid.Tokenizer) error {
-	for {
-		token := tokenizer.Shift()
-		if token == "" {
-			break
-		}
-
-		// Check for endraw
-		if strings.HasPrefix(token, "{%") && strings.HasSuffix(token, "%}") {
-			tokenContent := strings.TrimPrefix(token, "{%")
-			tokenContent = strings.TrimSuffix(tokenContent, "%}")
-			tokenContent = strings.TrimSpace(tokenContent)
-
-			if tokenContent == "endraw" || strings.HasPrefix(tokenContent, "endraw ") {
-				return nil
-			}
+	for !tokenizer.Exhausted() {
+		if _, tagName, ok := liquid.MatchTagPossiblyInvalid(tokenizer.Shift()); ok && tagName == "endraw" {
+			return nil
 		}
 	}
 
