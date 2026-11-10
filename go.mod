@@ -1,4 +1,4 @@
-module github.com/Notifuse/liquidgo
+module github.com/Notifuse/liquidgo/v5
 
 go 1.25.4
 

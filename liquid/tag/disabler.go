@@ -1,7 +1,7 @@
 package tag
 
 import (
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Disabler provides functionality for tags that disable other tags.

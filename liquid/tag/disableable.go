@@ -1,7 +1,7 @@
 package tag
 
 import (
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Disableable provides functionality for tags that can be disabled.

@@ -36,17 +36,17 @@ jobs:
 
       - name: Run unit tests (with coverage)
         if: matrix.os == 'ubuntu-latest'
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic github.com/Notifuse/liquidgo/liquid
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic github.com/Notifuse/liquidgo/v5/liquid
 
       - name: Run unit tests (without coverage)
         if: matrix.os != 'ubuntu-latest'
-        run: go test -v -race github.com/Notifuse/liquidgo/liquid
+        run: go test -v -race github.com/Notifuse/liquidgo/v5/liquid
 
       - name: Run tag tests
-        run: go test -v -race github.com/Notifuse/liquidgo/liquid/tag/... github.com/Notifuse/liquidgo/liquid/tags/...
+        run: go test -v -race github.com/Notifuse/liquidgo/v5/liquid/tag/... github.com/Notifuse/liquidgo/v5/liquid/tags/...
 
       - name: Run integration tests
-        run: go test -v -race github.com/Notifuse/liquidgo/integration
+        run: go test -v -race github.com/Notifuse/liquidgo/v5/integration
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'

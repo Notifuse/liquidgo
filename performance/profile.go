@@ -9,7 +9,7 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/Notifuse/liquidgo/performance"
+	"github.com/Notifuse/liquidgo/v5/performance"
 )
 
 var (

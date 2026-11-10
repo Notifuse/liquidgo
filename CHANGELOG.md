@@ -55,6 +55,9 @@ Several outputs change: see the list below before upgrading.
 - **`slice` on a number** slices its text (`12345 | slice: 0, 2` is `12`).
 - **`date` on a small number** reads it as a Unix timestamp, as Ruby does: `2024 | date: "%Y"` is
   `1970`. `%c` pads the day with a space (`Tue Mar  5`).
+- **Module path** is now `github.com/Notifuse/liquidgo/v5`, so that Go accepts the `v5` tags:
+  `go get github.com/Notifuse/liquidgo/v5@v5.11.0`. Replace `github.com/Notifuse/liquidgo/` with
+  `github.com/Notifuse/liquidgo/v5/` in imports.
 - `Version` is `5.11.0` (it said `5.10.0`), with a new `PortRevision` constant.
 
 ## [5.11.0]

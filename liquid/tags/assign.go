@@ -3,7 +3,7 @@ package tags
 import (
 	"regexp"
 
-	"github.com/Notifuse/liquidgo/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // assignSyntax matches: variable_name = value

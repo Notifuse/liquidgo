@@ -7,7 +7,7 @@
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)
 [![Benchmarks](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml)
 [![codecov](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
-[![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo/v5.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo/v5)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Notifuse/liquidgo)](https://goreportcard.com/report/github.com/Notifuse/liquidgo)
 
 A full-featured Go implementation of [Shopify's Liquid template engine](https://github.com/Shopify/liquid), maintaining feature parity with the Ruby version.
@@ -38,7 +38,7 @@ Liquid is a template engine written with specific requirements:
 ## Installation
 
 ```bash
-go get github.com/Notifuse/liquidgo
+go get github.com/Notifuse/liquidgo/v5
 ```
 
 ## Quick Start
@@ -50,7 +50,7 @@ package main
 
 import (
     "fmt"
-    "github.com/Notifuse/liquidgo/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 func main() {
@@ -76,8 +76,8 @@ package main
 
 import (
     "fmt"
-    "github.com/Notifuse/liquidgo/liquid"
-    "github.com/Notifuse/liquidgo/liquid/tags"
+    "github.com/Notifuse/liquidgo/v5/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 func main() {
@@ -126,7 +126,7 @@ package main
 import (
     "fmt"
     "strings"
-    "github.com/Notifuse/liquidgo/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Define custom filter
@@ -166,7 +166,7 @@ package main
 
 import (
     "fmt"
-    "github.com/Notifuse/liquidgo/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid"
 )
 
 // Custom tag implementation
@@ -302,8 +302,8 @@ Use environments to encapsulate custom tags, filters, and configurations:
 package main
 
 import (
-    "github.com/Notifuse/liquidgo/liquid"
-    "github.com/Notifuse/liquidgo/liquid/tags"
+    "github.com/Notifuse/liquidgo/v5/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 func main() {
