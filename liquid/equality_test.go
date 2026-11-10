@@ -141,6 +141,32 @@ func TestCompareValuesNumericTypes(t *testing.T) {
 	}
 }
 
+func TestContainsOperatorElementEquality(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		left  interface{}
+		right interface{}
+		want  bool
+	}{
+		{"element equal", []interface{}{"vip"}, "vip", true},
+		{"no substring of an element", []interface{}{"vip_gold"}, "vip", false},
+		{"number against float", []interface{}{1, 2}, 1.0, true},
+		{"number against its text", []interface{}{1, 2}, "1", false},
+		{"typed slice", []string{"a"}, "a", true},
+		{"typed slice no substring", []string{"apple"}, "app", false},
+		{"list element", []interface{}{[]interface{}{"a"}}, []interface{}{"a"}, true},
+		{"string substring", "hello world", "world", true},
+		{"string with number", "a1", 1, true},
+		{"map key", map[string]interface{}{"a": 1}, "a", true},
+		{"map missing key", map[string]interface{}{"a": 1}, "b", false},
+		{"nil left", nil, "a", false},
+	} {
+		if got := containsOperator(tt.left, tt.right); got != tt.want {
+			t.Errorf("%s: %#v contains %#v = %v, want %v", tt.name, tt.left, tt.right, got, tt.want)
+		}
+	}
+}
+
 func TestValuesEqualCollections(t *testing.T) {
 	if !valuesEqual([]interface{}{"a"}, []interface{}{"a"}) {
 		t.Error("equal lists should match")

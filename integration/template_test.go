@@ -632,9 +632,8 @@ func TestConditionBlogPostEmpty(t *testing.T) {
 	}
 }
 
-// TestConditionBlogPostContains tests the contains operator with []BlogPost.
-// This tests the issue in liquid/condition.go lines 274-280 where contains
-// only works with []interface{}.
+// contains on a list compares elements for equality, as Ruby's Array#include?: a post
+// is not equal to its title, so the title is found with map first.
 func TestConditionBlogPostContains(t *testing.T) {
 	posts := SampleBlogPosts()
 
@@ -645,26 +644,32 @@ func TestConditionBlogPostContains(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "typed slice - contains title",
+			name:     "typed slice - a title is not a post",
 			template: `{% if posts contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
-			posts:    posts,
-			expected: "found",
-		},
-		{
-			name:     "typed slice - contains author",
-			template: `{% if posts contains "Alice" %}found{% else %}not found{% endif %}`,
-			posts:    posts,
-			expected: "found",
-		},
-		{
-			name:     "typed slice - does not contain",
-			template: `{% if posts contains "Non-existent Post" %}found{% else %}not found{% endif %}`,
 			posts:    posts,
 			expected: "not found",
 		},
 		{
-			name:     "baseline - []interface{} - contains title",
-			template: `{% if posts contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
+			name:     "typed slice - contains title after map",
+			template: `{% assign titles = posts | map: "title" %}{% if titles contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "found",
+		},
+		{
+			name:     "typed slice - contains author after map",
+			template: `{% assign authors = posts | map: "author" %}{% if authors contains "Alice" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "found",
+		},
+		{
+			name:     "typed slice - no substring of a title",
+			template: `{% assign titles = posts | map: "title" %}{% if titles contains "Getting Started" %}found{% else %}not found{% endif %}`,
+			posts:    posts,
+			expected: "not found",
+		},
+		{
+			name:     "[]interface{} - contains title after map",
+			template: `{% assign titles = posts | map: "title" %}{% if titles contains "Getting Started with Go" %}found{% else %}not found{% endif %}`,
 			posts:    BlogPostsToInterfaceSlice(posts),
 			expected: "found",
 		},
