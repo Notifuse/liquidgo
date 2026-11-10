@@ -182,13 +182,6 @@
    "strict/ruby": "output: [<nil>]"
   }
  },
- "test/integration/standard_filter_test.rb:614": {
-  "reason": "minor: date does not parse the \"Fri Jul 16 01:00:00 2004\" format",
-  "actual": {
-   "lax/ruby": "value: \"Fri Jul 16 01:00:00 2004\"",
-   "strict/ruby": "value: \"Fri Jul 16 01:00:00 2004\""
-  }
- },
  "test/integration/standard_filter_test.rb:695": {
   "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
   "actual": {

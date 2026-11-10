@@ -2,6 +2,7 @@ package liquid
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -187,70 +188,93 @@ func ToNumber(obj interface{}) (interface{}, bool) {
 	}
 }
 
-// ToDate converts a value to a time.Time.
+// toDateLayouts are the text formats ToDate reads, standing in for Ruby's Time.parse.
+// A format without a zone is read as UTC.
+var toDateLayouts = []string{
+	time.RFC3339Nano,
+	"2006-01-02T15:04:05",
+	"2006-01-02T15:04",
+	"2006-01-02 15:04:05Z07:00",
+	"2006-01-02 15:04:05 -0700",
+	"2006-01-02 15:04:05 -07:00",
+	"2006-01-02 15:04:05 MST",
+	"2006-01-02 15:04:05",
+	"2006-01-02 15:04",
+	"2006-01-02",
+	"2006/01/02 15:04:05",
+	"2006/01/02",
+	time.ANSIC,
+	time.UnixDate,
+	time.RubyDate,
+	time.RFC1123,
+	time.RFC1123Z,
+	time.RFC850,
+	time.RFC822,
+	time.RFC822Z,
+	"January 2, 2006 15:04",
+	"January 2, 2006",
+	"Jan 2, 2006",
+	"2 January 2006 15:04",
+	"2 January 2006",
+	"2 Jan 2006",
+}
+
+// ToDate converts a value to a time.Time, as Ruby Liquid's Utils.to_date: a time, a
+// Unix timestamp (number or digits), "now"/"today", or a date in a common text format.
+// Unlike Ruby, a float timestamp is accepted too, since decoded JSON numbers are floats.
 func ToDate(obj interface{}) *time.Time {
-	// Handle time.Time directly
-	if t, ok := obj.(time.Time); ok {
-		return &t
-	}
-
-	// Handle *time.Time pointer (NEW - fixes the bug)
-	if t, ok := obj.(*time.Time); ok {
-		if t == nil {
-			return nil
-		}
-		return t
-	}
-
 	switch v := obj.(type) {
+	case time.Time:
+		return &v
+	case *time.Time:
+		return v
+	case nil, bool:
+		return nil
 	case string:
 		if v == "" {
 			return nil
 		}
-		lower := strings.ToLower(v)
+		trimmed := strings.TrimSpace(v)
+		lower := strings.ToLower(trimmed)
 		if lower == "now" || lower == "today" {
 			now := time.Now()
 			return &now
 		}
-		if UnixTimestampRegex.MatchString(v) {
-			ts, err := strconv.ParseInt(v, 10, 64)
+		if UnixTimestampRegex.MatchString(trimmed) {
+			ts, err := strconv.ParseInt(trimmed, 10, 64)
 			if err != nil {
 				return nil
 			}
 			t := time.Unix(ts, 0)
 			return &t
 		}
-		// Try parsing as RFC3339 or common formats
-		t, err := time.Parse(time.RFC3339, v)
-		if err != nil {
-			// Try other common formats
-			formats := []string{
-				time.RFC1123,
-				time.RFC1123Z,
-				"2006-01-02",
-				"2006-01-02 15:04:05",
+		for _, layout := range toDateLayouts {
+			if t, err := time.Parse(layout, trimmed); err == nil {
+				return &t
 			}
-			for _, format := range formats {
-				if t, err := time.Parse(format, v); err == nil {
-					return &t
-				}
-			}
-			return nil
 		}
-		return &t
-	case int, int64:
-		var ts int64
-		switch vv := v.(type) {
-		case int:
-			ts = int64(vv)
-		case int64:
-			ts = vv
-		}
-		t := time.Unix(ts, 0)
-		return &t
-	default:
 		return nil
 	}
+	if n, ok := asNumber(obj); ok {
+		var t time.Time
+		switch n.kind {
+		case signedNumber:
+			t = time.Unix(n.i, 0)
+		case unsignedNumber:
+			if n.u > math.MaxInt64 {
+				return nil
+			}
+			t = time.Unix(int64(n.u), 0)
+		default:
+			if math.IsNaN(n.f) || math.IsInf(n.f, 0) || math.Abs(n.f) > 1e15 {
+				return nil
+			}
+			sec := math.Floor(n.f)
+			t = time.Unix(int64(sec), int64((n.f-sec)*1e9))
+		}
+		return &t
+	}
+	return nil
 }
 
 // ToLiquidValue converts an object to its liquid representation.
