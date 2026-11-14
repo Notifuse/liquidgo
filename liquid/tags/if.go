@@ -147,9 +147,9 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 
 		// Handle elsif and else (Ruby: unknown_tag handles these)
 		if endTagName == "elsif" || endTagName == "else" {
-			err := i.pushBlock(endTagName, endTagMarkup)
-			if err != nil {
-				return false
+			// An elsif that does not parse is a syntax error, as an if
+			if err := i.pushBlock(endTagName, endTagMarkup); err != nil {
+				panic(err)
 			}
 			// New block created - Parse() will detect this and continue
 			return false // Stop parsing current block
@@ -448,9 +448,11 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 }
 
 // lexCondition returns the lexer's syntax error for the markup of a tag in
-// strict mode, with the markup as its context.
+// strict, strict2 or rigid mode, with the markup as its context.
 func lexCondition(markup string, parseContext liquid.ParseContextInterface) error {
-	if parseContext.ErrorMode() != "strict" {
+	switch parseContext.ErrorMode() {
+	case "strict", "strict2", "rigid":
+	default:
 		return nil
 	}
 	err := parseContext.NewParser(markup).Error()

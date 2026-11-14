@@ -37,6 +37,24 @@ func (sf *StandardFilters) checkItems(n int) {
 	}
 }
 
+// maxRangeItems is the most integers of a range a filter builds, or join
+// writes, when no limit bounds them: Ruby builds any range, but a range
+// literal of a template can name billions.
+const maxRangeItems = 1 << 20
+
+// checkRangeItems raises a MemoryError if a filter is about to build n
+// integers of a range: more than the assign score limit leaves, or more than
+// maxRangeItems.
+func (sf *StandardFilters) checkRangeItems(n int) {
+	sf.checkItems(n)
+	if n > maxRangeItems {
+		if rl := sf.limits(); rl != nil {
+			rl.raiseLimitsReached()
+		}
+		panic(NewMemoryError("Memory limits exceeded"))
+	}
+}
+
 // replacedLength returns the length of s once count occurrences of search
 // are replaced by replacement, saturated at math.MaxInt.
 func replacedLength(s, search, replacement string, count int) int {

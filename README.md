@@ -512,7 +512,9 @@ where every number is a `float64`, and render text meant for people (emails, pag
   `Liquid error: ...`; a `truncate` or `truncatewords` length that is not an integer keeps the
   input.
 - **Template-controlled sizes are bounded**: a `date` directive wider than 1024 (`%5000d`) is
-  copied as written, and a `round` precision beyond ±400 digits is not computed.
+  copied as written, a `round` precision beyond ±400 digits is not computed, and a filter builds
+  at most 1,048,576 integers of a range (`join` writes at most as many), raising `Memory limits
+  exceeded` beyond, where Ruby would build them.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.

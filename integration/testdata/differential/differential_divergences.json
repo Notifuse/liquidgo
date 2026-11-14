@@ -86,7 +86,7 @@
  "index-01/strict": {"reason":"minor: a negative index does not count from the end","actual":"output:  1 "},
  "index-07/lax": {"reason":"minor: comparisons with empty and blank differ from Ruby","actual":"output: c"},
  "index-07/strict": {"reason":"minor: comparisons with empty and blank differ from Ruby","actual":"output: c"},
- "lax-quirks-01/strict": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: X"},
+ "lax-quirks-01/strict": {"reason":"minor: a missing expression after a filter colon or and is not a syntax error","actual":"output: X"},
  "lax-quirks-02/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
  "lax-quirks-03/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: a' 'b"},
  "lax-quirks-10/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
@@ -94,7 +94,7 @@
  "lax-quirks-13/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
  "lax-quirks-16/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: x"},
  "lax-quirks-17/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: y"},
- "lax-quirks-17/strict": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: y"},
+ "lax-quirks-17/strict": {"reason":"minor: a missing expression after a filter colon or and is not a syntax error","actual":"output: y"},
  "lookup-07/lax": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: 012"},
  "lookup-07/strict": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: 012"},
  "nesting-02/lax": {"reason":"deliberate: a lookup nested more than 100 deep is refused while parsing, as a block is","actual":"error: Liquid error: Nesting too deep"},
@@ -139,7 +139,5 @@
  "tags-02/lax": {"reason":"minor: case renders only the first matching when, where Ruby renders each one","actual":"output: a"},
  "tags-02/strict": {"reason":"minor: case renders only the first matching when, where Ruby renders each one","actual":"output: a"},
  "tags-10/lax": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"},
- "tags-10/strict": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"},
- "tags-16/lax": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: ab"},
- "tags-16/strict": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: ab"}
+ "tags-10/strict": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"}
 }

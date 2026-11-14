@@ -23,21 +23,27 @@ Several outputs change: see the list below before upgrading. Tagged `v5.11.2`.
 - **Arrays render as in Ruby**: `{{ list }}`, `echo` and `cycle` write the items one after the other,
   nested lists included and `nil` items left out (`["a", "b"]` renders `ab`); they rendered
   `["a", "b"]`. A filter that takes a string still receives Ruby's inspect of the list, now with
-  `nil` for a nil item and quotes for a typed slice such as `[]string`.
+  `nil` for a nil item and quotes for a typed slice such as `[]string`. A list that holds itself
+  renders its other items, in an output and in `join` or `reverse`, where it overflowed the stack.
 - **Ranges in filters**: `join`, `size`, `first`, `last`, `sort`, `reverse`, `sum`, `uniq` and the
   other array filters treat `(1..3)` as its integers; `first` and `last` give the bounds even of an
   empty range. `join` stops at `render_length_limit` without building the integers, and the filters
-  that build them check `assign_score_limit` first.
+  that build them check `assign_score_limit` first. Without these limits, a filter builds at most
+  1,048,576 integers of a range and raises `Memory limits exceeded` beyond.
 - **Properties in the array filters**: `map`, `where`, `reject`, `has`, `find`, `find_index`,
   `sort`, `sort_natural`, `uniq`, `compact` and `sum` read a property as Ruby's `item[property]`:
   a string item gives the property when it contains it, an integer item is an error (which renders
-  nothing), and a float, boolean or nil item makes the filter give nil, or adds 0 to `sum`.
+  nothing), and a float, boolean or nil item makes the filter give nil, or adds 0 to `sum`. A
+  pointer to a struct, a drop and a map with string keys such as `map[string]string` give their
+  property; they gave nil.
 - **Comparisons**: `<`, `>`, `<=` and `>=` with nil, a boolean, a list, a hash or a drop on either
   side are false, as in Ruby, instead of comparing their text or raising; a number against a string
-  raises Ruby's message, `comparison of Integer with String failed`.
+  raises Ruby's message, `comparison of Integer with String failed`. A `*time.Time` compares as
+  the time.
 - **`case`** keeps the whitespace of its bodies unless every body is blank, as in Ruby.
-- **`tablerow` over nil** renders nothing; it rendered an empty row.
-- **Strict mode** lexes the whole markup of `if`, `unless` and `for`, so an unclosed quote in an
+- **`tablerow` over nil or false** renders nothing; it rendered an empty row.
+- **An `elsif` that does not parse** (`{% elsif %}`) is Ruby's `if` syntax error; it was dropped.
+- **Strict modes** (`strict`, `strict2` and `rigid`) lex the whole markup of `if`, `unless` and `for`, so an unclosed quote in an
   index (`a['k]`) is a syntax error that names the markup.
 
 ### Changed

@@ -249,7 +249,7 @@ func orderKindOf(v interface{}) orderKind {
 	if _, ok := asNumber(v); ok {
 		return orderedNumber
 	}
-	if _, ok := v.(time.Time); ok {
+	if _, ok := timeOf(v); ok {
 		return orderedTime
 	}
 	if v != nil && reflect.ValueOf(v).Kind() == reflect.String {
@@ -278,9 +278,24 @@ func compareValues(left, right interface{}) (cmp int, ok bool, err error) {
 		cmp, ok = compareNumbers(ln, rn)
 		return cmp, ok, nil
 	case orderedTime:
-		return left.(time.Time).Compare(right.(time.Time)), true, nil
+		lt, _ := timeOf(left)
+		rt, _ := timeOf(right)
+		return lt.Compare(rt), true, nil
 	}
 	return strings.Compare(reflect.ValueOf(left).String(), reflect.ValueOf(right).String()), true, nil
+}
+
+// timeOf returns the time of a time.Time or a non-nil *time.Time.
+func timeOf(v interface{}) (time.Time, bool) {
+	switch t := v.(type) {
+	case time.Time:
+		return t, true
+	case *time.Time:
+		if t != nil {
+			return *t, true
+		}
+	}
+	return time.Time{}, false
 }
 
 // rubyClassName returns the name of the Ruby class of an ordered value.

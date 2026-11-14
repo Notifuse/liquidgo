@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -444,6 +445,11 @@ func writeValue(output *OutputBuffer, value interface{}, seen map[uintptr]bool) 
 		for _, item := range v {
 			writeValue(output, item, seen)
 		}
+		return
+	}
+	if _, ok := value.(fmt.Stringer); ok {
+		// A value with a String method renders it, even a slice or an array
+		output.WriteString(ToS(value, nil))
 		return
 	}
 	if rv := reflect.ValueOf(value); rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {

@@ -9,7 +9,9 @@ import "testing"
 // property", and an item without [] (a float, a boolean, nil) makes the
 // filter give nil, or 0 for sum. A filter error renders empty in liquidgo
 // (deliberate: no error text in emails), where Ruby writes
-// "Liquid error: cannot select the property 'a'".
+// "Liquid error: cannot select the property 'a'", so the rows over integers
+// cannot tell the error from a nil result: TestAnIntegerItemRaisesThePropertyError
+// checks the error each filter returns.
 func TestTheArrayFiltersReadAPropertyAsRuby(t *testing.T) {
 	data := func() map[string]interface{} {
 		return map[string]interface{}{

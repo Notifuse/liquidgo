@@ -106,9 +106,9 @@ func (t *TableRowTag) Attributes() map[string]interface{} {
 // RenderToOutput renders the table_row tag.
 func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Evaluate collection
-	// As Ruby, a tablerow over nil renders nothing
+	// As Ruby, a tablerow over nil or false renders nothing
 	collection := context.Evaluate(t.collectionName)
-	if collection == nil {
+	if collection == nil || collection == false {
 		return
 	}
 

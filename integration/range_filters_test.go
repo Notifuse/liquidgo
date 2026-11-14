@@ -35,7 +35,9 @@ func TestARangeIsACollectionForTheFilters(t *testing.T) {
 // does not build more than the limits allow: join stops at the render length
 // limit, as Ruby's MemoryError, and a filter that builds an array of the
 // integers raises at the assign score limit, as the other filters that build
-// an array. size, first and last read the bounds without building anything.
+// an array. Without these limits, a range of more than 1,048,576 integers
+// raises too, where Ruby would build it. size, first and last read the
+// bounds without building anything.
 func TestALargeRangeStaysWithinTheLimits(t *testing.T) {
 	const memory = "Liquid error: Memory limits exceeded"
 	for _, c := range []struct {
@@ -47,6 +49,12 @@ func TestALargeRangeStaysWithinTheLimits(t *testing.T) {
 		{"a{{ (1..100000000) | sort | first }}b", limits{assignScore: 50}, memory},
 		{"a{{ (1..100000000) | size }}b{{ (1..100000000) | last }}", limits{renderLength: 50, assignScore: 5}, "a100000000b100000000"},
 		{"a{{ (1..2147483647) | size }}", limits{assignScore: 5}, "a2147483647"},
+		// Without the matching limit, a filter builds at most 1,048,576
+		// integers of a range, and join writes at most as many
+		{"a{{ (1..300000000) | reverse | size }}", limits{}, memory},
+		{"a{{ (1..300000000) | sort | first }}", limits{renderLength: 10000000}, memory},
+		{"a{{ (1..2147483647) | join }}", limits{assignScore: 50}, memory},
+		{"a{{ (1..2147483647) | map: 'x' | size }}", limits{}, memory},
 	} {
 		var r result
 		used := allocated(func() { r = renderWith(newEnv("lax", c.l), c.source, nil) })
@@ -56,5 +64,14 @@ func TestALargeRangeStaysWithinTheLimits(t *testing.T) {
 		if used > 8<<20 {
 			t.Errorf("%q allocated %s", c.source, mb(used))
 		}
+	}
+}
+
+// TestARangeUpToTheCeilingIsBuilt checks that a filter still builds a range
+// of 1,048,576 integers without limits.
+func TestARangeUpToTheCeilingIsBuilt(t *testing.T) {
+	r := renderWith(newEnv("lax", limits{}), "a{{ (1..1048576) | reverse | first }}", nil)
+	if r.output != "a1048576" {
+		t.Errorf("a range of 1,048,576 integers gives %q", r.output)
 	}
 }

@@ -516,10 +516,14 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 }
 
 // joinRange joins the integers of a range without building them first, and
-// stops at the render length limit.
+// stops at the render length limit, or past maxRangeItems integers.
 func (sf *StandardFilters) joinRange(r *Range, sep string) string {
+	n := r.Len()
+	if n > maxRangeItems {
+		sf.checkRangeItems(n)
+	}
 	var b strings.Builder
-	for i, n := 0, r.Len(); i < n; i++ {
+	for i := 0; i < n; i++ {
 		if i > 0 {
 			b.WriteString(sep)
 		}
@@ -862,7 +866,7 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 	} else if r, ok := input.(*Range); ok {
 		// A range is enumerable: its integers, within the limits
 		n := r.Len()
-		(&StandardFilters{context: context}).checkItems(n)
+		(&StandardFilters{context: context}).checkRangeItems(n)
 		items = make([]interface{}, n)
 		for i := range items {
 			items[i] = r.Start + i
@@ -891,12 +895,31 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 	}
 }
 
-// flattenArray recursively flattens nested arrays.
+// flattenArray recursively flattens nested arrays. An array that holds
+// itself is left out where it recurs, instead of recursing without end.
 func flattenArray(arr []interface{}) []interface{} {
 	result := make([]interface{}, 0, len(arr))
+	return appendFlattened(result, arr, map[flattenKey]bool{})
+}
+
+// flattenKey names an array being flattened by its first item and length.
+type flattenKey struct {
+	first *interface{}
+	n     int
+}
+
+func appendFlattened(result, arr []interface{}, seen map[flattenKey]bool) []interface{} {
+	if len(arr) > 0 {
+		key := flattenKey{&arr[0], len(arr)}
+		if seen[key] {
+			return result
+		}
+		seen[key] = true
+		defer delete(seen, key)
+	}
 	for _, item := range arr {
 		if nested, ok := item.([]interface{}); ok {
-			result = append(result, flattenArray(nested)...)
+			result = appendFlattened(result, nested, seen)
 		} else {
 			result = append(result, item)
 		}
@@ -1506,12 +1529,15 @@ func supportsIndexing(item interface{}) bool {
 		return true
 	default:
 		// Check if it has indexable methods via reflection
-		v := reflect.ValueOf(item)
-		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
-			return true
-		}
 		// Check for Drop interface
 		if _, ok := item.(interface{ Get(string) interface{} }); ok {
+			return true
+		}
+		v := reflect.ValueOf(item)
+		if v.Kind() == reflect.Ptr && !v.IsNil() {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
 			return true
 		}
 	}
@@ -1542,6 +1568,13 @@ func getProperty(item interface{}, property string) interface{} {
 	v := reflect.ValueOf(item)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
+	}
+
+	if v.Kind() == reflect.Map && v.Type().Key().Kind() == reflect.String {
+		if val := v.MapIndex(reflect.ValueOf(property).Convert(v.Type().Key())); val.IsValid() {
+			return val.Interface()
+		}
+		return nil
 	}
 
 	if v.Kind() == reflect.Struct {
