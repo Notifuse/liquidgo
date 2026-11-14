@@ -4,15 +4,16 @@
 
 ### Tests
 - **Hostile templates**: `TestRenderScalesLinearly` renders families of templates at n and 4n and
-  fails when 4 times the input takes more than 9 times as long; `TestHostileTemplatesAreBounded`
+  fails when 4 times the input takes more than 9 times as long or allocates more than 9 times as
+  much; `TestHostileTemplatesAreBounded`
   checks that each resource limit refuses a template before an allocation budget. The cases that
   fail today are listed as known, with the reason, and fail the test once they pass.
-- **Differential corpus**: 583 templates rendered by Shopify Liquid 5.11.0 in lax and strict mode
-  (`integration/testdata/differential`), with every divergence listed.
+- **Differential corpus**: hand-written and generated templates rendered by Shopify Liquid 5.11.0
+  in lax and strict mode (`integration/testdata/differential`), with every divergence listed.
 - **Fuzzing**: `FuzzRender` checks that no panic leaves the API or becomes an internal error, and
   that two parses of a template render the same output.
 - **CI**: the Go version comes from `go.mod`; tests run with the race detector on amd64 and arm64,
-  build for 32-bit platforms and run on Windows; the differential corpus is checked against
+  on 386 and on Windows; the differential corpus is checked against
   Shopify Liquid 5.11.0 and `FuzzRender` runs for 2 minutes.
 
 ## [5.11.0-port.1]

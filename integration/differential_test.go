@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
@@ -33,11 +35,33 @@ type differentialResult struct {
 type differentialDivergence struct {
 	Reason string `json:"reason"`
 	Actual string `json:"actual"`
+	// Actual32 is liquidgo's result on 32-bit platforms, when it differs.
+	Actual32 string `json:"actual_32bit,omitempty"`
 }
 
-// unclassified is the reason a regeneration gives a new divergence; the test
-// fails until it is replaced by the real one.
+// actual returns the result the divergence lists for this platform.
+func (d differentialDivergence) actual() string {
+	if strconv.IntSize == 32 && d.Actual32 != "" {
+		return d.Actual32
+	}
+	return d.Actual
+}
+
+// sameResult reports whether two results, as describe writes them, are the
+// same, up to the order in which a hash with several keys is rendered:
+// liquidgo renders a Go map, whose order changes from one render to the next.
+func sameResult(a, b string) bool {
+	return a == b || sameUpToHashOrder(a, b)
+}
+
+// unclassified is the reason a regeneration gives a new divergence of a
+// hand-written template; the test fails until it is replaced by the real one.
 const unclassified = "unclassified"
+
+// generatedReason is the reason of every divergence of a generated template:
+// each combines tags and filters whose divergences the hand-written templates
+// show one at a time, so its result is pinned but its cause is not named.
+const generatedReason = "generated: a combination of the divergences of the hand-written templates"
 
 func (r differentialResult) key() string { return r.ID + "/" + r.Mode }
 
@@ -111,6 +135,10 @@ func renderDifferential(t *testing.T, r differentialResult, data map[string]inte
 }
 
 func TestShopifyDifferential(t *testing.T) {
+	// Shopify's results were rendered with TZ=UTC.
+	local := time.Local
+	time.Local = time.UTC
+	defer func() { time.Local = local }()
 	raw, err := os.ReadFile(differentialDir + "/expected.json")
 	if err != nil {
 		t.Fatal(err)
@@ -138,7 +166,7 @@ func TestShopifyDifferential(t *testing.T) {
 	for _, r := range expected.Results {
 		seen[r.key()] = true
 		output, errText := renderDifferential(t, r, data)
-		same := (output == nil) == (r.Output == nil) && (output == nil || *output == *r.Output)
+		same := (output == nil) == (r.Output == nil) && (output == nil || sameResult(*output, *r.Output))
 		if same {
 			if _, listed := known[r.key()]; listed {
 				t.Errorf("%s now matches Shopify (%s): remove it from differential_divergences.json", r.key(), describe(r.Output, r.Error))
@@ -146,19 +174,32 @@ func TestShopifyDifferential(t *testing.T) {
 			continue
 		}
 		actual := describe(output, errText)
-		reason := unclassified
+		entry := differentialDivergence{Reason: unclassified, Actual: actual}
+		if strings.HasPrefix(r.ID, "generated-") {
+			entry.Reason = generatedReason
+		}
 		if k, listed := known[r.key()]; listed {
-			reason = k.Reason
-			if k.Actual != actual {
-				t.Errorf("%s: template %q\nliquidgo now gives %q\nthe file lists     %q\nShopify gives      %q", r.key(), r.Template, actual, k.Actual, describe(r.Output, r.Error))
+			entry = k
+			if !sameResult(k.actual(), actual) {
+				t.Errorf("%s: template %q\nliquidgo now gives %q\nthe file lists     %q\nShopify gives      %q", r.key(), r.Template, actual, k.actual(), describe(r.Output, r.Error))
+			}
+			// A regeneration keeps the result listed for the other
+			// platform.
+			if strconv.IntSize == 32 {
+				entry.Actual32 = actual
+				if entry.Actual32 == entry.Actual {
+					entry.Actual32 = ""
+				}
+			} else {
+				entry.Actual = actual
 			}
 		} else {
 			t.Errorf("%s: template %q\nliquidgo gives %q\nShopify gives  %q\n(not listed in differential_divergences.json)", r.key(), r.Template, actual, describe(r.Output, r.Error))
 		}
-		if reason == unclassified {
+		if entry.Reason == unclassified {
 			t.Errorf("%s: the divergence has no reason", r.key())
 		}
-		got[r.key()] = differentialDivergence{Reason: reason, Actual: actual}
+		got[r.key()] = entry
 	}
 	for key := range known {
 		if !seen[key] {

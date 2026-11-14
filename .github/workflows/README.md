@@ -11,7 +11,7 @@ This directory contains GitHub Actions workflows for continuous integration and 
 **Jobs:**
 
 1. **test** - Linux amd64 and arm64: vet, build, `go test ./...` and `go test -race ./...`;
-   on amd64, the build for 32-bit platforms (`386` and `arm`).
+   on amd64, `go test -short ./...` for `386` and the build for `arm`.
 2. **windows** - `go test -short ./...`, for the paths of `LocalFileSystem`.
 3. **reference** - Checks that `integration/testdata/differential/expected.json` is what
    Shopify Liquid 5.11.0 renders (`scripts/differential_reference.rb --check`), then runs the

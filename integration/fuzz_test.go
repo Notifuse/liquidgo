@@ -9,19 +9,29 @@ import (
 	"testing"
 )
 
-// Inputs the render cannot bound yet: large numbers (a range or a limit),
-// many loops, which nest, and many filters that multiply the size of a
-// string. They are skipped until the library bounds them itself.
+// Inputs the render cannot bound yet: a range bound, limit, offset or cols
+// that is large or computed (a variable), many loops, which nest, and many
+// filters that multiply the size of a string. They are skipped until the
+// library bounds them itself.
 var (
-	largeNumber       = regexp.MustCompile(`\d{3}`)
-	loopTag           = regexp.MustCompile(`\b(for|tablerow|ifchanged)\b`)
-	amplifyingFilter  = regexp.MustCompile(`\b(replace|replace_first|replace_last|join|split|concat|append|prepend)\b`)
-	timeDependent     = regexp.MustCompile(`\b(now|today)\b`)
-	knownInternalErr  = "a cycle without values panics"
-	knownNilKey       = "a hash indexed by a nil key panics"
-	knownParsePanic   = "slice bounds out of range"
-	knownParsePanicOf = "a lone quote panics while parsing"
-	knownHashOrder    = "a hash with several keys, which keyword arguments make, renders its keys in map order"
+	largeBound       = regexp.MustCompile(`(\d{3}|[A-Za-z_][\w.]*)\s*\.\.|\.\.\s*-?(\d{3}|[A-Za-z_])|\b(limit|offset|cols)\s*:\s*-?(\d{3}|[A-Za-z_])`)
+	loopTag          = regexp.MustCompile(`\b(for|tablerow|ifchanged)\b`)
+	amplifyingFilter = regexp.MustCompile(`\b(replace|replace_first|replace_last|join|split|concat|append|prepend)\b`)
+	timeDependent    = regexp.MustCompile(`\b(now|today)\b`)
+)
+
+// The panics known today, each with the shape of input that causes it.
+var (
+	// {% cycle a: %}, a group and no values.
+	cycleWithoutValues = regexp.MustCompile(`\bcycle\s*[^}\n]*:\s*(-?%\}|\n|$)`)
+	knownCyclePanic    = "a cycle without values panics"
+	// h[], h[name], h[!], h[0A]: an index, which an undefined name or
+	// markup that lax mode drops makes nil.
+	nilIndex       = regexp.MustCompile(`\[[^\]]*\]`)
+	knownNilKey    = "a hash indexed by a nil key panics"
+	loneQuotePanic = "slice bounds out of range [1:0]"
+	knownLoneQuote = "a lone quote panics while parsing"
+	knownHashOrder = "a hash with several keys, which keyword arguments make, renders its keys in map order"
 )
 
 // sameUpToHashOrder reports whether two outputs that render a hash ("=>")
@@ -40,7 +50,7 @@ func sameUpToHashOrder(a, b string) bool {
 // source, or "".
 func knownUnboundedInput(source string) string {
 	switch {
-	case largeNumber.MatchString(source):
+	case largeBound.MatchString(source):
 		return "a range is built as an array, and an empty loop body adds nothing to the render score"
 	case len(loopTag.FindAllString(source, -1)) > 3:
 		return "an empty loop body adds nothing to the render score, and tablerow and ifchanged render their body more than once"
@@ -72,15 +82,14 @@ func fuzzDataWithoutHashes() map[string]interface{} {
 // conformance suite.
 func fuzzSeeds(f *testing.F) []string {
 	var seeds []string
-	var templates []struct {
-		Template string `json:"template"`
-	}
 	for _, file := range []string{differentialDir + "/templates.json", conformanceDir + "/cases.json"} {
 		raw, err := os.ReadFile(file)
 		if err != nil {
 			f.Fatal(err)
 		}
-		templates = templates[:0]
+		var templates []struct {
+			Template string `json:"template"`
+		}
 		if err := json.Unmarshal(raw, &templates); err != nil {
 			f.Fatal(err)
 		}
@@ -113,19 +122,21 @@ func FuzzRender(f *testing.F) {
 			var first, second result
 			requireNoPanicEscapes(t, func() { first = renderWith(env, source, fuzzData()) })
 			if first.parseErr != nil && strings.Contains(first.parseErr.Error(), "runtime error") {
-				if strings.Contains(first.parseErr.Error(), knownParsePanic) && strings.ContainsAny(source, `'"`) {
-					t.Skipf("known: %s", knownParsePanicOf)
+				if strings.Contains(first.parseErr.Error(), loneQuotePanic) {
+					t.Skipf("known: %s", knownLoneQuote)
 				}
 				t.Fatalf("%s: a panic while parsing %q became the error %q", mode, source, first.parseErr)
 			}
 			if err := first.internalError(); err != nil {
-				if strings.Contains(source, "cycle") {
-					t.Skipf("known: %s", knownInternalErr)
+				if cycleWithoutValues.MatchString(source) {
+					t.Skipf("known: %s", knownCyclePanic)
 				}
-				var withoutHashes result
-				requireNoPanicEscapes(t, func() { withoutHashes = renderWith(env, source, fuzzDataWithoutHashes()) })
-				if withoutHashes.internalError() == nil {
-					t.Skipf("known: %s", knownNilKey)
+				if nilIndex.MatchString(source) {
+					var withoutHashes result
+					requireNoPanicEscapes(t, func() { withoutHashes = renderWith(env, source, fuzzDataWithoutHashes()) })
+					if withoutHashes.internalError() == nil {
+						t.Skipf("known: %s", knownNilKey)
+					}
 				}
 				t.Fatalf("%s: a panic in the render of %q became %v", mode, source, err)
 			}

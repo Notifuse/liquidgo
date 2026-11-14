@@ -53,11 +53,14 @@ var boundedCases = []boundedCase{
 	{name: "tablerow-range-limit", source: "{% tablerow i in (1..2000000) limit: 1 %}{{ i }}{% endtablerow %}", budget: 1 << 20,
 		wantOutput: "<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n"},
 	// Every iteration counts in the render score, even with an empty body.
-	{name: "empty-loop", source: "{% for i in (1..2000000) %}{% endfor %}", limits: allLimits, budget: 1 << 20, wantError: memoryLimit},
-	{name: "nested-empty-loops", source: "{% for i in (1..2000) %}{% for j in (1..2000) %}{% endfor %}{% endfor %}", limits: allLimits, budget: 1 << 20, wantError: memoryLimit},
-	{name: "empty-tablerow", source: "{% tablerow i in (1..2000) %}{% endtablerow %}", limits: limits{renderScore: 1000}, budget: 1 << 20, wantError: memoryLimit},
-	// A partial does not start the scores again.
-	{name: "partial-fan-out", source: "{% render 'p', d: 0 %}", partials: fanOut(12), limits: allLimits, budget: 50 << 20, wantError: memoryLimit},
+	// The ranges and the output are small, so that the render score is the
+	// only guard these cases test.
+	{name: "empty-loop", source: "{% for i in (1..2000) %}{% endfor %}", limits: limits{renderScore: 1000}, budget: 1 << 20, wantError: memoryLimit},
+	{name: "nested-empty-loops", source: "{% for i in (1..100) %}{% for j in (1..100) %}{% endfor %}{% endfor %}", limits: limits{renderScore: 1000}, budget: 1 << 20, wantError: memoryLimit},
+	{name: "empty-tablerow", source: "{% tablerow i in (1..2000) %}{% endtablerow %}", limits: limits{renderScore: 100}, budget: 1 << 20, wantError: memoryLimit},
+	// A partial does not start the scores again: 2^12 renders score about
+	// 32,000 in all, and about 4 each.
+	{name: "partial-fan-out", source: "{% render 'p', d: 0 %}", partials: fanOut(12), limits: limits{renderScore: 1000}, budget: 10 << 20, wantError: memoryLimit},
 	// A string or an array is refused before it is built: 26 doublings
 	// build 64 MB.
 	{name: "append-doubled", source: doubled(26, "{% assign s = s | append: s %}"), limits: allLimits, budget: 50 << 20, wantError: memoryLimit},
@@ -74,10 +77,10 @@ var boundedCases = []boundedCase{
 		limits: allLimits, budget: 50 << 20, wantError: memoryLimit},
 	// Each write of a tag is checked against the length limit, not only
 	// the whole tag once it has rendered.
-	{name: "tablerow-length", source: "{% tablerow i in (1..5000) %}xxxxxxxxxx{% endtablerow %}", limits: limits{renderLength: 1000}, budget: 50 << 20, wantError: memoryLimit},
+	{name: "tablerow-length", source: "{% tablerow i in (1..5000) %}xxxxxxxxxx{% endtablerow %}", limits: limits{renderLength: 1000}, budget: 2 << 20, wantError: memoryLimit},
 	// Nesting is refused while parsing, before it is deep enough to cost
 	// time quadratic in it.
-	{name: "brackets-100", source: "{{ " + rep("a[", 99) + "0" + rep("]", 99) + " }}", budget: 50 << 20, wantOutput: ""},
+	{name: "brackets-100", source: "{{ " + rep("a[", 100) + "0" + rep("]", 100) + " }}", budget: 50 << 20, wantOutput: ""},
 	{name: "brackets-101", source: "{{ " + rep("a[", 101) + "0" + rep("]", 101) + " }}", budget: 50 << 20, wantError: tooDeep},
 	{name: "liquid-101", source: "{% liquid " + rep("liquid ", 101) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
 }
@@ -91,7 +94,7 @@ var knownUnbounded = map[string]string{
 	"empty-loop":         "an iteration with an empty body adds nothing to the render score",
 	"nested-empty-loops": "an iteration with an empty body adds nothing to the render score",
 	"empty-tablerow":     "an iteration with an empty body adds nothing to the render score",
-	"partial-fan-out":    "a partial starts the resource scores again",
+	"partial-fan-out":    "a partial starts the resource scores again, and keeps the limit error to itself",
 	"replace-chain":      "a filter result in an output is not counted",
 	"replace-amplified":  "a filter result is counted only once it is built",
 	"join-amplified":     "a filter result is counted only once it is built",
@@ -154,45 +157,61 @@ func clip(s string) string {
 	return s
 }
 
-// knownCachesRetain is the reason the parse caches are known to retain what
-// each template adds, or "" once they no longer do.
-const knownCachesRetain = "the variable lookup and expression caches are global and never evicted"
+// cacheRun makes the names of each run of TestParseCachesAreBounded new, so
+// that -count=2 does not find them in the caches.
+var cacheRun int
 
 // TestParseCachesAreBounded parses and renders templates with distinct
 // variable names, and evaluates as many expressions with Context.Get, and
-// checks that the heap does not keep them once they are unreachable.
+// checks that the heap does not keep them once they are unreachable. The
+// template lookups have no brackets, which the variable lookup cache leaves
+// out; the expressions have one, so that only the expression cache keeps them.
 func TestParseCachesAreBounded(t *testing.T) {
+	cacheRun++
 	env := newEnv("", limits{})
-	heap := func() uint64 {
+	heap := func() int64 {
 		runtime.GC()
 		runtime.GC()
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
-		return m.HeapAlloc
+		return int64(m.HeapAlloc)
 	}
-	before := heap()
-	for i := range 20 {
-		// About 100 KB of distinct lookups.
-		var b strings.Builder
-		for j := range 4000 {
-			fmt.Fprintf(&b, "{{ v%d_%d.k[0] }}", i, j)
-		}
-		requireNoPanicEscapes(t, func() { renderWith(env, b.String(), nil) })
-		ctx := newContext(env)
-		for j := range 4000 {
-			ctx.Get(fmt.Sprintf("w%d_%d.k[0]", i, j))
-		}
-	}
-	retained := int64(heap()) - int64(before)
-	const budget = 5 << 20
-	switch {
-	case retained > budget && knownCachesRetain != "":
-		t.Logf("known (%s): %s retained", knownCachesRetain, mb(uint64(retained)))
-	case retained > budget:
-		t.Errorf("%s retained after GC, over the budget of %s", mb(uint64(retained)), mb(budget))
-	case knownCachesRetain != "":
-		t.Errorf("knownCachesRetain is set, but only %s is retained: clear it", mb(uint64(max(retained, 0))))
-	default:
-		t.Logf("%s retained", mb(uint64(max(retained, 0))))
+	for _, c := range []struct {
+		name, known string
+		fill        func(i int)
+	}{
+		{"variable lookups", "the variable lookup cache is global and never evicted", func(i int) {
+			// About 100 KB of distinct lookups.
+			var b strings.Builder
+			for j := range 4000 {
+				fmt.Fprintf(&b, "{{ r%d_v%d_%d.k }}", cacheRun, i, j)
+			}
+			requireNoPanicEscapes(t, func() { renderWith(env, b.String(), nil) })
+		}},
+		{"Context.Get", "the expression cache is global and never evicted", func(i int) {
+			ctx := newContext(env)
+			for j := range 4000 {
+				ctx.Get(fmt.Sprintf("r%d_w%d_%d.k[0]", cacheRun, i, j))
+			}
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			before := heap()
+			for i := range 20 {
+				c.fill(i)
+			}
+			retained := heap() - before
+			const budget = 5 << 20
+			switch {
+			case retained > budget && c.known != "":
+				t.Logf("known (%s): %s retained", c.known, mb(uint64(retained)))
+			case retained > budget:
+				t.Errorf("%s retained after GC, over the budget of %s", mb(uint64(retained)), mb(budget))
+			case c.known != "":
+				t.Errorf("known as %q, but only %s is retained: clear it", c.known, mb(uint64(max(retained, 0))))
+			default:
+				t.Logf("%s retained", mb(uint64(max(retained, 0))))
+			}
+		})
 	}
 }

@@ -8,7 +8,8 @@ and strict mode, and compares the result with the one Shopify Liquid 5.11.0 give
 - `data.json`: the data every template is rendered with. Its integers are given to liquidgo as
   `int`, as Ruby has them.
 - `expected.json`: the results of Shopify Liquid, written by `scripts/differential_reference.rb`,
-  for the templates above and 400 templates it generates from a fixed seed. Never edit it by hand:
+  for the templates above and for templates it generates from a fixed seed: one or two whole tags
+  or outputs over the names of `data.json`, some with a character removed. Never edit it by hand:
 
   ```sh
   git clone --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid /tmp/shopify-liquid
@@ -26,7 +27,14 @@ and strict mode, and compares the result with the one Shopify Liquid 5.11.0 give
   LIQUIDGO_DIFFERENTIAL_WRITE=1 go test ./integration -run TestShopifyDifferential
   ```
 
-  A new divergence is written with the reason `unclassified`, which fails the test until it is
-  replaced by the real one.
+  A new divergence of a hand-written template is written with the reason `unclassified`, which
+  fails the test until it is replaced by the real one. A divergence of a generated template is
+  written with a reason of its own (`generated: ...`): it combines divergences that the
+  hand-written templates show one at a time, so its result is pinned without naming its cause.
+  The result on 32-bit platforms, when it differs, is kept in `actual_32bit` (regenerate with
+  `GOARCH=386` too).
+
+Two results that differ only in the order of the keys of a rendered hash match: liquidgo renders a
+Go map, whose order changes from one render to the next.
 
 A result matches when both render the same output, or both fail: error messages are not compared.

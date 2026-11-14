@@ -513,7 +513,7 @@
  },
  {
   "id": "whitespace-03",
-  "template": "{%- assign x = 1 -%} {{ x }}"
+  "template": "{%- assign w = 1 -%} {{ w }}"
  },
  {
   "id": "whitespace-04",
@@ -730,5 +730,45 @@
  {
   "id": "nesting-07",
   "template": "{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}x{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}"
+ },
+ {
+  "id": "render-values-01",
+  "template": "{{ words }}|{{ arr }}|{{ empty }}"
+ },
+ {
+  "id": "render-values-02",
+  "template": "{{ 'lit' | reverse }}|{{ 1 | reverse }}"
+ },
+ {
+  "id": "render-values-03",
+  "template": "{{ nothing | split: ',' }}|{{ missing[1] | split: ',' }}"
+ },
+ {
+  "id": "render-values-04",
+  "template": "{{ name | minus: 2.5 | concat: arr }}"
+ },
+ {
+  "id": "render-values-05",
+  "template": "{{ h | url_encode }}|{{ true | slice: 1, 2 }}"
+ },
+ {
+  "id": "render-values-06",
+  "template": "{% assign v = (1..3) | abs %}{{ v }}"
+ },
+ {
+  "id": "render-values-07",
+  "template": "{% if f > x %}y{% endif %}|{% if s < 1 %}z{% endif %}"
+ },
+ {
+  "id": "render-values-08",
+  "template": "{% decrement x %}|{% increment s %}"
+ },
+ {
+  "id": "render-values-09",
+  "template": "{% unless words > (1..3) %}a{% endunless %}"
+ },
+ {
+  "id": "render-values-10",
+  "template": "{{ posts | capitalize }}"
  }
 ]
