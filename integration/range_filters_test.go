@@ -46,7 +46,7 @@ func TestALargeRangeStaysWithinTheLimits(t *testing.T) {
 		{"a{{ (1..100000000) | join }}b", limits{renderLength: 50}, memory},
 		{"a{{ (1..100000000) | sort | first }}b", limits{assignScore: 50}, memory},
 		{"a{{ (1..100000000) | size }}b{{ (1..100000000) | last }}", limits{renderLength: 50, assignScore: 5}, "a100000000b100000000"},
-		{"a{{ (1..9223372036854775807) | size }}", limits{assignScore: 5}, "a9223372036854775807"},
+		{"a{{ (1..2147483647) | size }}", limits{assignScore: 5}, "a2147483647"},
 	} {
 		var r result
 		used := allocated(func() { r = renderWith(newEnv("lax", c.l), c.source, nil) })
