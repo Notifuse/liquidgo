@@ -1,7 +1,10 @@
 package liquid
 
 import (
+	"math"
+	"strings"
 	"testing"
+	"time"
 )
 
 // MockConditionContext for testing
@@ -161,36 +164,6 @@ func TestConditionContainsOperator(t *testing.T) {
 	result3 := containsOperator(map[string]interface{}{"key": "value"}, "key")
 	if !result3 {
 		t.Error("Expected map contains key to return true")
-	}
-}
-
-// TestConditionCompareValues tests value comparison logic
-func TestConditionCompareValues(t *testing.T) {
-	// Test equal (compareValues returns int: -1, 0, 1)
-	result, err := compareValues(1, 1)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result != 0 {
-		t.Error("Expected 1 == 1 to return 0")
-	}
-
-	// Test less than
-	result2, err := compareValues(1, 2)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result2 >= 0 {
-		t.Error("Expected 1 < 2 to return negative")
-	}
-
-	// Test greater than
-	result3, err := compareValues(2, 1)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result3 <= 0 {
-		t.Error("Expected 2 > 1 to return positive")
 	}
 }
 
@@ -368,123 +341,6 @@ func TestConditionCheckMethodLiteral(t *testing.T) {
 	unknownML := &MethodLiteral{MethodName: "unknown"}
 	if checkMethodLiteral(unknownML, "anything") {
 		t.Error("Expected unknown method literal to return false")
-	}
-}
-
-// TestConditionCompareValuesEdgeCases tests compareValues with various edge case inputs
-func TestConditionCompareValuesEdgeCases(t *testing.T) {
-	// Test numeric comparison
-	result, err := compareValues(1, 2)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result >= 0 {
-		t.Error("Expected 1 < 2 to return negative")
-	}
-
-	result2, err := compareValues(2, 1)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result2 <= 0 {
-		t.Error("Expected 2 > 1 to return positive")
-	}
-
-	result3, err := compareValues(1, 1)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result3 != 0 {
-		t.Error("Expected 1 == 1 to return 0")
-	}
-
-	// Test float comparison
-	result4, err := compareValues(1.5, 2.5)
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result4 >= 0 {
-		t.Error("Expected 1.5 < 2.5 to return negative")
-	}
-
-	// Test string comparison
-	result5, err := compareValues("a", "b")
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result5 >= 0 {
-		t.Error("Expected \"a\" < \"b\" to return negative")
-	}
-
-	result6, err := compareValues("b", "a")
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result6 <= 0 {
-		t.Error("Expected \"b\" > \"a\" to return positive")
-	}
-
-	result7, err := compareValues("a", "a")
-	if err != nil {
-		t.Errorf("compareValues returned error: %v", err)
-	}
-	if result7 != 0 {
-		t.Error("Expected \"a\" == \"a\" to return 0")
-	}
-
-	// Test mixed types (should return error now)
-	_, err = compareValues(42, "hello")
-	// Should return error for mixed type comparison
-	if err == nil {
-		t.Error("Expected mixed type comparison to return error")
-	}
-}
-
-// TestConditionCompareValuesNilComparisons tests nil comparisons (matching Shopify Liquid behavior)
-func TestConditionCompareValuesNilComparisons(t *testing.T) {
-	// Test nil < number (nil is less than any number)
-	result, err := compareValues(nil, 10)
-	if err != nil {
-		t.Errorf("compareValues(nil, 10) returned error: %v", err)
-	}
-	if result >= 0 {
-		t.Errorf("Expected compareValues(nil, 10) to return negative, got %d", result)
-	}
-
-	// Test number > nil (should return negative to make condition false)
-	result2, err := compareValues(10, nil)
-	if err != nil {
-		t.Errorf("compareValues(10, nil) returned error: %v", err)
-	}
-	if result2 >= 0 {
-		t.Errorf("Expected compareValues(10, nil) to return negative, got %d", result2)
-	}
-
-	// Test nil == nil (both are equal)
-	result3, err := compareValues(nil, nil)
-	if err != nil {
-		t.Errorf("compareValues(nil, nil) returned error: %v", err)
-	}
-	if result3 != 0 {
-		t.Errorf("Expected compareValues(nil, nil) to return 0, got %d", result3)
-	}
-
-	// Test nil with float
-	result4, err := compareValues(nil, 3.14)
-	if err != nil {
-		t.Errorf("compareValues(nil, 3.14) returned error: %v", err)
-	}
-	if result4 >= 0 {
-		t.Errorf("Expected compareValues(nil, 3.14) to return negative, got %d", result4)
-	}
-
-	// Test float with nil
-	result5, err := compareValues(3.14, nil)
-	if err != nil {
-		t.Errorf("compareValues(3.14, nil) returned error: %v", err)
-	}
-	if result5 >= 0 {
-		t.Errorf("Expected compareValues(3.14, nil) to return negative, got %d", result5)
 	}
 }
 
@@ -704,5 +560,48 @@ func TestCheckMethodLiteralTypedSlices(t *testing.T) {
 				t.Errorf("checkMethodLiteral(%s, %v) = %v, want %v", tt.method, tt.obj, result, tt.expected)
 			}
 		})
+	}
+}
+
+// TestConditionCompareValues checks compareValues: numbers, strings and
+// times compare among their kind, a side without comparison methods gives
+// not ok, and a number against a string raises Ruby's ArgumentError.
+func TestConditionCompareValues(t *testing.T) {
+	now := time.Now()
+	for _, c := range []struct {
+		left, right interface{}
+		cmp         int
+		ok          bool
+		err         string
+	}{
+		{1, 1, 0, true, ""},
+		{1, 2, -1, true, ""},
+		{2, 1, 1, true, ""},
+		{1.5, 2.5, -1, true, ""},
+		{2, 1.5, 1, true, ""},
+		{"a", "b", -1, true, ""},
+		{"b", "a", 1, true, ""},
+		{"a", "a", 0, true, ""},
+		{now, now.Add(time.Second), -1, true, ""},
+		{math.NaN(), 1, 0, false, ""},
+		{nil, 10, 0, false, ""},
+		{10, nil, 0, false, ""},
+		{nil, nil, 0, false, ""},
+		{true, 1, 0, false, ""},
+		{[]interface{}{1}, 1, 0, false, ""},
+		{map[string]interface{}{}, "a", 0, false, ""},
+		{42, "hello", 0, false, "comparison of Integer with String failed"},
+		{1.5, "hello", 0, false, "comparison of Float with String failed"},
+		{"hello", 42, 0, false, "comparison of String with 42 failed"},
+		{"hello", 1.5, 0, false, "comparison of String with 1.5 failed"},
+	} {
+		cmp, ok, err := compareValues(c.left, c.right)
+		if (err == nil) != (c.err == "") || (err != nil && !strings.Contains(err.Error(), c.err)) {
+			t.Errorf("compareValues(%v, %v) error = %v, want %q", c.left, c.right, err, c.err)
+			continue
+		}
+		if cmp != c.cmp || ok != c.ok {
+			t.Errorf("compareValues(%v, %v) = %d, %v, want %d, %v", c.left, c.right, cmp, ok, c.cmp, c.ok)
+		}
 	}
 }

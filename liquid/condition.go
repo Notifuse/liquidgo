@@ -3,6 +3,7 @@ package liquid
 import (
 	"reflect"
 	"strings"
+	"time"
 )
 
 // MethodLiteral represents a method literal (blank, empty).
@@ -160,53 +161,13 @@ func getConditionOperator(op string) ConditionOperator {
 			return !cond.equalVariables(left, right), nil
 		}
 	case "<":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
-			if left == nil || right == nil {
-				return false, nil
-			}
-			res, err := compareValues(left, right)
-			if err != nil {
-				return false, err
-			}
-			return res < 0, nil
-		}
+		return orderOperator(func(cmp int) bool { return cmp < 0 })
 	case ">":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
-			if left == nil || right == nil {
-				return false, nil
-			}
-			res, err := compareValues(left, right)
-			if err != nil {
-				return false, err
-			}
-			return res > 0, nil
-		}
+		return orderOperator(func(cmp int) bool { return cmp > 0 })
 	case ">=":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
-			if left == nil || right == nil {
-				return false, nil
-			}
-			res, err := compareValues(left, right)
-			if err != nil {
-				return false, err
-			}
-			return res >= 0, nil
-		}
+		return orderOperator(func(cmp int) bool { return cmp >= 0 })
 	case "<=":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			// Handle nil comparisons: all comparisons with nil evaluate to false (matching Shopify Liquid)
-			if left == nil || right == nil {
-				return false, nil
-			}
-			res, err := compareValues(left, right)
-			if err != nil {
-				return false, err
-			}
-			return res <= 0, nil
-		}
+		return orderOperator(func(cmp int) bool { return cmp <= 0 })
 	case "contains":
 		return func(_ *Condition, left, right interface{}) (bool, error) {
 			return containsOperator(left, right), nil
@@ -260,68 +221,89 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 	}
 }
 
-func compareValues(left, right interface{}) (int, error) {
-	// Handle nil comparisons gracefully (matching Shopify Liquid behavior)
-	// When comparing nil with a number, the comparison should evaluate to false
-	// To achieve this, we return -1 for nil comparisons, which makes:
-	// - "nil > number" → res > 0 → -1 > 0 → false ✓
-	// - "number > nil" → res > 0 → -1 > 0 → false ✓
-	// - "nil < number" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
-	// - "number < nil" → res < 0 → -1 < 0 → true (but condition will be false due to nil falsiness)
-	if left == nil && right != nil {
-		// Check if right is a number
-		if _, rightOk := asNumber(right); rightOk {
-			return -1, nil
+// orderOperator returns <, >, <= or >=, holding when holds accepts the
+// comparison of the two sides.
+func orderOperator(holds func(cmp int) bool) ConditionOperator {
+	return func(_ *Condition, left, right interface{}) (bool, error) {
+		cmp, ok, err := compareValues(left, right)
+		if err != nil || !ok {
+			return false, err
 		}
+		return holds(cmp), nil
 	}
-	if right == nil && left != nil {
-		// Check if left is a number
-		if _, leftOk := asNumber(left); leftOk {
-			return -1, nil
-		}
-	}
-	if left == nil && right == nil {
-		// Both are nil, they're equal
-		return 0, nil
-	}
+}
 
-	// Numeric comparison, exact across Go numeric types (NaN compares as 0, as before)
-	leftNum, leftOk := asNumber(left)
-	rightNum, rightOk := asNumber(right)
-	if leftOk && rightOk {
-		cmp, _ := compareNumbers(leftNum, rightNum)
-		return cmp, nil
-	}
+// orderKind is how a value takes part in <, >, <= and >=.
+type orderKind int
 
-	// If one is a number and the other is not (and neither is nil), it's a type mismatch for comparison
-	if leftOk || rightOk {
-		// Format types nicely for error message
-		leftType := "nil"
-		if left != nil {
-			leftType = reflect.TypeOf(left).Name()
-			if leftType == "" {
-				leftType = reflect.TypeOf(left).String()
-			}
-		}
-		rightType := "nil"
-		if right != nil {
-			rightType = reflect.TypeOf(right).Name()
-			if rightType == "" {
-				rightType = reflect.TypeOf(right).String()
-			}
-		}
-		return 0, NewArgumentError("comparison of " + leftType + " with " + rightType + " failed")
-	}
+const (
+	// unordered: the value has no comparison methods in Ruby, as nil, a
+	// boolean, an array, a hash or a drop.
+	unordered orderKind = iota
+	orderedNumber
+	orderedString
+	orderedTime
+)
 
-	// String comparison
-	leftStr := ToS(left, nil)
-	rightStr := ToS(right, nil)
-	if leftStr < rightStr {
-		return -1, nil
-	} else if leftStr > rightStr {
-		return 1, nil
+func orderKindOf(v interface{}) orderKind {
+	if _, ok := asNumber(v); ok {
+		return orderedNumber
 	}
-	return 0, nil
+	if _, ok := v.(time.Time); ok {
+		return orderedTime
+	}
+	if v != nil && reflect.ValueOf(v).Kind() == reflect.String {
+		return orderedString
+	}
+	return unordered
+}
+
+// compareValues compares two values as Ruby's left.send(op, right) in a
+// condition. ok is false when either side has no comparison methods, which
+// makes the condition false, and when a float is NaN. Numbers, strings and
+// times compare only among their kind; any other pair raises Ruby's
+// ArgumentError.
+func compareValues(left, right interface{}) (cmp int, ok bool, err error) {
+	lk, rk := orderKindOf(left), orderKindOf(right)
+	if lk == unordered || rk == unordered {
+		return 0, false, nil
+	}
+	if lk != rk {
+		return 0, false, NewArgumentError("comparison of " + rubyClassName(left) + " with " + comparisonOperand(right) + " failed")
+	}
+	switch lk {
+	case orderedNumber:
+		ln, _ := asNumber(left)
+		rn, _ := asNumber(right)
+		cmp, ok = compareNumbers(ln, rn)
+		return cmp, ok, nil
+	case orderedTime:
+		return left.(time.Time).Compare(right.(time.Time)), true, nil
+	}
+	return strings.Compare(reflect.ValueOf(left).String(), reflect.ValueOf(right).String()), true, nil
+}
+
+// rubyClassName returns the name of the Ruby class of an ordered value.
+func rubyClassName(v interface{}) string {
+	switch orderKindOf(v) {
+	case orderedNumber:
+		if n, _ := asNumber(v); n.kind == floatNumber {
+			return "Float"
+		}
+		return "Integer"
+	case orderedTime:
+		return "Time"
+	}
+	return "String"
+}
+
+// comparisonOperand writes the right side of a failed comparison as Ruby's
+// rb_cmperr: a number by its value, anything else by its class.
+func comparisonOperand(v interface{}) string {
+	if orderKindOf(v) == orderedNumber {
+		return ToS(v, nil)
+	}
+	return rubyClassName(v)
 }
 
 // containsOperator implements contains as Ruby's include?: a substring for a string
