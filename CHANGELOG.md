@@ -2,6 +2,64 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.2]
+
+Rendering under resource limits: the output, loops, filters and parsing stay within the limits a
+template is given, a render can be stopped, and an error in one node no longer loses the rest of the
+output. Several outputs change: see the list below before upgrading. Tagged `v5.11.1`.
+
+### Added
+- **`OutputBuffer`**: the output of a render is written to a buffer that checks
+  `render_length_limit` at each write, or counts it in `assign_score_limit` inside a `capture`.
+  Blocks, tags, variables, documents and templates have a `RenderToOutput(context, *OutputBuffer)`
+  method; every `RenderToOutputBuffer(context, *string)` method stays and gives the same output. A
+  custom tag keeps the method it defines: a tag that embeds `*liquid.Tag` or `*liquid.Block` and
+  defines `Render` or `RenderToOutputBuffer` is rendered through it, as before.
+  `liquid.RenderToString` adapts one to the other, and `NewOutputBufferFor` gives a custom tag a
+  buffer under the limits of its context.
+- **Stopping a render**: `RenderOptions.Context` takes a `context.Context`, and
+  `Context.SetCancellation` sets one on a context the caller builds. The render stops at the next
+  node or loop iteration once it is done, with a `CanceledError` that wraps the context's error
+  (`errors.Is(err, context.DeadlineExceeded)`). `Context.CheckCanceled` lets a custom tag check it.
+
+### Fixed
+- **Output length**: building the output costs time in proportion to its length, and
+  `render_length_limit` stops a render as soon as the output passes it, instead of after the node
+  that wrote it.
+- **`tablerow` and `ifchanged`** render their body once per item: `increment`, `cycle` and `assign`
+  inside them take effect once, as in Ruby, and nesting them no longer costs exponential time.
+- **Ranges in `for` and `tablerow`** are iterated without being built, so `(1..2000000000) limit: 1`
+  takes no memory. An `offset` plus a `limit` past the integer range saturates instead of dropping
+  items. Each iteration counts in `render_score_limit`, even with an empty body.
+- **Filter results**: `split`, `join`, `replace`, `replace_first`, `replace_last`, `append`,
+  `prepend` and `concat` compute the size of their result and raise `Memory limits exceeded` before
+  building one that passes `render_length_limit`; the items of a list they build count in
+  `assign_score_limit`.
+- **An error in a node** writes its message in place of that node and keeps the rest of the output,
+  following Ruby's rules: an undefined variable, drop method or filter writes nothing, a tag that
+  renders nothing writes nothing, and `Memory limits exceeded` or a stopped render ends the render,
+  from any block or partial. Before, the whole output became `Liquid error: internal`.
+- **`cycle`** without values renders nothing.
+- **A hash indexed by a nil key** (`{{ h[nothing] }}`) renders nothing, as in Ruby.
+- **A drop method that takes arguments** is no longer called by a lookup.
+- **Resource limits** given as `int64`, `uint`, `int32` or another integer type are applied; they
+  were ignored. A value past the `int` range saturates.
+- **Parsing** costs time in proportion to the template: lookups, brackets and parentheses nested
+  more than 100 deep, and `liquid` tags nested more than 100 deep, raise `Nesting too deep`, as
+  blocks do. The body of `raw` is built in one pass.
+- **`slice` and `truncate`** on a string read only the characters they need.
+- **Parse caches**: the process-wide caches of lookups and expressions are gone; each parse keeps
+  its own, so memory no longer grows with the number of distinct templates.
+
+### Changed
+- **Partials share the limits** of the template that renders them: `render` and `include` no longer
+  reset `render_length_limit`, `render_score_limit` and `assign_score_limit`. Ruby resets them, so a
+  template can pass the limits through partials there; here it cannot.
+- **A lookup nested more than 100 deep** (`a[a[a[...]]]`) is a parse error. Ruby accepts it up to its
+  stack size.
+- **With `StrictFilters`, an undefined filter** renders nothing and is reported in `Errors()`, as in Ruby;
+  it rendered the error message.
+
 ### Tests
 - **Hostile templates**: `TestRenderScalesLinearly` renders families of templates at n and 4n and
   fails when 4 times the input takes more than 9 times as long or allocates more than 9 times as

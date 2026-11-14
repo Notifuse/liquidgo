@@ -490,7 +490,8 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.11.0**, port revision 1 (`liquid.Version`, `liquid.PortRevision`).
+Current version: **5.11.0**, port revision 2 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 2 is `v5.11.1`.
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.
 
@@ -515,6 +516,11 @@ where every number is a `float64`, and render text meant for people (emails, pag
   elements; use `join`.
 - **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.
 - **`decrement`** counters live in their own namespace, separate from `assign`.
+- **Partials share the resource limits** of the template that renders them: `render` and `include`
+  do not reset them, as Ruby does.
+- **Nesting is bounded at 100** for lookups and `liquid` tags too, as for blocks: `a[a[a[...]]]`
+  nested deeper is a parse error.
+- **A filter result over `render_length_limit`** raises `Memory limits exceeded` before it is built.
 - Some malformed markup that Ruby's lax parser tolerates (`{{ 'a' | split$$$:' ' }}`,
   `{{ false - }}`) renders differently.
 
