@@ -5,7 +5,8 @@
 ## [5.11.0-port.3]
 
 Lookups, parse errors and rendering of lists, ranges and conditions follow Shopify Liquid 5.11.0.
-Several outputs change: see the list below before upgrading. Tagged `v5.11.2`.
+Several outputs change: see the list below before upgrading. Tagged `v5.11.2`, which also ships
+5.11.0-port.2.
 
 ### Fixed
 - **Lookup order**: a variable set by `assign` or `capture` wins over the render data of the same
@@ -58,7 +59,8 @@ Several outputs change: see the list below before upgrading. Tagged `v5.11.2`.
 
 Rendering under resource limits: the output, loops, filters and parsing stay within the limits a
 template is given, a render can be stopped, and an error in one node no longer loses the rest of the
-output. Several outputs change: see the list below before upgrading. Tagged `v5.11.1`.
+output. Several outputs change: see the list below before upgrading. Not tagged on its own: it ships
+in `v5.11.2` with 5.11.0-port.3.
 
 ### Added
 - **`OutputBuffer`**: the output of a render is written to a buffer that checks
