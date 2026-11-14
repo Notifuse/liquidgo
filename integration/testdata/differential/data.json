@@ -1,0 +1,13 @@
+{
+ "x": "a",
+ "name": "<b>",
+ "arr": [1, 2, 3],
+ "words": ["b", "a", "C"],
+ "n": 3,
+ "f": 1.5,
+ "s": "héllo wörld",
+ "posts": [{"title": "t1", "public": true}, {"title": "t2", "public": false}],
+ "h": {"k": "v"},
+ "empty": "",
+ "nothing": null
+}

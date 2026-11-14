@@ -66,7 +66,7 @@ func TestArithmeticIntegers(t *testing.T) {
 		{"nil + 1", sf.Plus(nil, 1), 1},
 		{"JSON integer + int", sf.Plus(100.0, 1), 101.0},
 		{"JSON integer / int", div(1999.0, 100), 19.99},
-		{"overflow", sf.Plus(math.MaxInt64, 1), float64(math.MaxInt64) + 1},
+		{"overflow", sf.Plus(int64(math.MaxInt64), 1), float64(math.MaxInt64) + 1},
 	})
 }
 
