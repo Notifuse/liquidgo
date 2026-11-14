@@ -464,32 +464,24 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// Key is already a string
 	keyStr := key
 
-	// Check scopes except the last one (outerScope)
-	// We want to check environments before outerScope so custom assigns override instance assigns
-	scopesToCheck := c.scopes
+	// As Ruby's find_variable: every scope, the outer one included, before
+	// the environments. The outer scope holds the template's assign and
+	// capture; the instance assigns kept from an earlier render were
+	// replaced by the render data when the context was built
+	// (squashInstanceAssignsWithEnvironments).
 	var outerScope map[string]interface{}
-	if len(scopesToCheck) > 0 {
-		outerScope = scopesToCheck[len(scopesToCheck)-1]
-		scopesToCheck = scopesToCheck[:len(scopesToCheck)-1]
+	if len(c.scopes) > 0 {
+		outerScope = c.scopes[len(c.scopes)-1]
 	}
-
-	for _, scope := range scopesToCheck {
+	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
 		}
 	}
 
-	// Check environments (includes custom assigns which should override instance assigns)
 	variable := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 	if variable != nil {
 		return variable
-	}
-
-	// Check outerScope (instance assigns) last, after environments
-	if outerScope != nil {
-		if _, ok := outerScope[keyStr]; ok {
-			return c.lookupAndEvaluate(outerScope, keyStr, raiseOnNotFound)
-		}
 	}
 
 	// Check if there's a drop in the outermost scope that can handle this key

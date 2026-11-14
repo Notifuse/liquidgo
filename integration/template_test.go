@@ -129,7 +129,11 @@ func TestCustomAssignsSquashInstanceAssigns(t *testing.T) {
 		t.Errorf("Expected 'from instance assigns', got %q", result)
 	}
 
-	// Render with custom assigns - should squash instance assigns
+	// Parse again and render with custom assigns, as Ruby's test does: they
+	// squash the instance assigns
+	if err := tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env}); err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
 	result = tmpl.RenderBang(map[string]interface{}{"foo": "from custom assigns"}, &liquid.RenderOptions{})
 	if result != "from custom assigns" {
 		t.Errorf("Expected 'from custom assigns', got %q", result)

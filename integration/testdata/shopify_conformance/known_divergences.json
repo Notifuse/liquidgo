@@ -234,17 +234,6 @@
    "strict2/ruby": "output: 0"
   }
  },
- "test/integration/tags/increment_tag_test.rb:20": {
-  "reason": "deliberate: decrement counters live in their own namespace, separate from assign",
-  "actual": {
-   "lax/json": "output: -1 10",
-   "lax/ruby": "output: -1 10",
-   "strict/json": "output: -1 10",
-   "strict/ruby": "output: -1 10",
-   "strict2/json": "output: -1 10",
-   "strict2/ruby": "output: -1 10"
-  }
- },
  "test/integration/tags/standard_tag_test.rb:285": {
   "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
   "actual": {
