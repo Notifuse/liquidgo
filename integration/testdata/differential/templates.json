@@ -1,0 +1,726 @@
+[
+ {
+  "id": "lookup-01",
+  "template": "{% assign x = x | upcase %}{{ x }}"
+ },
+ {
+  "id": "lookup-02",
+  "template": "{% assign name = name | escape %}<p>{{ name }}</p>"
+ },
+ {
+  "id": "lookup-03",
+  "template": "{% capture x %}[{{ x }}]{% endcapture %}{{ x }}"
+ },
+ {
+  "id": "lookup-04",
+  "template": "{% assign posts = posts | where: 'public', true %}{% for p in posts %}{{ p.title }}{% endfor %}"
+ },
+ {
+  "id": "lookup-05",
+  "template": "{% assign arr = 'q,r' | split: ',' %}{{ arr | join: '-' }}"
+ },
+ {
+  "id": "lookup-06",
+  "template": "{% for x in arr %}{{ x }}{% endfor %}{{ x }}"
+ },
+ {
+  "id": "lookup-07",
+  "template": "{% increment n %}{% increment n %}{{ n }}"
+ },
+ {
+  "id": "lookup-08",
+  "template": "{% decrement fresh %}{% decrement fresh %}{{ fresh }}"
+ },
+ {
+  "id": "unknown-tag-01",
+  "template": "{% for i in (1..1) %}<a href=\"https://x/?q={%22k%22}\">l</a><p>body</p>{% endfor %}<p>footer</p>"
+ },
+ {
+  "id": "unknown-tag-02",
+  "template": "{% capture c %}a{% bogus %}b{% endcapture %}{{ c }}"
+ },
+ {
+  "id": "unknown-tag-03",
+  "template": "{% case 1 %}{% when 1 %}a{% bogus %}b{% endcase %}"
+ },
+ {
+  "id": "unknown-tag-04",
+  "template": "{% tablerow i in (1..2) %}a{% bogus %}{% endtablerow %}"
+ },
+ {
+  "id": "unknown-tag-05",
+  "template": "{% ifchanged %}a{% bogus %}{% endifchanged %}"
+ },
+ {
+  "id": "unknown-tag-06",
+  "template": "{% if true %}a{% bogus %}{% endif %}"
+ },
+ {
+  "id": "unknown-tag-07",
+  "template": "{% liquid\nif true\nbogus\nendif\n%}"
+ },
+ {
+  "id": "unknown-tag-08",
+  "template": "{% liquid\nfor i in (1..2)\nbogus\nendfor\n%}"
+ },
+ {
+  "id": "unknown-tag-09",
+  "template": "{% unless false %}a{% bogus %}{% endunless %}"
+ },
+ {
+  "id": "unknown-tag-10",
+  "template": "{% bogus %}"
+ },
+ {
+  "id": "unknown-tag-11",
+  "template": "a{% endfor %}b"
+ },
+ {
+  "id": "panic-01",
+  "template": "<p>Dear</p>{% cycle a: %}<p>footer</p>"
+ },
+ {
+  "id": "panic-02",
+  "template": "A{% cycle 'x': %}B"
+ },
+ {
+  "id": "panic-03",
+  "template": "{{ ' }}"
+ },
+ {
+  "id": "panic-04",
+  "template": "{{ \" }}"
+ },
+ {
+  "id": "panic-05",
+  "template": "{% assign v = ' %}[{{ v }}]"
+ },
+ {
+  "id": "panic-06",
+  "template": "{% if ' %}y{% endif %}"
+ },
+ {
+  "id": "panic-07",
+  "template": "{{ 'a' | append: ' }}"
+ },
+ {
+  "id": "block-once-01",
+  "template": "{% tablerow i in (1..2) %}{% increment c %}{% endtablerow %}"
+ },
+ {
+  "id": "block-once-02",
+  "template": "{% ifchanged %}{% increment c %}{% endifchanged %}"
+ },
+ {
+  "id": "block-once-03",
+  "template": "{% tablerow i in (1..3) %}{% cycle 'a', 'b' %}{% endtablerow %}"
+ },
+ {
+  "id": "block-once-04",
+  "template": "{% ifchanged %}{% cycle 'a', 'b' %}{% endifchanged %}{% cycle 'a', 'b' %}"
+ },
+ {
+  "id": "block-once-05",
+  "template": "{% tablerow i in (1..2) %}{% assign t = t | append: i %}{% endtablerow %}{{ t }}"
+ },
+ {
+  "id": "block-once-06",
+  "template": "{% for i in (1..4) %}{% ifchanged %}{{ i | divided_by: 2 }}{% endifchanged %}{% endfor %}"
+ },
+ {
+  "id": "block-once-07",
+  "template": "{% tablerow i in (1..1) %}{% tablerow j in (1..1) %}{% increment c %}{% endtablerow %}{% endtablerow %}"
+ },
+ {
+  "id": "range-01",
+  "template": "{% for i in (1..10) offset: 2 limit: 9223372036854775807 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-02",
+  "template": "{% for i in arr offset: 1 limit: 9223372036854775807 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-03",
+  "template": "{% for i in (1..10) reversed limit: 3 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-04",
+  "template": "{% for i in (1..10) reversed offset: 8 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-05",
+  "template": "{% for i in (1..6) limit: 2 %}{{ i }}{% endfor %}|{% for i in (1..6) offset: continue limit: 2 %}{{ i }}{% endfor %}|{% for i in (1..6) offset: continue %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-06",
+  "template": "{% for i in (1..5) %}{% if i == 3 %}{% break %}{% endif %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-07",
+  "template": "{% for i in (1..5) %}{% if i == 3 %}{% continue %}{% endif %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-08",
+  "template": "{% for i in (3..1) %}{{ i }}{% else %}empty{% endfor %}"
+ },
+ {
+  "id": "range-09",
+  "template": "{% for i in (1..3) %}{{ forloop.index }}/{{ forloop.rindex }}/{{ forloop.first }}/{{ forloop.last }} {% endfor %}"
+ },
+ {
+  "id": "range-10",
+  "template": "{{ (1..3) | join: ',' }}"
+ },
+ {
+  "id": "range-11",
+  "template": "{{ (1..3) | size }}"
+ },
+ {
+  "id": "range-12",
+  "template": "{% assign r = (1..4) %}{% for i in r %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-13",
+  "template": "{% for i in (1..n) %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-14",
+  "template": "{% for i in (1..3) limit: -1 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-15",
+  "template": "{% for i in (1..5) offset: -2 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-16",
+  "template": "{% for i in (1..5) limit: 2.7 %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-17",
+  "template": "{% for i in (1..5) offset: '2' %}{{ i }}{% endfor %}"
+ },
+ {
+  "id": "range-18",
+  "template": "{% tablerow i in (1..5) cols: 2 limit: 4 offset: 1 %}{{ i }}{% endtablerow %}"
+ },
+ {
+  "id": "range-19",
+  "template": "{% tablerow i in arr cols: 0 %}{{ i }}{% endtablerow %}"
+ },
+ {
+  "id": "range-20",
+  "template": "{% for c in 'abc' %}{{ c }}{% endfor %}"
+ },
+ {
+  "id": "range-21",
+  "template": "{% for k in h %}{{ k[0] }}={{ k[1] }}{% endfor %}"
+ },
+ {
+  "id": "numbers-01",
+  "template": "{{ 10 | divided_by: 0 }}"
+ },
+ {
+  "id": "numbers-02",
+  "template": "{{ 10 | modulo: 0 }}"
+ },
+ {
+  "id": "numbers-03",
+  "template": "{{ 10.5 | divided_by: 0 }}"
+ },
+ {
+  "id": "numbers-04",
+  "template": "{{ 9223372036854775807 | plus: 1 }}"
+ },
+ {
+  "id": "numbers-05",
+  "template": "{{ 9223372036854775807 | times: 2 }}"
+ },
+ {
+  "id": "numbers-06",
+  "template": "{{ -9223372036854775808 | abs }}"
+ },
+ {
+  "id": "numbers-07",
+  "template": "{{ 1e300 | ceil }}"
+ },
+ {
+  "id": "numbers-08",
+  "template": "{{ 1.0e300 | times: 1.0e300 }}"
+ },
+ {
+  "id": "numbers-09",
+  "template": "{{ 7 | divided_by: 2 }} {{ 7 | divided_by: 2.0 }} {{ -7 | divided_by: 2 }}"
+ },
+ {
+  "id": "numbers-10",
+  "template": "{{ -7 | modulo: 3 }} {{ 7 | modulo: -3 }} {{ 5.5 | modulo: 2 }}"
+ },
+ {
+  "id": "numbers-11",
+  "template": "{{ 0.1 | plus: 0.2 }}"
+ },
+ {
+  "id": "numbers-12",
+  "template": "{{ 3 | minus: 5.0 }}"
+ },
+ {
+  "id": "numbers-13",
+  "template": "{{ '3' | plus: '4' }}"
+ },
+ {
+  "id": "numbers-14",
+  "template": "{{ 'abc' | plus: 1 }}"
+ },
+ {
+  "id": "numbers-15",
+  "template": "{{ 2.5 | round }} {{ 3.5 | round }} {{ -2.5 | round }} {{ 1.2345 | round: 2 }}"
+ },
+ {
+  "id": "numbers-16",
+  "template": "{{ 4.6 | floor }} {{ -4.6 | floor }} {{ 4.1 | ceil }}"
+ },
+ {
+  "id": "numbers-17",
+  "template": "{{ 5 | at_least: 7 }} {{ 5 | at_most: 3 }}"
+ },
+ {
+  "id": "numbers-18",
+  "template": "{{ f }} {{ f | times: 2 }} {{ n | times: f }}"
+ },
+ {
+  "id": "numbers-19",
+  "template": "{{ 100000000000000000000 }}"
+ },
+ {
+  "id": "numbers-20",
+  "template": "{{ 1.0 }} {{ 1.50 }} {{ -0.0 }}"
+ },
+ {
+  "id": "index-01",
+  "template": "{{ arr[-1] }} {{ arr[0] }} {{ arr[5] }}"
+ },
+ {
+  "id": "index-02",
+  "template": "{{ arr.first }} {{ arr.last }} {{ arr.size }}"
+ },
+ {
+  "id": "index-03",
+  "template": "{{ s.size }} {{ s.first }}"
+ },
+ {
+  "id": "index-04",
+  "template": "{{ h.k }} {{ h['k'] }} {{ h.missing }}"
+ },
+ {
+  "id": "index-05",
+  "template": "{{ nothing }}|{{ nothing.x }}|{{ nothing | default: 'd' }}"
+ },
+ {
+  "id": "index-06",
+  "template": "{{ empty | default: 'd' }}|{{ false | default: 'd' }}|{{ false | default: 'd', allow_false: true }}"
+ },
+ {
+  "id": "index-07",
+  "template": "{% if empty == empty %}a{% endif %}{% if arr == empty %}b{% endif %}{% if '' == blank %}c{% endif %}"
+ },
+ {
+  "id": "index-08",
+  "template": "{{ arr | first | plus: 1 }}"
+ },
+ {
+  "id": "index-09",
+  "template": "{{ posts[1].title }} {{ posts.first.title }}"
+ },
+ {
+  "id": "strings-01",
+  "template": "{{ s | slice: 1, 3 }}|{{ s | slice: -3, 2 }}|{{ s | slice: 20 }}|{{ s | slice: -20, 3 }}"
+ },
+ {
+  "id": "strings-02",
+  "template": "{{ s | truncate: 5 }}|{{ s | truncate: 5, '' }}|{{ s | truncate: 2, '...' }}|{{ s | truncate: 0 }}"
+ },
+ {
+  "id": "strings-03",
+  "template": "{{ s | truncatewords: 1 }}|{{ s | truncatewords: 0 }}|{{ s | truncatewords: 1, '' }}"
+ },
+ {
+  "id": "strings-04",
+  "template": "{{ s | upcase }} {{ s | capitalize }} {{ s | downcase }} {{ s | size }}"
+ },
+ {
+  "id": "strings-05",
+  "template": "{{ 'a,b,,c' | split: ',' | size }} {{ '' | split: ',' | size }} {{ 'abc' | split: '' | join: '-' }}"
+ },
+ {
+  "id": "strings-06",
+  "template": "{{ ' a  b ' | strip }}|{{ ' a ' | lstrip }}|{{ ' a ' | rstrip }}|{{ 'a\n\nb' | strip_newlines }}"
+ },
+ {
+  "id": "strings-07",
+  "template": "{{ 'a\nb' | newline_to_br }}"
+ },
+ {
+  "id": "strings-08",
+  "template": "{{ '<p>a<br/>b</p><script>x</script><!-- c -->' | strip_html }}"
+ },
+ {
+  "id": "strings-09",
+  "template": "{{ '<a href=\"x\">&amp;</a>' | escape }}|{{ '&amp; &lt;' | escape_once }}"
+ },
+ {
+  "id": "strings-10",
+  "template": "{{ 'a b&c/é' | url_encode }}|{{ 'a+b%20c' | url_decode }}"
+ },
+ {
+  "id": "strings-11",
+  "template": "{{ 'aXbXc' | replace: 'X', '-' }}|{{ 'aXbXc' | replace_first: 'X', '-' }}|{{ 'aXbXc' | replace_last: 'X', '-' }}"
+ },
+ {
+  "id": "strings-12",
+  "template": "{{ 'aXbXc' | remove: 'X' }}|{{ 'aXbXc' | remove_first: 'X' }}|{{ 'aXbXc' | remove_last: 'X' }}"
+ },
+ {
+  "id": "strings-13",
+  "template": "{{ 'abc' | prepend: 'x' | append: 'y' }}"
+ },
+ {
+  "id": "strings-14",
+  "template": "{{ 'hello' | base64_encode }}|{{ 'aGVsbG8=' | base64_decode }}|{{ 'a?b' | base64_url_safe_encode }}"
+ },
+ {
+  "id": "strings-15",
+  "template": "{{ 'Hello World' | sha1 }}|{{ 'Hello World' | md5 }}"
+ },
+ {
+  "id": "strings-16",
+  "template": "{{ words | sort | join: ',' }}|{{ words | reverse | join: ',' }}|{{ words | sort_natural | join: ',' }}"
+ },
+ {
+  "id": "strings-17",
+  "template": "{{ 'b,a,b,c' | split: ',' | uniq | join: ',' }}|{{ arr | concat: words | join: ',' }}"
+ },
+ {
+  "id": "strings-18",
+  "template": "{{ posts | map: 'title' | join: ',' }}|{{ posts | where: 'public' | map: 'title' | join: ',' }}"
+ },
+ {
+  "id": "strings-19",
+  "template": "{{ posts | find: 'public', false | map: 'title' }}|{{ posts | has: 'public', true }}|{{ posts | find_index: 'public', false }}"
+ },
+ {
+  "id": "strings-20",
+  "template": "{{ arr | sum }}|{{ posts | sum: 'x' }}|{{ arr | compact | size }}"
+ },
+ {
+  "id": "strings-21",
+  "template": "{{ 'abc' | slice: 1.5 }}|{{ 'abc' | slice: 'x' }}"
+ },
+ {
+  "id": "strings-22",
+  "template": "{{ s | truncate: -1 }}|{{ s | truncatewords: -1 }}"
+ },
+ {
+  "id": "filters-errors-01",
+  "template": "a{{ 'x' | nosuchfilter }}b"
+ },
+ {
+  "id": "filters-errors-02",
+  "template": "a{{ 'x' | upcase: 1 }}b"
+ },
+ {
+  "id": "filters-errors-03",
+  "template": "a{{ 'x' | replace }}b"
+ },
+ {
+  "id": "filters-errors-04",
+  "template": "a{{ 'x' | split }}b"
+ },
+ {
+  "id": "filters-errors-05",
+  "template": "a{{ arr | map }}b"
+ },
+ {
+  "id": "filters-errors-06",
+  "template": "a{{ 'x' | date: '%Y' }}b"
+ },
+ {
+  "id": "filters-errors-07",
+  "template": "a{{ 0 | date: '%Y-%m-%d %H:%M' }}b"
+ },
+ {
+  "id": "filters-errors-08",
+  "template": "a{{ '2020-02-29T12:00:00Z' | date: '%a %d %b %Y %j %%' }}b"
+ },
+ {
+  "id": "filters-errors-09",
+  "template": "a{{ 'not a date' | date: '%Y' }}b"
+ },
+ {
+  "id": "filters-errors-10",
+  "template": "a{{ 1 | plus }}b"
+ },
+ {
+  "id": "raw-comment-01",
+  "template": "{% raw %}{{ x }}{% if %}{% endraw %}"
+ },
+ {
+  "id": "raw-comment-02",
+  "template": "{% raw %}{% raw %}{% endraw %}"
+ },
+ {
+  "id": "raw-comment-03",
+  "template": "{% raw %}a"
+ },
+ {
+  "id": "raw-comment-04",
+  "template": "{% comment %}a{% if %}{% endcomment %}b"
+ },
+ {
+  "id": "raw-comment-05",
+  "template": "{% comment %}a"
+ },
+ {
+  "id": "raw-comment-06",
+  "template": "{% comment %}{% comment %}a{% endcomment %}{% endcomment %}b"
+ },
+ {
+  "id": "raw-comment-07",
+  "template": "{% # inline comment %}a"
+ },
+ {
+  "id": "raw-comment-08",
+  "template": "{% liquid\n# a comment\necho 'x'\n%}"
+ },
+ {
+  "id": "raw-comment-09",
+  "template": "{% doc %}text{% enddoc %}a"
+ },
+ {
+  "id": "whitespace-01",
+  "template": "a  {{- 'x' -}}  b"
+ },
+ {
+  "id": "whitespace-02",
+  "template": "a \n {%- if true -%} \n b \n {%- endif -%} \n c"
+ },
+ {
+  "id": "whitespace-03",
+  "template": "{%- assign x = 1 -%} {{ x }}"
+ },
+ {
+  "id": "whitespace-04",
+  "template": "{{-'x'-}}"
+ },
+ {
+  "id": "whitespace-05",
+  "template": "{% raw -%} a {%- endraw %}"
+ },
+ {
+  "id": "lax-quirks-01",
+  "template": "{{ 'x' | upcase: }}"
+ },
+ {
+  "id": "lax-quirks-02",
+  "template": "{{ x x }}"
+ },
+ {
+  "id": "lax-quirks-03",
+  "template": "{{ 'a' 'b' }}"
+ },
+ {
+  "id": "lax-quirks-04",
+  "template": "{{ | upcase }}"
+ },
+ {
+  "id": "lax-quirks-05",
+  "template": "{% if x = 1 %}y{% endif %}"
+ },
+ {
+  "id": "lax-quirks-06",
+  "template": "{% if 1 =! 1 %}y{% else %}n{% endif %}"
+ },
+ {
+  "id": "lax-quirks-07",
+  "template": "{% assign = 1 %}{{ x }}"
+ },
+ {
+  "id": "lax-quirks-08",
+  "template": "{% for in arr %}x{% endfor %}"
+ },
+ {
+  "id": "lax-quirks-09",
+  "template": "{% if %}x{% endif %}"
+ },
+ {
+  "id": "lax-quirks-10",
+  "template": "{{ arr[ }}"
+ },
+ {
+  "id": "lax-quirks-11",
+  "template": "{{ arr] }}"
+ },
+ {
+  "id": "lax-quirks-12",
+  "template": "{{ h.k. }}"
+ },
+ {
+  "id": "lax-quirks-13",
+  "template": "{{ 1..3 }}"
+ },
+ {
+  "id": "lax-quirks-14",
+  "template": "{{ (1..) }}"
+ },
+ {
+  "id": "lax-quirks-15",
+  "template": "{% assign v = (1..3 %}{{ v }}"
+ },
+ {
+  "id": "lax-quirks-16",
+  "template": "{{ 'x' | append: 'y' | }}"
+ },
+ {
+  "id": "lax-quirks-17",
+  "template": "{% if true and %}y{% endif %}"
+ },
+ {
+  "id": "lax-quirks-18",
+  "template": "{% case %}{% when %}x{% endcase %}"
+ },
+ {
+  "id": "lax-quirks-19",
+  "template": "{% cycle %}"
+ },
+ {
+  "id": "lax-quirks-20",
+  "template": "{% tablerow %}x{% endtablerow %}"
+ },
+ {
+  "id": "lax-quirks-21",
+  "template": "{% capture %}x{% endcapture %}"
+ },
+ {
+  "id": "lax-quirks-22",
+  "template": "{% echo %}"
+ },
+ {
+  "id": "lax-quirks-23",
+  "template": "{{"
+ },
+ {
+  "id": "lax-quirks-24",
+  "template": "{%"
+ },
+ {
+  "id": "lax-quirks-25",
+  "template": "}} %}"
+ },
+ {
+  "id": "lax-quirks-26",
+  "template": "{{ }}"
+ },
+ {
+  "id": "lax-quirks-27",
+  "template": "{% %}"
+ },
+ {
+  "id": "lax-quirks-28",
+  "template": "{{ 'a' }"
+ },
+ {
+  "id": "lax-quirks-29",
+  "template": "{% if true }x{% endif %}"
+ },
+ {
+  "id": "tags-01",
+  "template": "{% case n %}{% when 1, 2 %}a{% when 3 or 4 %}b{% else %}c{% endcase %}"
+ },
+ {
+  "id": "tags-02",
+  "template": "{% case 'x' %}{% when 'x' %}a{% when 'x' %}b{% endcase %}"
+ },
+ {
+  "id": "tags-03",
+  "template": "{% unless arr contains 2 %}a{% else %}b{% endunless %}"
+ },
+ {
+  "id": "tags-04",
+  "template": "{% if s contains 'wö' %}a{% endif %}{% if arr contains 2 %}b{% endif %}{% if h contains 'k' %}c{% endif %}"
+ },
+ {
+  "id": "tags-05",
+  "template": "{% if 1 < 2 and 2 < 3 or false %}a{% endif %}{% if false or true and false %}b{% endif %}"
+ },
+ {
+  "id": "tags-06",
+  "template": "{% if 'a' < 'b' %}a{% endif %}{% if 1 < 'b' %}b{% endif %}{% if nothing < 1 %}c{% endif %}"
+ },
+ {
+  "id": "tags-07",
+  "template": "{% if n > 2.5 %}a{% endif %}{% if n == 3.0 %}b{% endif %}{% if '3' == 3 %}c{% endif %}"
+ },
+ {
+  "id": "tags-08",
+  "template": "{% echo 'x' | upcase %}"
+ },
+ {
+  "id": "tags-09",
+  "template": "{% liquid\nassign a = 'x'\nif a == 'x'\necho a\nendif\n%}"
+ },
+ {
+  "id": "tags-10",
+  "template": "{% liquid liquid echo 1 %}"
+ },
+ {
+  "id": "tags-11",
+  "template": "{% assign a = 1 %}{% increment a %}{{ a }}"
+ },
+ {
+  "id": "tags-12",
+  "template": "{% cycle 'g': 'a', 'b' %}{% cycle 'g': 'a', 'b' %}{% cycle 'a', 'b' %}"
+ },
+ {
+  "id": "tags-13",
+  "template": "{% ifchanged %}a{% endifchanged %}{% ifchanged %}a{% endifchanged %}"
+ },
+ {
+  "id": "tags-14",
+  "template": "{% if a %}{% elsif b %}{% else %}e{% endif %}"
+ },
+ {
+  "id": "tags-15",
+  "template": "{% if true %}a{% else %}b{% else %}c{% endif %}"
+ },
+ {
+  "id": "tags-16",
+  "template": "{% if true %}a{% elsif %}b{% endif %}"
+ },
+ {
+  "id": "nesting-01",
+  "template": "{{ a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] }}"
+ },
+ {
+  "id": "nesting-02",
+  "template": "{{ a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[a[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] }}"
+ },
+ {
+  "id": "nesting-03",
+  "template": "{{ ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1..2)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) }}"
+ },
+ {
+  "id": "nesting-04",
+  "template": "{% liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid echo 1 %}"
+ },
+ {
+  "id": "nesting-05",
+  "template": "{% liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid liquid echo 1 %}"
+ },
+ {
+  "id": "nesting-06",
+  "template": "{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}x{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}"
+ },
+ {
+  "id": "nesting-07",
+  "template": "{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}{% if true %}x{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}"
+ }
+]

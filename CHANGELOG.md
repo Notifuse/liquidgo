@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Tests
+- **Hostile templates**: `TestRenderScalesLinearly` renders families of templates at n and 4n and
+  fails when 4 times the input takes more than 9 times as long; `TestHostileTemplatesAreBounded`
+  checks that each resource limit refuses a template before an allocation budget. The cases that
+  fail today are listed as known, with the reason, and fail the test once they pass.
+- **Differential corpus**: 581 templates rendered by Shopify Liquid 5.11.0 in lax and strict mode
+  (`integration/testdata/differential`), with every divergence listed.
+- **Fuzzing**: `FuzzRender` checks that no panic leaves the API or becomes an internal error, and
+  that two parses of a template render the same output.
+- **CI**: the Go version comes from `go.mod`; tests run with the race detector on amd64 and arm64,
+  build for 32-bit platforms and run on Windows; the differential corpus is checked against
+  Shopify Liquid 5.11.0 and `FuzzRender` runs for 2 minutes.
+
 ## [5.11.0-port.1]
 
 Conformance fixes, checked by a new suite that replays the Shopify Liquid 5.11.0 test cases.

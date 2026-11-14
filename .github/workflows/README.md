@@ -6,27 +6,20 @@ This directory contains GitHub Actions workflows for continuous integration and 
 
 ### 🧪 Tests (`test.yml`)
 
-**Triggers:** Push and PR to `main`, `master`, or `develop` branches
+**Triggers:** Push and PR to `main`. Every job uses the Go version of `go.mod`.
 
 **Jobs:**
 
-1. **test** - Runs on multiple OS and Go versions
-   - **Matrix:** 
-     - OS: Ubuntu, macOS, Windows
-     - Go: 1.21, 1.22, 1.23
-   - **Steps:**
-     - Unit tests (`./liquid/...`)
-     - Tag tests (`./liquid/tag/...`, `./liquid/tags/...`)
-     - Integration tests (`./integration/...`)
-   - **Coverage:** Uploads to Codecov (Ubuntu + Go 1.23 only)
+1. **test** - Linux amd64 and arm64: vet, build, `go test ./...` and `go test -race ./...`;
+   on amd64, the build for 32-bit platforms (`386` and `arm`).
+2. **windows** - `go test -short ./...`, for the paths of `LocalFileSystem`.
+3. **reference** - Checks that `integration/testdata/differential/expected.json` is what
+   Shopify Liquid 5.11.0 renders (`scripts/differential_reference.rb --check`), then runs the
+   conformance and differential tests.
+4. **fuzz** - `FuzzRender` for 2 minutes; the input it fails on is kept as an artifact.
+5. **lint** - `golangci-lint` with `.golangci.yml`.
 
-2. **lint** - Code quality checks
-   - Runs `golangci-lint` with configured linters
-   - See `.golangci.yml` for configuration
-
-3. **build** - Ensures code builds
-   - Builds main package
-   - Builds all examples
+Coverage is uploaded to Codecov by `coverage.yml` only.
 
 ### 📊 Benchmarks (`benchmarks.yml`)
 
@@ -92,23 +85,7 @@ For full functionality, configure these secrets in your GitHub repository:
 
 ### Changing Go Versions
 
-Edit the matrix in `test.yml`:
-
-```yaml
-strategy:
-  matrix:
-    go: ['1.21', '1.22', '1.23']  # Add or remove versions
-```
-
-### Changing Test OS
-
-Edit the matrix in `test.yml`:
-
-```yaml
-strategy:
-  matrix:
-    os: [ubuntu-latest, macos-latest, windows-latest]  # Modify as needed
-```
+The workflows read the version from `go.mod`.
 
 ### Adjusting Benchmark Threshold
 
