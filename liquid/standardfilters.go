@@ -33,6 +33,8 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 		return len(v)
 	case map[string]interface{}:
 		return len(v)
+	case *Range:
+		return v.Len()
 	default:
 		// Reflection fallback for typed slices/arrays/maps
 		// This matches Ruby's duck-typing behavior: objects respond to .size
@@ -453,8 +455,12 @@ func (sf *StandardFilters) StripHTML(input interface{}) string {
 	return result
 }
 
-// First returns the first element of an array.
+// First returns the first element of an array, or the start of a range, as
+// Range#first, even when the range is empty.
 func (sf *StandardFilters) First(input interface{}) interface{} {
+	if r, ok := input.(*Range); ok {
+		return r.Start
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[0]
 	}
@@ -469,8 +475,12 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 	return nil
 }
 
-// Last returns the last element of an array.
+// Last returns the last element of an array, or the end of a range, as
+// Range#last, even when the range is empty.
 func (sf *StandardFilters) Last(input interface{}) interface{} {
+	if r, ok := input.(*Range); ok {
+		return r.End
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[len(arr)-1]
 	}
@@ -485,35 +495,38 @@ func (sf *StandardFilters) Last(input interface{}) interface{} {
 	return nil
 }
 
-// Join joins array elements with a separator.
+// Join joins the items of the input with a separator, as Ruby's
+// InputIterator#join: nested arrays are flattened, a range gives its
+// integers, and any other input is a single item.
 func (sf *StandardFilters) Join(input interface{}, separator interface{}) string {
 	sep := " "
 	if separator != nil {
 		sep = ToS(separator, nil)
 	}
+	if r, ok := input.(*Range); ok {
+		return sf.joinRange(r, sep)
+	}
+	iter := NewInputIterator(input, sf.context)
+	parts := make([]string, 0, len(iter.input))
+	iter.Each(func(item interface{}) {
+		parts = append(parts, ToS(item, nil))
+	})
+	sf.checkLength(joinedLength(parts, sep))
+	return strings.Join(parts, sep)
+}
 
-	if arr, ok := input.([]interface{}); ok {
-		parts := make([]string, len(arr))
-		for i, item := range arr {
-			parts[i] = ToS(item, nil)
+// joinRange joins the integers of a range without building them first, and
+// stops at the render length limit.
+func (sf *StandardFilters) joinRange(r *Range, sep string) string {
+	var b strings.Builder
+	for i, n := 0, r.Len(); i < n; i++ {
+		if i > 0 {
+			b.WriteString(sep)
 		}
-		sf.checkLength(joinedLength(parts, sep))
-		return strings.Join(parts, sep)
+		b.WriteString(strconv.Itoa(r.Start + i))
+		sf.checkLength(b.Len())
 	}
-	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
-	// This matches Ruby's duck-typing behavior: arrays respond to .join
-	if input != nil {
-		v := reflect.ValueOf(input)
-		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-			parts := make([]string, v.Len())
-			for i := 0; i < v.Len(); i++ {
-				parts[i] = ToS(v.Index(i).Interface(), nil)
-			}
-			sf.checkLength(joinedLength(parts, sep))
-			return strings.Join(parts, sep)
-		}
-	}
-	return ToS(input, nil)
+	return b.String()
 }
 
 // Date formats a date using strftime-style format codes.
@@ -846,6 +859,14 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 		items = flattenArray(arr)
 	} else if m, ok := input.(map[string]interface{}); ok {
 		items = []interface{}{m}
+	} else if r, ok := input.(*Range); ok {
+		// A range is enumerable: its integers, within the limits
+		n := r.Len()
+		(&StandardFilters{context: context}).checkItems(n)
+		items = make([]interface{}, n)
+		for i := range items {
+			items[i] = r.Start + i
+		}
 	} else if input != nil {
 		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
 		// This matches Ruby's duck-typing behavior: arrays respond to iteration

@@ -2,6 +2,7 @@ package liquid
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -25,6 +26,19 @@ func (rl *RangeLookup) EndObj() interface{} {
 type Range struct {
 	Start int
 	End   int
+}
+
+// Len returns the number of integers in the range, saturated at
+// math.MaxInt.
+func (r *Range) Len() int {
+	if r.End < r.Start {
+		return 0
+	}
+	span := uint64(r.End) - uint64(r.Start)
+	if span >= math.MaxInt {
+		return math.MaxInt
+	}
+	return int(span) + 1
 }
 
 // String returns the string representation of the range (e.g., "1..5").
