@@ -22,13 +22,7 @@ func NewAssignTag(tagName, markup string, parseContext liquid.ParseContextInterf
 	matches := assignSyntax.FindStringSubmatch(markup)
 	if len(matches) < 3 {
 		// Get locale from parse context if it's a ParseContext struct
-		var locale *liquid.I18n
-		if pc, ok := parseContext.(*liquid.ParseContext); ok {
-			locale = pc.Locale()
-			msg := locale.Translate("errors.syntax.assign", map[string]interface{}{})
-			return nil, liquid.NewSyntaxError(msg)
-		}
-		return nil, liquid.NewSyntaxError("Liquid syntax error: assign")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.assign", nil)
 	}
 
 	return &AssignTag{

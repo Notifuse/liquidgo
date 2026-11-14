@@ -27,34 +27,10 @@ func (d *DecrementTag) VariableName() string {
 
 // RenderToOutput renders the decrement tag.
 func (d *DecrementTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
-	// Get counter environment (first environment)
 	ctx := context.Context().(*liquid.Context)
-	environments := ctx.Scopes()
-	if len(environments) == 0 {
-		environments = []map[string]interface{}{make(map[string]interface{})}
-	}
-
-	counterEnv := environments[0]
-	value, ok := counterEnv[d.variableName]
-	if !ok {
-		value = 0
-	}
-
-	// Convert to int
-	var intValue int
-	switch v := value.(type) {
-	case int:
-		intValue = v
-	case float64:
-		intValue = int(v)
-	default:
-		intValue = 0
-	}
-
-	// Decrement first, then output
-	intValue--
-	counterEnv[d.variableName] = intValue
-	output.WriteString(liquid.ToS(intValue, nil))
+	value := ctx.Counter(d.variableName) - 1
+	ctx.SetCounter(d.variableName, value)
+	output.WriteString(liquid.ToS(value, nil))
 }
 
 // RenderToOutputBuffer renders the tag and appends its output to output.

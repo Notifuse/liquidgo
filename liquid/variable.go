@@ -1,6 +1,8 @@
 package liquid
 
 import (
+	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -409,7 +411,54 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 
 // RenderToOutput writes the value of the variable to output.
 func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {
-	output.WriteString(ToS(v.Render(context), nil))
+	WriteValue(output, v.Render(context))
+}
+
+// WriteValue writes a value to output as Ruby's render_obj_to_output: nil
+// writes nothing, and an array writes its items one after the other, nested
+// arrays included. An array that holds itself is not written again inside
+// itself.
+func WriteValue(output *OutputBuffer, value interface{}) {
+	writeValue(output, value, nil)
+}
+
+func writeValue(output *OutputBuffer, value interface{}, seen map[uintptr]bool) {
+	switch v := value.(type) {
+	case nil:
+		return
+	case string:
+		output.WriteString(v)
+		return
+	case []interface{}:
+		if len(v) == 0 {
+			return
+		}
+		ptr := reflect.ValueOf(v).Pointer()
+		if seen[ptr] {
+			return
+		}
+		if seen == nil {
+			seen = make(map[uintptr]bool)
+		}
+		seen[ptr] = true
+		defer delete(seen, ptr)
+		for _, item := range v {
+			writeValue(output, item, seen)
+		}
+		return
+	}
+	if _, ok := value.(fmt.Stringer); ok {
+		// A value with a String method renders it, even a slice or an array
+		output.WriteString(ToS(value, nil))
+		return
+	}
+	if rv := reflect.ValueOf(value); rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+		for i := 0; i < rv.Len(); i++ {
+			writeValue(output, rv.Index(i).Interface(), seen)
+		}
+		return
+	}
+	output.WriteString(ToS(value, nil))
 }
 
 // parseContextWrapper is a minimal wrapper for ParseContextInterface when it doesn't implement ErrorMode/AddWarning.

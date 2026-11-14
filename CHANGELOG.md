@@ -2,6 +2,58 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.3]
+
+Lookups, parse errors and rendering of lists, ranges and conditions follow Shopify Liquid 5.11.0.
+Several outputs change: see the list below before upgrading. Tagged `v5.11.2`.
+
+### Fixed
+- **Lookup order**: a variable set by `assign` or `capture` wins over the render data of the same
+  name, as in Ruby. Before, the render data was read first.
+- **`increment` and `decrement`** counters last the whole render: they no longer restart after a
+  `for` loop, no longer start from an `assign` of the same name, and `{{ name }}` reads the counter
+  unless an `assign` hides it.
+- **An unknown tag inside a block** (`capture`, `for`, `case`, `tablerow`, `ifchanged` and the
+  others) is a syntax error in every mode, as in Ruby. Before, it was dropped, or it closed the
+  block and the text after it was lost. A `when` without a condition is a syntax error too.
+- **A lone quote** (`{{ ' }}`) is an empty string in lax mode, and a condition without a value is
+  Ruby's `if` syntax error; both could panic before.
+- **Error messages** are Shopify Liquid's: the English locale of 5.11.0 is embedded, so no file in
+  the working directory changes a message, and a missing key gives the key instead of panicking.
+- **Arrays render as in Ruby**: `{{ list }}`, `echo` and `cycle` write the items one after the other,
+  nested lists included and `nil` items left out (`["a", "b"]` renders `ab`); they rendered
+  `["a", "b"]`. A filter that takes a string still receives Ruby's inspect of the list, now with
+  `nil` for a nil item and quotes for a typed slice such as `[]string`. A list that holds itself
+  renders its other items, in an output and in `join` or `reverse`, where it overflowed the stack.
+- **Ranges in filters**: `join`, `size`, `first`, `last`, `sort`, `reverse`, `sum`, `uniq` and the
+  other array filters treat `(1..3)` as its integers; `first` and `last` give the bounds even of an
+  empty range. `join` stops at `render_length_limit` without building the integers, and the filters
+  that build them check `assign_score_limit` first. Without these limits, a filter builds at most
+  1,048,576 integers of a range and raises `Memory limits exceeded` beyond.
+- **Properties in the array filters**: `map`, `where`, `reject`, `has`, `find`, `find_index`,
+  `sort`, `sort_natural`, `uniq`, `compact` and `sum` read a property as Ruby's `item[property]`:
+  a string item gives the property when it contains it, an integer item is an error (which renders
+  nothing), and a float, boolean or nil item makes the filter give nil, or adds 0 to `sum`. A
+  pointer to a struct, a drop and a map with string keys such as `map[string]string` give their
+  property; they gave nil.
+- **Comparisons**: `<`, `>`, `<=` and `>=` with nil, a boolean, a list, a hash or a drop on either
+  side are false, as in Ruby, instead of comparing their text or raising; a number against a string
+  raises Ruby's message, `comparison of Integer with String failed`. A `*time.Time` compares as
+  the time.
+- **`case`** keeps the whitespace of its bodies unless every body is blank, as in Ruby.
+- **`tablerow` over nil or false** renders nothing; it rendered an empty row.
+- **An `elsif` that does not parse** (`{% elsif %}`) is Ruby's `if` syntax error; it was dropped.
+- **Strict modes** (`strict`, `strict2` and `rigid`) lex the whole markup of `if`, `unless` and `for`, so an unclosed quote in an
+  index (`a['k]`) is a syntax error that names the markup.
+
+### Changed
+- **`Sort`, `SortNatural`, `Uniq`, `Compact`, `Where`, `Reject`, `Has`, `Find`, `FindIndex` and
+  `Sum`** of `StandardFilters` return a value and an error, as `Map` does; `Has` returns
+  `interface{}`: nil when an item is a float, a boolean or nil, as in Ruby.
+- **Added**: `liquid.WriteValue` writes a value as an output does, `Range.Len`,
+  `Context.Counter` and `Context.SetCounter` for the `increment` and `decrement` counters, and
+  `liquid.LocaleOf` and `liquid.NewSyntaxErrorFor` for a tag's syntax error with Ruby's message.
+
 ## [5.11.0-port.2]
 
 Rendering under resource limits: the output, loops, filters and parsing stay within the limits a

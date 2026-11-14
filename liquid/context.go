@@ -44,9 +44,13 @@ type Context struct {
 	baseScopeDepth     int
 	renderDepth        int             // Track nesting depth during rendering
 	dropInvokeStack    map[string]bool // Track drop method invocations to prevent infinite recursion
-	strictFilters      bool
-	strictVariables    bool
-	partial            bool
+	// counters holds the increment and decrement counters of the render.
+	// Ruby keeps them in the first environment; they are read after the
+	// scopes and before the environments, as there.
+	counters        map[string]int
+	strictFilters   bool
+	strictVariables bool
+	partial         bool
 }
 
 // BuildContext creates a new Context with the given configuration.
@@ -464,32 +468,27 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// Key is already a string
 	keyStr := key
 
-	// Check scopes except the last one (outerScope)
-	// We want to check environments before outerScope so custom assigns override instance assigns
-	scopesToCheck := c.scopes
+	// As Ruby's find_variable: every scope, the outer one included, before
+	// the environments. The outer scope holds the template's assign and
+	// capture; the instance assigns kept from an earlier render were
+	// replaced by the render data when the context was built
+	// (squashInstanceAssignsWithEnvironments).
 	var outerScope map[string]interface{}
-	if len(scopesToCheck) > 0 {
-		outerScope = scopesToCheck[len(scopesToCheck)-1]
-		scopesToCheck = scopesToCheck[:len(scopesToCheck)-1]
+	if len(c.scopes) > 0 {
+		outerScope = c.scopes[len(c.scopes)-1]
 	}
-
-	for _, scope := range scopesToCheck {
+	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
 		}
 	}
+	if n, ok := c.counters[keyStr]; ok {
+		return n
+	}
 
-	// Check environments (includes custom assigns which should override instance assigns)
 	variable := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 	if variable != nil {
 		return variable
-	}
-
-	// Check outerScope (instance assigns) last, after environments
-	if outerScope != nil {
-		if _, ok := outerScope[keyStr]; ok {
-			return c.lookupAndEvaluate(outerScope, keyStr, raiseOnNotFound)
-		}
 	}
 
 	// Check if there's a drop in the outermost scope that can handle this key
@@ -581,6 +580,21 @@ func (c *Context) WithDisabledTags(tagNames []string, fn func()) {
 // TagDisabled returns true if a tag is disabled.
 func (c *Context) TagDisabled(tagName string) bool {
 	return c.disabledTags[tagName] > 0
+}
+
+// Counter returns the value of the increment and decrement counter name: 0
+// until a tag sets it. A counter lasts the whole render of the context, and a
+// lookup reads it unless a scope holds the same name.
+func (c *Context) Counter(name string) int {
+	return c.counters[name]
+}
+
+// SetCounter sets the increment and decrement counter name.
+func (c *Context) SetCounter(name string, value int) {
+	if c.counters == nil {
+		c.counters = make(map[string]int)
+	}
+	c.counters[name] = value
 }
 
 // NewIsolatedSubcontext creates a new isolated subcontext.
@@ -695,6 +709,8 @@ func (c *Context) Reset() {
 	c.interrupts = c.interrupts[:0]
 	c.environments = c.environments[:0]
 	c.staticEnvironments = c.staticEnvironments[:0]
+
+	c.counters = nil
 
 	// Clear maps
 	if c.disabledTags != nil {

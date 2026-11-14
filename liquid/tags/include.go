@@ -46,7 +46,7 @@ func NewIncludeTag(tagName, markup string, parseContext liquid.ParseContextInter
 func (i *IncludeTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
 	matches := includeSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid include tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.include", nil)
 	}
 
 	// Template name

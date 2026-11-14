@@ -50,7 +50,7 @@ func NewTableRowTag(tagName, markup string, parseContext liquid.ParseContextInte
 func (t *TableRowTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
 	matches := tableRowSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid table_row tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.table_row", nil)
 	}
 
 	t.variableName = matches[1]
@@ -106,9 +106,9 @@ func (t *TableRowTag) Attributes() map[string]interface{} {
 // RenderToOutput renders the table_row tag.
 func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Evaluate collection
+	// As Ruby, a tablerow over nil or false renders nothing
 	collection := context.Evaluate(t.collectionName)
-	if collection == nil {
-		output.WriteString("<tr class=\"row1\">\n</tr>\n")
+	if collection == nil || collection == false {
 		return
 	}
 

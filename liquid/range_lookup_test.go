@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"math"
 	"testing"
 )
 
@@ -92,5 +93,23 @@ func TestRangeToInteger(t *testing.T) {
 				t.Errorf("toInteger() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRangeLen(t *testing.T) {
+	for _, c := range []struct {
+		r    Range
+		want int
+	}{
+		{Range{1, 3}, 3},
+		{Range{-2, 2}, 5},
+		{Range{5, 1}, 0},
+		{Range{4, 4}, 1},
+		{Range{0, math.MaxInt}, math.MaxInt},
+		{Range{math.MinInt, math.MaxInt}, math.MaxInt},
+	} {
+		if got := c.r.Len(); got != c.want {
+			t.Errorf("(%d..%d).Len() = %d, want %d", c.r.Start, c.r.End, got, c.want)
+		}
 	}
 }

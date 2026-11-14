@@ -147,9 +147,9 @@ func (i *IfTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, condition Conditi
 
 		// Handle elsif and else (Ruby: unknown_tag handles these)
 		if endTagName == "elsif" || endTagName == "else" {
-			err := i.pushBlock(endTagName, endTagMarkup)
-			if err != nil {
-				return false
+			// An elsif that does not parse is a syntax error, as an if
+			if err := i.pushBlock(endTagName, endTagMarkup); err != nil {
+				panic(err)
 			}
 			// New block created - Parse() will detect this and continue
 			return false // Stop parsing current block
@@ -253,12 +253,19 @@ func (i *IfTag) Blank() bool {
 func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) (*liquid.Condition, error) {
 	markup = strings.TrimSpace(markup)
 
+	// In strict mode, the whole markup is lexed first, as Ruby's strict
+	// parse, so that a character the lexer refuses is a syntax error that
+	// names the whole condition.
+	if err := lexCondition(markup, parseContext); err != nil {
+		return nil, err
+	}
+
 	// Split by 'and' and 'or' operators, keeping track of which operator was used
 	// We need to parse from right to left like Ruby does
 	parts := splitByBooleanOperators(markup)
 
 	if len(parts) == 0 {
-		return nil, liquid.NewSyntaxError("Syntax Error in 'if' - Valid syntax: if [expression]")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.if", nil)
 	}
 
 	// Parse the rightmost condition first
@@ -394,10 +401,9 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 		if err := validateExpression(expr, parseContext); err != nil {
 			return nil, err
 		}
-
-		// Try as simple expression - use ParseConditionExpression to support filters
-		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
-		return liquid.NewCondition(parsedExpr, "", nil), nil
+		// An expression without a value, such as a lone quote, is Ruby's
+		// lax syntax error: expressions.pop =~ Syntax fails.
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.if", nil)
 	}
 
 	// Validate left expression syntax
@@ -439,6 +445,25 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 	}
 
 	return liquid.NewCondition(left, operator, right), nil
+}
+
+// lexCondition returns the lexer's syntax error for the markup of a tag in
+// strict, strict2 or rigid mode, with the markup as its context.
+func lexCondition(markup string, parseContext liquid.ParseContextInterface) error {
+	switch parseContext.ErrorMode() {
+	case "strict", "strict2", "rigid":
+	default:
+		return nil
+	}
+	err := parseContext.NewParser(markup).Error()
+	if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
+		syntaxErr.Err.MarkupContext = "in \"" + markup + "\""
+		if parseContext.LineNumber() != nil {
+			ln := *parseContext.LineNumber()
+			syntaxErr.Err.LineNumber = &ln
+		}
+	}
+	return err
 }
 
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {

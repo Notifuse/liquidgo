@@ -993,7 +993,7 @@ func TestSort(t *testing.T) {
 	sf := &StandardFilters{}
 
 	input := []interface{}{4, 3, 2, 1}
-	result := sf.Sort(input, nil)
+	result := filterValue(sf.Sort(input, nil))
 	expected := []interface{}{1, 2, 3, 4}
 
 	if arr, ok := result.([]interface{}); ok {
@@ -1016,7 +1016,7 @@ func TestSort(t *testing.T) {
 		map[string]interface{}{"a": 1},
 		map[string]interface{}{"a": 2},
 	}
-	result2 := sf.Sort(input2, "a")
+	result2 := filterValue(sf.Sort(input2, "a"))
 	if arr, ok := result2.([]interface{}); ok {
 		if len(arr) != 4 {
 			t.Fatalf("Sort() with property returned %d elements, want 4", len(arr))
@@ -1034,7 +1034,7 @@ func TestSortNatural(t *testing.T) {
 	sf := &StandardFilters{}
 
 	input := []interface{}{"c", "D", "a", "B"}
-	result := sf.SortNatural(input, nil)
+	result := filterValue(sf.SortNatural(input, nil))
 	expected := []interface{}{"a", "B", "c", "D"}
 
 	if arr, ok := result.([]interface{}); ok {
@@ -1071,7 +1071,7 @@ func TestUniq(t *testing.T) {
 	sf := &StandardFilters{}
 
 	input := []interface{}{1, 1, 3, 2, 3, 1, 4, 3, 2, 1}
-	result := sf.Uniq(input, nil)
+	result := filterValue(sf.Uniq(input, nil))
 
 	if arr, ok := result.([]interface{}); ok {
 		// Should have unique values
@@ -1087,7 +1087,7 @@ func TestCompact(t *testing.T) {
 	sf := &StandardFilters{}
 
 	input := []interface{}{1, nil, 2, nil, 3}
-	result := sf.Compact(input, nil)
+	result := filterValue(sf.Compact(input, nil))
 
 	if arr, ok := result.([]interface{}); ok {
 		if len(arr) != 3 {
@@ -1141,7 +1141,7 @@ func TestWhere(t *testing.T) {
 		map[string]interface{}{"handle": "delta", "ok": true},
 	}
 
-	result := sf.Where(input, "ok", true)
+	result := filterValue(sf.Where(input, "ok", true))
 
 	if arr, ok := result.([]interface{}); ok {
 		if len(arr) != 2 {
@@ -1162,7 +1162,7 @@ func TestReject(t *testing.T) {
 		map[string]interface{}{"handle": "delta", "ok": true},
 	}
 
-	result := sf.Reject(input, "ok", true)
+	result := filterValue(sf.Reject(input, "ok", true))
 
 	if arr, ok := result.([]interface{}); ok {
 		if len(arr) != 2 {
@@ -1183,8 +1183,8 @@ func TestHas(t *testing.T) {
 		map[string]interface{}{"handle": "delta", "ok": false},
 	}
 
-	result := sf.Has(input, "ok", true)
-	if !result {
+	result := filterValue(sf.Has(input, "ok", true))
+	if result != true {
 		t.Error("Has() = false, want true")
 	}
 
@@ -1193,8 +1193,8 @@ func TestHas(t *testing.T) {
 		map[string]interface{}{"handle": "beta", "ok": false},
 	}
 
-	result2 := sf.Has(input2, "ok", true)
-	if result2 {
+	result2 := filterValue(sf.Has(input2, "ok", true))
+	if result2 != false {
 		t.Error("Has() = true, want false")
 	}
 }
@@ -1208,7 +1208,7 @@ func TestFind(t *testing.T) {
 		map[string]interface{}{"title": "Alpine jacket", "price": 3999},
 	}
 
-	result := sf.Find(input, "price", 3999)
+	result := filterValue(sf.Find(input, "price", 3999))
 
 	if result == nil {
 		t.Fatal("Find() returned nil")
@@ -1230,7 +1230,7 @@ func TestFindIndex(t *testing.T) {
 		map[string]interface{}{"title": "Alpine jacket", "price": 3999},
 	}
 
-	result := sf.FindIndex(input, "price", 3999)
+	result := filterValue(sf.FindIndex(input, "price", 3999))
 
 	if result != 2 {
 		t.Errorf("FindIndex() = %v, want 2", result)
@@ -1273,7 +1273,7 @@ func TestSum(t *testing.T) {
 	sf := &StandardFilters{}
 
 	input := []interface{}{1, 2}
-	result := sf.Sum(input, nil)
+	result := filterValue(sf.Sum(input, nil))
 
 	if result != 3 {
 		t.Errorf("Sum([1, 2]) = %v, want 3", result)
@@ -1286,12 +1286,12 @@ func TestSum(t *testing.T) {
 		map[string]interface{}{"weight": 4},
 	}
 
-	result2 := sf.Sum(input2, "quantity")
+	result2 := filterValue(sf.Sum(input2, "quantity"))
 	if result2 != 3 {
 		t.Errorf("Sum(input, 'quantity') = %v, want 3", result2)
 	}
 
-	result3 := sf.Sum(input2, "weight")
+	result3 := filterValue(sf.Sum(input2, "weight"))
 	if result3 != 7 {
 		t.Errorf("Sum(input, 'weight') = %v, want 7", result3)
 	}
@@ -1545,4 +1545,13 @@ func TestStandardFilters_Date_WithPointerToTime(t *testing.T) {
 	if result != expected {
 		t.Errorf("Date(*time.Time) = %v, expected %v", result, expected)
 	}
+}
+
+// filterValue returns the value of a filter that returns a value and an
+// error, and fails on an error.
+func filterValue(v interface{}, err error) interface{} {
+	if err != nil {
+		panic(err)
+	}
+	return v
 }

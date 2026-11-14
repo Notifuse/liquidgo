@@ -45,6 +45,9 @@ type CaseTag struct {
 	*liquid.Block
 	left   interface{} // Expression to compare
 	blocks []CaseBlock
+	// blank is Ruby's @blank: whether every body parsed, the text before
+	// the first when included, is blank.
+	blank bool
 }
 
 // NewCaseTag creates a new CaseTag.
@@ -54,6 +57,7 @@ func NewCaseTag(tagName, markup string, parseContext liquid.ParseContextInterfac
 	tag := &CaseTag{
 		Block:  block,
 		blocks: []CaseBlock{},
+		blank:  true,
 	}
 
 	// Parse markup to get left expression
@@ -72,7 +76,7 @@ func (c *CaseTag) parseMarkup(markup string, parseContext liquid.ParseContextInt
 
 	matches := caseSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid case tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.case", nil)
 	}
 
 	c.left = parseContext.ParseExpression(matches[1])
@@ -180,26 +184,29 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 		}
 		if endTagName == "" {
 			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
-			panic(liquid.NewSyntaxError("Tag was never closed: " + c.BlockName()))
+			panic(liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": c.BlockName()}))
 		}
 
 		// Handle when and else
 		if endTagName == "when" || endTagName == "else" {
-			err := c.UnknownTag(endTagName, endTagMarkup, tokenizer)
-			if err != nil {
-				return false
+			if err := c.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+				panic(err)
 			}
 			return false // Stop parsing current block
 		}
 
-		// Unknown tag - let block handle it
-		return c.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := c.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)
 	if err != nil {
 		return false, err
 	}
+	c.blank = c.blank && body.Blank()
 
 	// Return true if we should continue (didn't find endcase)
 	return !foundEndTag, nil
@@ -211,11 +218,12 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 	// Ruby: parse_lax_when creates one body and multiple conditions attached to it
 	body := liquid.NewBlockBody()
 
+	// As Ruby's parse_lax_when, a when without a condition is a syntax error
 	remainingMarkup := strings.TrimSpace(markup)
-	for remainingMarkup != "" {
+	for first := true; first || remainingMarkup != ""; first = false {
 		matches := whenSyntax.FindStringSubmatch(remainingMarkup)
 		if len(matches) == 0 {
-			return liquid.NewSyntaxError("invalid when condition syntax")
+			return liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.case_invalid_when", nil)
 		}
 
 		// Parse the value expression
@@ -245,7 +253,7 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 // recordElseCondition records an else condition.
 func (c *CaseTag) recordElseCondition(markup string) error {
 	if strings.TrimSpace(markup) != "" {
-		return liquid.NewSyntaxError("else tag should not have markup")
+		return liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.case_invalid_else", nil)
 	}
 
 	block := liquid.NewElseCondition()
@@ -291,9 +299,9 @@ func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.Outpu
 	}
 }
 
-// Blank returns true if all blocks are blank.
+// Blank returns true if every body of the case is blank, as Ruby's blank?.
 func (c *CaseTag) Blank() bool {
-	return c.Block.Blank()
+	return c.blank
 }
 
 // RenderToOutputBuffer renders the tag and appends its output to output.

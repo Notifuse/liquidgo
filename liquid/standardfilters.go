@@ -33,6 +33,8 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 		return len(v)
 	case map[string]interface{}:
 		return len(v)
+	case *Range:
+		return v.Len()
 	default:
 		// Reflection fallback for typed slices/arrays/maps
 		// This matches Ruby's duck-typing behavior: objects respond to .size
@@ -453,8 +455,12 @@ func (sf *StandardFilters) StripHTML(input interface{}) string {
 	return result
 }
 
-// First returns the first element of an array.
+// First returns the first element of an array, or the start of a range, as
+// Range#first, even when the range is empty.
 func (sf *StandardFilters) First(input interface{}) interface{} {
+	if r, ok := input.(*Range); ok {
+		return r.Start
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[0]
 	}
@@ -469,8 +475,12 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 	return nil
 }
 
-// Last returns the last element of an array.
+// Last returns the last element of an array, or the end of a range, as
+// Range#last, even when the range is empty.
 func (sf *StandardFilters) Last(input interface{}) interface{} {
+	if r, ok := input.(*Range); ok {
+		return r.End
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[len(arr)-1]
 	}
@@ -485,35 +495,42 @@ func (sf *StandardFilters) Last(input interface{}) interface{} {
 	return nil
 }
 
-// Join joins array elements with a separator.
+// Join joins the items of the input with a separator, as Ruby's
+// InputIterator#join: nested arrays are flattened, a range gives its
+// integers, and any other input is a single item.
 func (sf *StandardFilters) Join(input interface{}, separator interface{}) string {
 	sep := " "
 	if separator != nil {
 		sep = ToS(separator, nil)
 	}
+	if r, ok := input.(*Range); ok {
+		return sf.joinRange(r, sep)
+	}
+	iter := NewInputIterator(input, sf.context)
+	parts := make([]string, 0, len(iter.input))
+	iter.Each(func(item interface{}) {
+		parts = append(parts, ToS(item, nil))
+	})
+	sf.checkLength(joinedLength(parts, sep))
+	return strings.Join(parts, sep)
+}
 
-	if arr, ok := input.([]interface{}); ok {
-		parts := make([]string, len(arr))
-		for i, item := range arr {
-			parts[i] = ToS(item, nil)
-		}
-		sf.checkLength(joinedLength(parts, sep))
-		return strings.Join(parts, sep)
+// joinRange joins the integers of a range without building them first, and
+// stops at the render length limit, or past maxRangeItems integers.
+func (sf *StandardFilters) joinRange(r *Range, sep string) string {
+	n := r.Len()
+	if n > maxRangeItems {
+		sf.checkRangeItems(n)
 	}
-	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
-	// This matches Ruby's duck-typing behavior: arrays respond to .join
-	if input != nil {
-		v := reflect.ValueOf(input)
-		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-			parts := make([]string, v.Len())
-			for i := 0; i < v.Len(); i++ {
-				parts[i] = ToS(v.Index(i).Interface(), nil)
-			}
-			sf.checkLength(joinedLength(parts, sep))
-			return strings.Join(parts, sep)
+	var b strings.Builder
+	for i := 0; i < n; i++ {
+		if i > 0 {
+			b.WriteString(sep)
 		}
+		b.WriteString(strconv.Itoa(r.Start + i))
+		sf.checkLength(b.Len())
 	}
-	return ToS(input, nil)
+	return b.String()
 }
 
 // Date formats a date using strftime-style format codes.
@@ -846,6 +863,14 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 		items = flattenArray(arr)
 	} else if m, ok := input.(map[string]interface{}); ok {
 		items = []interface{}{m}
+	} else if r, ok := input.(*Range); ok {
+		// A range is enumerable: its integers, within the limits
+		n := r.Len()
+		(&StandardFilters{context: context}).checkRangeItems(n)
+		items = make([]interface{}, n)
+		for i := range items {
+			items[i] = r.Start + i
+		}
 	} else if input != nil {
 		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
 		// This matches Ruby's duck-typing behavior: arrays respond to iteration
@@ -870,12 +895,31 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 	}
 }
 
-// flattenArray recursively flattens nested arrays.
+// flattenArray recursively flattens nested arrays. An array that holds
+// itself is left out where it recurs, instead of recursing without end.
 func flattenArray(arr []interface{}) []interface{} {
 	result := make([]interface{}, 0, len(arr))
+	return appendFlattened(result, arr, map[flattenKey]bool{})
+}
+
+// flattenKey names an array being flattened by its first item and length.
+type flattenKey struct {
+	first *interface{}
+	n     int
+}
+
+func appendFlattened(result, arr []interface{}, seen map[flattenKey]bool) []interface{} {
+	if len(arr) > 0 {
+		key := flattenKey{&arr[0], len(arr)}
+		if seen[key] {
+			return result
+		}
+		seen[key] = true
+		defer delete(seen, key)
+	}
 	for _, item := range arr {
 		if nested, ok := item.([]interface{}); ok {
-			result = append(result, flattenArray(nested)...)
+			result = appendFlattened(result, nested, seen)
 		} else {
 			result = append(result, item)
 		}
@@ -1096,136 +1140,131 @@ func (sf *StandardFilters) Reverse(input interface{}) []interface{} {
 
 // Sort sorts items in an array.
 // Mirrors Ruby's sort from standardfilters.rb:378
-func (sf *StandardFilters) Sort(input interface{}, property interface{}) interface{} {
-	iter := NewInputIterator(input, sf.context)
-	arr := iter.ToArray()
-
-	if len(arr) == 0 {
-		return []interface{}{}
-	}
-
-	// If no property, sort items directly
-	if property == nil {
-		sorted := make([]interface{}, len(arr))
-		copy(sorted, arr)
-		sort.SliceStable(sorted, func(i, j int) bool {
-			return nilSafeCompare(sorted[i], sorted[j]) < 0
-		})
-		return sorted
-	}
-
-	// Sort by property
-	propStr := ToS(property, nil)
-
-	// Check if all items support indexing
-	for _, item := range arr {
-		if !supportsIndexing(item) {
-			return nil
-		}
-	}
-
-	sorted := make([]interface{}, len(arr))
-	copy(sorted, arr)
-
-	sort.SliceStable(sorted, func(i, j int) bool {
-		a := getProperty(sorted[i], propStr)
-		b := getProperty(sorted[j], propStr)
-		return nilSafeCompare(a, b) < 0
-	})
-
-	return sorted
+func (sf *StandardFilters) Sort(input interface{}, property interface{}) (interface{}, error) {
+	return sf.sortBy(input, property, nilSafeCompare)
 }
 
 // SortNatural sorts items case-insensitively.
 // Mirrors Ruby's sort_natural from standardfilters.rb:407
-func (sf *StandardFilters) SortNatural(input interface{}, property interface{}) interface{} {
-	iter := NewInputIterator(input, sf.context)
-	arr := iter.ToArray()
+func (sf *StandardFilters) SortNatural(input interface{}, property interface{}) (interface{}, error) {
+	return sf.sortBy(input, property, nilSafeCasecmp)
+}
 
+// sortBy sorts the items of input with compare, by a property when one is
+// given. As Ruby, sorting by a property gives nil unless every item has a
+// [] method, and an integer item raises the property error once two items
+// are compared.
+func (sf *StandardFilters) sortBy(input interface{}, property interface{}, compare func(a, b interface{}) int) (interface{}, error) {
+	arr := NewInputIterator(input, sf.context).ToArray()
 	if len(arr) == 0 {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
-
-	// If no property, sort items directly
-	if property == nil {
-		sorted := make([]interface{}, len(arr))
-		copy(sorted, arr)
-		sort.SliceStable(sorted, func(i, j int) bool {
-			return nilSafeCasecmp(sorted[i], sorted[j]) < 0
-		})
-		return sorted
-	}
-
-	// Sort by property
-	propStr := ToS(property, nil)
-
-	// Check if all items support indexing
-	for _, item := range arr {
-		if !supportsIndexing(item) {
-			return nil
-		}
-	}
-
 	sorted := make([]interface{}, len(arr))
 	copy(sorted, arr)
+	if property == nil {
+		sort.SliceStable(sorted, func(i, j int) bool {
+			return compare(sorted[i], sorted[j]) < 0
+		})
+		return sorted, nil
+	}
 
-	sort.SliceStable(sorted, func(i, j int) bool {
-		a := getProperty(sorted[i], propStr)
-		b := getProperty(sorted[j], propStr)
-		return nilSafeCasecmp(a, b) < 0
+	keys := make(map[int]interface{}, len(arr))
+	failed := false
+	for i, item := range arr {
+		key, kind := indexItem(item, property)
+		if kind == noIndex {
+			return nil, nil
+		}
+		failed = failed || kind == indexError
+		keys[i] = key
+	}
+	if failed && len(arr) > 1 {
+		return nil, raisePropertyError(property)
+	}
+	order := make([]int, len(arr))
+	for i := range order {
+		order[i] = i
+	}
+	sort.SliceStable(order, func(i, j int) bool {
+		return compare(keys[order[i]], keys[order[j]]) < 0
 	})
-
-	return sorted
+	for i, k := range order {
+		sorted[i] = arr[k]
+	}
+	return sorted, nil
 }
 
 // Uniq removes duplicate items from an array.
 // Mirrors Ruby's uniq from standardfilters.rb:497
-func (sf *StandardFilters) Uniq(input interface{}, property interface{}) interface{} {
+func (sf *StandardFilters) Uniq(input interface{}, property interface{}) (interface{}, error) {
 	iter := NewInputIterator(input, sf.context)
 
 	if iter.Empty() {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	if property == nil {
-		return iter.Uniq(nil)
+		return iter.Uniq(nil), nil
 	}
 
-	// Uniq by property
-	propStr := ToS(property, nil)
-	return iter.Uniq(func(item interface{}) interface{} {
-		return getProperty(item, propStr)
-	})
+	// Uniq by property: as Ruby, an item without [] gives nil, and a single
+	// item is kept without reading its property, as Array#uniq
+	items := iter.ToArray()
+	if len(items) == 1 {
+		return items, nil
+	}
+	seen := make(map[string]bool)
+	result := make([]interface{}, 0)
+	for _, item := range items {
+		key, kind := indexItem(ToLiquidValue(item), property)
+		switch kind {
+		case indexError:
+			return nil, raisePropertyError(property)
+		case noIndex:
+			return nil, nil
+		}
+		keyStr := ""
+		if key != nil {
+			keyStr = ToS(key, nil)
+		}
+		if !seen[keyStr] {
+			seen[keyStr] = true
+			result = append(result, item)
+		}
+	}
+	return result, nil
 }
 
 // Compact removes nil items from an array.
 // Mirrors Ruby's compact from standardfilters.rb:557
-func (sf *StandardFilters) Compact(input interface{}, property interface{}) interface{} {
+func (sf *StandardFilters) Compact(input interface{}, property interface{}) (interface{}, error) {
 	iter := NewInputIterator(input, sf.context)
 
 	if iter.Empty() {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	if property == nil {
-		return iter.Compact()
+		return iter.Compact(), nil
 	}
 
-	// Compact by property - remove items where property is nil
-	propStr := ToS(property, nil)
+	// Compact by property - remove items where property is nil; as Ruby, an
+	// item without [] gives nil
 	result := make([]interface{}, 0)
-
-	iter.Each(func(item interface{}) {
-		if !supportsIndexing(item) {
-			return
+	for _, item := range iter.ToArray() {
+		val, kind := indexItem(item, property)
+		switch kind {
+		case indexError:
+			return nil, raisePropertyError(property)
+		case noIndex:
+			return nil, nil
 		}
-		val := getProperty(item, propStr)
 		if val != nil {
 			result = append(result, item)
 		}
-	})
+	}
 
-	return result
+	return result, nil
 }
 
 // Map extracts property values from array items.
@@ -1239,226 +1278,114 @@ func (sf *StandardFilters) Map(input interface{}, property interface{}) (interfa
 	propStr := ToS(property, nil)
 	result := make([]interface{}, 0)
 
-	iter.Each(func(item interface{}) {
+	for _, item := range iter.ToArray() {
 		// Special case for "to_liquid"
 		if propStr == "to_liquid" {
 			result = append(result, item)
-			return
+			continue
 		}
-
-		if !supportsIndexing(item) {
-			result = append(result, nil)
-			return
+		val, kind := indexItem(item, property)
+		if kind == indexError {
+			return nil, raisePropertyError(property)
 		}
-
-		val := getProperty(item, propStr)
 		result = append(result, val)
-	})
+	}
 
 	return result, nil
 }
 
 // Where filters array items by property value.
 // Mirrors Ruby's where from standardfilters.rb:434
-func (sf *StandardFilters) Where(input interface{}, property interface{}, targetValue interface{}) interface{} {
-	iter := NewInputIterator(input, sf.context)
-
-	if iter.Empty() {
-		return []interface{}{}
-	}
-
-	if property == nil {
-		return nil
-	}
-
-	propStr := ToS(property, nil)
+func (sf *StandardFilters) Where(input interface{}, property interface{}, targetValue interface{}) (interface{}, error) {
 	result := make([]interface{}, 0)
-
-	iter.Each(func(item interface{}) {
-		if !supportsIndexing(item) {
-			return
+	return sf.filterArray(input, property, targetValue, []interface{}{}, func(i int, item interface{}, match bool) bool {
+		if match {
+			result = append(result, item)
 		}
-
-		val := getProperty(item, propStr)
-
-		// If no target value, filter by truthiness
-		if targetValue == nil {
-			if isTruthy(val) {
-				result = append(result, item)
-			}
-		} else {
-			// Filter by exact match
-			if valuesEqual(val, targetValue) {
-				result = append(result, item)
-			}
-		}
-	})
-
-	return result
+		return false
+	}, func() interface{} { return result })
 }
 
 // Reject filters out array items by property value.
 // Mirrors Ruby's reject from standardfilters.rb:447
-func (sf *StandardFilters) Reject(input interface{}, property interface{}, targetValue interface{}) interface{} {
-	iter := NewInputIterator(input, sf.context)
-
-	if iter.Empty() {
-		return []interface{}{}
-	}
-
-	if property == nil {
-		return nil
-	}
-
-	propStr := ToS(property, nil)
+func (sf *StandardFilters) Reject(input interface{}, property interface{}, targetValue interface{}) (interface{}, error) {
 	result := make([]interface{}, 0)
-
-	iter.Each(func(item interface{}) {
-		if !supportsIndexing(item) {
-			return
+	return sf.filterArray(input, property, targetValue, []interface{}{}, func(i int, item interface{}, match bool) bool {
+		if !match {
+			result = append(result, item)
 		}
-
-		val := getProperty(item, propStr)
-
-		// If no target value, reject by truthiness
-		if targetValue == nil {
-			if !isTruthy(val) {
-				result = append(result, item)
-			}
-		} else {
-			// Reject by exact match
-			if !valuesEqual(val, targetValue) {
-				result = append(result, item)
-			}
-		}
-	})
-
-	return result
+		return false
+	}, func() interface{} { return result })
 }
 
 // Has tests if any array item has a property value.
 // Mirrors Ruby's has from standardfilters.rb:460
-func (sf *StandardFilters) Has(input interface{}, property interface{}, targetValue interface{}) bool {
-	iter := NewInputIterator(input, sf.context)
-
-	if iter.Empty() {
-		return false
-	}
-
-	if property == nil {
-		return false
-	}
-
-	propStr := ToS(property, nil)
+func (sf *StandardFilters) Has(input interface{}, property interface{}, targetValue interface{}) (interface{}, error) {
 	found := false
-
-	iter.Each(func(item interface{}) {
-		if found {
-			return
-		}
-
-		if !supportsIndexing(item) {
-			return
-		}
-
-		val := getProperty(item, propStr)
-
-		// If no target value, check truthiness
-		if targetValue == nil {
-			if isTruthy(val) {
-				found = true
-			}
-		} else {
-			// Check exact match
-			if valuesEqual(val, targetValue) {
-				found = true
-			}
-		}
-	})
-
-	return found
+	return sf.filterArray(input, property, targetValue, false, func(i int, item interface{}, match bool) bool {
+		found = match
+		return match
+	}, func() interface{} { return found })
 }
 
 // Find returns the first array item with a property value.
 // Mirrors Ruby's find from standardfilters.rb:473
-func (sf *StandardFilters) Find(input interface{}, property interface{}, targetValue interface{}) interface{} {
-	iter := NewInputIterator(input, sf.context)
-
-	if iter.Empty() {
-		return nil
-	}
-
-	if property == nil {
-		return nil
-	}
-
-	propStr := ToS(property, nil)
-	var result interface{}
-
-	iter.Each(func(item interface{}) {
-		if result != nil {
-			return
+func (sf *StandardFilters) Find(input interface{}, property interface{}, targetValue interface{}) (interface{}, error) {
+	var found interface{}
+	return sf.filterArray(input, property, targetValue, nil, func(i int, item interface{}, match bool) bool {
+		if match {
+			found = item
 		}
-
-		if !supportsIndexing(item) {
-			return
-		}
-
-		val := getProperty(item, propStr)
-
-		// If no target value, find by truthiness
-		if targetValue == nil {
-			if isTruthy(val) {
-				result = item
-			}
-		} else {
-			// Find by exact match
-			if valuesEqual(val, targetValue) {
-				result = item
-			}
-		}
-	})
-
-	return result
+		return match
+	}, func() interface{} { return found })
 }
 
 // FindIndex returns the index of the first array item with a property value.
 // Mirrors Ruby's find_index from standardfilters.rb:486
-func (sf *StandardFilters) FindIndex(input interface{}, property interface{}, targetValue interface{}) interface{} {
+func (sf *StandardFilters) FindIndex(input interface{}, property interface{}, targetValue interface{}) (interface{}, error) {
+	var found interface{}
+	return sf.filterArray(input, property, targetValue, nil, func(i int, item interface{}, match bool) bool {
+		if match {
+			found = i
+		}
+		return match
+	}, func() interface{} { return found })
+}
+
+// filterArray is Ruby's filter_array: it gives each item of input to visit,
+// in order, with whether its property is truthy, or equal to targetValue
+// when one is given, until visit returns true, and then returns result. An
+// empty input gives empty. As Ruby, an integer item raises the property
+// error, and an item without [] makes the filter give nil.
+func (sf *StandardFilters) filterArray(input, property, targetValue, empty interface{}, visit func(i int, item interface{}, match bool) bool, result func() interface{}) (interface{}, error) {
 	iter := NewInputIterator(input, sf.context)
-
 	if iter.Empty() {
-		return nil
+		return empty, nil
 	}
-
 	if property == nil {
-		return nil
+		return empty, nil
 	}
-
-	propStr := ToS(property, nil)
-	arr := iter.ToArray()
-
-	for i, item := range arr {
-		if !supportsIndexing(item) {
-			continue
+	for i, item := range iter.ToArray() {
+		val, kind := indexItem(item, property)
+		switch kind {
+		case indexError:
+			return nil, raisePropertyError(property)
+		case noIndex:
+			return nil, nil
 		}
-
-		val := getProperty(item, propStr)
-
-		// If no target value, find by truthiness
+		// Truthiness and equality stay liquidgo's: an empty string or
+		// list is falsy, and a string matches the number it writes
+		var match bool
 		if targetValue == nil {
-			if isTruthy(val) {
-				return i
-			}
+			match = isTruthy(val)
 		} else {
-			// Find by exact match
-			if valuesEqual(val, targetValue) {
-				return i
-			}
+			match = valuesEqual(val, targetValue)
+		}
+		if visit(i, item, match) {
+			break
 		}
 	}
-
-	return nil
+	return result(), nil
 }
 
 // Concat concatenates two arrays.
@@ -1487,36 +1414,109 @@ func (sf *StandardFilters) Concat(input interface{}, array interface{}) (interfa
 
 // Sum returns the sum of array elements.
 // Mirrors Ruby's sum from standardfilters.rb:953
-func (sf *StandardFilters) Sum(input interface{}, property interface{}) interface{} {
+func (sf *StandardFilters) Sum(input interface{}, property interface{}) (interface{}, error) {
 	iter := NewInputIterator(input, sf.context)
 
 	if iter.Empty() {
-		return 0
+		return 0, nil
 	}
 
 	sum := integerOf(0)
-	add := func(v interface{}) {
-		sum = arithmetic(sum, toLiquidNumber(v), '+')
-	}
-
-	if property == nil {
-		// Sum items directly
-		iter.Each(add)
-	} else {
-		// Sum by property
-		propStr := ToS(property, nil)
-		iter.Each(func(item interface{}) {
-			if !supportsIndexing(item) {
-				return
+	for _, item := range iter.ToArray() {
+		if property != nil {
+			// As Ruby, an item without [] adds 0
+			val, kind := indexItem(item, property)
+			if kind == indexError {
+				return nil, raisePropertyError(property)
 			}
-			add(getProperty(item, propStr))
-		})
+			item = val
+		}
+		sum = arithmetic(sum, toLiquidNumber(item), '+')
 	}
 
-	return sum.value()
+	return sum.value(), nil
 }
 
 // Helper functions for array filters
+
+// indexKind says how Ruby's item[property] went for an item.
+type indexKind int
+
+const (
+	// indexed: the item has a [] method that gave a value.
+	indexed indexKind = iota
+	// noIndex: the item has no [] method, as a float, a boolean or nil.
+	noIndex
+	// indexError: the item's [] raised a TypeError, as an integer's for a
+	// string property.
+	indexError
+)
+
+// indexItem reads property on item as Ruby's item[property] in the array
+// filters. A hash or a drop gives its property. A string gives the property
+// when it contains it, as String#[], or its character at an integer
+// property. An integer gives its bit at an integer property and raises a
+// TypeError for any other property, as Integer#[].
+func indexItem(item, property interface{}) (interface{}, indexKind) {
+	switch v := item.(type) {
+	case nil, bool, float32, float64:
+		return nil, noIndex
+	case string:
+		if sub, ok := property.(string); ok {
+			if strings.Contains(v, sub) {
+				return sub, indexed
+			}
+			return nil, indexed
+		}
+		if n, ok := integerItem(property); ok {
+			runes := []rune(v)
+			if n < 0 {
+				n += int64(len(runes))
+			}
+			if n < 0 || n >= int64(len(runes)) {
+				return nil, indexed
+			}
+			return string(runes[n]), indexed
+		}
+		return nil, indexError
+	}
+	if n, ok := integerItem(item); ok {
+		bit, ok := integerItem(property)
+		if !ok {
+			return nil, indexError
+		}
+		switch {
+		case bit >= 64:
+			if n < 0 {
+				return 1, indexed
+			}
+			return 0, indexed
+		case bit < 0:
+			return 0, indexed
+		}
+		return int((n >> uint(bit)) & 1), indexed
+	}
+	if supportsIndexing(item) {
+		return getProperty(item, ToS(property, nil)), indexed
+	}
+	if rv := reflect.ValueOf(item); rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+		// Array#[] with a property that is not an integer
+		return nil, indexError
+	}
+	return nil, noIndex
+}
+
+// integerItem returns the value of an item of an integer kind.
+func integerItem(item interface{}) (int64, bool) {
+	rv := reflect.ValueOf(item)
+	switch rv.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return rv.Int(), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return int64(rv.Uint()), true
+	}
+	return 0, false
+}
 
 // supportsIndexing checks if an item supports property access.
 func supportsIndexing(item interface{}) bool {
@@ -1529,12 +1529,15 @@ func supportsIndexing(item interface{}) bool {
 		return true
 	default:
 		// Check if it has indexable methods via reflection
-		v := reflect.ValueOf(item)
-		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
-			return true
-		}
 		// Check for Drop interface
 		if _, ok := item.(interface{ Get(string) interface{} }); ok {
+			return true
+		}
+		v := reflect.ValueOf(item)
+		if v.Kind() == reflect.Ptr && !v.IsNil() {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
 			return true
 		}
 	}
@@ -1565,6 +1568,13 @@ func getProperty(item interface{}, property string) interface{} {
 	v := reflect.ValueOf(item)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
+	}
+
+	if v.Kind() == reflect.Map && v.Type().Key().Kind() == reflect.String {
+		if val := v.MapIndex(reflect.ValueOf(property).Convert(v.Type().Key())); val.IsValid() {
+			return val.Interface()
+		}
+		return nil
 	}
 
 	if v.Kind() == reflect.Struct {

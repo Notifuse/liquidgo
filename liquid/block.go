@@ -151,7 +151,7 @@ func RaiseUnknownTag(tag, blockName, blockDelimiter string, parseContext ParseCo
 
 // RaiseTagNeverClosed raises an error for a tag that was never closed.
 func (b *Block) RaiseTagNeverClosed() error {
-	return NewSyntaxError("'" + b.BlockName() + "' tag was never closed")
+	return NewSyntaxErrorFor(b.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": b.BlockName()})
 }
 
 func (b *Block) newBody() *BlockBody {
@@ -183,9 +183,11 @@ func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 			panic(b.RaiseTagNeverClosed())
 		}
 
-		// Unknown tag - let block handle it
-		err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
-		return err == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := b.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := b.body.Parse(tokenizer, parseContext, unknownTagHandler)

@@ -51,9 +51,13 @@ func NewForTag(tagName, markup string, parseContext liquid.ParseContextInterface
 
 // parseMarkup parses the for tag markup.
 func (f *ForTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
+	// In strict mode, the markup is lexed first, as Ruby's strict parse
+	if err := lexCondition(strings.TrimSpace(markup), parseContext); err != nil {
+		return err
+	}
 	matches := forSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid for tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.for", nil)
 	}
 
 	f.variableName = matches[1]
@@ -170,14 +174,16 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 		}
 		if endTagName == "else" {
 			// Handle else - UnknownTag will create elseBlock if needed
-			err := f.UnknownTag(endTagName, endTagMarkup, tokenizer)
-			if err != nil {
-				return false
+			if err := f.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+				panic(err)
 			}
 			return false // Stop parsing current block, continue with else block
 		}
-		// Unknown tag - let block handle it
-		return f.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := f.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)

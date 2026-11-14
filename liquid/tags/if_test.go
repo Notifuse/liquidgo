@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -534,7 +535,8 @@ func TestIfTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 	_, _ = tag.parseBodyForBlock(tokenizer, tag.blocks[0])
 }
 
-// Test parseBodyForBlock with error in pushBlock
+// Test parseBodyForBlock with an elsif that does not parse: a syntax error,
+// as Ruby raises for an if.
 func TestIfTagParseBodyForBlockPushBlockError(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
 	tag, err := NewIfTag("if", "true", pc)
@@ -542,14 +544,19 @@ func TestIfTagParseBodyForBlockPushBlockError(t *testing.T) {
 		t.Fatalf("NewIfTag() error = %v", err)
 	}
 
-	// Try to parse with invalid elsif syntax that causes pushBlock error
-	// This is tricky - we need to trigger an error in parseIfCondition
-	// Let's try with a very malformed elsif
+	defer func() {
+		r := recover()
+		syntaxErr, ok := r.(*liquid.SyntaxError)
+		if !ok {
+			t.Fatalf("Expected a SyntaxError panic for an empty elsif, got %v", r)
+		}
+		if !strings.Contains(syntaxErr.Error(), "Valid syntax: if [expression]") {
+			t.Errorf("Unexpected error: %v", syntaxErr.Error())
+		}
+	}()
+
 	tokenizer := pc.NewTokenizer("content {% elsif %}", false, nil, false)
-	shouldContinue, err := tag.parseBodyForBlock(tokenizer, tag.blocks[0])
-	// pushBlock might succeed even with empty markup, so we just verify it doesn't crash
-	_ = shouldContinue
-	_ = err
+	_, _ = tag.parseBodyForBlock(tokenizer, tag.blocks[0])
 }
 
 // Test parseBodyForBlock with unknown tag that causes error

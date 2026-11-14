@@ -823,7 +823,7 @@ func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) 
 	})
 
 	output1 := tmpl1.Render(ctx1, &liquid.RenderOptions{})
-	expected1 := "Liquid error: comparison of int with string failed0"
+	expected1 := "Liquid error: comparison of Integer with String failed0"
 
 	if output1 != expected1 {
 		t.Errorf("Expected %q, got %q", expected1, output1)

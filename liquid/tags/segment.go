@@ -42,18 +42,6 @@ func addSaturated(a, b int) int {
 	return a + b
 }
 
-// rangeLength returns the number of integers in r, or math.MaxInt.
-func rangeLength(r *liquid.Range) int {
-	if r.End < r.Start {
-		return 0
-	}
-	span := uint64(r.End) - uint64(r.Start)
-	if span >= math.MaxInt {
-		return math.MaxInt
-	}
-	return int(span) + 1
-}
-
 // sliceSegment returns the items of collection whose index is at least from
 // and below to, when to is set, as Ruby's Utils.slice_collection.
 func sliceSegment(collection interface{}, from int, to *int) segment {
@@ -62,7 +50,7 @@ func sliceSegment(collection interface{}, from int, to *int) segment {
 		items := liquid.SliceCollection(collection, from, to)
 		return segment{items: items, length: len(items)}
 	}
-	lo, hi := max(from, 0), rangeLength(r)
+	lo, hi := max(from, 0), r.Len()
 	if to != nil {
 		hi = min(hi, *to)
 	}
