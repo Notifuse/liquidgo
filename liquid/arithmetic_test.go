@@ -120,10 +120,10 @@ func TestRoundCeilFloorAbsExact(t *testing.T) {
 func TestSumExact(t *testing.T) {
 	sf := &StandardFilters{}
 	checkArith(t, []arithCase{
-		{"ints", sf.Sum([]interface{}{1, 2, 3}, nil), 6},
-		{"decimals", sf.Sum([]interface{}{0.1, 0.2}, nil), 0.3},
-		{"strings", sf.Sum([]interface{}{"0.1", "0.2", 1}, nil), 1.3},
-		{"property", sf.Sum([]interface{}{map[string]interface{}{"p": 19.99}, map[string]interface{}{"p": 0.01}}, "p"), 20.0},
-		{"empty", sf.Sum([]interface{}{}, nil), 0},
+		{"ints", filterValue(sf.Sum([]interface{}{1, 2, 3}, nil)), 6},
+		{"decimals", filterValue(sf.Sum([]interface{}{0.1, 0.2}, nil)), 0.3},
+		{"strings", filterValue(sf.Sum([]interface{}{"0.1", "0.2", 1}, nil)), 1.3},
+		{"property", filterValue(sf.Sum([]interface{}{map[string]interface{}{"p": 19.99}, map[string]interface{}{"p": 0.01}}, "p")), 20.0},
+		{"empty", filterValue(sf.Sum([]interface{}{}, nil)), 0},
 	})
 }
