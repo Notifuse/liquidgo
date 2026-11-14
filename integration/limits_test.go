@@ -106,9 +106,15 @@ func TestHostileTemplatesAreBounded(t *testing.T) {
 			alloc := allocated(func() {
 				requireNoPanicEscapes(t, func() { r = renderWith(env, c.source, hostileData()) })
 			})
+			// The race detector makes sync.Pool drop items, so that regexp,
+			// which pools its matchers, allocates at each match.
+			budget := c.budget
+			if raceEnabled {
+				budget *= 10
+			}
 			var problems []string
-			if alloc > c.budget {
-				problems = append(problems, fmt.Sprintf("allocated %s, over the budget of %s", mb(alloc), mb(c.budget)))
+			if alloc > budget {
+				problems = append(problems, fmt.Sprintf("allocated %s, over the budget of %s", mb(alloc), mb(budget)))
 			}
 			if c.wantError != "" && !r.hasError(c.wantError) && !strings.Contains(r.output, c.wantError) {
 				problems = append(problems, fmt.Sprintf("got output %q and errors %v, want the error %q", clip(r.output), r.errors, c.wantError))
