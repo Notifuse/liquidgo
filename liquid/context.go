@@ -2,6 +2,7 @@ package liquid
 
 import (
 	gocontext "context"
+	"fmt"
 )
 
 // ContextConfig configures a Context.
@@ -17,10 +18,14 @@ type ContextConfig struct {
 
 // Context keeps the variable stack and resolves variables, as well as keywords.
 type Context struct {
-	disabledTags       map[string]int
-	resourceLimits     *ResourceLimits
-	cancel             gocontext.Context
-	done               <-chan struct{}
+	disabledTags   map[string]int
+	resourceLimits *ResourceLimits
+	cancel         gocontext.Context
+	done           <-chan struct{}
+	// diagnostics is the context whose errors and warnings this one adds
+	// to: an isolated subcontext reports to the context that made it, as
+	// Ruby's subcontexts share the errors array.
+	diagnostics        *Context
 	profiler           *Profiler
 	exceptionRenderer  func(error) interface{}
 	registers          *Registers
@@ -151,17 +156,26 @@ func (c *Context) Registers() *Registers {
 
 // Errors returns the errors.
 func (c *Context) Errors() []error {
-	return c.errors
+	return c.reporter().errors
 }
 
 // Warnings returns the warnings.
 func (c *Context) Warnings() []error {
-	return c.warnings
+	return c.reporter().warnings
 }
 
 // AddWarning adds a warning.
 func (c *Context) AddWarning(warning error) {
-	c.warnings = append(c.warnings, warning)
+	r := c.reporter()
+	r.warnings = append(r.warnings, warning)
+}
+
+// reporter returns the context that holds the errors and warnings of c.
+func (c *Context) reporter() *Context {
+	if c.diagnostics != nil {
+		return c.diagnostics
+	}
+	return c
 }
 
 // IncrementRenderDepth increments the render depth and checks for stack overflow.
@@ -322,7 +336,8 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 		e.LineNumber = lineNumber
 	}
 
-	c.errors = append(c.errors, liquidErr)
+	r := c.reporter()
+	r.errors = append(r.errors, liquidErr)
 	result := c.exceptionRenderer(liquidErr)
 	return ToS(result, nil)
 }
@@ -337,6 +352,14 @@ func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) in
 			panic(err)
 		}
 		return nil
+	}
+	// A filter result is checked as a write to the output would be, so that
+	// a chain of filters that each grow their input stays within the render
+	// length limit.
+	if str, ok := result.(string); ok && c.resourceLimits != nil {
+		if limit := c.resourceLimits.renderLengthLimit; limit != nil && len(str) > *limit {
+			c.resourceLimits.raiseLimitsReached()
+		}
 	}
 	return ToLiquid(result)
 }
@@ -575,8 +598,7 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	subCtx.exceptionRenderer = c.exceptionRenderer
 	subCtx.filters = c.filters
 	subCtx.strainer = nil
-	subCtx.errors = c.errors
-	subCtx.warnings = c.warnings
+	subCtx.diagnostics = c.reporter()
 	subCtx.disabledTags = c.disabledTags
 	subCtx.profiler = c.profiler
 	subCtx.cancel, subCtx.done = c.cancel, c.done
@@ -690,6 +712,8 @@ func (c *Context) Reset() {
 	c.strainer = nil
 	c.environment = nil
 	c.globalFilter = nil
+	c.diagnostics = nil
+	c.cancel, c.done = nil, nil
 
 	// Reset primitive fields
 	c.templateName = ""
@@ -716,7 +740,11 @@ func (c *Context) checkCanceled() {
 	}
 	select {
 	case <-c.done:
-		panic(NewCanceledError(c.cancel.Err()))
+		err := c.cancel.Err()
+		if cause := gocontext.Cause(c.cancel); cause != nil && cause != err {
+			err = fmt.Errorf("%w: %w", err, cause)
+		}
+		panic(NewCanceledError(err))
 	default:
 	}
 }

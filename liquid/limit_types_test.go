@@ -1,15 +1,16 @@
 package liquid
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
 
 // TestResourceLimitsOfAnyIntegerType checks that a limit given as an int64,
-// a uint or an int32 is applied, as an int is, and that one that is not an
-// integer is left out.
+// a uint, an int32 or a whole float64 is applied, as an int is, and that one
+// that is not an integer is left out.
 func TestResourceLimitsOfAnyIntegerType(t *testing.T) {
-	for _, limit := range []interface{}{int64(5), uint(5), int32(5), uint64(5), int8(5)} {
+	for _, limit := range []interface{}{int64(5), uint(5), int32(5), uint64(5), int8(5), 5.0} {
 		env := NewEnvironment()
 		env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": limit})
 		tmpl, err := ParseTemplate("0123456789", &TemplateOptions{Environment: env})
@@ -20,8 +21,15 @@ func TestResourceLimitsOfAnyIntegerType(t *testing.T) {
 			t.Errorf("render_length_limit %T(5): got %q, want the limit error", limit, out)
 		}
 	}
-	if limitValue("5") != nil || limitValue(5.0) != nil || limitValue(nil) != nil {
+	if limitValue("5") != nil || limitValue(5.5) != nil || limitValue(math.NaN()) != nil || limitValue(nil) != nil {
 		t.Error("a limit that is not an integer must be left out")
+	}
+	// A number decoded from JSON is a float64.
+	if got := limitValue(5.0); got == nil || *got != 5 {
+		t.Errorf("a whole float64 limit must be applied, got %v", got)
+	}
+	if got := limitValue(1e300); got == nil || *got != math.MaxInt {
+		t.Errorf("a float64 limit past the int range must saturate, got %v", got)
 	}
 	if got := limitValue(uint64(1) << 63); got == nil || *got <= 0 {
 		t.Errorf("a uint64 limit past the int range must saturate, got %v", got)

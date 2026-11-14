@@ -96,7 +96,7 @@ func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseC
 				lineNum := *parseContext.LineNumber() - 1
 				parseContext.SetLineNumber(&lineNum)
 			}
-			bb.parseLiquidTag(markup, parseContext)
+			bb.parseNestedLiquidTag(markup, parseContext)
 			continue
 		}
 
@@ -526,15 +526,19 @@ func (bb *BlockBody) RemoveBlankStrings() {
 
 // parseLiquidTag parses a liquid tag by creating a new tokenizer for the markup
 // and recursively parsing it as if it were inside a liquid tag context.
-func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInterface) {
-	// Each nested liquid tag parses the rest of the markup again: the depth
-	// of blocks bounds them, so that the cost stays linear.
+// parseNestedLiquidTag parses a liquid tag inside another one. Each nested
+// liquid tag parses the rest of the markup again: it counts as a level of
+// blocks, whose depth bounds them, so that the cost stays linear.
+func (bb *BlockBody) parseNestedLiquidTag(markup string, parseContext ParseContextInterface) {
 	if parseContext.Depth() >= blockMaxDepth {
 		panic(NewStackLevelError("Nesting too deep"))
 	}
 	parseContext.IncrementDepth()
 	defer parseContext.DecrementDepth()
+	bb.parseLiquidTag(markup, parseContext)
+}
 
+func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInterface) {
 	// Create a new tokenizer with for_liquid_tag: true
 	lineNumber := parseContext.LineNumber()
 	liquidTagTokenizer := parseContext.NewTokenizer(markup, lineNumber != nil, lineNumber, true)

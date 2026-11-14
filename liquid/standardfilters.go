@@ -380,6 +380,19 @@ func isASCIIWhitespace(r rune) bool {
 
 // splitASCIIWhitespace splits like Ruby's split(" "): on runs of ASCII whitespace,
 // ignoring leading and trailing whitespace.
+// asciiFieldCount returns the number of strings splitASCIIWhitespace gives.
+func asciiFieldCount(s string) int {
+	count, inField := 0, false
+	for i := 0; i < len(s); i++ {
+		space := isASCIIWhitespace(rune(s[i]))
+		if !space && !inField {
+			count++
+		}
+		inField = !space
+	}
+	return count
+}
+
 func splitASCIIWhitespace(s string) []string {
 	return strings.FieldsFunc(s, isASCIIWhitespace)
 }
@@ -392,10 +405,10 @@ func (sf *StandardFilters) Split(input interface{}, pattern interface{}) []inter
 	patternStr := ToS(pattern, nil)
 	var parts []string
 	if patternStr == " " {
-		sf.countItems(len(strings.Fields(inputStr)))
+		sf.checkItems(asciiFieldCount(inputStr))
 		parts = splitASCIIWhitespace(inputStr)
 	} else if inputStr != "" {
-		sf.countItems(splitCount(inputStr, patternStr))
+		sf.checkItems(splitCount(inputStr, patternStr))
 		parts = strings.Split(inputStr, patternStr)
 		// Ruby drops trailing empty strings
 		for len(parts) > 0 && parts[len(parts)-1] == "" {
@@ -1468,7 +1481,7 @@ func (sf *StandardFilters) Concat(input interface{}, array interface{}) (interfa
 	}
 
 	iter := NewInputIterator(input, sf.context)
-	sf.countItems(len(iter.input) + reflectLen(array))
+	sf.checkItems(len(iter.input) + reflectLen(array))
 	return iter.Concat(array), nil
 }
 

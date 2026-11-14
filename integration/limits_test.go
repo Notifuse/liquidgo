@@ -82,8 +82,13 @@ var boundedCases = []boundedCase{
 	// deep; the same depth applies here to lookups and liquid tags, which
 	// Shopify does not limit.
 	{name: "brackets-100", source: "{{ " + rep("a[", 100) + "0" + rep("]", 100) + " }}", budget: 50 << 20, wantOutput: ""},
+	{name: "quoted-brackets", source: "{{ h[\"" + rep("[", 112) + "\"] }}|ok", budget: 50 << 20, wantOutput: "|ok"},
 	{name: "brackets-101", source: "{{ " + rep("a[", 101) + "0" + rep("]", 101) + " }}", budget: 50 << 20, wantError: tooDeep},
-	{name: "liquid-101", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
+	// A liquid tag nested in another counts as a level, as a block does;
+	// the outermost one does not, so that it holds as many blocks.
+	{name: "nested-liquid-100", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantOutput: "1"},
+	{name: "nested-liquid-101", source: "{% liquid " + rep("liquid ", 101) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
+	{name: "liquid-if-100", source: "{% liquid\n" + rep("if true\n", 100) + "echo 1\n" + rep("endif\n", 100) + "%}", budget: 50 << 20, wantOutput: "1"},
 }
 
 // knownUnbounded lists the cases known to fail, with the reason. A listed

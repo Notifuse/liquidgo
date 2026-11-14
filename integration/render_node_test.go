@@ -102,3 +102,33 @@ func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 		}
 	}
 }
+
+// boomDrop panics when its method is called.
+type boomDrop struct{ liquid.Drop }
+
+func (b *boomDrop) Boom() string {
+	var items []int
+	return string(rune(items[len(items)]))
+}
+
+// TestAnIncludeRestoresTheTemplateNameOnAnError checks that the template
+// name and the partial flag are restored when an include ends on an error,
+// as Ruby's ensure: a later error is reported for the template itself.
+func TestAnIncludeRestoresTheTemplateNameOnAnError(t *testing.T) {
+	env := newEnv("", limits{})
+	env.SetFileSystem(NewStubFileSystem(map[string]string{"part": "p"}))
+	source := "a\n{% include 'part', v: d.boom %}\nb\n{{ 'x' | nofilter }}"
+	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true, StrictFilters: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl.Render(map[string]interface{}{"d": &boomDrop{}}, &liquid.RenderOptions{StrictFilters: true})
+	errs := tmpl.Errors()
+	if len(errs) == 0 {
+		t.Fatal("no error recorded")
+	}
+	last := errs[len(errs)-1].Error()
+	if last != "Liquid error (line 4): undefined filter nofilter" {
+		t.Errorf("the last error is %q, want it on line 4 of the template itself", last)
+	}
+}

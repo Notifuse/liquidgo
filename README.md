@@ -520,7 +520,9 @@ where every number is a `float64`, and render text meant for people (emails, pag
   do not reset them, as Ruby does.
 - **Nesting is bounded at 100** for lookups and `liquid` tags too, as for blocks: `a[a[a[...]]]`
   nested deeper is a parse error.
-- **A filter result over `render_length_limit`** raises `Memory limits exceeded` before it is built.
+- **A filter result longer than `render_length_limit`** raises `Memory limits exceeded`, even when
+  it is assigned rather than written; the filters that can multiply their input check before they
+  build it.
 - Some malformed markup that Ruby's lax parser tolerates (`{{ 'a' | split$$$:' ' }}`,
   `{{ false - }}`) renders differently.
 

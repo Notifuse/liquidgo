@@ -87,3 +87,39 @@ func TestRenderWithACancelledContextOfItsOwn(t *testing.T) {
 		t.Errorf("errors %v, want a CanceledError that wraps context.Canceled (output %q)", ctx.Errors(), out)
 	}
 }
+
+// TestACancellationEndsWithItsRender checks that RenderOptions.Context stops
+// only the render it is given, on a Context of the caller too; that the
+// RenderToOutputBuffer of a template records the stop, as it records a
+// MemoryError; and that the cause of the cancellation is wrapped.
+func TestACancellationEndsWithItsRender(t *testing.T) {
+	env := newEnv("", limits{})
+	tmpl, err := liquid.ParseTemplate("a{{ 1 }}b", &liquid.TemplateOptions{Environment: env})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelled, cancel := gocontext.WithCancel(gocontext.Background())
+	cancel()
+
+	ctx := newContext(env)
+	tmpl.Render(ctx, &liquid.RenderOptions{Context: cancelled})
+	if out := tmpl.Render(ctx, nil); out != "a1b" {
+		t.Errorf("a second render of the same Context renders %q, want %q", out, "a1b")
+	}
+
+	ctx = newContext(env)
+	ctx.SetCancellation(cancelled)
+	output := ""
+	tmpl.RenderToOutputBuffer(ctx, &output)
+	if errs := ctx.Errors(); len(errs) == 0 || !errors.Is(errs[len(errs)-1], gocontext.Canceled) {
+		t.Errorf("RenderToOutputBuffer: errors %v, want one that wraps context.Canceled", errs)
+	}
+
+	cause := errors.New("the request ended")
+	withCause, cancelWithCause := gocontext.WithCancelCause(gocontext.Background())
+	cancelWithCause(cause)
+	tmpl.Render(nil, &liquid.RenderOptions{Context: withCause})
+	if errs := tmpl.Errors(); len(errs) == 0 || !errors.Is(errs[0], cause) || !errors.Is(errs[0], gocontext.Canceled) {
+		t.Errorf("errors %v, want one that wraps the cause and context.Canceled", errs)
+	}
+}

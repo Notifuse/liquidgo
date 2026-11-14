@@ -158,6 +158,12 @@ func (i *IncludeTag) RenderToOutput(context liquid.TagContext, output *liquid.Ou
 	}
 	ctx.SetTemplateName(partialName)
 	ctx.SetPartial(true)
+	// Restore the state when the partial ends, even on an error, as Ruby's
+	// ensure.
+	defer func() {
+		ctx.SetTemplateName(oldTemplateName)
+		ctx.SetPartial(oldPartial)
+	}()
 
 	// Use stack to create isolated scope
 	ctx.Stack(make(map[string]interface{}), func() {
@@ -194,10 +200,6 @@ func (i *IncludeTag) RenderToOutput(context liquid.TagContext, output *liquid.Ou
 			partialTemplate.RenderToOutput(ctx, output)
 		}
 	})
-
-	// Restore old state
-	ctx.SetTemplateName(oldTemplateName)
-	ctx.SetPartial(oldPartial)
 }
 
 // TemplateNameExpr returns the template name expression.

@@ -71,11 +71,16 @@ func parseVariableTokens(markup string) []string {
 	return tokens
 }
 
-// bracketDepth returns the deepest nesting of brackets in markup.
+// bracketDepth returns the deepest nesting of brackets in markup, outside
+// quoted strings.
 func bracketDepth(markup string) int {
 	depth, deepest := 0, 0
 	for i := 0; i < len(markup); i++ {
 		switch markup[i] {
+		case '\'', '"':
+			if end := strings.IndexByte(markup[i+1:], markup[i]); end >= 0 {
+				i += end + 1
+			}
 		case '[':
 			depth++
 			deepest = max(deepest, depth)

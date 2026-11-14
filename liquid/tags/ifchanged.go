@@ -17,12 +17,13 @@ func NewIfchangedTag(tagName, markup string, parseContext liquid.ParseContextInt
 	}, nil
 }
 
-// RenderToOutput renders the ifchanged tag: its body is written, and kept
-// only when it differs from the last body an ifchanged rendered.
+// RenderToOutput renders the ifchanged tag: its body is rendered apart, as
+// Ruby's block_output, and written only when it differs from the last body
+// an ifchanged rendered, so that a body that is not kept counts in no limit.
 func (i *IfchangedTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
-	start := output.Len()
-	i.Block.RenderToOutput(context, output)
-	blockOutput := output.Since(start)
+	body := output.Scratch()
+	i.Block.RenderToOutput(context, body)
+	blockOutput := body.String()
 
 	registers := context.Registers()
 	var lastOutput string
@@ -32,10 +33,10 @@ func (i *IfchangedTag) RenderToOutput(context liquid.TagContext, output *liquid.
 		}
 	}
 	if blockOutput == lastOutput {
-		output.Truncate(start)
 		return
 	}
 	registers.Set("ifchanged", blockOutput)
+	output.WriteString(blockOutput)
 }
 
 // RenderToOutputBuffer renders the tag and appends its output to output.

@@ -65,9 +65,8 @@ func (c *CaptureTag) To() string {
 // scope, as Ruby's context.scopes.last[@to] = capture_output.
 func (c *CaptureTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
-	captured := liquid.NewCaptureBuffer(context)
-	c.Block.RenderToOutput(context, captured)
-	ctx.SetLast(c.to, captured.String())
+	captured := liquid.RenderCaptured(context, func(o *liquid.OutputBuffer) { c.Block.RenderToOutput(context, o) })
+	ctx.SetLast(c.to, captured)
 }
 
 // Blank returns true since capture tags are blank (they don't output).

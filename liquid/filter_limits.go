@@ -28,11 +28,12 @@ func (sf *StandardFilters) checkLength(n int) {
 	}
 }
 
-// countItems counts the n items of an array a filter is about to build in
-// the assign score.
-func (sf *StandardFilters) countItems(n int) {
-	if rl := sf.limits(); rl != nil && n > 0 {
-		rl.IncrementAssignScore(n)
+// checkItems raises a MemoryError if an array of n items, which a filter is
+// about to build, has more items than the assign score limit leaves. The
+// items are counted when the array is assigned, as in Ruby.
+func (sf *StandardFilters) checkItems(n int) {
+	if rl := sf.limits(); rl != nil && rl.assignScoreLimit != nil && n > *rl.assignScoreLimit-rl.assignScore {
+		rl.raiseLimitsReached()
 	}
 }
 
@@ -68,10 +69,17 @@ func joinedLength(parts []string, sep string) int {
 	return total
 }
 
-// splitCount returns the number of parts strings.Split(s, sep) gives.
+// splitCount returns the number of parts the split filter keeps:
+// strings.Split(s, sep) without its trailing empty strings.
 func splitCount(s, sep string) int {
 	if sep == "" {
 		return utf8.RuneCountInString(s)
+	}
+	for strings.HasSuffix(s, sep) {
+		s = s[:len(s)-len(sep)]
+	}
+	if s == "" {
+		return 0
 	}
 	return strings.Count(s, sep) + 1
 }

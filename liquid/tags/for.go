@@ -301,6 +301,9 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputB
 	// Push to stack
 	forStack = append(forStack, loopVars)
 	registers.Set("for_stack", forStack)
+	// Pop from the stack when the loop ends, even on an error, as Ruby's
+	// ensure.
+	defer registers.Set("for_stack", forStack[:len(forStack)-1])
 
 	// Get underlying Context for Stack
 	ctx := context.Context().(*liquid.Context)
@@ -336,10 +339,6 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputB
 			}
 		}
 	})
-
-	// Pop from stack
-	forStack = forStack[:len(forStack)-1]
-	registers.Set("for_stack", forStack)
 }
 
 // renderElse renders the else block if collection is empty.

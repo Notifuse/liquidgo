@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
+	"github.com/Notifuse/liquidgo/v5/liquid/tag"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
@@ -75,6 +76,29 @@ func (w *wrappedForTag) RenderToOutputBuffer(context liquid.TagContext, output *
 	*output += ")"
 }
 
+// valueBufferTag declares RenderToOutputBuffer on its value receiver.
+type valueBufferTag struct{ *liquid.Tag }
+
+func (t valueBufferTag) RenderToOutputBuffer(_ liquid.TagContext, output *string) { *output += "V" }
+
+// valueBlockTag declares RenderToOutputBuffer on its value receiver.
+type valueBlockTag struct{ *liquid.Block }
+
+func (b valueBlockTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	*output += "<"
+	b.Block.RenderToOutputBuffer(context, output)
+	*output += ">"
+}
+
+// disableableTag embeds Tag and tag.Disableable, whose methods of the same
+// names hide each other.
+type disableableTag struct {
+	*liquid.Tag
+	tag.Disableable
+}
+
+func (d *disableableTag) Render(liquid.TagContext) string { return "" }
+
 func tagOf(make func(*liquid.Tag) interface{}) interface{} {
 	return tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (interface{}, error) {
 		return make(liquid.NewTag(name, markup, pc)), nil
@@ -100,6 +124,10 @@ func customTagEnvironment() *liquid.Environment {
 	env.RegisterTag("blankrender", blockOf(func(b *liquid.Block) interface{} { return &blankRenderBlockTag{b} }))
 	env.RegisterTag("nestedbuffer", blockOf(func(b *liquid.Block) interface{} { return &nestedBufferTag{&blockBufferTag{b}} }))
 	env.RegisterTag("nestedrender", blockOf(func(b *liquid.Block) interface{} { return &nestedRenderTag{&blockBufferTag{b}} }))
+	env.RegisterTag("valuebuffer", tagOf(func(t *liquid.Tag) interface{} { return &valueBufferTag{t} }))
+	env.RegisterTag("valuebufferbyvalue", tagOf(func(t *liquid.Tag) interface{} { return valueBufferTag{t} }))
+	env.RegisterTag("valueblock", blockOf(func(b *liquid.Block) interface{} { return &valueBlockTag{b} }))
+	env.RegisterTag("disableable", tagOf(func(t *liquid.Tag) interface{} { return &disableableTag{Tag: t} }))
 	env.RegisterTag("wrappedif", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (interface{}, error) {
 		t, err := tags.NewIfTag(name, markup, pc)
 		if err != nil {
@@ -137,6 +165,10 @@ func TestCustomTagsRenderAsBeforeOutputBuffer(t *testing.T) {
 		{"a{% wrappedif true %}" + loop + "{% else %}no{% endwrappedif %}b", "a123b"},
 		{"a{% wrappedfor j in (1..2) %}{{ j }}{% endwrappedfor %}b", "a(12)b"},
 		{"{% capture c %}{% blockbuffer %}x{% endblockbuffer %}{% endcapture %}{{ c }}{{ c }}", "<x><x>"},
+		{"a{% valuebuffer %}b", "aVb"},
+		{"a{% valuebufferbyvalue %}b", "aVb"},
+		{"a{% valueblock %}" + loop + "{% endvalueblock %}b", "a<123>b"},
+		{"a{% disableable %}b", "ab"},
 		{"{% for i in (1..2) %}{% blockbuffer %}{% plainblock %}{{ i }}{% endplainblock %}{% endblockbuffer %}{% endfor %}", "<1><2>"},
 	} {
 		tmpl, err := liquid.ParseTemplate(c.source, &liquid.TemplateOptions{Environment: env})

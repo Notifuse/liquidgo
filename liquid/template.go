@@ -2,6 +2,8 @@ package liquid
 
 import (
 	gocontext "context"
+	"math"
+	"reflect"
 	"sync"
 	"unicode/utf8"
 )
@@ -265,6 +267,12 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		return ""
 	}
 
+	// A Context of the caller keeps its own cancellation after this render.
+	if ctx, ok := assigns.(*Context); ok && ctx != nil && options != nil && options.Context != nil {
+		cancel, done := ctx.cancel, ctx.done
+		defer func() { ctx.cancel, ctx.done = cancel, done }()
+	}
+
 	context := t.buildContext(assigns, options)
 
 	// Track whether we should merge back state (only when we create the context, not when user passes one)
@@ -405,7 +413,7 @@ func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) strin
 
 // RenderToOutputBuffer renders the template with context and appends the
 // result to output. As in Ruby, it resets the resource usage of context, and
-// a MemoryError is recorded rather than raised.
+// a MemoryError, or a CanceledError, is recorded rather than raised.
 func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 	if t.root == nil {
 		return
@@ -422,9 +430,12 @@ func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 
 		defer func() {
 			if r := recover(); r != nil {
-				if memErr, ok := r.(*MemoryError); ok {
-					ctx.HandleError(memErr, nil)
-				} else {
+				switch err := r.(type) {
+				case *MemoryError:
+					ctx.HandleError(err, nil)
+				case *CanceledError:
+					ctx.HandleError(err, nil)
+				default:
 					panic(r)
 				}
 			}
@@ -605,8 +616,9 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 	return NewParseContext(parseContextOpts)
 }
 
-// limitValue returns a resource limit given as any integer type, saturated to
-// the int range, or nil when v is not an integer.
+// limitValue returns a resource limit given as any integer type, or as a
+// whole float such as a number decoded from JSON, saturated to the int range,
+// or nil when v is not an integer.
 func limitValue(v interface{}) *int {
 	var limit int
 	switch n := v.(type) {
@@ -616,6 +628,19 @@ func limitValue(v interface{}) *int {
 		var err error
 		if limit, err = ToInteger(n); err != nil {
 			return nil
+		}
+	case float64, float32:
+		f := reflect.ValueOf(n).Float()
+		if math.IsNaN(f) || math.IsInf(f, 0) || f != math.Trunc(f) {
+			return nil
+		}
+		switch {
+		case f >= math.MaxInt:
+			limit = math.MaxInt
+		case f <= math.MinInt:
+			limit = math.MinInt
+		default:
+			limit = int(f)
 		}
 	default:
 		return nil
