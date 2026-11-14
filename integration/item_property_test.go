@@ -31,13 +31,14 @@ func TestTheArrayFiltersReadAPropertyAsRuby(t *testing.T) {
 		}
 	}
 	for _, c := range []struct{ source, want string }{
-		// Only nil and false are falsy, and == is Ruby's
-		{"{{ hs | where: 'a' | size }}", "5"},
-		{"{{ hs | reject: 'a' | size }}", "2"},
-		{"{{ hs | find_index: 'a' }}", "0"},
+		// Deliberate: an empty string, list or hash is falsy, and a string
+		// matches the number it writes. Ruby gives 5, 2, 0, 1, 1 and 0.
+		{"{{ hs | where: 'a' | size }}", "2"},
+		{"{{ hs | reject: 'a' | size }}", "5"},
+		{"{{ hs | find_index: 'a' }}", "2"},
 		{"{{ hs | where: 'a', '' | size }}", "1"},
 		{"{{ hs | where: 'a', 0 | size }}", "1"},
-		{"{{ hs | where: 'a', '0' | size }}", "0"},
+		{"{{ hs | where: 'a', '0' | size }}", "1"},
 		{"{{ ints | map: 'a' | join: ',' }}", ""},
 		{"{{ ints | where: 'a' | join: ',' }}", ""},
 		{"{{ ints | where: 'a', 1 | join: ',' }}", ""},

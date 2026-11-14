@@ -1350,11 +1350,13 @@ func (sf *StandardFilters) filterArray(input, property, targetValue, empty inter
 		case noIndex:
 			return nil, nil
 		}
+		// Truthiness and equality stay liquidgo's: an empty string or
+		// list is falsy, and a string matches the number it writes
 		var match bool
 		if targetValue == nil {
-			match = val != nil && val != false
+			match = isTruthy(val)
 		} else {
-			match = liquidEqual(val, targetValue)
+			match = valuesEqual(val, targetValue)
 		}
 		if visit(i, item, match) {
 			break

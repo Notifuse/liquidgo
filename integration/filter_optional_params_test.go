@@ -123,8 +123,7 @@ func TestFiltersWithOptionalParameters(t *testing.T) {
 					{"name": "Bob"},
 				},
 			},
-			// As Ruby, an empty string is truthy
-			expected: "3",
+			expected: "2",
 		},
 
 		// sort_natural filter tests - property parameter is optional
