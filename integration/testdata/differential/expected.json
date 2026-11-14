@@ -998,6 +998,30 @@
       "output": "t2 t1"
     },
     {
+      "id": "index-10",
+      "mode": "lax",
+      "template": "a{{ h[nothing] }}b",
+      "output": "ab"
+    },
+    {
+      "id": "index-10",
+      "mode": "strict",
+      "template": "a{{ h[nothing] }}b",
+      "output": "ab"
+    },
+    {
+      "id": "index-11",
+      "mode": "lax",
+      "template": "a{{ h[] }}b{{ h[missing] }}c",
+      "output": "abc"
+    },
+    {
+      "id": "index-11",
+      "mode": "strict",
+      "template": "a{{ h[] }}b{{ h[missing] }}c",
+      "error": "Liquid::SyntaxError: Liquid syntax error: [:close_square, \"]\"] is not a valid expression in \"{{ h[] }}\""
+    },
+    {
       "id": "strings-01",
       "mode": "lax",
       "template": "{{ s | slice: 1, 3 }}|{{ s | slice: -3, 2 }}|{{ s | slice: 20 }}|{{ s | slice: -20, 3 }}",

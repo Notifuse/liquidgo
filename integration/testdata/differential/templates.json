@@ -332,6 +332,14 @@
   "template": "{{ posts[1].title }} {{ posts.first.title }}"
  },
  {
+  "id": "index-10",
+  "template": "a{{ h[nothing] }}b"
+ },
+ {
+  "id": "index-11",
+  "template": "a{{ h[] }}b{{ h[missing] }}c"
+ },
+ {
   "id": "strings-01",
   "template": "{{ s | slice: 1, 3 }}|{{ s | slice: -3, 2 }}|{{ s | slice: 20 }}|{{ s | slice: -20, 3 }}"
  },

@@ -7,7 +7,7 @@
   fails when 4 times the input takes more than 9 times as long; `TestHostileTemplatesAreBounded`
   checks that each resource limit refuses a template before an allocation budget. The cases that
   fail today are listed as known, with the reason, and fail the test once they pass.
-- **Differential corpus**: 581 templates rendered by Shopify Liquid 5.11.0 in lax and strict mode
+- **Differential corpus**: 583 templates rendered by Shopify Liquid 5.11.0 in lax and strict mode
   (`integration/testdata/differential`), with every divergence listed.
 - **Fuzzing**: `FuzzRender` checks that no panic leaves the API or becomes an internal error, and
   that two parses of a template render the same output.
