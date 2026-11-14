@@ -53,7 +53,7 @@ func NewForTag(tagName, markup string, parseContext liquid.ParseContextInterface
 func (f *ForTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
 	matches := forSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid for tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.for", nil)
 	}
 
 	f.variableName = matches[1]

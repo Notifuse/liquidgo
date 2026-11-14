@@ -47,7 +47,7 @@ func NewRenderTag(tagName, markup string, parseContext liquid.ParseContextInterf
 func (r *RenderTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
 	matches := renderSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid render tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.render", nil)
 	}
 
 	// Template name

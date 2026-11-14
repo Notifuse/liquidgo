@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -22,7 +21,7 @@ func TestSnippetTagReturnsUnknownTagError(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error for unknown 'snippet' tag, but parsing succeeded")
 	}
-	if !strings.Contains(err.Error(), "unknown_tag") && !strings.Contains(err.Error(), "unknown tag") {
-		t.Errorf("Expected 'unknown tag' or 'unknown_tag' error, got: %v", err)
+	if err.Error() != "Liquid syntax error: Unknown tag 'snippet'" {
+		t.Errorf("Expected Ruby's error, Liquid syntax error: Unknown tag 'snippet', got: %v", err)
 	}
 }

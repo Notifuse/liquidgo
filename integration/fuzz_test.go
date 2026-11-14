@@ -12,12 +12,8 @@ import (
 // timeDependent finds the inputs whose output changes with the time.
 var timeDependent = regexp.MustCompile(`\b(now|today)\b`)
 
-// The panics known today, each with the shape of input that causes it.
-var (
-	loneQuotePanic = "slice bounds out of range [1:0]"
-	knownLoneQuote = "a lone quote panics while parsing"
-	knownHashOrder = "a hash with several keys, which keyword arguments make, renders its keys in map order"
-)
+// The difference known today between two renders of the same source.
+const knownHashOrder = "a hash with several keys, which keyword arguments make, renders its keys in map order"
 
 // renderedHash is a hash as liquidgo and Ruby render it: {"k"=>"v", ...}.
 var renderedHash = regexp.MustCompile(`\{[^{}]*=>[^{}]*\}`)
@@ -88,9 +84,6 @@ func FuzzRender(f *testing.F) {
 			var first, second result
 			requireNoPanicEscapes(t, func() { first = renderWith(env, source, fuzzData()) })
 			if first.parseErr != nil && strings.Contains(first.parseErr.Error(), "runtime error") {
-				if strings.Contains(first.parseErr.Error(), loneQuotePanic) {
-					t.Skipf("known: %s", knownLoneQuote)
-				}
 				t.Fatalf("%s: a panic while parsing %q became the error %q", mode, source, first.parseErr)
 			}
 			if err := first.internalError(); err != nil {

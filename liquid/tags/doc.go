@@ -20,13 +20,7 @@ type DocTag struct {
 func NewDocTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*DocTag, error) {
 	// Validate markup is empty
 	if !docNoUnexpectedArgs.MatchString(markup) {
-		var locale *liquid.I18n
-		if pc, ok := parseContext.(*liquid.ParseContext); ok {
-			locale = pc.Locale()
-			msg := locale.Translate("errors.syntax.block_tag_unexpected_args", map[string]interface{}{"tag": tagName})
-			return nil, liquid.NewSyntaxError(msg)
-		}
-		return nil, liquid.NewSyntaxError("Liquid syntax error: block tag unexpected args")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.block_tag_unexpected_args", map[string]interface{}{"tag": tagName})
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)
@@ -64,13 +58,7 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 
 		// Raise error if nested doc tag found
 		if foundTagName == tagName {
-			var locale *liquid.I18n
-			if pc, ok := d.ParseContext().(*liquid.ParseContext); ok {
-				locale = pc.Locale()
-				msg := locale.Translate("errors.syntax.doc_invalid_nested", map[string]interface{}{})
-				return liquid.NewSyntaxError(msg)
-			}
-			return liquid.NewSyntaxError("Liquid syntax error: doc invalid nested")
+			return liquid.NewSyntaxErrorFor(d.ParseContext(), "errors.syntax.doc_invalid_nested", nil)
 		}
 
 		if foundTagName == blockDelimiter {

@@ -141,13 +141,7 @@ func (c *CycleTag) parseMarkup(markup string, parseContext liquid.ParseContextIn
 	}
 
 	// Syntax error
-	var locale *liquid.I18n
-	if pc, ok := parseContext.(*liquid.ParseContext); ok {
-		locale = pc.Locale()
-		msg := locale.Translate("errors.syntax.cycle", map[string]interface{}{})
-		return liquid.NewSyntaxError(msg)
-	}
-	return liquid.NewSyntaxError("Liquid syntax error: cycle")
+	return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.cycle", nil)
 }
 
 func (c *CycleTag) variablesFromString(markup string, parseContext liquid.ParseContextInterface) []interface{} {

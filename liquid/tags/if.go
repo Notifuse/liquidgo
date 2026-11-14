@@ -258,7 +258,7 @@ func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) 
 	parts := splitByBooleanOperators(markup)
 
 	if len(parts) == 0 {
-		return nil, liquid.NewSyntaxError("Syntax Error in 'if' - Valid syntax: if [expression]")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.if", nil)
 	}
 
 	// Parse the rightmost condition first
@@ -394,10 +394,9 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 		if err := validateExpression(expr, parseContext); err != nil {
 			return nil, err
 		}
-
-		// Try as simple expression - use ParseConditionExpression to support filters
-		parsedExpr := liquid.ParseConditionExpression(parseContext, expr, false)
-		return liquid.NewCondition(parsedExpr, "", nil), nil
+		// An expression without a value, such as a lone quote, is Ruby's
+		// lax syntax error: expressions.pop =~ Syntax fails.
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.if", nil)
 	}
 
 	// Validate left expression syntax

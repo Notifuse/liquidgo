@@ -1,18 +1,32 @@
 package liquid
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	// DefaultLocalePath is the default path to the English locale file
+	// DefaultLocalePath is the path that names the English locale of
+	// Shopify Liquid, which is embedded: NewI18n reads no file for it.
 	DefaultLocalePath = filepath.Join("liquid", "locales", "en.yml")
+)
+
+// builtinLocalePath is the value DefaultLocalePath starts with.
+var builtinLocalePath = DefaultLocalePath
+
+//go:embed locales/en.yml
+var builtinLocaleSource []byte
+
+var (
+	builtinLocaleOnce sync.Once
+	builtinLocale     map[string]interface{}
 )
 
 // I18n handles internationalization for Liquid templates.
@@ -21,7 +35,10 @@ type I18n struct {
 	path   string
 }
 
-// NewI18n creates a new I18n instance with the given locale path.
+// NewI18n creates a new I18n instance with the given locale path. An empty
+// path, "en" or DefaultLocalePath gives the English locale of Shopify Liquid
+// 5.11.0, embedded in the package; any other path is read from the file
+// system when a message is first translated.
 func NewI18n(path string) *I18n {
 	if path == "" {
 		path = DefaultLocalePath
@@ -29,7 +46,8 @@ func NewI18n(path string) *I18n {
 	return &I18n{path: path}
 }
 
-// Translate translates a key using the locale, with optional variables for interpolation.
+// Translate translates a key using the locale, with optional variables for
+// interpolation. A key the locale does not have translates to itself.
 func (i *I18n) Translate(name string, vars map[string]interface{}) string {
 	if vars == nil {
 		vars = make(map[string]interface{})
@@ -46,6 +64,16 @@ func (i *I18n) T(name string, vars map[string]interface{}) string {
 // Locale returns the loaded locale data.
 func (i *I18n) Locale() (map[string]interface{}, error) {
 	if i.locale != nil {
+		return i.locale, nil
+	}
+
+	if i.path == "en" || i.path == builtinLocalePath {
+		builtinLocaleOnce.Do(func() {
+			if err := yaml.Unmarshal(builtinLocaleSource, &builtinLocale); err != nil {
+				panic(fmt.Sprintf("the embedded locale does not parse: %v", err))
+			}
+		})
+		i.locale = builtinLocale
 		return i.locale, nil
 	}
 
@@ -81,24 +109,46 @@ func (i *I18n) deepFetchTranslation(name string) string {
 		return name
 	}
 
-	parts := strings.Split(name, ".")
-	current := locale
+	// Ruby's locale files nest the keys under the language; a key may be
+	// given with or without it.
+	if en, ok := locale["en"].(map[string]interface{}); ok && !strings.HasPrefix(name, "en.") {
+		locale = en
+	}
 
-	for _, part := range parts {
-		if val, ok := current[part]; ok {
+	current := locale
+	parts := strings.Split(name, ".")
+	for n, part := range parts {
+		val, ok := current[part]
+		if !ok {
+			return name
+		}
+		if n == len(parts)-1 {
 			if str, ok := val.(string); ok {
 				return str
 			}
-			if m, ok := val.(map[string]interface{}); ok {
-				current = m
-			} else {
-				panic(fmt.Sprintf("Translation for %s does not exist in locale %s", name, i.path))
-			}
-		} else {
-			panic(fmt.Sprintf("Translation for %s does not exist in locale %s", name, i.path))
+			return name
 		}
+		m, ok := val.(map[string]interface{})
+		if !ok {
+			return name
+		}
+		current = m
 	}
+	return name
+}
 
-	// If we get here, return the last value as string
-	return fmt.Sprintf("%v", current)
+// LocaleOf returns the locale of parseContext, or the embedded English locale
+// of Shopify Liquid.
+func LocaleOf(parseContext ParseContextInterface) *I18n {
+	if pc, ok := parseContext.(*ParseContext); ok && pc != nil && pc.Locale() != nil {
+		return pc.Locale()
+	}
+	return NewI18n("")
+}
+
+// NewSyntaxErrorFor returns the syntax error of the locale key, as Ruby's
+// SyntaxError, options[:locale].t(key, vars): errors.syntax.for gives
+// "Syntax Error in 'for loop' - Valid syntax: for [item] in [collection]".
+func NewSyntaxErrorFor(parseContext ParseContextInterface, key string, vars map[string]interface{}) *SyntaxError {
+	return NewSyntaxError(LocaleOf(parseContext).Translate(key, vars))
 }

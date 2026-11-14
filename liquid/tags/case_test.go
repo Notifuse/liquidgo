@@ -239,8 +239,8 @@ func TestCaseTagParseBodyForBlockTagNeverClosed(t *testing.T) {
 			if !ok {
 				t.Fatalf("Expected SyntaxError panic, got %T: %v", r, r)
 			}
-			if syntaxErr.Error() != "Liquid syntax error: Tag was never closed: case" {
-				t.Errorf("Expected 'Tag was never closed: case', got: %v", syntaxErr.Error())
+			if syntaxErr.Error() != "Liquid syntax error: 'case' tag was never closed" {
+				t.Errorf("Expected Ruby's 'case' tag was never closed, got: %v", syntaxErr.Error())
 			}
 		} else {
 			t.Fatal("Expected panic for unclosed tag, but no panic occurred")

@@ -151,7 +151,7 @@ func RaiseUnknownTag(tag, blockName, blockDelimiter string, parseContext ParseCo
 
 // RaiseTagNeverClosed raises an error for a tag that was never closed.
 func (b *Block) RaiseTagNeverClosed() error {
-	return NewSyntaxError("'" + b.BlockName() + "' tag was never closed")
+	return NewSyntaxErrorFor(b.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": b.BlockName()})
 }
 
 func (b *Block) newBody() *BlockBody {

@@ -549,7 +549,7 @@ func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInte
 			// Unknown tag in liquid tag - raise error
 			// This would call Block.raise_unknown_tag in Ruby
 			// For now, we'll raise a syntax error
-			panic(NewSyntaxError("Unknown tag '" + endTagName + "' in liquid tag"))
+			panic(NewSyntaxErrorFor(parseContext, "errors.syntax.unknown_tag", map[string]interface{}{"tag": endTagName}))
 		}
 		return true
 	}); err != nil {

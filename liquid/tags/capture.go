@@ -28,13 +28,7 @@ func NewCaptureTag(tagName, markup string, parseContext liquid.ParseContextInter
 	// Parse variable name from markup
 	matches := captureSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		var locale *liquid.I18n
-		if pc, ok := parseContext.(*liquid.ParseContext); ok {
-			locale = pc.Locale()
-			msg := locale.Translate("errors.syntax.capture", map[string]interface{}{})
-			return nil, liquid.NewSyntaxError(msg)
-		}
-		return nil, liquid.NewSyntaxError("Liquid syntax error: capture")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.capture", nil)
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)

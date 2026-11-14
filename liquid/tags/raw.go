@@ -19,13 +19,7 @@ type RawTag struct {
 func NewRawTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*RawTag, error) {
 	// Validate markup is empty
 	if !rawSyntax.MatchString(markup) {
-		var locale *liquid.I18n
-		if pc, ok := parseContext.(*liquid.ParseContext); ok {
-			locale = pc.Locale()
-			msg := locale.Translate("errors.syntax.tag_unexpected_args", map[string]interface{}{"tag": tagName})
-			return nil, liquid.NewSyntaxError(msg)
-		}
-		return nil, liquid.NewSyntaxError("Liquid syntax error: tag unexpected args")
+		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.tag_unexpected_args", map[string]interface{}{"tag": tagName})
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)
@@ -56,7 +50,7 @@ func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
 
 	// Tag never closed
 	r.body = body.String()
-	return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
+	return liquid.NewSyntaxErrorFor(r.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": r.BlockName()})
 }
 
 // RenderToOutput renders the raw tag.

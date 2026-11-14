@@ -50,7 +50,7 @@ func NewTableRowTag(tagName, markup string, parseContext liquid.ParseContextInte
 func (t *TableRowTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
 	matches := tableRowSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid table_row tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.table_row", nil)
 	}
 
 	t.variableName = matches[1]

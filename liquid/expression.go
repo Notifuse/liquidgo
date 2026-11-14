@@ -48,6 +48,10 @@ func Parse(markup string, ss *StringScanner, cache map[string]interface{}) inter
 	// Handle quoted strings (fast path, don't cache)
 	if (strings.HasPrefix(markup, `"`) && strings.HasSuffix(markup, `"`)) ||
 		(strings.HasPrefix(markup, `'`) && strings.HasSuffix(markup, `'`)) {
+		// A lone quote is an empty string, as Ruby's markup[1..-2]
+		if len(markup) < 2 {
+			return ""
+		}
 		return markup[1 : len(markup)-1]
 	}
 

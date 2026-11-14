@@ -120,7 +120,7 @@ func (c *CommentTag) parseRawTagBody(tokenizer *liquid.Tokenizer) error {
 		}
 	}
 
-	return liquid.NewSyntaxError("tag raw was never closed")
+	return liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": "raw"})
 }
 
 // RenderToOutputBuffer renders the tag and appends its output to output.

@@ -72,7 +72,7 @@ func (c *CaseTag) parseMarkup(markup string, parseContext liquid.ParseContextInt
 
 	matches := caseSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
-		return liquid.NewSyntaxError("invalid case tag syntax")
+		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.case", nil)
 	}
 
 	c.left = parseContext.ParseExpression(matches[1])
@@ -180,7 +180,7 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 		}
 		if endTagName == "" {
 			// Tag never closed - raise error (matches Ruby: raise_tag_never_closed)
-			panic(liquid.NewSyntaxError("Tag was never closed: " + c.BlockName()))
+			panic(liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.tag_never_closed", map[string]interface{}{"block_name": c.BlockName()}))
 		}
 
 		// Handle when and else
@@ -218,7 +218,7 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 	for first := true; first || remainingMarkup != ""; first = false {
 		matches := whenSyntax.FindStringSubmatch(remainingMarkup)
 		if len(matches) == 0 {
-			return liquid.NewSyntaxError("Syntax Error in tag 'case' - Valid when condition: {% when [condition] [or condition2...] %}")
+			return liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.case_invalid_when", nil)
 		}
 
 		// Parse the value expression
@@ -248,7 +248,7 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 // recordElseCondition records an else condition.
 func (c *CaseTag) recordElseCondition(markup string) error {
 	if strings.TrimSpace(markup) != "" {
-		return liquid.NewSyntaxError("else tag should not have markup")
+		return liquid.NewSyntaxErrorFor(c.ParseContext(), "errors.syntax.case_invalid_else", nil)
 	}
 
 	block := liquid.NewElseCondition()
