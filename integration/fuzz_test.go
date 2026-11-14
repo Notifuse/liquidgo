@@ -14,10 +14,6 @@ var timeDependent = regexp.MustCompile(`\b(now|today)\b`)
 
 // The panics known today, each with the shape of input that causes it.
 var (
-	// h[], h[name], h[!], h[0A]: an index, which an undefined name or
-	// markup that lax mode drops makes nil.
-	nilIndex       = regexp.MustCompile(`\[[^\]]*\]`)
-	knownNilKey    = "a hash indexed by a nil key panics"
 	loneQuotePanic = "slice bounds out of range [1:0]"
 	knownLoneQuote = "a lone quote panics while parsing"
 	knownHashOrder = "a hash with several keys, which keyword arguments make, renders its keys in map order"
@@ -49,15 +45,6 @@ func fuzzData() map[string]interface{} {
 		"a": []interface{}{1, 2}, "x": "x", "s": "héllo", "n": 3, "f": 1.5,
 		"h": map[string]interface{}{"k": "v"}, "posts": []interface{}{map[string]interface{}{"title": "t"}},
 	}
-}
-
-// fuzzDataWithoutHashes is fuzzData without its hashes, to tell the known
-// panic of a hash indexed by a nil key from the others.
-func fuzzDataWithoutHashes() map[string]interface{} {
-	data := fuzzData()
-	delete(data, "h")
-	delete(data, "posts")
-	return data
 }
 
 // fuzzSeeds returns the templates of the differential corpus and of the
@@ -107,13 +94,6 @@ func FuzzRender(f *testing.F) {
 				t.Fatalf("%s: a panic while parsing %q became the error %q", mode, source, first.parseErr)
 			}
 			if err := first.internalError(); err != nil {
-				if nilIndex.MatchString(source) {
-					var withoutHashes result
-					requireNoPanicEscapes(t, func() { withoutHashes = renderWith(env, source, fuzzDataWithoutHashes()) })
-					if withoutHashes.internalError() == nil {
-						t.Skipf("known: %s", knownNilKey)
-					}
-				}
 				t.Fatalf("%s: a panic in the render of %q became %v", mode, source, err)
 			}
 			if timeDependent.MatchString(source) {

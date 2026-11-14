@@ -208,12 +208,48 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 		}
 	}
 
-	runes := []rune(ToS(input, nil))
-	start, end, ok := sliceBounds(len(runes), offsetInt, lengthInt)
+	// The string is walked only as far as the slice reaches: a positive
+	// offset needs no count of its characters.
+	str := ToS(input, nil)
+	if offsetInt < 0 {
+		start, end, ok := sliceBounds(utf8.RuneCountInString(str), offsetInt, lengthInt)
+		if !ok {
+			return ""
+		}
+		offsetInt, lengthInt = start, end-start
+	}
+	if lengthInt < 0 {
+		return ""
+	}
+	start, ok := runeOffset(str, offsetInt)
 	if !ok {
 		return ""
 	}
-	return string(runes[start:end])
+	size, _ := runeOffset(str[start:], lengthInt)
+	return asRunes(str[start : start+size])
+}
+
+// runeOffset returns the byte index after the first n characters of s, as
+// []rune(s) counts them, and whether s has n characters.
+func runeOffset(s string, n int) (int, bool) {
+	i := 0
+	for k := 0; k < n; k++ {
+		if i >= len(s) {
+			return i, false
+		}
+		_, size := utf8.DecodeRuneInString(s[i:])
+		i += size
+	}
+	return i, true
+}
+
+// asRunes returns s as string([]rune(s)) does: each invalid byte becomes
+// U+FFFD.
+func asRunes(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	return string([]rune(s))
 }
 
 // sliceBounds applies Ruby's slice(offset, length) rules to a sequence of size n.
@@ -252,9 +288,12 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	runes := []rune(inputStr)
-	if len(runes) <= lengthInt {
-		return inputStr
+	// The string is walked only as far as the length: a long input is not
+	// copied to count its characters.
+	if lengthInt >= 0 {
+		if end, ok := runeOffset(inputStr, lengthInt); !ok || end == len(inputStr) {
+			return inputStr
+		}
 	}
 
 	// compared before subtracting, so that a length near the int minimum cannot wrap
@@ -263,7 +302,8 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		l = lengthInt - ellipsis
 	}
 
-	return string(runes[:l]) + truncateStr
+	end, _ := runeOffset(inputStr, l)
+	return asRunes(inputStr[:end]) + truncateStr
 }
 
 // TruncateWords shortens a string to a number of words (15 by default, at least 1).

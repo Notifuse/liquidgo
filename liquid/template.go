@@ -100,15 +100,9 @@ func NewTemplate(options *TemplateOptions) *Template {
 	config := ResourceLimitsConfig{}
 	if env.defaultResourceLimits != nil {
 		// Convert map[string]interface{} to ResourceLimitsConfig
-		if renderLengthLimit, ok := env.defaultResourceLimits["render_length_limit"].(int); ok {
-			config.RenderLengthLimit = &renderLengthLimit
-		}
-		if renderScoreLimit, ok := env.defaultResourceLimits["render_score_limit"].(int); ok {
-			config.RenderScoreLimit = &renderScoreLimit
-		}
-		if assignScoreLimit, ok := env.defaultResourceLimits["assign_score_limit"].(int); ok {
-			config.AssignScoreLimit = &assignScoreLimit
-		}
+		config.RenderLengthLimit = limitValue(env.defaultResourceLimits["render_length_limit"])
+		config.RenderScoreLimit = limitValue(env.defaultResourceLimits["render_score_limit"])
+		config.AssignScoreLimit = limitValue(env.defaultResourceLimits["assign_score_limit"])
 	}
 	resourceLimits = NewResourceLimits(config)
 
@@ -609,4 +603,22 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 	}
 
 	return NewParseContext(parseContextOpts)
+}
+
+// limitValue returns a resource limit given as any integer type, saturated to
+// the int range, or nil when v is not an integer.
+func limitValue(v interface{}) *int {
+	var limit int
+	switch n := v.(type) {
+	case int:
+		limit = n
+	case int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		var err error
+		if limit, err = ToInteger(n); err != nil {
+			return nil
+		}
+	default:
+		return nil
+	}
+	return &limit
 }

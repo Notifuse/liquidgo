@@ -269,9 +269,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 						}
 					}
 				}
-				// Try key as-is for other map key types
+				// Try key as-is for other map key types; a nil key finds
+				// nothing, as in Ruby
 				keyValue := reflect.ValueOf(key)
-				if keyValue.Type().ConvertibleTo(v.Type().Key()) {
+				if keyValue.IsValid() && keyValue.Type().ConvertibleTo(v.Type().Key()) {
 					mapValue := v.MapIndex(keyValue.Convert(v.Type().Key()))
 					if mapValue.IsValid() {
 						obj = mapValue.Interface()

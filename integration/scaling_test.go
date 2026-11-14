@@ -74,10 +74,7 @@ var scalingFamilies = []scalingFamily{
 // knownSuperLinear lists the families known to cost more than linear time,
 // with the reason. A listed family that becomes linear fails the test until
 // its line is removed.
-var knownSuperLinear = map[string]string{
-	"slice-loop":    "slice copies the string to runes",
-	"truncate-loop": "truncate copies the string to runes",
-}
+var knownSuperLinear = map[string]string{}
 
 // TestRenderScalesLinearly parses and renders each family at n and 4n. A
 // family is super-linear when 4 times the input takes more than 9 times as
