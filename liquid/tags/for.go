@@ -51,6 +51,10 @@ func NewForTag(tagName, markup string, parseContext liquid.ParseContextInterface
 
 // parseMarkup parses the for tag markup.
 func (f *ForTag) parseMarkup(markup string, parseContext liquid.ParseContextInterface) error {
+	// In strict mode, the markup is lexed first, as Ruby's strict parse
+	if err := lexCondition(strings.TrimSpace(markup), parseContext); err != nil {
+		return err
+	}
 	matches := forSyntax.FindStringSubmatch(markup)
 	if len(matches) == 0 {
 		return liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.for", nil)

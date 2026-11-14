@@ -253,6 +253,13 @@ func (i *IfTag) Blank() bool {
 func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) (*liquid.Condition, error) {
 	markup = strings.TrimSpace(markup)
 
+	// In strict mode, the whole markup is lexed first, as Ruby's strict
+	// parse, so that a character the lexer refuses is a syntax error that
+	// names the whole condition.
+	if err := lexCondition(markup, parseContext); err != nil {
+		return nil, err
+	}
+
 	// Split by 'and' and 'or' operators, keeping track of which operator was used
 	// We need to parse from right to left like Ruby does
 	parts := splitByBooleanOperators(markup)
@@ -438,6 +445,23 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 	}
 
 	return liquid.NewCondition(left, operator, right), nil
+}
+
+// lexCondition returns the lexer's syntax error for the markup of a tag in
+// strict mode, with the markup as its context.
+func lexCondition(markup string, parseContext liquid.ParseContextInterface) error {
+	if parseContext.ErrorMode() != "strict" {
+		return nil
+	}
+	err := parseContext.NewParser(markup).Error()
+	if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
+		syntaxErr.Err.MarkupContext = "in \"" + markup + "\""
+		if parseContext.LineNumber() != nil {
+			ln := *parseContext.LineNumber()
+			syntaxErr.Err.LineNumber = &ln
+		}
+	}
+	return err
 }
 
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {

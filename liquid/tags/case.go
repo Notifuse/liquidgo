@@ -45,6 +45,9 @@ type CaseTag struct {
 	*liquid.Block
 	left   interface{} // Expression to compare
 	blocks []CaseBlock
+	// blank is Ruby's @blank: whether every body parsed, the text before
+	// the first when included, is blank.
+	blank bool
 }
 
 // NewCaseTag creates a new CaseTag.
@@ -54,6 +57,7 @@ func NewCaseTag(tagName, markup string, parseContext liquid.ParseContextInterfac
 	tag := &CaseTag{
 		Block:  block,
 		blocks: []CaseBlock{},
+		blank:  true,
 	}
 
 	// Parse markup to get left expression
@@ -202,6 +206,7 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 	if err != nil {
 		return false, err
 	}
+	c.blank = c.blank && body.Blank()
 
 	// Return true if we should continue (didn't find endcase)
 	return !foundEndTag, nil
@@ -294,9 +299,9 @@ func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.Outpu
 	}
 }
 
-// Blank returns true if all blocks are blank.
+// Blank returns true if every body of the case is blank, as Ruby's blank?.
 func (c *CaseTag) Blank() bool {
-	return c.Block.Blank()
+	return c.blank
 }
 
 // RenderToOutputBuffer renders the tag and appends its output to output.
