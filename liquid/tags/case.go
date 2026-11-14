@@ -185,15 +185,17 @@ func (c *CaseTag) parseBodyForBlock(tokenizer *liquid.Tokenizer, body *liquid.Bl
 
 		// Handle when and else
 		if endTagName == "when" || endTagName == "else" {
-			err := c.UnknownTag(endTagName, endTagMarkup, tokenizer)
-			if err != nil {
-				return false
+			if err := c.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+				panic(err)
 			}
 			return false // Stop parsing current block
 		}
 
-		// Unknown tag - let block handle it
-		return c.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := c.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)
@@ -211,11 +213,12 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 	// Ruby: parse_lax_when creates one body and multiple conditions attached to it
 	body := liquid.NewBlockBody()
 
+	// As Ruby's parse_lax_when, a when without a condition is a syntax error
 	remainingMarkup := strings.TrimSpace(markup)
-	for remainingMarkup != "" {
+	for first := true; first || remainingMarkup != ""; first = false {
 		matches := whenSyntax.FindStringSubmatch(remainingMarkup)
 		if len(matches) == 0 {
-			return liquid.NewSyntaxError("invalid when condition syntax")
+			return liquid.NewSyntaxError("Syntax Error in tag 'case' - Valid when condition: {% when [condition] [or condition2...] %}")
 		}
 
 		// Parse the value expression

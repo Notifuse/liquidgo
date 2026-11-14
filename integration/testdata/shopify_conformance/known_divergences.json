@@ -234,22 +234,6 @@
    "strict2/ruby": "output: 0"
   }
  },
- "test/integration/tags/standard_tag_test.rb:285": {
-  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
- "test/integration/tags/standard_tag_test.rb:289": {
-  "reason": "minor: an empty {% when %} or an unknown tag inside case is not a syntax error",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
  "test/integration/variable_test.rb:134": {
   "reason": "minor: a nested array containing nil renders [[<nil>]] instead of \"\"",
   "actual": {

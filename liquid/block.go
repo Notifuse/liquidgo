@@ -183,9 +183,11 @@ func (b *Block) parseBody(tokenizer *Tokenizer) (bool, error) {
 			panic(b.RaiseTagNeverClosed())
 		}
 
-		// Unknown tag - let block handle it
-		err := b.UnknownTag(endTagName, endTagMarkup, tokenizer)
-		return err == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := b.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := b.body.Parse(tokenizer, parseContext, unknownTagHandler)

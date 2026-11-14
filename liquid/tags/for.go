@@ -170,14 +170,16 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 		}
 		if endTagName == "else" {
 			// Handle else - UnknownTag will create elseBlock if needed
-			err := f.UnknownTag(endTagName, endTagMarkup, tokenizer)
-			if err != nil {
-				return false
+			if err := f.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+				panic(err)
 			}
 			return false // Stop parsing current block, continue with else block
 		}
-		// Unknown tag - let block handle it
-		return f.UnknownTag(endTagName, endTagMarkup, tokenizer) == nil
+		// Unknown tag: as Ruby's unknown_tag, a syntax error in every mode
+		if err := f.UnknownTag(endTagName, endTagMarkup, tokenizer); err != nil {
+			panic(err)
+		}
+		return true
 	}
 
 	err := body.Parse(tokenizer, parseContext, unknownTagHandler)

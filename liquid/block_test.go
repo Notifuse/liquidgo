@@ -148,14 +148,19 @@ func TestBlockParse(t *testing.T) {
 		t.Error("Expected body to be set")
 	}
 
-	// Test parsing with nested content
+	// A tag the environment does not know is a syntax error, as Ruby's
+	// unknown_tag: no tag is registered here
 	source2 := "outer{% if inner %}{% endif %}inner{% endif %}"
 	tokenizer2 := NewTokenizer(source2, nil, false, nil, false)
 	block2 := NewBlock("if", "condition", pc)
-	err = block2.Parse(tokenizer2)
-	if err != nil {
-		t.Fatalf("Parse() with nested content error = %v", err)
-	}
+	defer func() {
+		r := recover()
+		if err, ok := r.(*SyntaxError); !ok || !strings.Contains(err.Error(), "Unknown tag 'if'") {
+			t.Errorf("Parse() of an unknown tag raised %v, want Unknown tag 'if'", r)
+		}
+	}()
+	_ = block2.Parse(tokenizer2)
+	t.Error("Parse() of an unknown tag returned")
 }
 
 // TestBlockRender tests block rendering
@@ -300,7 +305,13 @@ func TestBlockNesting(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	pc.SetLineNumber(&lineNum)
 
-	// Test nested if blocks
+	// Test nested if blocks, with if registered as a plain block
+	env := NewEnvironment()
+	env.RegisterTag("if", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+		return NewBlock(tagName, markup, parseContext), nil
+	})
+	pc = NewParseContext(ParseContextOptions{Environment: env})
+	pc.SetLineNumber(&lineNum)
 	source := "outer{% if inner %}{% endif %}inner{% endif %}"
 	tokenizer := NewTokenizer(source, nil, false, nil, false)
 	block := NewBlock("if", "condition", pc)

@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -272,13 +273,10 @@ func TestCaseTagRecordWhenCondition(t *testing.T) {
 		t.Fatalf("recordWhenCondition() with multiple values error = %v", err)
 	}
 
-	// Test with invalid syntax - empty string doesn't enter loop, so returns nil
-	// The function only errors if it enters the loop and doesn't match
-	// Empty string is valid (no conditions)
+	// A when without a condition is a syntax error, as in Ruby
 	tag3, _ := NewCaseTag("case", "var", pc)
-	err = tag3.recordWhenCondition("")
-	if err != nil {
-		t.Errorf("Empty when condition should not error, got %v", err)
+	if err = tag3.recordWhenCondition(""); err == nil {
+		t.Error("an empty when condition must be a syntax error")
 	}
 }
 
@@ -398,12 +396,15 @@ func TestCaseTagParseBodyForBlockUnknownTag(t *testing.T) {
 	// Test with unknown tag that should be handled
 	tokenizer := pc.NewTokenizer("content {% unknown_tag %}more{% endcase %}", false, nil, false)
 
-	shouldContinue, err := tag.parseBodyForBlock(tokenizer, body)
-	if err != nil {
-		// Unknown tags might cause errors, which is acceptable
-		_ = err
-	}
-	_ = shouldContinue
+	// As Ruby's unknown_tag, an unknown tag is a syntax error
+	defer func() {
+		r := recover()
+		if err, ok := r.(*liquid.SyntaxError); !ok || !strings.Contains(err.Error(), "Unknown tag 'unknown_tag'") {
+			t.Errorf("an unknown tag raised %v, want Unknown tag 'unknown_tag'", r)
+		}
+	}()
+	_, _ = tag.parseBodyForBlock(tokenizer, body)
+	t.Error("an unknown tag did not raise")
 }
 
 func TestCaseTagRenderToOutputBufferWithError(t *testing.T) {

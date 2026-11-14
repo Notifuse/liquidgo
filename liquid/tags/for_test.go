@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -462,10 +463,15 @@ func TestForTagParseBodyWithUnknownTag(t *testing.T) {
 	body := liquid.NewBlockBody()
 	tokenizer := pc.NewTokenizer("content {% unknown_tag %}more{% endfor %}", false, nil, false)
 
-	shouldContinue, err := tag.parseBody(tokenizer, body)
-	// Unknown tags might cause errors, which is acceptable
-	_ = shouldContinue
-	_ = err
+	// As Ruby's unknown_tag, an unknown tag is a syntax error
+	defer func() {
+		r := recover()
+		if err, ok := r.(*liquid.SyntaxError); !ok || !strings.Contains(err.Error(), "Unknown tag 'unknown_tag'") {
+			t.Errorf("an unknown tag raised %v, want Unknown tag 'unknown_tag'", r)
+		}
+	}()
+	_, _ = tag.parseBody(tokenizer, body)
+	t.Error("an unknown tag did not raise")
 }
 
 // Test collectionSegment with invalid offsets map type

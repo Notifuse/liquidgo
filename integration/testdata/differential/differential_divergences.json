@@ -276,15 +276,5 @@
  "tags-11/lax": {"reason":"deliberate: increment and decrement counters live in their own namespace, separate from assign and the render data","actual":"output: 12"},
  "tags-11/strict": {"reason":"deliberate: increment and decrement counters live in their own namespace, separate from assign and the render data","actual":"output: 12"},
  "tags-16/lax": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: ab"},
- "tags-16/strict": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: ab"},
- "unknown-tag-01/lax": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: <a href=\"https://x/?q=<p>footer</p>"},
- "unknown-tag-01/strict": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: <a href=\"https://x/?q=<p>footer</p>"},
- "unknown-tag-02/lax": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: ab"},
- "unknown-tag-02/strict": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: ab"},
- "unknown-tag-03/lax": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: ab"},
- "unknown-tag-03/strict": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: ab"},
- "unknown-tag-04/lax": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: <tr class=\"row1\">\n<td class=\"col1\">a</td><td class=\"col2\">a</td></tr>\n"},
- "unknown-tag-04/strict": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: <tr class=\"row1\">\n<td class=\"col1\">a</td><td class=\"col2\">a</td></tr>\n"},
- "unknown-tag-05/lax": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: a"},
- "unknown-tag-05/strict": {"reason":"bug: an unknown tag inside a block is ignored, or closes the block, without an error","actual":"output: a"}
+ "tags-16/strict": {"reason":"minor: a missing expression after a filter colon, and, or elsif is not a syntax error","actual":"output: ab"}
 }
