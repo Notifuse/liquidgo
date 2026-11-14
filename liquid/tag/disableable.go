@@ -71,3 +71,20 @@ func (d *Disableable) disabledError(
 	// Handle error through context
 	return context.HandleError(err, lineNumber)
 }
+
+// RenderToOutput is RenderToOutputBuffer for a tag that renders to an
+// OutputBuffer.
+func (d *Disableable) RenderToOutput(
+	tagName string,
+	context liquid.TagContext,
+	lineNumber *int,
+	parseContext liquid.ParseContextInterface,
+	output *liquid.OutputBuffer,
+	renderFn func(),
+) {
+	if context.TagDisabled(tagName) {
+		output.WriteString(d.disabledError(tagName, context, lineNumber, parseContext))
+		return
+	}
+	renderFn()
+}

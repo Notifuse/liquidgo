@@ -291,7 +291,7 @@ func TestForTagRenderSegment(t *testing.T) {
 
 	// Test renderSegment
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	expected := "1 2 3 "
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
@@ -633,7 +633,7 @@ func TestForTagRenderSegmentInvalidForStack(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should handle gracefully and create new stack
 	expected := "1 2 3 "
 	if output != expected {
@@ -667,7 +667,7 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should use parent loop
 	expected := "1 2 3 "
 	if output != expected {
@@ -705,7 +705,7 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should break after rendering item 2 and detecting break in if statement
 	// Output: "1 " (item 1 + space) + "2" (item 2, then break before space)
 	expected := "1 2"
@@ -736,7 +736,7 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should skip item 2, output should contain "1" and "3" but not "2"
 	expected := "1 3 "
 	if output != expected {
@@ -766,9 +766,8 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 	initialStack := []*liquid.ForloopDrop{}
 	registers.Set("for_stack", initialStack)
 
-	var output string
 	segment := []interface{}{1, 2}
-	tag.renderSegment(ctx, &output, segment)
+	_ = renderSegmentForTest(tag, ctx, segment)
 
 	// Verify stack was popped back to initial state
 	finalStack := registers.Get("for_stack")
@@ -777,4 +776,11 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 			t.Errorf("Expected empty stack after render, got length %d", len(stack))
 		}
 	}
+}
+
+// renderSegmentForTest renders the loop over segment, as RenderToOutput does.
+func renderSegmentForTest(tag *ForTag, ctx *liquid.Context, segment []interface{}) string {
+	buf := liquid.NewOutputBuffer()
+	tag.renderSegment(ctx, buf, segment)
+	return buf.String()
 }

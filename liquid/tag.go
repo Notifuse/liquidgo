@@ -98,15 +98,19 @@ func (t *Tag) Render(context TagContext) string {
 	return ""
 }
 
-// RenderToOutputBuffer renders the tag to the output buffer.
-// Note: Due to Go's method dispatch with embedded pointers, this method cannot
-// automatically call overridden Render() methods in subtypes. Tags that override
-// Render() must be handled specially in the rendering code.
+// RenderToOutputBuffer renders the tag and appends its output to output.
+// Due to Go's method dispatch with embedded pointers, this method cannot call
+// a Render that a type embedding Tag declares: BlockBody finds it.
 func (t *Tag) RenderToOutputBuffer(context TagContext, output *string) {
 	renderResult := t.Render(context)
 	if renderResult != "" {
 		*output += renderResult
 	}
+}
+
+// RenderToOutput writes the output of the tag to output.
+func (t *Tag) RenderToOutput(context TagContext, output *OutputBuffer) {
+	output.WriteString(t.Render(context))
 }
 
 // Blank returns true if the tag is blank (produces no output).

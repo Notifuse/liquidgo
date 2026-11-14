@@ -199,8 +199,8 @@ func (i *IfTag) pushBlock(tagName, markup string) error {
 	return nil
 }
 
-// RenderToOutputBuffer renders the if tag.
-func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the if tag.
+func (i *IfTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
 
@@ -218,7 +218,7 @@ func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) 
 				return
 			}
 			errorMsg := context.HandleError(err, i.LineNumber())
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 
@@ -229,7 +229,7 @@ func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) 
 		if resultVal != nil && resultVal != false && resultVal != "" {
 			// Render the attachment
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
-				attachment.RenderToOutputBuffer(context, output)
+				attachment.RenderToOutput(context, output)
 			}
 			return
 		}
@@ -462,4 +462,9 @@ func validateExpression(expr string, parseContext liquid.ParseContextInterface) 
 		}
 	}
 	return nil
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
 }

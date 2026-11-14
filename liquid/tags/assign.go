@@ -48,8 +48,8 @@ func (a *AssignTag) From() *liquid.Variable {
 	return a.from
 }
 
-// RenderToOutputBuffer renders the assign tag.
-func (a *AssignTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the assign tag.
+func (a *AssignTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	val := a.from.Render(context)
 
 	// Set in the last scope (outermost scope, matching Ruby's context.scopes.last[@to] = val)
@@ -90,4 +90,9 @@ func assignScoreOf(val interface{}) int {
 // Blank returns true since assign tags are blank.
 func (a *AssignTag) Blank() bool {
 	return true
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (a *AssignTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { a.RenderToOutput(context, o) })
 }

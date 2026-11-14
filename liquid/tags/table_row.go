@@ -103,12 +103,12 @@ func (t *TableRowTag) Attributes() map[string]interface{} {
 	return t.attributes
 }
 
-// RenderToOutputBuffer renders the table_row tag.
-func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the table_row tag.
+func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Evaluate collection
 	collection := context.Evaluate(t.collectionName)
 	if collection == nil {
-		*output += "<tr class=\"row1\">\n</tr>\n"
+		output.WriteString("<tr class=\"row1\">\n</tr>\n")
 		return
 	}
 
@@ -120,7 +120,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 			offsetInt, err := liquid.ToInteger(offsetValue)
 			if err != nil {
 				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				*output += errorMsg
+				output.WriteString(errorMsg)
 				return
 			}
 			from = offsetInt
@@ -135,7 +135,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 			limitInt, err := liquid.ToInteger(limitValue)
 			if err != nil {
 				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				*output += errorMsg
+				output.WriteString(errorMsg)
 				return
 			}
 			toVal := from + limitInt
@@ -155,7 +155,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 			colsInt, err := liquid.ToInteger(colsValue)
 			if err != nil {
 				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				*output += errorMsg
+				output.WriteString(errorMsg)
 				return
 			}
 			cols = colsInt
@@ -167,7 +167,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 	}
 
 	// Start first row
-	*output += "<tr class=\"row1\">\n"
+	output.WriteString("<tr class=\"row1\">\n")
 
 	// Get underlying Context for Stack
 	ctx := context.Context().(*liquid.Context)
@@ -184,13 +184,13 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 			ctx.Set(t.variableName, item)
 
 			// Output <td> tag
-			*output += fmt.Sprintf("<td class=\"col%d\">", tablerowloop.Col())
+			output.WriteString(fmt.Sprintf("<td class=\"col%d\">", tablerowloop.Col()))
 
 			// Render block body (equivalent to Ruby's 'super')
-			t.Block.RenderToOutputBuffer(context, output)
+			t.Block.RenderToOutput(context, output)
 
 			// Close </td>
-			*output += "</td>"
+			output.WriteString("</td>")
 
 			// Handle interrupts
 			if ctx.Interrupt() {
@@ -202,7 +202,7 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 
 			// Check if we need to close row and start new one
 			if tablerowloop.ColLast() && !tablerowloop.Last() {
-				*output += fmt.Sprintf("</tr>\n<tr class=\"row%d\">", tablerowloop.Row()+1)
+				output.WriteString(fmt.Sprintf("</tr>\n<tr class=\"row%d\">", tablerowloop.Row()+1))
 			}
 
 			// Increment loop
@@ -211,5 +211,10 @@ func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *st
 	})
 
 	// Close last row
-	*output += "</tr>\n"
+	output.WriteString("</tr>\n")
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { t.RenderToOutput(context, o) })
 }

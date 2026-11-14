@@ -47,8 +47,12 @@ func (c *CycleTag) Named() bool {
 	return c.isNamed
 }
 
-// RenderToOutputBuffer renders the cycle tag.
-func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the cycle tag.
+func (c *CycleTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	// A group without values ({% cycle a: %}) renders nothing, as in Ruby.
+	if len(c.variables) == 0 {
+		return
+	}
 	ctx := context.Context().(*liquid.Context)
 	registers := ctx.Registers()
 
@@ -108,7 +112,7 @@ func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	} else {
 		valStr = liquid.ToS(val, nil)
 	}
-	*output += valStr
+	output.WriteString(valStr)
 
 	// Increment iteration
 	iter++
@@ -176,4 +180,9 @@ func (c *CycleTag) variablesFromString(markup string, parseContext liquid.ParseC
 	}
 
 	return variables
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
 }

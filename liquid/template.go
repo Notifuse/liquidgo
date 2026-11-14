@@ -302,8 +302,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 	}
 
 	// Use output from options if provided
+	buffer := NewOutputBufferFor(context)
 	if options != nil && options.Output != nil {
-		output = *options.Output
+		buffer.buf = append(buffer.buf, *options.Output...)
 	}
 
 	defer func() {
@@ -382,7 +383,8 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		}
 	}()
 
-	t.root.RenderToOutputBuffer(context, &output)
+	t.root.RenderToOutput(context, buffer)
+	output = buffer.String()
 	return output
 }
 
@@ -403,7 +405,9 @@ func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) strin
 	return t.Render(assigns, options)
 }
 
-// RenderToOutputBuffer renders the template to the output buffer.
+// RenderToOutputBuffer renders the template with context and appends the
+// result to output. As in Ruby, it resets the resource usage of context, and
+// a MemoryError is recorded rather than raised.
 func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 	if t.root == nil {
 		return
@@ -429,11 +433,27 @@ func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 			t.errors = ctx.Errors()
 		}()
 
-		t.root.RenderToOutputBuffer(context, output)
+		buffer := NewOutputBufferFor(context)
+		defer func() { *output += buffer.String() }()
+		t.root.RenderToOutput(context, buffer)
 	} else {
 		// Fallback: use Render method
 		_ = t.Render(context, &RenderOptions{Output: output})
 	}
+}
+
+// RenderToOutput renders the template with context to output, as a partial
+// of the render that context belongs to: the resource usage goes on from
+// where it is, and an error that ends the render, such as a MemoryError, goes
+// on up.
+func (t *Template) RenderToOutput(context TagContext, output *OutputBuffer) {
+	if t.root == nil {
+		return
+	}
+	if ctx, ok := context.(*Context); ok && ctx.TemplateName() == "" {
+		ctx.SetTemplateName(t.name)
+	}
+	t.root.RenderToOutput(context, output)
 }
 
 // buildContext builds a Context from assigns and options.

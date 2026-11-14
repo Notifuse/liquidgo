@@ -26,8 +26,8 @@ func NewCommentTag(tagName, markup string, parseContext liquid.ParseContextInter
 	}, nil
 }
 
-// RenderToOutputBuffer renders the comment tag (does nothing - comments don't render).
-func (c *CommentTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the comment tag (does nothing - comments don't render).
+func (c *CommentTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Comments don't render anything
 	_ = context // no-op to register coverage
 }
@@ -121,4 +121,9 @@ func (c *CommentTag) parseRawTagBody(tokenizer *liquid.Tokenizer) error {
 	}
 
 	return liquid.NewSyntaxError("tag raw was never closed")
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (c *CommentTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
 }

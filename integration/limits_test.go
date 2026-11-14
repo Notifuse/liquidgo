@@ -96,7 +96,6 @@ var knownUnbounded = map[string]string{
 	"empty-loop":         "an iteration with an empty body adds nothing to the render score",
 	"nested-empty-loops": "an iteration with an empty body adds nothing to the render score",
 	"empty-tablerow":     "an iteration with an empty body adds nothing to the render score",
-	"partial-fan-out":    "a partial starts the resource scores again, and keeps the limit error to itself",
 	"replace-chain":      "a filter result in an output is not counted",
 	"replace-amplified":  "a filter result is counted only once it is built",
 	"join-amplified":     "a filter result is counted only once it is built",

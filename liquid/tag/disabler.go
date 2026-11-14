@@ -20,3 +20,14 @@ func (d *Disabler) RenderToOutputBuffer(
 		renderFn()
 	})
 }
+
+// RenderToOutput is RenderToOutputBuffer for a tag that renders to an
+// OutputBuffer.
+func (d *Disabler) RenderToOutput(
+	disabledTags []string,
+	context liquid.TagContext,
+	output *liquid.OutputBuffer,
+	renderFn func(),
+) {
+	context.WithDisabledTags(disabledTags, renderFn)
+}

@@ -35,8 +35,8 @@ func NewUnlessTag(tagName, markup string, parseContext liquid.ParseContextInterf
 	}, nil
 }
 
-// RenderToOutputBuffer renders the unless tag (negated if).
-func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the unless tag (negated if).
+func (u *UnlessTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
 
@@ -47,7 +47,7 @@ func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		if err != nil {
 			// Handle error
 			errorMsg := context.HandleError(err, nil)
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 
@@ -68,9 +68,14 @@ func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		if shouldRender {
 			// Render the attachment
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
-				attachment.RenderToOutputBuffer(context, output)
+				attachment.RenderToOutput(context, output)
 			}
 			return
 		}
 	}
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { u.RenderToOutput(context, o) })
 }

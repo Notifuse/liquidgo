@@ -440,196 +440,66 @@ func (bb *BlockBody) Blank() bool {
 
 // Render renders the block body.
 func (bb *BlockBody) Render(context TagContext) string {
-	output := ""
-	bb.RenderToOutputBuffer(context, &output)
-	return output
+	output := NewOutputBufferFor(context)
+	bb.RenderToOutput(context, output)
+	return output.String()
 }
 
-// RenderToOutputBuffer renders the block body to the output buffer.
+// RenderToOutputBuffer renders the block body and appends it to output.
 func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
-	ctx, hasProfiler := context.(*Context)
-	profiler := hasProfiler && ctx.Profiler() != nil
+	RenderToString(context, output, func(o *OutputBuffer) { bb.RenderToOutput(context, o) })
+}
 
-	// Increment render score (like Ruby: context.resource_limits.increment_render_score(@nodelist.length))
-	if ctx != nil {
-		rl := ctx.ResourceLimits()
-		if rl != nil {
-			rl.IncrementRenderScore(len(bb.nodelist))
-		}
+// RenderToOutput renders the block body to output.
+func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
+	ctx, _ := context.(*Context)
+	profiler := ctx != nil && ctx.Profiler() != nil
+
+	// Like Ruby: context.resource_limits.increment_render_score(@nodelist.length)
+	if rl := limitsOf(context); rl != nil {
+		rl.IncrementRenderScore(len(bb.nodelist))
 	}
 
 	for _, node := range bb.nodelist {
-		// Optimization: Use type switches instead of reflection for better performance
-		switch n := node.(type) {
-		case string:
-			// Raw strings are not profiled
-			*output += n
-
-		case *Variable:
-			// Handle variables
-			if profiler {
-				code := n.Raw()
-				lineNumber := n.LineNumber()
-				ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {
-					n.RenderToOutputBuffer(context, output)
-				})
-			} else {
-				n.RenderToOutputBuffer(context, output)
-			}
-			// Check for interrupts
-			if ctx != nil && ctx.Interrupt() {
-				return
-			}
-
-		default:
-			// For other node types, use interface-based dispatch
-			// This is much faster than reflection and handles all tag types
-			bb.renderNodeOptimized(node, context, output, profiler, ctx)
-
-			// Check for interrupts
-			if ctx != nil && ctx.Interrupt() {
-				return
-			}
+		if s, ok := node.(string); ok {
+			output.WriteString(s)
+			continue
 		}
-
-		// Increment write score after each node
-		if ctx != nil {
-			rl := ctx.ResourceLimits()
-			if rl != nil {
-				rl.IncrementWriteScore(*output)
-			}
+		bb.renderNode(context, ctx, output, node, profiler)
+		if context != nil && context.Interrupt() {
+			return
 		}
 	}
 }
 
-// renderNodeOptimized handles rendering of non-string, non-variable nodes with minimal reflection.
-// Optimization: This reduces reflection usage by 90% compared to the old implementation.
-// Uses method override detection to handle tags that only override Render() vs RenderToOutputBuffer().
-func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, output *string, profiler bool, ctx *Context) {
-	// Get metadata for profiling if needed
-	var code string
-	var lineNumber *int
-
-	if profiler {
-		if r, ok := node.(interface{ Raw() string }); ok {
-			code = r.Raw()
+// renderNode renders one node that is not raw text. An error in the node is
+// handled as Ruby's rescue_render_node does.
+func (bb *BlockBody) renderNode(context TagContext, ctx *Context, output *OutputBuffer, node interface{}, profiler bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			rescueRenderNode(context, output, node, r)
 		}
-		if r, ok := node.(interface{ LineNumber() *int }); ok {
-			lineNumber = r.LineNumber()
-		}
-	}
-
-	// Check if node implements RenderToOutputBuffer
-	type Renderable interface {
-		RenderToOutputBuffer(TagContext, *string)
-	}
-
-	if renderable, ok := node.(Renderable); ok {
-		nodeValue := reflect.ValueOf(node)
-		nodeType := nodeValue.Type()
-
-		// Detect which methods are overridden by checking method counts
-		// Methods with pointer receivers show up on pointer type, value receivers on both
-		hasOwnRender := false
-		hasOwnRTOB := false
-
-		if nodeValue.Kind() == reflect.Ptr {
-			elemType := nodeType.Elem()
-
-			// For pointer receiver methods, check on the pointer type
-			// Compare method counts: if tag has more methods than base, it overrode something
-
-			// Check if this type defines Render (pointer receiver method appears on pointer type)
-			// but NOT on elem type (unless it has value receiver)
-			ptrHasRender := false
-			elemHasRender := false
-
-			if _, ok := nodeType.MethodByName("Render"); ok {
-				ptrHasRender = true
-			}
-			if _, ok := elemType.MethodByName("Render"); ok {
-				elemHasRender = true
-			}
-
-			// Similar check for RenderToOutputBuffer
-			ptrHasRTOB := false
-			elemHasRTOB := false
-
-			if _, ok := nodeType.MethodByName("RenderToOutputBuffer"); ok {
-				ptrHasRTOB = true
-			}
-			if _, ok := elemType.MethodByName("RenderToOutputBuffer"); ok {
-				elemHasRTOB = true
-			}
-
-			// Detect if Render was overridden with pointer receiver
-			// If ptr has it but elem doesn't, AND this isn't *Tag or *Block, it's an override
-			if ptrHasRender && !elemHasRender && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
-				hasOwnRender = true
-			}
-
-			// Detect if RenderToOutputBuffer was overridden with pointer receiver
-			if ptrHasRTOB && !elemHasRTOB && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
-				hasOwnRTOB = true
-			}
-		}
-
-		// Decision logic from plan:
-		// 1. If tag overrode RenderToOutputBuffer → use it (Pattern 2: CustomTag with Disableable)
-		// 2. Else if tag overrode Render and is not blank → call Render via reflection (Pattern 1: TestTag1)
-		// 3. Else → use inherited RenderToOutputBuffer (Pattern 3: standard tags)
-
-		if hasOwnRTOB {
-			// Pattern 2: Tag has its own RenderToOutputBuffer
-			if profiler {
-				ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {
-					renderable.RenderToOutputBuffer(context, output)
-				})
-			} else {
-				renderable.RenderToOutputBuffer(context, output)
-			}
+	}()
+	render := func() {
+		if v, ok := node.(*Variable); ok {
+			v.RenderToOutput(context, output)
 			return
 		}
-
-		// Check if blank
-		isBlank := false
-		if blanker, ok := node.(interface{ Blank() bool }); ok {
-			isBlank = blanker.Blank()
-		}
-
-		if hasOwnRender && !isBlank {
-			// Pattern 1: Tag only overrode Render(), call it via reflection
-			if nodeValue.Kind() == reflect.Ptr {
-				renderMethod := nodeValue.MethodByName("Render")
-				if renderMethod.IsValid() {
-					results := renderMethod.Call([]reflect.Value{reflect.ValueOf(context)})
-					if len(results) > 0 {
-						renderResult := results[0].String()
-						if renderResult != "" {
-							if profiler {
-								ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {
-									*output += renderResult
-								})
-							} else {
-								*output += renderResult
-							}
-							return
-						}
-					}
-				}
-			}
-		}
-
-		// Pattern 3: Use inherited RenderToOutputBuffer
-		if profiler {
-			ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {
-				renderable.RenderToOutputBuffer(context, output)
-			})
-		} else {
-			renderable.RenderToOutputBuffer(context, output)
-		}
+		renderWithPlan(planFor(node), node, context, output)
+	}
+	if !profiler {
+		render()
 		return
 	}
+	var code string
+	var lineNumber *int
+	if r, ok := node.(interface{ Raw() string }); ok {
+		code = r.Raw()
+	}
+	if r, ok := node.(interface{ LineNumber() *int }); ok {
+		lineNumber = r.LineNumber()
+	}
+	ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, render)
 }
 
 // RemoveBlankStrings removes blank strings from the block body.

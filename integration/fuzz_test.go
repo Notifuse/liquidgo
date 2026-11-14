@@ -26,10 +26,6 @@ var (
 
 // The panics known today, each with the shape of input that causes it.
 var (
-	// {% cycle a: %}, {% cycle a:, %}, {%cycle}:%}: a group and no values,
-	// up to the end of the tag.
-	cycleWithoutValues = regexp.MustCompile(`\bcycle\b(?:[^%\n]|%[^}\n])*?%?:[\s,]*(-?%\}|\n|$)`)
-	knownCyclePanic    = "a cycle without values panics"
 	// h[], h[name], h[!], h[0A]: an index, which an undefined name or
 	// markup that lax mode drops makes nil.
 	nilIndex       = regexp.MustCompile(`\[[^\]]*\]`)
@@ -141,9 +137,6 @@ func FuzzRender(f *testing.F) {
 				t.Fatalf("%s: a panic while parsing %q became the error %q", mode, source, first.parseErr)
 			}
 			if err := first.internalError(); err != nil {
-				if cycleWithoutValues.MatchString(source) {
-					t.Skipf("known: %s", knownCyclePanic)
-				}
 				if nilIndex.MatchString(source) {
 					var withoutHashes result
 					requireNoPanicEscapes(t, func() { withoutHashes = renderWith(env, source, fuzzDataWithoutHashes()) })

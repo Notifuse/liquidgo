@@ -17,27 +17,28 @@ func NewIfchangedTag(tagName, markup string, parseContext liquid.ParseContextInt
 	}, nil
 }
 
-// RenderToOutputBuffer renders the ifchanged tag.
-// Only renders if the block output is different from the last rendered output.
-func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	// Render block body to temporary buffer
-	blockOutput := ""
-	i.Block.RenderToOutputBuffer(context, &blockOutput)
+// RenderToOutput renders the ifchanged tag: its body is written, and kept
+// only when it differs from the last body an ifchanged rendered.
+func (i *IfchangedTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	start := output.Len()
+	i.Block.RenderToOutput(context, output)
+	blockOutput := output.Since(start)
 
-	// Get registers
 	registers := context.Registers()
-
-	// Get last output from registers
 	var lastOutput string
 	if lastVal := registers.Get("ifchanged"); lastVal != nil {
 		if str, ok := lastVal.(string); ok {
 			lastOutput = str
 		}
 	}
-
-	// Only output if different from last output
-	if blockOutput != lastOutput {
-		registers.Set("ifchanged", blockOutput)
-		*output += blockOutput
+	if blockOutput == lastOutput {
+		output.Truncate(start)
+		return
 	}
+	registers.Set("ifchanged", blockOutput)
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
 }

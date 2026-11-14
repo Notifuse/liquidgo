@@ -189,7 +189,6 @@ func TestRenderToOutputBufferPreservesLiquidErrorTypes(t *testing.T) {
 		{"UndefinedVariable", func() error { return NewUndefinedVariable("test") }},
 		{"UndefinedDropMethod", func() error { return NewUndefinedDropMethod("test") }},
 		{"DisabledError", func() error { return NewDisabledError("test") }},
-		{"MemoryError", func() error { return NewMemoryError("test") }},
 		{"FileSystemError", func() error { return NewFileSystemError("test") }},
 		{"ZeroDivisionError", func() error { return NewZeroDivisionError("test") }},
 		{"FloatDomainError", func() error { return NewFloatDomainError("test") }},
@@ -221,4 +220,20 @@ func TestRenderToOutputBufferPreservesLiquidErrorTypes(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestRenderToOutputBufferRaisesMemoryError tests that a resource limit in a
+// variable ends the render, as in Ruby, rather than being written in place.
+func TestRenderToOutputBufferRaisesMemoryError(t *testing.T) {
+	ctx := NewContext()
+	ctx.Set("panicker", &testPanicker{err: NewMemoryError("Memory limits exceeded")})
+	lineNum := 1
+	v := NewVariable("panicker.trigger", &mockParseContext{lineNum: &lineNum})
+	defer func() {
+		if _, ok := recover().(*MemoryError); !ok {
+			t.Error("expected the MemoryError to go on up")
+		}
+	}()
+	output := ""
+	v.RenderToOutputBuffer(ctx, &output)
 }

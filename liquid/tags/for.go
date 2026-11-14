@@ -189,8 +189,8 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 	return !foundEndTag, nil
 }
 
-// RenderToOutputBuffer renders the for tag.
-func (f *ForTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the for tag.
+func (f *ForTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	segment := f.collectionSegment(context)
 
 	if len(segment) == 0 {
@@ -286,7 +286,7 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) []interface{} {
 }
 
 // renderSegment renders the segment.
-func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segment []interface{}) {
+func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputBuffer, segment []interface{}) {
 	registers := context.Registers()
 
 	// Get or create for_stack
@@ -333,7 +333,7 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 			ctx.Set(f.variableName, item)
 
 			// Render for block
-			f.forBlock.RenderToOutputBuffer(context, output)
+			f.forBlock.RenderToOutput(context, output)
 
 			// Increment loop
 			loopVars.Increment()
@@ -357,9 +357,9 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 }
 
 // renderElse renders the else block if collection is empty.
-func (f *ForTag) renderElse(context liquid.TagContext, output *string) {
+func (f *ForTag) renderElse(context liquid.TagContext, output *liquid.OutputBuffer) {
 	if f.elseBlock != nil {
-		f.elseBlock.RenderToOutputBuffer(context, output)
+		f.elseBlock.RenderToOutput(context, output)
 	}
 }
 
@@ -381,4 +381,9 @@ func (f *ForTag) Limit() interface{} {
 // From returns the from/offset expression.
 func (f *ForTag) From() interface{} {
 	return f.from
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (f *ForTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { f.RenderToOutput(context, o) })
 }

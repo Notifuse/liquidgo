@@ -75,20 +75,12 @@ var scalingFamilies = []scalingFamily{
 // with the reason. A listed family that becomes linear fails the test until
 // its line is removed.
 var knownSuperLinear = map[string]string{
-	"for-output":       "the output is built by string concatenation",
-	"flat-variables":   "the output is built by string concatenation",
-	"tablerow":         "the output is built by string concatenation",
-	"cycle":            "the output is built by string concatenation",
-	"capture-linear":   "the output is built by string concatenation",
-	"for-nested2":      "the output is built by string concatenation",
-	"slice-loop":       "slice copies the string to runes, and the output is built by string concatenation",
-	"truncate-loop":    "truncate copies the string to runes, and the output is built by string concatenation",
-	"nested-tablerow":  "a block renders its body more than once",
-	"nested-ifchanged": "a block renders its body more than once",
-	"nested-brackets":  "nested lookups are parsed again at each level",
-	"nested-liquid":    "nested liquid tags are parsed again at each level",
-	"raw-body":         "the raw body is built by string concatenation",
-	"unclosed-raw":     "the raw body is built by string concatenation",
+	"slice-loop":      "slice copies the string to runes",
+	"truncate-loop":   "truncate copies the string to runes",
+	"nested-brackets": "nested lookups are parsed again at each level",
+	"nested-liquid":   "nested liquid tags are parsed again at each level",
+	"raw-body":        "the raw body is built by string concatenation",
+	"unclosed-raw":    "the raw body is built by string concatenation",
 }
 
 // TestRenderScalesLinearly parses and renders each family at n and 4n. A

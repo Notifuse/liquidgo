@@ -56,9 +56,9 @@ func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
 	return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
 }
 
-// RenderToOutputBuffer renders the raw tag.
-func (r *RawTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	*output += r.body
+// RenderToOutput renders the raw tag.
+func (r *RawTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	output.WriteString(r.body)
 }
 
 // Nodelist returns the nodelist (just the body as a string).
@@ -69,4 +69,9 @@ func (r *RawTag) Nodelist() []interface{} {
 // Blank returns true if body is empty.
 func (r *RawTag) Blank() bool {
 	return r.body == ""
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (r *RawTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { r.RenderToOutput(context, o) })
 }
