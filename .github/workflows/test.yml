@@ -80,13 +80,14 @@ jobs:
 
   fuzz:
     # Two minutes of fuzzing find no panic and no output that changes from
-    # one parse to the next.
+    # one parse to the next. Go before 1.27 can report the end of -fuzztime
+    # as a failure (golang/go#75804), so this job runs on Go 1.27.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: '1.27.3'
       - name: Fuzz the render
         run: go test ./integration -run '^$' -fuzz FuzzRender -fuzztime 2m
       - name: Keep the input the fuzzer failed on
