@@ -68,7 +68,7 @@ func (a *AssignTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 func assignScoreOf(val interface{}) int {
 	switch v := val.(type) {
 	case string:
-		return len([]byte(v))
+		return len(v)
 	case []interface{}:
 		sum := 1
 		for _, child := range v {

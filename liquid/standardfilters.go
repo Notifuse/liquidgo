@@ -352,8 +352,10 @@ func (sf *StandardFilters) Split(input interface{}, pattern interface{}) []inter
 	patternStr := ToS(pattern, nil)
 	var parts []string
 	if patternStr == " " {
+		sf.countItems(len(strings.Fields(inputStr)))
 		parts = splitASCIIWhitespace(inputStr)
 	} else if inputStr != "" {
+		sf.countItems(splitCount(inputStr, patternStr))
 		parts = strings.Split(inputStr, patternStr)
 		// Ruby drops trailing empty strings
 		for len(parts) > 0 && parts[len(parts)-1] == "" {
@@ -442,6 +444,7 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 		for i, item := range arr {
 			parts[i] = ToS(item, nil)
 		}
+		sf.checkLength(joinedLength(parts, sep))
 		return strings.Join(parts, sep)
 	}
 	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
@@ -453,6 +456,7 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 			for i := 0; i < v.Len(); i++ {
 				parts[i] = ToS(v.Index(i).Interface(), nil)
 			}
+			sf.checkLength(joinedLength(parts, sep))
 			return strings.Join(parts, sep)
 		}
 	}
@@ -501,6 +505,7 @@ func (sf *StandardFilters) Replace(input interface{}, str interface{}, replaceme
 	if replacement != nil {
 		replaceStr = ToS(replacement, nil)
 	}
+	sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, strings.Count(inputStr, searchStr)))
 	return strings.ReplaceAll(inputStr, searchStr, replaceStr)
 }
 
@@ -512,6 +517,9 @@ func (sf *StandardFilters) ReplaceFirst(input interface{}, str interface{}, repl
 	replaceStr := ""
 	if replacement != nil {
 		replaceStr = ToS(replacement, nil)
+	}
+	if strings.Contains(inputStr, searchStr) {
+		sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, 1))
 	}
 	return strings.Replace(inputStr, searchStr, replaceStr, 1)
 }
@@ -528,6 +536,7 @@ func (sf *StandardFilters) ReplaceLast(input interface{}, str interface{}, repla
 		return inputStr
 	}
 
+	sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, 1))
 	return inputStr[:startIndex] + replaceStr + inputStr[startIndex+len(searchStr):]
 }
 
@@ -554,6 +563,7 @@ func (sf *StandardFilters) RemoveLast(input interface{}, str interface{}) string
 func (sf *StandardFilters) Append(input interface{}, str interface{}) string {
 	inputStr := ToS(input, nil)
 	appendStr := ToS(str, nil)
+	sf.checkLength(len(inputStr) + len(appendStr))
 	return inputStr + appendStr
 }
 
@@ -562,6 +572,7 @@ func (sf *StandardFilters) Append(input interface{}, str interface{}) string {
 func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 	inputStr := ToS(input, nil)
 	prependStr := ToS(str, nil)
+	sf.checkLength(len(inputStr) + len(prependStr))
 	return prependStr + inputStr
 }
 
@@ -1417,6 +1428,7 @@ func (sf *StandardFilters) Concat(input interface{}, array interface{}) (interfa
 	}
 
 	iter := NewInputIterator(input, sf.context)
+	sf.countItems(len(iter.input) + reflectLen(array))
 	return iter.Concat(array), nil
 }
 

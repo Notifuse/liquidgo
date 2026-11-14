@@ -9,12 +9,8 @@ import (
 	"testing"
 )
 
-// Inputs the render cannot bound yet are skipped until the library bounds
-// them itself: many filters that multiply the size of a string.
-var (
-	amplifyingFilter = regexp.MustCompile(`\b(replace|replace_first|replace_last|join|split|concat|append|prepend)\b`)
-	timeDependent    = regexp.MustCompile(`\b(now|today)\b`)
-)
+// timeDependent finds the inputs whose output changes with the time.
+var timeDependent = regexp.MustCompile(`\b(now|today)\b`)
 
 // The panics known today, each with the shape of input that causes it.
 var (
@@ -44,16 +40,6 @@ func canonicalHashes(s string) string {
 // the pairs of each rendered hash are sorted.
 func sameUpToHashOrder(a, b string) bool {
 	return a != b && strings.Contains(a, "=>") && canonicalHashes(a) == canonicalHashes(b)
-}
-
-// knownUnboundedInput returns why the library cannot yet bound the render of
-// source, or "".
-func knownUnboundedInput(source string) string {
-	switch {
-	case len(amplifyingFilter.FindAllString(source, -1)) > 3:
-		return "a filter result is counted only once it is built"
-	}
-	return ""
 }
 
 // fuzzData is the data every fuzzed template is rendered with. Its maps have
@@ -110,9 +96,6 @@ func FuzzRender(f *testing.F) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, source string) {
-		if reason := knownUnboundedInput(source); reason != "" {
-			t.Skip(reason)
-		}
 		for _, mode := range []string{"lax", "strict"} {
 			env := newEnv(mode, allLimits)
 			var first, second result

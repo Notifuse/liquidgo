@@ -89,12 +89,8 @@ var boundedCases = []boundedCase{
 // knownUnbounded lists the cases known to fail, with the reason. A listed
 // case that passes fails the test until its line is removed.
 var knownUnbounded = map[string]string{
-	"replace-chain":     "a filter result in an output is not counted",
-	"replace-amplified": "a filter result is counted only once it is built",
-	"join-amplified":    "a filter result is counted only once it is built",
-	"split-large":       "a filter result is counted only once it is built",
-	"brackets-101":      "expressions have no nesting limit",
-	"liquid-101":        "liquid tags have no nesting limit",
+	"brackets-101": "expressions have no nesting limit",
+	"liquid-101":   "liquid tags have no nesting limit",
 }
 
 // TestHostileTemplatesAreBounded renders each case and checks its result,
