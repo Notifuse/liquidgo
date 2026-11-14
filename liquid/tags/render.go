@@ -88,8 +88,8 @@ func (r *RenderTag) Parse(tokenizer *liquid.Tokenizer) error {
 	return nil
 }
 
-// RenderToOutputBuffer renders the render tag.
-func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the render tag.
+func (r *RenderTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Evaluate template name
 	template := context.Evaluate(r.templateNameExpr)
 
@@ -97,7 +97,7 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 	ctx, ok := context.(*liquid.Context)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewInternalError("context is not a liquid.Context"), r.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 	templateNameStr, ok := template.(string)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewArgumentError("render tag requires a string template name"), r.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -117,13 +117,13 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 	partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, r.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 	partial, ok = partialInterface.(*liquid.Template)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), r.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 	templateName = partial.Name()
@@ -160,7 +160,7 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		}
 
 		// Render partial
-		partial.RenderToOutputBuffer(innerContext, output)
+		partial.RenderToOutput(innerContext, output)
 
 		// Increment forloop if provided
 		if forloop != nil {
@@ -238,4 +238,9 @@ func (r *RenderTag) Attributes() map[string]interface{} {
 // IsForLoop returns true if this is a for loop render.
 func (r *RenderTag) IsForLoop() bool {
 	return r.isForLoop
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { r.RenderToOutput(context, o) })
 }

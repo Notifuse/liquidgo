@@ -164,9 +164,15 @@ func buildDropMethodCache(t reflect.Type) *cachedDropMethods {
 		methods: make(map[string]int, t.NumMethod()),
 	}
 
+	// Only a method that takes no argument can be called by a lookup: one
+	// that needs arguments would panic in reflect.Call. The receiver is
+	// the first input of a method of a type.
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
-		cache.methods[method.Name] = i
+		in := method.Type.NumIn()
+		if in == 1 || in == 2 && method.Type.IsVariadic() {
+			cache.methods[method.Name] = i
+		}
 	}
 
 	return cache

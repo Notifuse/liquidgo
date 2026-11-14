@@ -112,25 +112,27 @@ func (d *Document) UnknownTag(tag, markup string, tokenizer *Tokenizer) error {
 	}
 }
 
-// RenderToOutputBuffer renders the document to an output buffer.
+// RenderToOutputBuffer renders the document and appends it to output.
 func (d *Document) RenderToOutputBuffer(context TagContext, output *string) {
-	// Check if profiling is enabled
+	RenderToString(context, output, func(o *OutputBuffer) { d.RenderToOutput(context, o) })
+}
+
+// RenderToOutput renders the document to output.
+func (d *Document) RenderToOutput(context TagContext, output *OutputBuffer) {
 	if ctx, ok := context.(*Context); ok && ctx.Profiler() != nil {
-		templateName := ctx.TemplateName()
-		ctx.Profiler().Profile(templateName, func() {
-			d.body.RenderToOutputBuffer(context, output)
+		ctx.Profiler().Profile(ctx.TemplateName(), func() {
+			d.body.RenderToOutput(context, output)
 		})
 		return
 	}
-
-	d.body.RenderToOutputBuffer(context, output)
+	d.body.RenderToOutput(context, output)
 }
 
 // Render renders the document and returns the result as a string.
 func (d *Document) Render(context TagContext) string {
-	var output string
-	d.RenderToOutputBuffer(context, &output)
-	return output
+	output := NewOutputBufferFor(context)
+	d.RenderToOutput(context, output)
+	return output.String()
 }
 
 func (d *Document) parseBody(tokenizer *Tokenizer, parseContext ParseContextInterface) bool {

@@ -182,7 +182,7 @@ func TestShopifyDifferential(t *testing.T) {
 				if sameResult(entry.Actual32, entry.Actual) {
 					entry.Actual32 = ""
 				}
-			} else {
+			} else if !sameResult(entry.Actual, actual) {
 				entry.Actual = actual
 			}
 		} else {

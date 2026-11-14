@@ -60,35 +60,21 @@ func (c *CaptureTag) To() string {
 	return c.to
 }
 
-// RenderToOutputBuffer renders the capture tag.
-// Following Ruby implementation: always uses resource_limits.with_capture,
-// renders the block body, and assigns to context.scopes.last
-func (c *CaptureTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the capture tag: its body is written to a buffer of
+// its own, whose writes count in the assign score, and assigned in the outer
+// scope, as Ruby's context.scopes.last[@to] = capture_output.
+func (c *CaptureTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
-	rl := context.ResourceLimits()
-
-	// Use WithCapture to track resource limits during capture (like Ruby: context.resource_limits.with_capture)
-	// Ruby always calls with_capture, so we do too (resource_limits should always exist)
-	if rl != nil {
-		rl.WithCapture(func() {
-			captureOutput := c.Render(context)
-			// Increment write score with captured output (like Ruby: increment_write_score is called in block_body)
-			// This will increment assign_score by the byte difference since lastCaptureLength is set
-			rl.IncrementWriteScore(captureOutput)
-			// Set in the last scope (outermost scope, matching Ruby's context.scopes.last[@to] = capture_output)
-			ctx.SetLast(c.to, captureOutput)
-		})
-	} else {
-		// Fallback if resource_limits is nil (shouldn't happen in normal usage)
-		captureOutput := c.Render(context)
-		ctx.SetLast(c.to, captureOutput)
-	}
-
-	// Ruby returns output unchanged (doesn't modify it)
-	// In Go, we don't modify output, so this is correct
+	captured := liquid.RenderCaptured(context, func(o *liquid.OutputBuffer) { c.Block.RenderToOutput(context, o) })
+	ctx.SetLast(c.to, captured)
 }
 
 // Blank returns true since capture tags are blank (they don't output).
 func (c *CaptureTag) Blank() bool {
 	return true
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (c *CaptureTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
 }

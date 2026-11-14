@@ -424,7 +424,7 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	v := NewVariable("test", pc)
 	ctx.Set("test", "value")
-	bb.renderNodeOptimized(v, ctx, &output, false, ctx)
+	renderNodeForTest(bb, v, ctx, &output, false, ctx)
 	if output != "value" {
 		t.Errorf("Expected 'value', got %q", output)
 	}
@@ -435,7 +435,7 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	ctx2.SetProfiler(NewProfiler())
 	v2 := NewVariable("test2", pc)
 	ctx2.Set("test2", "value2")
-	bb.renderNodeOptimized(v2, ctx2, &output2, true, ctx2)
+	renderNodeForTest(bb, v2, ctx2, &output2, true, ctx2)
 	if output2 != "value2" {
 		t.Errorf("Expected 'value2', got %q", output2)
 	}
@@ -445,7 +445,7 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	tag := NewTag("test", "", pc3)
 	output3 := ""
 	ctx3 := NewContext()
-	bb.renderNodeOptimized(tag, ctx3, &output3, false, ctx3)
+	renderNodeForTest(bb, tag, ctx3, &output3, false, ctx3)
 	// Tag.Render returns empty, so output should remain empty
 	if output3 != "" {
 		t.Logf("Tag render output: %q", output3)
@@ -459,14 +459,14 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	// Add Render method via embedding - this tests the reflection path
 	output4 := ""
 	ctx4 := NewContext()
-	bb.renderNodeOptimized(custom, ctx4, &output4, false, ctx4)
+	renderNodeForTest(bb, custom, ctx4, &output4, false, ctx4)
 	_ = output4
 
 	// Test with blank tag
 	blankTag := NewTag("blank", "", pc3)
 	output5 := ""
 	ctx5 := NewContext()
-	bb.renderNodeOptimized(blankTag, ctx5, &output5, false, ctx5)
+	renderNodeForTest(bb, blankTag, ctx5, &output5, false, ctx5)
 	_ = output5
 }
 
@@ -732,4 +732,11 @@ func TestBlockBodyParseForDocumentWithTrimWhitespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
+}
+
+// renderNodeForTest renders node as BlockBody does, and appends its output.
+func renderNodeForTest(bb *BlockBody, node interface{}, context TagContext, output *string, profiler bool, ctx *Context) {
+	buf := NewOutputBuffer()
+	bb.renderNode(context, ctx, buf, node, profiler)
+	*output += buf.String()
 }

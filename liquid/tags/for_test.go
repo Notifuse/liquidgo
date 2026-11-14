@@ -238,16 +238,16 @@ func TestForTagCollectionSegment(t *testing.T) {
 
 	// Test collectionSegment with simple array
 	segment := tag.collectionSegment(ctx)
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 
 	// Test with nil collection
 	ctx2 := liquid.NewContext()
 	ctx2.Set("array", nil)
 	segment2 := tag.collectionSegment(ctx2)
-	if len(segment2) != 0 {
-		t.Errorf("Expected empty segment for nil collection, got %d", len(segment2))
+	if segment2.Len() != 0 {
+		t.Errorf("Expected empty segment for nil collection, got %d", segment2.Len())
 	}
 
 	// Test with offset:continue
@@ -266,8 +266,8 @@ func TestForTagCollectionSegment(t *testing.T) {
 	ctx4 := liquid.NewContext()
 	ctx4.Set("array", []interface{}{1, 2, 3, 4, 5})
 	segment4 := tag4.collectionSegment(ctx4)
-	if len(segment4) != 2 {
-		t.Errorf("Expected segment length 2 with limit, got %d", len(segment4))
+	if segment4.Len() != 2 {
+		t.Errorf("Expected segment length 2 with limit, got %d", segment4.Len())
 	}
 }
 
@@ -291,7 +291,7 @@ func TestForTagRenderSegment(t *testing.T) {
 
 	// Test renderSegment
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	expected := "1 2 3 "
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
@@ -485,8 +485,8 @@ func TestForTagCollectionSegmentInvalidOffsetsMap(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should handle gracefully and create new map
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -508,8 +508,8 @@ func TestForTagCollectionSegmentContinueWithNonInt(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should start from 0 when offset is not an int
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -528,8 +528,8 @@ func TestForTagCollectionSegmentWithNilFromValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -547,8 +547,8 @@ func TestForTagCollectionSegmentWithInvalidFromValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0 when ToInteger fails
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -566,8 +566,8 @@ func TestForTagCollectionSegmentWithRange(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should convert range to array [1, 2, 3, 4, 5]
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -585,8 +585,8 @@ func TestForTagCollectionSegmentWithNilLimitValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when limit is nil
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -604,8 +604,8 @@ func TestForTagCollectionSegmentWithInvalidLimitValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when ToInteger fails
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -633,7 +633,7 @@ func TestForTagRenderSegmentInvalidForStack(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should handle gracefully and create new stack
 	expected := "1 2 3 "
 	if output != expected {
@@ -667,7 +667,7 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should use parent loop
 	expected := "1 2 3 "
 	if output != expected {
@@ -705,7 +705,7 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should break after rendering item 2 and detecting break in if statement
 	// Output: "1 " (item 1 + space) + "2" (item 2, then break before space)
 	expected := "1 2"
@@ -736,7 +736,7 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 
 	var output string
 	segment := []interface{}{1, 2, 3}
-	tag.renderSegment(ctx, &output, segment)
+	output = renderSegmentForTest(tag, ctx, segment)
 	// Should skip item 2, output should contain "1" and "3" but not "2"
 	expected := "1 3 "
 	if output != expected {
@@ -766,9 +766,8 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 	initialStack := []*liquid.ForloopDrop{}
 	registers.Set("for_stack", initialStack)
 
-	var output string
 	segment := []interface{}{1, 2}
-	tag.renderSegment(ctx, &output, segment)
+	_ = renderSegmentForTest(tag, ctx, segment)
 
 	// Verify stack was popped back to initial state
 	finalStack := registers.Get("for_stack")
@@ -777,4 +776,11 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 			t.Errorf("Expected empty stack after render, got length %d", len(stack))
 		}
 	}
+}
+
+// renderSegmentForTest renders the loop over segment, as RenderToOutput does.
+func renderSegmentForTest(tag *ForTag, ctx *liquid.Context, items []interface{}) string {
+	buf := liquid.NewOutputBuffer()
+	tag.renderSegment(ctx, buf, segment{items: items, length: len(items)})
+	return buf.String()
 }

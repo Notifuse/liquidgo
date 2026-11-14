@@ -1044,12 +1044,12 @@ func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
 			StrictFilters: true,
 		})
 
-		// Should contain error message about undefined filter
-		if !strings.Contains(output, "undefined filter") {
-			t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+		// As in Ruby, an undefined filter is recorded and writes nothing.
+		if output != "" {
+			t.Errorf("Expected an empty output, got %q", output)
 		}
-		if !strings.Contains(output, "unknown_filter") {
-			t.Errorf("Expected output to contain 'unknown_filter', got %q", output)
+		if errs := tmpl.Errors(); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter unknown_filter") {
+			t.Errorf("Expected the error 'undefined filter unknown_filter', got %v", errs)
 		}
 	})
 
@@ -1122,12 +1122,12 @@ Line 4`
 		StrictFilters: true,
 	})
 
-	// Should contain line number in error
-	if !strings.Contains(output, "line 3") {
-		t.Errorf("Expected output to contain 'line 3', got %q", output)
+	// As in Ruby, the error is recorded with its line, and writes nothing.
+	if output != "Line 1\nLine 2\n\nLine 4" {
+		t.Errorf("Expected the lines without the output, got %q", output)
 	}
-	if !strings.Contains(output, "undefined filter") {
-		t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+	if errs := tmpl.Errors(); len(errs) != 1 || errs[0].Error() != "Liquid error (line 3): undefined filter bad_filter" {
+		t.Errorf("Expected the error 'Liquid error (line 3): undefined filter bad_filter', got %v", errs)
 	}
 }
 
@@ -1149,9 +1149,12 @@ func TestErrorHandling_StrictFiltersWithFilterChain(t *testing.T) {
 			StrictFilters: true,
 		})
 
-		// Should contain error about undefined filter
-		if !strings.Contains(output, "undefined filter") {
-			t.Errorf("Expected output to contain 'undefined filter', got %q", output)
+		// As in Ruby, an undefined filter is recorded and writes nothing.
+		if output != "" {
+			t.Errorf("Expected an empty output, got %q", output)
+		}
+		if errs := tmpl.Errors(); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter") {
+			t.Errorf("Expected the error 'undefined filter', got %v", errs)
 		}
 	})
 

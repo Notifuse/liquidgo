@@ -36,8 +36,8 @@ func NewDocTag(tagName, markup string, parseContext liquid.ParseContextInterface
 	}, nil
 }
 
-// RenderToOutputBuffer renders the doc tag (does nothing - docs don't render).
-func (d *DocTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the doc tag (does nothing - docs don't render).
+func (d *DocTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Docs don't render anything
 	_ = context // no-op to register coverage
 }
@@ -89,4 +89,9 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 // RaiseTagNeverClosed raises an error for a tag that was never closed.
 func (d *DocTag) RaiseTagNeverClosed() error {
 	return liquid.NewSyntaxError("'" + d.BlockName() + "' tag was never closed")
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (d *DocTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { d.RenderToOutput(context, o) })
 }

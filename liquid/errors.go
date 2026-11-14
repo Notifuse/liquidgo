@@ -370,3 +370,28 @@ func (e *TemplateEncodingError) Error() string {
 }
 
 func (e *TemplateEncodingError) GetError() *Error { return e.Err }
+
+// CanceledError ends a render whose context.Context is done. It wraps the
+// error of that context, errors.Is(err, context.DeadlineExceeded), and its
+// cause when one was given, as context.WithCancelCause does.
+type CanceledError struct {
+	Err   *Error
+	cause error
+}
+
+// NewCanceledError creates a CanceledError for the error of a context.
+func NewCanceledError(cause error) *CanceledError {
+	message := "render stopped"
+	if cause != nil {
+		message += ": " + cause.Error()
+	}
+	return &CanceledError{Err: &Error{Message: message}, cause: cause}
+}
+
+func (e *CanceledError) Error() string { return e.Err.Error() }
+
+// GetError returns the underlying Error.
+func (e *CanceledError) GetError() *Error { return e.Err }
+
+// Unwrap returns the error of the context.
+func (e *CanceledError) Unwrap() error { return e.cause }

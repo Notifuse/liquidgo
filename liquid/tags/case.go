@@ -259,8 +259,8 @@ func (c *CaseTag) recordElseCondition(markup string) error {
 	return nil
 }
 
-// RenderToOutputBuffer renders the case tag.
-func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the case tag.
+func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
 	executeElseBlock := true
 
@@ -268,7 +268,7 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 		if block.IsElse() {
 			if executeElseBlock {
 				if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
-					attachment.RenderToOutputBuffer(context, output)
+					attachment.RenderToOutput(context, output)
 				}
 			}
 			continue
@@ -277,14 +277,14 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 		result, err := block.Evaluate(ctx)
 		if err != nil {
 			errorMsg := context.HandleError(err, nil)
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 
 		resultVal := liquid.ToLiquidValue(result)
 		if resultVal != nil && resultVal != false && resultVal != "" {
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
-				attachment.RenderToOutputBuffer(context, output)
+				attachment.RenderToOutput(context, output)
 			}
 			return
 		}
@@ -294,4 +294,9 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 // Blank returns true if all blocks are blank.
 func (c *CaseTag) Blank() bool {
 	return c.Block.Blank()
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
 }

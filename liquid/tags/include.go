@@ -83,8 +83,8 @@ func (i *IncludeTag) Parse(tokenizer *liquid.Tokenizer) error {
 	return nil
 }
 
-// RenderToOutputBuffer renders the include tag.
-func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the include tag.
+func (i *IncludeTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	// Evaluate template name
 	templateName := context.Evaluate(i.templateNameExpr)
 	templateNameStr, ok := templateName.(string)
@@ -100,7 +100,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 			msg = "include tag requires a string template name"
 		}
 		errorMsg := context.HandleError(liquid.NewArgumentError(msg), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	partial, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	partialTemplate, ok := partial.(*liquid.Template)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	ctx, ok := context.(*liquid.Context)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewInternalError("context is not a liquid.Context"), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -158,6 +158,12 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	}
 	ctx.SetTemplateName(partialName)
 	ctx.SetPartial(true)
+	// Restore the state when the partial ends, even on an error, as Ruby's
+	// ensure.
+	defer func() {
+		ctx.SetTemplateName(oldTemplateName)
+		ctx.SetPartial(oldPartial)
+	}()
 
 	// Use stack to create isolated scope
 	ctx.Stack(make(map[string]interface{}), func() {
@@ -172,7 +178,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 			// Array: render once for each item
 			for _, varItem := range arr {
 				ctx.Set(contextVariableName, varItem)
-				partialTemplate.RenderToOutputBuffer(ctx, output)
+				partialTemplate.RenderToOutput(ctx, output)
 			}
 		} else if variable != nil {
 			// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
@@ -181,23 +187,19 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 				for i := 0; i < v.Len(); i++ {
 					ctx.Set(contextVariableName, v.Index(i).Interface())
-					partialTemplate.RenderToOutputBuffer(ctx, output)
+					partialTemplate.RenderToOutput(ctx, output)
 				}
 			} else {
 				// Single value
 				ctx.Set(contextVariableName, variable)
-				partialTemplate.RenderToOutputBuffer(ctx, output)
+				partialTemplate.RenderToOutput(ctx, output)
 			}
 		} else {
 			// Single value
 			ctx.Set(contextVariableName, variable)
-			partialTemplate.RenderToOutputBuffer(ctx, output)
+			partialTemplate.RenderToOutput(ctx, output)
 		}
 	})
-
-	// Restore old state
-	ctx.SetTemplateName(oldTemplateName)
-	ctx.SetPartial(oldPartial)
 }
 
 // TemplateNameExpr returns the template name expression.
@@ -218,4 +220,9 @@ func (i *IncludeTag) AliasName() string {
 // Attributes returns the attributes map.
 func (i *IncludeTag) Attributes() map[string]interface{} {
 	return i.attributes
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
 }

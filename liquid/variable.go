@@ -393,43 +393,23 @@ func (v *Variable) Render(context TagContext) interface{} {
 	return value
 }
 
-// RenderToOutputBuffer renders the variable to the output buffer.
+// RenderToOutputBuffer renders the variable and appends it to output. An
+// error is handled as in a block body: its message takes the place of the
+// variable, and a resource limit goes on up.
 func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
-	// Catch panics from drop method invocations and convert to error messages
-	defer func() {
-		if r := recover(); r != nil {
-			// Get the context to handle errors
-			ctxInterface := context.Context()
-			ctx, ok := ctxInterface.(*Context)
-			if !ok {
-				// If we can't get the context, just output a generic error
-				*output += "Liquid error: internal"
-				return
+	RenderToString(context, output, func(o *OutputBuffer) {
+		defer func() {
+			if r := recover(); r != nil {
+				rescueRenderNode(context, o, v, r)
 			}
+		}()
+		v.RenderToOutput(context, o)
+	})
+}
 
-			// Convert panic to error
-			var err error
-			switch e := r.(type) {
-			case LiquidError:
-				err = e
-			case *Error:
-				err = e
-			case error:
-				// Non-Liquid errors should be wrapped as InternalError
-				err = NewInternalError("internal")
-			default:
-				// Non-error panics should be wrapped as InternalError
-				err = NewInternalError("internal")
-			}
-
-			// Handle the error and append the error message to output
-			errorMsg := ctx.HandleError(err, v.lineNumber)
-			*output += errorMsg
-		}
-	}()
-
-	val := v.Render(context)
-	*output += ToS(val, nil)
+// RenderToOutput writes the value of the variable to output.
+func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {
+	output.WriteString(ToS(v.Render(context), nil))
 }
 
 // parseContextWrapper is a minimal wrapper for ParseContextInterface when it doesn't implement ErrorMode/AddWarning.

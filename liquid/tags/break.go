@@ -16,8 +16,13 @@ func NewBreakTag(tagName, markup string, parseContext liquid.ParseContextInterfa
 	}
 }
 
-// RenderToOutputBuffer renders the break tag by pushing a break interrupt.
-func (b *BreakTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the break tag by pushing a break interrupt.
+func (b *BreakTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	interrupt := liquid.NewBreakInterrupt()
 	context.PushInterrupt(interrupt)
+}
+
+// RenderToOutputBuffer renders the tag and appends its output to output.
+func (b *BreakTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { b.RenderToOutput(context, o) })
 }

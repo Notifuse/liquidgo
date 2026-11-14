@@ -6,6 +6,7 @@ type ResourceLimits struct {
 	renderScoreLimit  *int
 	assignScoreLimit  *int
 	lastCaptureLength *int
+	captures          int // the depth of capture tags being rendered
 	renderScore       int
 	assignScore       int
 	reachedLimit      bool
@@ -55,6 +56,11 @@ func (rl *ResourceLimits) IncrementWriteScore(output string) {
 	} else if rl.renderLengthLimit != nil && len([]byte(output)) > *rl.renderLengthLimit {
 		rl.raiseLimitsReached()
 	}
+}
+
+// inCapture reports whether the writes of the render go to a capture.
+func (rl *ResourceLimits) inCapture() bool {
+	return rl.lastCaptureLength != nil || rl.captures > 0
 }
 
 func (rl *ResourceLimits) raiseLimitsReached() {

@@ -41,16 +41,15 @@ func doubled(times int, body string) string {
 	return fmt.Sprintf("{%% assign s = 'x' %%}{%% for i in (1..%d) %%}%s{%% endfor %%}{{ s.size }}", times, body)
 }
 
-// The ranges are 2,000,000 long, which a materialized range allocates in
-// about 200 MB: enough to fail the budget, and small enough not to end the
-// test binary while the case is known.
+// The cases of a fix still to come are sized to fail fast without ending the
+// test binary.
 var boundedCases = []boundedCase{
 	// Ranges are iterated, not built. As in Shopify, reversed applies to
 	// the items that offset and limit keep.
-	{name: "range-limit", source: "{% for i in (1..2000000) limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
-	{name: "range-reversed", source: "{% for i in (1..2000000) reversed limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
-	{name: "range-offset", source: "{% for i in (1..2000000) offset: 1999999 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "2000000"},
-	{name: "tablerow-range-limit", source: "{% tablerow i in (1..2000000) limit: 1 %}{{ i }}{% endtablerow %}", budget: 1 << 20,
+	{name: "range-limit", source: "{% for i in (1..2000000000) limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
+	{name: "range-reversed", source: "{% for i in (1..2000000000) reversed limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
+	{name: "range-offset", source: "{% for i in (1..2000000000) offset: 1999999999 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "2000000000"},
+	{name: "tablerow-range-limit", source: "{% tablerow i in (1..2000000000) limit: 1 %}{{ i }}{% endtablerow %}", budget: 1 << 20,
 		wantOutput: "<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n"},
 	// Every iteration counts in the render score, even with an empty body.
 	// The ranges and the output are small, so that the render score is the
@@ -83,27 +82,18 @@ var boundedCases = []boundedCase{
 	// deep; the same depth applies here to lookups and liquid tags, which
 	// Shopify does not limit.
 	{name: "brackets-100", source: "{{ " + rep("a[", 100) + "0" + rep("]", 100) + " }}", budget: 50 << 20, wantOutput: ""},
+	{name: "quoted-brackets", source: "{{ h[\"" + rep("[", 112) + "\"] }}|ok", budget: 50 << 20, wantOutput: "|ok"},
 	{name: "brackets-101", source: "{{ " + rep("a[", 101) + "0" + rep("]", 101) + " }}", budget: 50 << 20, wantError: tooDeep},
-	{name: "liquid-101", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
+	// A liquid tag nested in another counts as a level, as a block does;
+	// the outermost one does not, so that it holds as many blocks.
+	{name: "nested-liquid-100", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantOutput: "1"},
+	{name: "nested-liquid-101", source: "{% liquid " + rep("liquid ", 101) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
+	{name: "liquid-if-100", source: "{% liquid\n" + rep("if true\n", 100) + "echo 1\n" + rep("endif\n", 100) + "%}", budget: 50 << 20, wantOutput: "1"},
 }
 
 // knownUnbounded lists the cases known to fail, with the reason. A listed
 // case that passes fails the test until its line is removed.
-var knownUnbounded = map[string]string{
-	"range-limit":        "a range is built as an array before the loop",
-	"range-reversed":     "a range is built as an array before the loop",
-	"range-offset":       "a range is built as an array before the loop",
-	"empty-loop":         "an iteration with an empty body adds nothing to the render score",
-	"nested-empty-loops": "an iteration with an empty body adds nothing to the render score",
-	"empty-tablerow":     "an iteration with an empty body adds nothing to the render score",
-	"partial-fan-out":    "a partial starts the resource scores again, and keeps the limit error to itself",
-	"replace-chain":      "a filter result in an output is not counted",
-	"replace-amplified":  "a filter result is counted only once it is built",
-	"join-amplified":     "a filter result is counted only once it is built",
-	"split-large":        "a filter result is counted only once it is built",
-	"brackets-101":       "expressions have no nesting limit",
-	"liquid-101":         "liquid tags have no nesting limit",
-}
+var knownUnbounded = map[string]string{}
 
 // TestHostileTemplatesAreBounded renders each case and checks its result,
 // and that the render allocated less than its budget.
@@ -121,9 +111,15 @@ func TestHostileTemplatesAreBounded(t *testing.T) {
 			alloc := allocated(func() {
 				requireNoPanicEscapes(t, func() { r = renderWith(env, c.source, hostileData()) })
 			})
+			// The race detector makes sync.Pool drop items, so that regexp,
+			// which pools its matchers, allocates at each match.
+			budget := c.budget
+			if raceEnabled {
+				budget *= 10
+			}
 			var problems []string
-			if alloc > c.budget {
-				problems = append(problems, fmt.Sprintf("allocated %s, over the budget of %s", mb(alloc), mb(c.budget)))
+			if alloc > budget {
+				problems = append(problems, fmt.Sprintf("allocated %s, over the budget of %s", mb(alloc), mb(budget)))
 			}
 			if c.wantError != "" && !r.hasError(c.wantError) && !strings.Contains(r.output, c.wantError) {
 				problems = append(problems, fmt.Sprintf("got output %q and errors %v, want the error %q", clip(r.output), r.errors, c.wantError))
@@ -165,9 +161,9 @@ var cacheRun int
 
 // TestParseCachesAreBounded parses and renders templates with distinct
 // variable names, and evaluates as many expressions with Context.Get, and
-// checks that the heap does not keep them once they are unreachable. The
-// template lookups have no brackets, which the variable lookup cache leaves
-// out; the expressions have one, so that only the expression cache keeps them.
+// checks that the heap does not keep them once they are unreachable: no
+// cache outlives a parse. The template lookups have no brackets and the
+// expressions have one, the two shapes that global caches kept.
 func TestParseCachesAreBounded(t *testing.T) {
 	cacheRun++
 	env := newEnv("", limits{})
@@ -179,10 +175,10 @@ func TestParseCachesAreBounded(t *testing.T) {
 		return int64(m.HeapAlloc)
 	}
 	for _, c := range []struct {
-		name, known string
-		fill        func(i int)
+		name string
+		fill func(i int)
 	}{
-		{"variable lookups", "the variable lookup cache is global and never evicted", func(i int) {
+		{"variable lookups", func(i int) {
 			// About 100 KB of distinct lookups.
 			var b strings.Builder
 			for j := range 4000 {
@@ -190,7 +186,7 @@ func TestParseCachesAreBounded(t *testing.T) {
 			}
 			requireNoPanicEscapes(t, func() { renderWith(env, b.String(), nil) })
 		}},
-		{"Context.Get", "the expression cache is global and never evicted", func(i int) {
+		{"Context.Get", func(i int) {
 			ctx := newContext(env)
 			for j := range 4000 {
 				ctx.Get(fmt.Sprintf("r%d_w%d_%d.k[0]", cacheRun, i, j))
@@ -204,14 +200,9 @@ func TestParseCachesAreBounded(t *testing.T) {
 			}
 			retained := heap() - before
 			const budget = 5 << 20
-			switch {
-			case retained > budget && c.known != "":
-				t.Logf("known (%s): %s retained", c.known, mb(uint64(retained)))
-			case retained > budget:
+			if retained > budget {
 				t.Errorf("%s retained after GC, over the budget of %s", mb(uint64(retained)), mb(budget))
-			case c.known != "":
-				t.Errorf("known as %q, but only %s is retained: clear it", c.known, mb(uint64(max(retained, 0))))
-			default:
+			} else {
 				t.Logf("%s retained", mb(uint64(max(retained, 0))))
 			}
 		})

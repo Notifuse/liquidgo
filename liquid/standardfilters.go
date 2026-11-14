@@ -208,12 +208,48 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 		}
 	}
 
-	runes := []rune(ToS(input, nil))
-	start, end, ok := sliceBounds(len(runes), offsetInt, lengthInt)
+	// The string is walked only as far as the slice reaches: a positive
+	// offset needs no count of its characters.
+	str := ToS(input, nil)
+	if offsetInt < 0 {
+		start, end, ok := sliceBounds(utf8.RuneCountInString(str), offsetInt, lengthInt)
+		if !ok {
+			return ""
+		}
+		offsetInt, lengthInt = start, end-start
+	}
+	if lengthInt < 0 {
+		return ""
+	}
+	start, ok := runeOffset(str, offsetInt)
 	if !ok {
 		return ""
 	}
-	return string(runes[start:end])
+	size, _ := runeOffset(str[start:], lengthInt)
+	return asRunes(str[start : start+size])
+}
+
+// runeOffset returns the byte index after the first n characters of s, as
+// []rune(s) counts them, and whether s has n characters.
+func runeOffset(s string, n int) (int, bool) {
+	i := 0
+	for k := 0; k < n; k++ {
+		if i >= len(s) {
+			return i, false
+		}
+		_, size := utf8.DecodeRuneInString(s[i:])
+		i += size
+	}
+	return i, true
+}
+
+// asRunes returns s as string([]rune(s)) does: each invalid byte becomes
+// U+FFFD.
+func asRunes(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	return string([]rune(s))
 }
 
 // sliceBounds applies Ruby's slice(offset, length) rules to a sequence of size n.
@@ -252,9 +288,12 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	runes := []rune(inputStr)
-	if len(runes) <= lengthInt {
-		return inputStr
+	// The string is walked only as far as the length: a long input is not
+	// copied to count its characters.
+	if lengthInt >= 0 {
+		if end, ok := runeOffset(inputStr, lengthInt); !ok || end == len(inputStr) {
+			return inputStr
+		}
 	}
 
 	// compared before subtracting, so that a length near the int minimum cannot wrap
@@ -263,7 +302,8 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		l = lengthInt - ellipsis
 	}
 
-	return string(runes[:l]) + truncateStr
+	end, _ := runeOffset(inputStr, l)
+	return asRunes(inputStr[:end]) + truncateStr
 }
 
 // TruncateWords shortens a string to a number of words (15 by default, at least 1).
@@ -340,6 +380,19 @@ func isASCIIWhitespace(r rune) bool {
 
 // splitASCIIWhitespace splits like Ruby's split(" "): on runs of ASCII whitespace,
 // ignoring leading and trailing whitespace.
+// asciiFieldCount returns the number of strings splitASCIIWhitespace gives.
+func asciiFieldCount(s string) int {
+	count, inField := 0, false
+	for i := 0; i < len(s); i++ {
+		space := isASCIIWhitespace(rune(s[i]))
+		if !space && !inField {
+			count++
+		}
+		inField = !space
+	}
+	return count
+}
+
 func splitASCIIWhitespace(s string) []string {
 	return strings.FieldsFunc(s, isASCIIWhitespace)
 }
@@ -352,8 +405,10 @@ func (sf *StandardFilters) Split(input interface{}, pattern interface{}) []inter
 	patternStr := ToS(pattern, nil)
 	var parts []string
 	if patternStr == " " {
+		sf.checkItems(asciiFieldCount(inputStr))
 		parts = splitASCIIWhitespace(inputStr)
 	} else if inputStr != "" {
+		sf.checkItems(splitCount(inputStr, patternStr))
 		parts = strings.Split(inputStr, patternStr)
 		// Ruby drops trailing empty strings
 		for len(parts) > 0 && parts[len(parts)-1] == "" {
@@ -442,6 +497,7 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 		for i, item := range arr {
 			parts[i] = ToS(item, nil)
 		}
+		sf.checkLength(joinedLength(parts, sep))
 		return strings.Join(parts, sep)
 	}
 	// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
@@ -453,6 +509,7 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 			for i := 0; i < v.Len(); i++ {
 				parts[i] = ToS(v.Index(i).Interface(), nil)
 			}
+			sf.checkLength(joinedLength(parts, sep))
 			return strings.Join(parts, sep)
 		}
 	}
@@ -501,6 +558,7 @@ func (sf *StandardFilters) Replace(input interface{}, str interface{}, replaceme
 	if replacement != nil {
 		replaceStr = ToS(replacement, nil)
 	}
+	sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, strings.Count(inputStr, searchStr)))
 	return strings.ReplaceAll(inputStr, searchStr, replaceStr)
 }
 
@@ -512,6 +570,9 @@ func (sf *StandardFilters) ReplaceFirst(input interface{}, str interface{}, repl
 	replaceStr := ""
 	if replacement != nil {
 		replaceStr = ToS(replacement, nil)
+	}
+	if strings.Contains(inputStr, searchStr) {
+		sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, 1))
 	}
 	return strings.Replace(inputStr, searchStr, replaceStr, 1)
 }
@@ -528,6 +589,7 @@ func (sf *StandardFilters) ReplaceLast(input interface{}, str interface{}, repla
 		return inputStr
 	}
 
+	sf.checkLength(replacedLength(inputStr, searchStr, replaceStr, 1))
 	return inputStr[:startIndex] + replaceStr + inputStr[startIndex+len(searchStr):]
 }
 
@@ -554,6 +616,7 @@ func (sf *StandardFilters) RemoveLast(input interface{}, str interface{}) string
 func (sf *StandardFilters) Append(input interface{}, str interface{}) string {
 	inputStr := ToS(input, nil)
 	appendStr := ToS(str, nil)
+	sf.checkLength(len(inputStr) + len(appendStr))
 	return inputStr + appendStr
 }
 
@@ -562,6 +625,7 @@ func (sf *StandardFilters) Append(input interface{}, str interface{}) string {
 func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 	inputStr := ToS(input, nil)
 	prependStr := ToS(str, nil)
+	sf.checkLength(len(inputStr) + len(prependStr))
 	return prependStr + inputStr
 }
 
@@ -1417,6 +1481,7 @@ func (sf *StandardFilters) Concat(input interface{}, array interface{}) (interfa
 	}
 
 	iter := NewInputIterator(input, sf.context)
+	sf.checkItems(len(iter.input) + reflectLen(array))
 	return iter.Concat(array), nil
 }
 

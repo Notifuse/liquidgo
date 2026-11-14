@@ -1,6 +1,9 @@
 package liquid
 
 import (
+	gocontext "context"
+	"math"
+	"reflect"
 	"sync"
 	"unicode/utf8"
 )
@@ -99,15 +102,9 @@ func NewTemplate(options *TemplateOptions) *Template {
 	config := ResourceLimitsConfig{}
 	if env.defaultResourceLimits != nil {
 		// Convert map[string]interface{} to ResourceLimitsConfig
-		if renderLengthLimit, ok := env.defaultResourceLimits["render_length_limit"].(int); ok {
-			config.RenderLengthLimit = &renderLengthLimit
-		}
-		if renderScoreLimit, ok := env.defaultResourceLimits["render_score_limit"].(int); ok {
-			config.RenderScoreLimit = &renderScoreLimit
-		}
-		if assignScoreLimit, ok := env.defaultResourceLimits["assign_score_limit"].(int); ok {
-			config.AssignScoreLimit = &assignScoreLimit
-		}
+		config.RenderLengthLimit = limitValue(env.defaultResourceLimits["render_length_limit"])
+		config.RenderScoreLimit = limitValue(env.defaultResourceLimits["render_score_limit"])
+		config.AssignScoreLimit = limitValue(env.defaultResourceLimits["assign_score_limit"])
 	}
 	resourceLimits = NewResourceLimits(config)
 
@@ -270,6 +267,12 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		return ""
 	}
 
+	// A Context of the caller keeps its own cancellation after this render.
+	if ctx, ok := assigns.(*Context); ok && ctx != nil && options != nil && options.Context != nil {
+		cancel, done := ctx.cancel, ctx.done
+		defer func() { ctx.cancel, ctx.done = cancel, done }()
+	}
+
 	context := t.buildContext(assigns, options)
 
 	// Track whether we should merge back state (only when we create the context, not when user passes one)
@@ -302,8 +305,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 	}
 
 	// Use output from options if provided
+	buffer := NewOutputBufferFor(context)
 	if options != nil && options.Output != nil {
-		output = *options.Output
+		buffer.buf = append(buffer.buf, *options.Output...)
 	}
 
 	defer func() {
@@ -382,12 +386,16 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		}
 	}()
 
-	t.root.RenderToOutputBuffer(context, &output)
+	t.root.RenderToOutput(context, buffer)
+	output = buffer.String()
 	return output
 }
 
 // RenderOptions contains options for rendering a template.
 type RenderOptions struct {
+	// Context, when set, stops the render once it is done: the render ends
+	// with a CanceledError, which wraps the error of Context.
+	Context           gocontext.Context
 	Output            *string
 	Registers         map[string]interface{}
 	GlobalFilter      func(interface{}) interface{}
@@ -403,7 +411,9 @@ func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) strin
 	return t.Render(assigns, options)
 }
 
-// RenderToOutputBuffer renders the template to the output buffer.
+// RenderToOutputBuffer renders the template with context and appends the
+// result to output. As in Ruby, it resets the resource usage of context, and
+// a MemoryError, or a CanceledError, is recorded rather than raised.
 func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 	if t.root == nil {
 		return
@@ -420,20 +430,39 @@ func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 
 		defer func() {
 			if r := recover(); r != nil {
-				if memErr, ok := r.(*MemoryError); ok {
-					ctx.HandleError(memErr, nil)
-				} else {
+				switch err := r.(type) {
+				case *MemoryError:
+					ctx.HandleError(err, nil)
+				case *CanceledError:
+					ctx.HandleError(err, nil)
+				default:
 					panic(r)
 				}
 			}
 			t.errors = ctx.Errors()
 		}()
 
-		t.root.RenderToOutputBuffer(context, output)
+		buffer := NewOutputBufferFor(context)
+		defer func() { *output += buffer.String() }()
+		t.root.RenderToOutput(context, buffer)
 	} else {
 		// Fallback: use Render method
 		_ = t.Render(context, &RenderOptions{Output: output})
 	}
+}
+
+// RenderToOutput renders the template with context to output, as a partial
+// of the render that context belongs to: the resource usage goes on from
+// where it is, and an error that ends the render, such as a MemoryError, goes
+// on up.
+func (t *Template) RenderToOutput(context TagContext, output *OutputBuffer) {
+	if t.root == nil {
+		return
+	}
+	if ctx, ok := context.(*Context); ok && ctx.TemplateName() == "" {
+		ctx.SetTemplateName(t.name)
+	}
+	t.root.RenderToOutput(context, output)
 }
 
 // buildContext builds a Context from assigns and options.
@@ -544,6 +573,9 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 		if options.StrictFilters {
 			ctx.SetStrictFilters(true)
 		}
+		if options.Context != nil {
+			ctx.SetCancellation(options.Context)
+		}
 	}
 
 	return ctx
@@ -582,4 +614,36 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 	}
 
 	return NewParseContext(parseContextOpts)
+}
+
+// limitValue returns a resource limit given as any integer type, or as a
+// whole float such as a number decoded from JSON, saturated to the int range,
+// or nil when v is not an integer.
+func limitValue(v interface{}) *int {
+	var limit int
+	switch n := v.(type) {
+	case int:
+		limit = n
+	case int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		var err error
+		if limit, err = ToInteger(n); err != nil {
+			return nil
+		}
+	case float64, float32:
+		f := reflect.ValueOf(n).Float()
+		if math.IsNaN(f) || math.IsInf(f, 0) || f != math.Trunc(f) {
+			return nil
+		}
+		switch {
+		case f >= math.MaxInt:
+			limit = math.MaxInt
+		case f <= math.MinInt:
+			limit = math.MinInt
+		default:
+			limit = int(f)
+		}
+	default:
+		return nil
+	}
+	return &limit
 }
