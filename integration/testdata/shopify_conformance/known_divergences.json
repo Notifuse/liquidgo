@@ -1,15 +1,4 @@
 {
- "test/integration/filter_test.rb:76": {
-  "reason": "minor: sort on a scalar returns a one-element array, which renders as [3]",
-  "actual": {
-   "lax/json": "output: [3]",
-   "lax/ruby": "output: [3]",
-   "strict/json": "output: [3]",
-   "strict/ruby": "output: [3]",
-   "strict2/json": "output: [3]",
-   "strict2/ruby": "output: [3]"
-  }
- },
  "test/integration/hash_rendering_test.rb:11": {
   "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
   "skip": true
@@ -170,22 +159,6 @@
    "lax/ruby": "output: X"
   }
  },
- "test/integration/standard_filter_test.rb:487": {
-  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
-  "actual": {
-   "lax/ruby": "output: [<nil>]",
-   "strict/ruby": "output: [<nil>]",
-   "strict2/ruby": "output: [<nil>]"
-  }
- },
- "test/integration/standard_filter_test.rb:488": {
-  "reason": "minor: map on a string renders [<nil>] instead of an empty string",
-  "actual": {
-   "lax/ruby": "output: [<nil>]",
-   "strict/ruby": "output: [<nil>]",
-   "strict2/ruby": "output: [<nil>]"
-  }
- },
  "test/integration/standard_filter_test.rb:695": {
   "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
   "actual": {
@@ -232,14 +205,6 @@
    "lax/ruby": "output: 0",
    "strict/ruby": "output: 0",
    "strict2/ruby": "output: 0"
-  }
- },
- "test/integration/variable_test.rb:134": {
-  "reason": "minor: a nested array containing nil renders [[<nil>]] instead of \"\"",
-  "actual": {
-   "lax/ruby": "output: [[<nil>]]",
-   "strict/ruby": "output: [[<nil>]]",
-   "strict2/ruby": "output: [[<nil>]]"
   }
  }
 }

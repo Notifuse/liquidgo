@@ -390,8 +390,28 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		}
 		return arrayInspect(v, seen)
 	default:
+		if items, ok := sliceItems(obj); ok {
+			if seen == nil {
+				seen = make(map[uintptr]bool)
+			}
+			return arrayInspect(items, seen)
+		}
 		return fmt.Sprintf("%v", obj)
 	}
+}
+
+// sliceItems returns the items of a typed slice or array, which Ruby has as
+// an Array.
+func sliceItems(obj interface{}) ([]interface{}, bool) {
+	rv := reflect.ValueOf(obj)
+	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
+		return nil, false
+	}
+	items := make([]interface{}, rv.Len())
+	for i := range items {
+		items[i] = rv.Index(i).Interface()
+	}
+	return items, true
 }
 
 // Inspect returns a detailed string representation of an object.
@@ -401,11 +421,16 @@ func Inspect(obj interface{}, seen map[uintptr]bool) string {
 	}
 
 	switch v := obj.(type) {
+	case nil:
+		return "nil"
 	case map[string]interface{}:
 		return hashInspect(v, seen)
 	case []interface{}:
 		return arrayInspect(v, seen)
 	default:
+		if items, ok := sliceItems(obj); ok {
+			return arrayInspect(items, seen)
+		}
 		return fmt.Sprintf("%#v", obj)
 	}
 }
