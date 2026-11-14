@@ -2318,6 +2318,102 @@
       "output": "[{\"title\"=>\"t1\", \"public\"=>true}, {\"title\"=>\"t2\", \"public\"=>false}]"
     },
     {
+      "id": "render-values-11",
+      "mode": "lax",
+      "template": "{{ n | map: 'title' }}|{{ nothing | map: 'title' }}",
+      "output": "Liquid error: cannot select the property 'title'|"
+    },
+    {
+      "id": "render-values-11",
+      "mode": "strict",
+      "template": "{{ n | map: 'title' }}|{{ nothing | map: 'title' }}",
+      "output": "Liquid error: cannot select the property 'title'|"
+    },
+    {
+      "id": "render-values-12",
+      "mode": "lax",
+      "template": "{{ n | size }}|{{ f | size }}",
+      "output": "8|0"
+    },
+    {
+      "id": "render-values-12",
+      "mode": "strict",
+      "template": "{{ n | size }}|{{ f | size }}",
+      "output": "8|0"
+    },
+    {
+      "id": "render-values-13",
+      "mode": "lax",
+      "template": "{% tablerow i in (1.3) %}x{% endtablerow %}",
+      "output": ""
+    },
+    {
+      "id": "render-values-13",
+      "mode": "strict",
+      "template": "{% tablerow i in (1.3) %}x{% endtablerow %}",
+      "output": ""
+    },
+    {
+      "id": "render-values-14",
+      "mode": "lax",
+      "template": "{% case 1 %}{% when 2 %}a{% else %} {% endcase %}|{% if false %}a{% else %} {% endif %}|",
+      "output": " | |"
+    },
+    {
+      "id": "render-values-14",
+      "mode": "strict",
+      "template": "{% case 1 %}{% when 2 %}a{% else %} {% endcase %}|{% if false %}a{% else %} {% endif %}|",
+      "output": " | |"
+    },
+    {
+      "id": "render-values-15",
+      "mode": "lax",
+      "template": "{{ nothing['k] }}",
+      "output": ""
+    },
+    {
+      "id": "render-values-15",
+      "mode": "strict",
+      "template": "{{ nothing['k] }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character ' in \"{{ nothing['k] }}\""
+    },
+    {
+      "id": "render-values-16",
+      "mode": "lax",
+      "template": "{% unless 'a' != nothing['k] %}b{% endunless %}",
+      "output": ""
+    },
+    {
+      "id": "render-values-16",
+      "mode": "strict",
+      "template": "{% unless 'a' != nothing['k] %}b{% endunless %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character ' in \"'a' != nothing['k]\""
+    },
+    {
+      "id": "render-values-17",
+      "mode": "lax",
+      "template": "{% if true > posts %}y{% endif %}|{% if arr > 1 %}z{% endif %}",
+      "output": "|"
+    },
+    {
+      "id": "render-values-17",
+      "mode": "strict",
+      "template": "{% if true > posts %}y{% endif %}|{% if arr > 1 %}z{% endif %}",
+      "output": "|"
+    },
+    {
+      "id": "render-values-18",
+      "mode": "lax",
+      "template": "{{ (1..3) | last }}|{{ (1..3) | first }}",
+      "output": "3|1"
+    },
+    {
+      "id": "render-values-18",
+      "mode": "strict",
+      "template": "{{ (1..3) | last }}|{{ (1..3) | first }}",
+      "output": "3|1"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

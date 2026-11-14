@@ -54,14 +54,9 @@ func sameResult(a, b string) bool {
 	return a == b || sameUpToHashOrder(a, b)
 }
 
-// unclassified is the reason a regeneration gives a new divergence of a
-// hand-written template; the test fails until it is replaced by the real one.
+// unclassified is the reason a regeneration gives a new divergence; the test
+// fails until it is replaced by the real one.
 const unclassified = "unclassified"
-
-// generatedReason is the reason of every divergence of a generated template:
-// each combines tags and filters whose divergences the hand-written templates
-// show one at a time, so its result is pinned but its cause is not named.
-const generatedReason = "generated: a combination of the divergences of the hand-written templates"
 
 func (r differentialResult) key() string { return r.ID + "/" + r.Mode }
 
@@ -175,9 +170,6 @@ func TestShopifyDifferential(t *testing.T) {
 		}
 		actual := describe(output, errText)
 		entry := differentialDivergence{Reason: unclassified, Actual: actual}
-		if strings.HasPrefix(r.ID, "generated-") {
-			entry.Reason = generatedReason
-		}
 		if k, listed := known[r.key()]; listed {
 			entry = k
 			if !sameResult(k.actual(), actual) {
@@ -187,7 +179,7 @@ func TestShopifyDifferential(t *testing.T) {
 			// platform.
 			if strconv.IntSize == 32 {
 				entry.Actual32 = actual
-				if entry.Actual32 == entry.Actual {
+				if sameResult(entry.Actual32, entry.Actual) {
 					entry.Actual32 = ""
 				}
 			} else {
@@ -204,6 +196,25 @@ func TestShopifyDifferential(t *testing.T) {
 	for key := range known {
 		if !seen[key] {
 			t.Errorf("differential_divergences.json lists %s, which is not in expected.json", key)
+		}
+	}
+	// A generated template combines tags and filters: each cause of its
+	// divergence must also be shown, alone, by a hand-written template.
+	handWritten := map[string]bool{}
+	for key, d := range got {
+		if !strings.HasPrefix(key, "generated-") {
+			for _, reason := range strings.Split(d.Reason, "; ") {
+				handWritten[reason] = true
+			}
+		}
+	}
+	for key, d := range got {
+		if strings.HasPrefix(key, "generated-") && d.Reason != unclassified {
+			for _, reason := range strings.Split(d.Reason, "; ") {
+				if !handWritten[reason] {
+					t.Errorf("%s: no hand-written template shows the divergence %q", key, reason)
+				}
+			}
 		}
 	}
 

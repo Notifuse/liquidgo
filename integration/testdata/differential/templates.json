@@ -770,5 +770,37 @@
  {
   "id": "render-values-10",
   "template": "{{ posts | capitalize }}"
+ },
+ {
+  "id": "render-values-11",
+  "template": "{{ n | map: 'title' }}|{{ nothing | map: 'title' }}"
+ },
+ {
+  "id": "render-values-12",
+  "template": "{{ n | size }}|{{ f | size }}"
+ },
+ {
+  "id": "render-values-13",
+  "template": "{% tablerow i in (1.3) %}x{% endtablerow %}"
+ },
+ {
+  "id": "render-values-14",
+  "template": "{% case 1 %}{% when 2 %}a{% else %} {% endcase %}|{% if false %}a{% else %} {% endif %}|"
+ },
+ {
+  "id": "render-values-15",
+  "template": "{{ nothing['k] }}"
+ },
+ {
+  "id": "render-values-16",
+  "template": "{% unless 'a' != nothing['k] %}b{% endunless %}"
+ },
+ {
+  "id": "render-values-17",
+  "template": "{% if true > posts %}y{% endif %}|{% if arr > 1 %}z{% endif %}"
+ },
+ {
+  "id": "render-values-18",
+  "template": "{{ (1..3) | last }}|{{ (1..3) | first }}"
  }
 ]

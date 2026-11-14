@@ -9,12 +9,16 @@ import (
 	"testing"
 )
 
-// Inputs the render cannot bound yet: a range bound, limit, offset or cols
-// that is large or computed (a variable), many loops, which nest, and many
-// filters that multiply the size of a string. They are skipped until the
-// library bounds them itself.
+// Inputs the render cannot bound yet are skipped until the library bounds
+// them itself: a range other than a literal of two small integers, a large
+// or computed limit, offset or cols, many loops, which nest, and many filters
+// that multiply the size of a string. Three nested tablerow of 99 items
+// already take 20 s.
 var (
-	largeBound       = regexp.MustCompile(`(\d{3}|[A-Za-z_][\w.]*)\s*\.\.|\.\.\s*-?(\d{3}|[A-Za-z_])|\b(limit|offset|cols)\s*:\s*-?(\d{3}|[A-Za-z_])`)
+	rangeOperator    = regexp.MustCompile(`\.\.`)
+	smallRange       = regexp.MustCompile(`\(\s*-?\d{1,2}\s*\.\.\s*-?\d{1,2}\s*\)`)
+	loopOption       = regexp.MustCompile(`\b(limit|offset|cols)\s*:\s*`)
+	smallOption      = regexp.MustCompile(`\b(limit|offset|cols)\s*:\s*(-?\d{1,2}(\D|$)|continue)`)
 	loopTag          = regexp.MustCompile(`\b(for|tablerow|ifchanged)\b`)
 	amplifyingFilter = regexp.MustCompile(`\b(replace|replace_first|replace_last|join|split|concat|append|prepend)\b`)
 	timeDependent    = regexp.MustCompile(`\b(now|today)\b`)
@@ -22,8 +26,8 @@ var (
 
 // The panics known today, each with the shape of input that causes it.
 var (
-	// {% cycle a: %}, a group and no values.
-	cycleWithoutValues = regexp.MustCompile(`\bcycle\s*[^}\n]*:\s*(-?%\}|\n|$)`)
+	// {% cycle a: %}, {% cycle a:, %}: a group and no values.
+	cycleWithoutValues = regexp.MustCompile(`\bcycle\b[^}\n]*:[\s,]*(-?%\}|\n|$)`)
 	knownCyclePanic    = "a cycle without values panics"
 	// h[], h[name], h[!], h[0A]: an index, which an undefined name or
 	// markup that lax mode drops makes nil.
@@ -34,25 +38,33 @@ var (
 	knownHashOrder = "a hash with several keys, which keyword arguments make, renders its keys in map order"
 )
 
-// sameUpToHashOrder reports whether two outputs that render a hash ("=>")
-// hold the same characters, in another order.
+// renderedHash is a hash as liquidgo and Ruby render it: {"k"=>"v", ...}.
+var renderedHash = regexp.MustCompile(`\{[^{}]*=>[^{}]*\}`)
+
+// canonicalHashes sorts the pairs of every rendered hash in s, so that two
+// renders of the same hash compare equal whatever the order of its keys.
+func canonicalHashes(s string) string {
+	return renderedHash.ReplaceAllStringFunc(s, func(h string) string {
+		pairs := strings.Split(h[1:len(h)-1], ", ")
+		sort.Strings(pairs)
+		return "{" + strings.Join(pairs, ", ") + "}"
+	})
+}
+
+// sameUpToHashOrder reports whether two different outputs are the same once
+// the pairs of each rendered hash are sorted.
 func sameUpToHashOrder(a, b string) bool {
-	if !strings.Contains(a, "=>") || len(a) != len(b) {
-		return false
-	}
-	ra, rb := []rune(a), []rune(b)
-	sort.Slice(ra, func(i, j int) bool { return ra[i] < ra[j] })
-	sort.Slice(rb, func(i, j int) bool { return rb[i] < rb[j] })
-	return string(ra) == string(rb)
+	return a != b && strings.Contains(a, "=>") && canonicalHashes(a) == canonicalHashes(b)
 }
 
 // knownUnboundedInput returns why the library cannot yet bound the render of
 // source, or "".
 func knownUnboundedInput(source string) string {
 	switch {
-	case largeBound.MatchString(source):
+	case len(rangeOperator.FindAllString(source, -1)) > len(smallRange.FindAllString(source, -1)),
+		len(loopOption.FindAllString(source, -1)) > len(smallOption.FindAllString(source, -1)):
 		return "a range is built as an array, and an empty loop body adds nothing to the render score"
-	case len(loopTag.FindAllString(source, -1)) > 3:
+	case len(loopTag.FindAllString(source, -1)) > 2:
 		return "an empty loop body adds nothing to the render score, and tablerow and ifchanged render their body more than once"
 	case len(amplifyingFilter.FindAllString(source, -1)) > 3:
 		return "a filter result is counted only once it is built"

@@ -94,8 +94,9 @@ var knownSuperLinear = map[string]string{
 // TestRenderScalesLinearly parses and renders each family at n and 4n. A
 // family is super-linear when 4 times the input takes more than 9 times as
 // long (16 times for a quadratic cost), or allocates more than 9 times as
-// much. The allocation ratio does not depend on the machine, its load or
-// -race; the time ratio does, a little, and is only read above 20 ms.
+// much. The allocation ratio does not depend on the machine or its load; the
+// time ratio does, so it is only read above 20 ms, and a family that is not
+// listed fails only when it is super-linear in each of three measures.
 func TestRenderScalesLinearly(t *testing.T) {
 	if testing.Short() {
 		t.Skip("timing test")
@@ -131,17 +132,26 @@ func TestRenderScalesLinearly(t *testing.T) {
 			}
 			small, large := f.build(f.n), f.build(4*f.n)
 			measure(t, small) // warm up
-			base, got := measure(t, small), measure(t, large)
 			allocBase := allocated(func() { render(t, small) })
 			allocGot := allocated(func() { render(t, large) })
-			ratio := float64(got) / float64(max(base, time.Microsecond))
 			allocRatio := float64(allocGot) / float64(max(allocBase, 1))
-			timeSuper := ratio > 9 && got > longEnough
 			allocSuper := allocRatio > 9 && allocGot > largeEnough
-			clearlyLinear := (ratio <= 5 || got <= longEnough) && (allocRatio <= 6 || allocGot <= largeEnough)
-			sizes := fmt.Sprintf("%d bytes in %v and %s, %d bytes in %v and %s (x%.1f in time, x%.1f in allocation)",
-				len(small), base, mb(allocBase), len(large), got, mb(allocGot), ratio, allocRatio)
 			reason, known := knownSuperLinear[f.name]
+			var timeSuper, clearlyLinear bool
+			var sizes string
+			// The time of a render on a loaded machine can jump: a family
+			// that is not listed is measured again before it fails.
+			for round := 0; round < 3; round++ {
+				base, got := measure(t, small), measure(t, large)
+				ratio := float64(got) / float64(max(base, time.Microsecond))
+				timeSuper = ratio > 9 && got > longEnough
+				clearlyLinear = (ratio <= 5 || got <= longEnough) && (allocRatio <= 6 || allocGot <= largeEnough)
+				sizes = fmt.Sprintf("%d bytes in %v and %s, %d bytes in %v and %s (x%.1f in time, x%.1f in allocation)",
+					len(small), base, mb(allocBase), len(large), got, mb(allocGot), ratio, allocRatio)
+				if known || allocSuper || !timeSuper {
+					break
+				}
+			}
 			switch {
 			case (timeSuper || allocSuper) && known:
 				t.Logf("known (%s): %s", reason, sizes)

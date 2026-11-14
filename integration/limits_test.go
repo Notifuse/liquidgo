@@ -79,10 +79,12 @@ var boundedCases = []boundedCase{
 	// the whole tag once it has rendered.
 	{name: "tablerow-length", source: "{% tablerow i in (1..5000) %}xxxxxxxxxx{% endtablerow %}", limits: limits{renderLength: 1000}, budget: 2 << 20, wantError: memoryLimit},
 	// Nesting is refused while parsing, before it is deep enough to cost
-	// time quadratic in it.
+	// time quadratic in it. Shopify refuses a block nested more than 100
+	// deep; the same depth applies here to lookups and liquid tags, which
+	// Shopify does not limit.
 	{name: "brackets-100", source: "{{ " + rep("a[", 100) + "0" + rep("]", 100) + " }}", budget: 50 << 20, wantOutput: ""},
 	{name: "brackets-101", source: "{{ " + rep("a[", 101) + "0" + rep("]", 101) + " }}", budget: 50 << 20, wantError: tooDeep},
-	{name: "liquid-101", source: "{% liquid " + rep("liquid ", 101) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
+	{name: "liquid-101", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
 }
 
 // knownUnbounded lists the cases known to fail, with the reason. A listed

@@ -13,7 +13,7 @@ and strict mode, and compares the result with the one Shopify Liquid 5.11.0 give
 
   ```sh
   git clone --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid /tmp/shopify-liquid
-  gem install strscan bigdecimal
+  gem install strscan:'>= 3.1.1' bigdecimal
   TZ=UTC ruby -I /tmp/shopify-liquid/lib scripts/differential_reference.rb
   ```
 
@@ -27,11 +27,11 @@ and strict mode, and compares the result with the one Shopify Liquid 5.11.0 give
   LIQUIDGO_DIFFERENTIAL_WRITE=1 go test ./integration -run TestShopifyDifferential
   ```
 
-  A new divergence of a hand-written template is written with the reason `unclassified`, which
-  fails the test until it is replaced by the real one. A divergence of a generated template is
-  written with a reason of its own (`generated: ...`): it combines divergences that the
-  hand-written templates show one at a time, so its result is pinned without naming its cause.
-  The result on 32-bit platforms, when it differs, is kept in `actual_32bit` (regenerate with
+  A new divergence is written with the reason `unclassified`, which fails the test until it is
+  replaced by the real one. A generated template can combine several causes: its reason lists
+  them, separated by `; `, and each must also be the reason of a hand-written template, which
+  shows that cause alone. When a generated divergence has a cause no hand-written template
+  shows, add a template for it to `templates.json`. The result on 32-bit platforms, when it differs, is kept in `actual_32bit` (regenerate with
   `GOARCH=386` too).
 
 Two results that differ only in the order of the keys of a rendered hash match: liquidgo renders a

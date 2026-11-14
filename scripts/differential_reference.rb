@@ -10,8 +10,8 @@
 #   TZ=UTC ruby -I <shopify-liquid>/lib scripts/differential_reference.rb --check # compare
 #
 # The corpus is integration/testdata/differential/templates.json, written by
-# hand, plus generated templates: fragments of tags, filters and delimiters
-# joined at random from a fixed seed, so that every run writes the same file.
+# hand, plus generated templates (see Generator below), built at random from a
+# fixed seed, so that every run writes the same file.
 
 require "json"
 require "liquid"
