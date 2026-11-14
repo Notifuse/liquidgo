@@ -1,5 +1,9 @@
 package liquid
 
+import (
+	gocontext "context"
+)
+
 // ContextConfig configures a Context.
 type ContextConfig struct {
 	Registers          interface{}
@@ -15,6 +19,8 @@ type ContextConfig struct {
 type Context struct {
 	disabledTags       map[string]int
 	resourceLimits     *ResourceLimits
+	cancel             gocontext.Context
+	done               <-chan struct{}
 	profiler           *Profiler
 	exceptionRenderer  func(error) interface{}
 	registers          *Registers
@@ -573,6 +579,7 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	subCtx.warnings = c.warnings
 	subCtx.disabledTags = c.disabledTags
 	subCtx.profiler = c.profiler
+	subCtx.cancel, subCtx.done = c.cancel, c.done
 
 	return subCtx
 }
@@ -690,4 +697,32 @@ func (c *Context) Reset() {
 	c.strictFilters = false
 	c.strictVariables = false
 	c.partial = false
+}
+
+// SetCancellation makes the render stop once goCtx is done: the next node or
+// loop iteration raises a CanceledError, which ends the render.
+func (c *Context) SetCancellation(goCtx gocontext.Context) {
+	c.cancel = goCtx
+	c.done = nil
+	if goCtx != nil {
+		c.done = goCtx.Done()
+	}
+}
+
+// checkCanceled raises a CanceledError if the render was cancelled.
+func (c *Context) checkCanceled() {
+	if c == nil || c.done == nil {
+		return
+	}
+	select {
+	case <-c.done:
+		panic(NewCanceledError(c.cancel.Err()))
+	default:
+	}
+}
+
+// CheckCanceled raises a CanceledError if the render was cancelled. A tag
+// that loops calls it at each iteration.
+func (c *Context) CheckCanceled() {
+	c.checkCanceled()
 }

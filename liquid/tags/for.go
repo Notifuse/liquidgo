@@ -193,7 +193,7 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 func (f *ForTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	segment := f.collectionSegment(context)
 
-	if len(segment) == 0 {
+	if segment.Len() == 0 {
 		f.renderElse(context, output)
 	} else {
 		f.renderSegment(context, output, segment)
@@ -201,7 +201,7 @@ func (f *ForTag) RenderToOutput(context liquid.TagContext, output *liquid.Output
 }
 
 // collectionSegment gets the segment of the collection to iterate over.
-func (f *ForTag) collectionSegment(context liquid.TagContext) []interface{} {
+func (f *ForTag) collectionSegment(context liquid.TagContext) segment {
 	registers := context.Registers()
 
 	// Get or create offsets map
@@ -243,50 +243,34 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) []interface{} {
 	// Evaluate collection
 	collection := context.Evaluate(f.collectionName)
 	if collection == nil {
-		return []interface{}{}
+		return segment{}
 	}
 
-	// Convert Range to array if needed
-	if r, ok := collection.(*liquid.Range); ok {
-		// Convert range to array
-		arr := []interface{}{}
-		for i := r.Start; i <= r.End && i >= r.Start; i++ { // i >= r.Start stops at an int overflow
-			arr = append(arr, i)
-		}
-		collection = arr
-	}
-
-	// Calculate to (limit)
+	// Calculate to (limit), saturated as Ruby's integers never overflow
 	var to *int
 	if f.limit != nil {
 		limitValue := context.Evaluate(f.limit)
 		if limitValue != nil {
 			limitInt, err := liquid.ToInteger(limitValue)
 			if err == nil {
-				toVal := from + limitInt
+				toVal := addSaturated(from, limitInt)
 				to = &toVal
 			}
 		}
 	}
 
-	// Slice collection
-	segment := liquid.SliceCollection(collection, from, to)
-
-	// Reverse if needed
-	if f.reversed {
-		for i, j := 0, len(segment)-1; i < j; i, j = i+1, j-1 {
-			segment[i], segment[j] = segment[j], segment[i]
-		}
-	}
+	// A range is iterated, not built
+	seg := sliceSegment(collection, from, to)
+	seg.reversed = f.reversed
 
 	// Store offset for continue
-	offsets[f.name] = from + len(segment)
+	offsets[f.name] = addSaturated(from, seg.Len())
 
-	return segment
+	return seg
 }
 
 // renderSegment renders the segment.
-func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputBuffer, segment []interface{}) {
+func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputBuffer, segment segment) {
 	registers := context.Registers()
 
 	// Get or create for_stack
@@ -303,7 +287,7 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputB
 		registers.Set("for_stack", forStack)
 	}
 
-	length := len(segment)
+	length := segment.Len()
 
 	// Get parent loop (if any)
 	var parentLoop *liquid.ForloopDrop
@@ -328,9 +312,11 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputB
 
 		// Iterate over segment
 	forLoop:
-		for _, item := range segment {
+		for i := 0; i < length; i++ {
+			ctx.CheckCanceled()
+
 			// Set variable
-			ctx.Set(f.variableName, item)
+			ctx.Set(f.variableName, segment.At(i))
 
 			// Render for block
 			f.forBlock.RenderToOutput(context, output)

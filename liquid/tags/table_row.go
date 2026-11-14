@@ -138,14 +138,14 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 				output.WriteString(errorMsg)
 				return
 			}
-			toVal := from + limitInt
+			toVal := addSaturated(from, limitInt)
 			to = &toVal
 		}
 	}
 
-	// Slice collection
-	segment := liquid.SliceCollection(collection, from, to)
-	length := len(segment)
+	// Slice collection; a range is iterated, not built
+	segment := sliceSegment(collection, from, to)
+	length := segment.Len()
 
 	// Calculate cols
 	var cols int
@@ -179,9 +179,11 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 		ctx.Set("tablerowloop", tablerowloop)
 
 		// Iterate over segment
-		for _, item := range segment {
+		for i := 0; i < length; i++ {
+			ctx.CheckCanceled()
+
 			// Set variable
-			ctx.Set(t.variableName, item)
+			ctx.Set(t.variableName, segment.At(i))
 
 			// Output <td> tag
 			output.WriteString(fmt.Sprintf("<td class=\"col%d\">", tablerowloop.Col()))

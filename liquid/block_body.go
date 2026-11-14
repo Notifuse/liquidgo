@@ -455,16 +455,20 @@ func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 	ctx, _ := context.(*Context)
 	profiler := ctx != nil && ctx.Profiler() != nil
 
-	// Like Ruby: context.resource_limits.increment_render_score(@nodelist.length)
+	// Like Ruby: context.resource_limits.increment_render_score(@nodelist.length),
+	// but an empty body counts 1, so that a loop with an empty body is
+	// bounded too.
 	if rl := limitsOf(context); rl != nil {
-		rl.IncrementRenderScore(len(bb.nodelist))
+		rl.IncrementRenderScore(max(1, len(bb.nodelist)))
 	}
+	ctx.checkCanceled()
 
 	for _, node := range bb.nodelist {
 		if s, ok := node.(string); ok {
 			output.WriteString(s)
 			continue
 		}
+		ctx.checkCanceled()
 		bb.renderNode(context, ctx, output, node, profiler)
 		if context != nil && context.Interrupt() {
 			return

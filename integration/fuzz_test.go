@@ -10,16 +10,8 @@ import (
 )
 
 // Inputs the render cannot bound yet are skipped until the library bounds
-// them itself: a range other than a literal of two small integers, a large
-// or computed limit, offset or cols, many loops, which nest, and many filters
-// that multiply the size of a string. Three nested tablerow of 99 items
-// already take 20 s.
+// them itself: many filters that multiply the size of a string.
 var (
-	rangeOperator    = regexp.MustCompile(`\.\.`)
-	smallRange       = regexp.MustCompile(`\(\s*-?\d{1,2}\s*\.\.\s*-?\d{1,2}\s*\)`)
-	loopOption       = regexp.MustCompile(`\b(limit|offset|cols)\s*:\s*`)
-	smallOption      = regexp.MustCompile(`\b(limit|offset|cols)\s*:\s*(-?\d{1,2}(\D|$)|continue)`)
-	loopTag          = regexp.MustCompile(`\b(for|tablerow|ifchanged)\b`)
 	amplifyingFilter = regexp.MustCompile(`\b(replace|replace_first|replace_last|join|split|concat|append|prepend)\b`)
 	timeDependent    = regexp.MustCompile(`\b(now|today)\b`)
 )
@@ -58,11 +50,6 @@ func sameUpToHashOrder(a, b string) bool {
 // source, or "".
 func knownUnboundedInput(source string) string {
 	switch {
-	case len(rangeOperator.FindAllString(source, -1)) > len(smallRange.FindAllString(source, -1)),
-		len(loopOption.FindAllString(source, -1)) > len(smallOption.FindAllString(source, -1)):
-		return "a range is built as an array, and an empty loop body adds nothing to the render score"
-	case len(loopTag.FindAllString(source, -1)) > 2:
-		return "an empty loop body adds nothing to the render score, and tablerow and ifchanged render their body more than once"
 	case len(amplifyingFilter.FindAllString(source, -1)) > 3:
 		return "a filter result is counted only once it is built"
 	}

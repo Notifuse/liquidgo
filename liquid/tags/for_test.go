@@ -238,16 +238,16 @@ func TestForTagCollectionSegment(t *testing.T) {
 
 	// Test collectionSegment with simple array
 	segment := tag.collectionSegment(ctx)
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 
 	// Test with nil collection
 	ctx2 := liquid.NewContext()
 	ctx2.Set("array", nil)
 	segment2 := tag.collectionSegment(ctx2)
-	if len(segment2) != 0 {
-		t.Errorf("Expected empty segment for nil collection, got %d", len(segment2))
+	if segment2.Len() != 0 {
+		t.Errorf("Expected empty segment for nil collection, got %d", segment2.Len())
 	}
 
 	// Test with offset:continue
@@ -266,8 +266,8 @@ func TestForTagCollectionSegment(t *testing.T) {
 	ctx4 := liquid.NewContext()
 	ctx4.Set("array", []interface{}{1, 2, 3, 4, 5})
 	segment4 := tag4.collectionSegment(ctx4)
-	if len(segment4) != 2 {
-		t.Errorf("Expected segment length 2 with limit, got %d", len(segment4))
+	if segment4.Len() != 2 {
+		t.Errorf("Expected segment length 2 with limit, got %d", segment4.Len())
 	}
 }
 
@@ -485,8 +485,8 @@ func TestForTagCollectionSegmentInvalidOffsetsMap(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should handle gracefully and create new map
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -508,8 +508,8 @@ func TestForTagCollectionSegmentContinueWithNonInt(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should start from 0 when offset is not an int
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -528,8 +528,8 @@ func TestForTagCollectionSegmentWithNilFromValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -547,8 +547,8 @@ func TestForTagCollectionSegmentWithInvalidFromValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should default to from = 0 when ToInteger fails
-	if len(segment) != 3 {
-		t.Errorf("Expected segment length 3, got %d", len(segment))
+	if segment.Len() != 3 {
+		t.Errorf("Expected segment length 3, got %d", segment.Len())
 	}
 }
 
@@ -566,8 +566,8 @@ func TestForTagCollectionSegmentWithRange(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should convert range to array [1, 2, 3, 4, 5]
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -585,8 +585,8 @@ func TestForTagCollectionSegmentWithNilLimitValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when limit is nil
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -604,8 +604,8 @@ func TestForTagCollectionSegmentWithInvalidLimitValue(t *testing.T) {
 
 	segment := tag.collectionSegment(ctx)
 	// Should use all items when ToInteger fails
-	if len(segment) != 5 {
-		t.Errorf("Expected segment length 5, got %d", len(segment))
+	if segment.Len() != 5 {
+		t.Errorf("Expected segment length 5, got %d", segment.Len())
 	}
 }
 
@@ -779,8 +779,8 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 }
 
 // renderSegmentForTest renders the loop over segment, as RenderToOutput does.
-func renderSegmentForTest(tag *ForTag, ctx *liquid.Context, segment []interface{}) string {
+func renderSegmentForTest(tag *ForTag, ctx *liquid.Context, items []interface{}) string {
 	buf := liquid.NewOutputBuffer()
-	tag.renderSegment(ctx, buf, segment)
+	tag.renderSegment(ctx, buf, segment{items: items, length: len(items)})
 	return buf.String()
 }

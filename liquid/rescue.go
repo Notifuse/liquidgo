@@ -18,7 +18,7 @@ func errorFromPanic(r interface{}) error {
 // cancelled.
 func stopsRender(err error) bool {
 	switch err.(type) {
-	case *MemoryError:
+	case *MemoryError, *CanceledError:
 		return true
 	}
 	return false

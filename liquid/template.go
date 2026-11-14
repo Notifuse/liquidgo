@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	gocontext "context"
 	"sync"
 	"unicode/utf8"
 )
@@ -390,6 +391,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 
 // RenderOptions contains options for rendering a template.
 type RenderOptions struct {
+	// Context, when set, stops the render once it is done: the render ends
+	// with a CanceledError, which wraps the error of Context.
+	Context           gocontext.Context
 	Output            *string
 	Registers         map[string]interface{}
 	GlobalFilter      func(interface{}) interface{}
@@ -563,6 +567,9 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 		}
 		if options.StrictFilters {
 			ctx.SetStrictFilters(true)
+		}
+		if options.Context != nil {
+			ctx.SetCancellation(options.Context)
 		}
 	}
 

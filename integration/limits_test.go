@@ -41,16 +41,15 @@ func doubled(times int, body string) string {
 	return fmt.Sprintf("{%% assign s = 'x' %%}{%% for i in (1..%d) %%}%s{%% endfor %%}{{ s.size }}", times, body)
 }
 
-// The ranges are 2,000,000 long, which a materialized range allocates in
-// about 200 MB: enough to fail the budget, and small enough not to end the
-// test binary while the case is known.
+// The cases of a fix still to come are sized to fail fast without ending the
+// test binary.
 var boundedCases = []boundedCase{
 	// Ranges are iterated, not built. As in Shopify, reversed applies to
 	// the items that offset and limit keep.
-	{name: "range-limit", source: "{% for i in (1..2000000) limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
-	{name: "range-reversed", source: "{% for i in (1..2000000) reversed limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
-	{name: "range-offset", source: "{% for i in (1..2000000) offset: 1999999 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "2000000"},
-	{name: "tablerow-range-limit", source: "{% tablerow i in (1..2000000) limit: 1 %}{{ i }}{% endtablerow %}", budget: 1 << 20,
+	{name: "range-limit", source: "{% for i in (1..2000000000) limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
+	{name: "range-reversed", source: "{% for i in (1..2000000000) reversed limit: 1 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "1"},
+	{name: "range-offset", source: "{% for i in (1..2000000000) offset: 1999999999 %}{{ i }}{% endfor %}", budget: 1 << 20, wantOutput: "2000000000"},
+	{name: "tablerow-range-limit", source: "{% tablerow i in (1..2000000000) limit: 1 %}{{ i }}{% endtablerow %}", budget: 1 << 20,
 		wantOutput: "<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n"},
 	// Every iteration counts in the render score, even with an empty body.
 	// The ranges and the output are small, so that the render score is the
@@ -90,18 +89,12 @@ var boundedCases = []boundedCase{
 // knownUnbounded lists the cases known to fail, with the reason. A listed
 // case that passes fails the test until its line is removed.
 var knownUnbounded = map[string]string{
-	"range-limit":        "a range is built as an array before the loop",
-	"range-reversed":     "a range is built as an array before the loop",
-	"range-offset":       "a range is built as an array before the loop",
-	"empty-loop":         "an iteration with an empty body adds nothing to the render score",
-	"nested-empty-loops": "an iteration with an empty body adds nothing to the render score",
-	"empty-tablerow":     "an iteration with an empty body adds nothing to the render score",
-	"replace-chain":      "a filter result in an output is not counted",
-	"replace-amplified":  "a filter result is counted only once it is built",
-	"join-amplified":     "a filter result is counted only once it is built",
-	"split-large":        "a filter result is counted only once it is built",
-	"brackets-101":       "expressions have no nesting limit",
-	"liquid-101":         "liquid tags have no nesting limit",
+	"replace-chain":     "a filter result in an output is not counted",
+	"replace-amplified": "a filter result is counted only once it is built",
+	"join-amplified":    "a filter result is counted only once it is built",
+	"split-large":       "a filter result is counted only once it is built",
+	"brackets-101":      "expressions have no nesting limit",
+	"liquid-101":        "liquid tags have no nesting limit",
 }
 
 // TestHostileTemplatesAreBounded renders each case and checks its result,
