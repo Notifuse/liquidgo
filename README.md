@@ -490,8 +490,8 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.11.0**, port revision 2 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 2 is `v5.11.1`.
+Current version: **5.11.0**, port revision 3 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 3 is `v5.11.2`.
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.
 
@@ -501,21 +501,23 @@ A few behaviours differ on purpose, because Go applications usually pass data de
 where every number is a `float64`, and render text meant for people (emails, pages):
 
 - **An empty string is falsy**: `{% if "" %}` is false, so `{% if contact.first_name %}` skips an
-  empty name. In Ruby, only `nil` and `false` are falsy.
+  empty name. In Ruby, only `nil` and `false` are falsy. `where`, `reject`, `has`, `find` and
+  `find_index` without a value also treat an empty list or hash as falsy, and with a value match a
+  string to the number it writes (`where: "id", "10"` keeps an `id` of `10`).
 - **Whole floats render without `.0`**: `{{ 2.0 }}` renders `2`, and `{{ 100 | plus: 1 }}` with a
   JSON number renders `101`, not `101.0`. A JSON integer stays a float in arithmetic, so
   `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`).
-- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode` and a
-  filter given too many arguments render an empty string instead of `Liquid error: ...`; a
-  `truncate` or `truncatewords` length that is not an integer keeps the input.
+- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode`, `map`
+  over integers and a filter given too many arguments render an empty string instead of
+  `Liquid error: ...`; a `truncate` or `truncatewords` length that is not an integer keeps the
+  input.
 - **Template-controlled sizes are bounded**: a `date` directive wider than 1024 (`%5000d`) is
   copied as written, and a `round` precision beyond ±400 digits is not computed.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
-- **Arrays render with brackets**: `{{ list }}` renders `[1, 2, 3]` where Ruby concatenates the
-  elements; use `join`.
 - **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.
-- **`decrement`** counters live in their own namespace, separate from `assign`.
+- **`increment` and `decrement`** counters start at 0, never at a render data value of the same
+  name.
 - **Partials share the resource limits** of the template that renders them: `render` and `include`
   do not reset them, as Ruby does.
 - **Nesting is bounded at 100** for lookups and `liquid` tags too, as for blocks: `a[a[a[...]]]`
