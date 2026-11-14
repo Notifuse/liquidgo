@@ -26,8 +26,9 @@ var (
 
 // The panics known today, each with the shape of input that causes it.
 var (
-	// {% cycle a: %}, {% cycle a:, %}: a group and no values.
-	cycleWithoutValues = regexp.MustCompile(`\bcycle\b[^}\n]*:[\s,]*(-?%\}|\n|$)`)
+	// {% cycle a: %}, {% cycle a:, %}, {%cycle}:%}: a group and no values,
+	// up to the end of the tag.
+	cycleWithoutValues = regexp.MustCompile(`\bcycle\b(?:[^%\n]|%[^}\n])*?%?:[\s,]*(-?%\}|\n|$)`)
 	knownCyclePanic    = "a cycle without values panics"
 	// h[], h[name], h[!], h[0A]: an index, which an undefined name or
 	// markup that lax mode drops makes nil.
