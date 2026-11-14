@@ -20,7 +20,7 @@ func TestFilterArgumentsAreBounded(t *testing.T) {
 				t.Errorf("strftime(%q) produced %d bytes", format, len(got))
 			}
 		}
-		for _, digits := range []interface{}{30000000, 200000000, -200000000, math.MaxInt64} {
+		for _, digits := range []interface{}{30000000, 200000000, -200000000, int64(math.MaxInt64)} {
 			_, _ = sf.Round(1.5, digits)
 			_, _ = sf.Round(5, digits)
 		}
@@ -74,14 +74,14 @@ func TestOutOfRangeLengths(t *testing.T) {
 			t.Errorf("%s = %#v, want %#v", c.name, c.got, c.want)
 		}
 	}
-	if got, _ := ToInteger(1e20); got != math.MaxInt64 {
-		t.Errorf("ToInteger(1e20) = %d, want MaxInt64", got)
+	if got, _ := ToInteger(1e20); got != math.MaxInt {
+		t.Errorf("ToInteger(1e20) = %d, want MaxInt", got)
 	}
-	if got, _ := ToInteger(-1e20); got != math.MinInt64 {
-		t.Errorf("ToInteger(-1e20) = %d, want MinInt64", got)
+	if got, _ := ToInteger(-1e20); got != math.MinInt {
+		t.Errorf("ToInteger(-1e20) = %d, want MinInt", got)
 	}
-	if got, _ := ToInteger(uint64(math.MaxUint64)); got != math.MaxInt64 {
-		t.Errorf("ToInteger(MaxUint64) = %d, want MaxInt64", got)
+	if got, _ := ToInteger(uint64(math.MaxUint64)); got != math.MaxInt {
+		t.Errorf("ToInteger(MaxUint64) = %d, want MaxInt", got)
 	}
 }
 

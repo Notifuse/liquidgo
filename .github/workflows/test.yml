@@ -2,99 +2,109 @@ name: Tests
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
-    branches: [main, master, develop]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    name: Test
-    runs-on: ${{ matrix.os }}
+    # amd64 and arm64: the output must be the same on every CPU.
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        go: ['1.21', '1.22', '1.23']
-
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: true
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
-          cache: true
-
-      - name: Get dependencies
-        run: go mod download
-
+          go-version-file: go.mod
       - name: Verify dependencies
         run: go mod verify
-
-      - name: Run unit tests (with coverage)
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+      - name: Test with the race detector
+        run: go test -race ./...
+      - name: Test on 32-bit platforms
+        # 386 runs natively on amd64; arm is only built.
         if: matrix.os == 'ubuntu-latest'
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic github.com/Notifuse/liquidgo/v5/liquid
+        run: |
+          GOOS=linux GOARCH=386 go vet ./...
+          GOOS=linux GOARCH=386 go test -short ./...
+          GOOS=linux GOARCH=arm go build ./...
 
-      - name: Run unit tests (without coverage)
-        if: matrix.os != 'ubuntu-latest'
-        run: go test -v -race github.com/Notifuse/liquidgo/v5/liquid
-
-      - name: Run tag tests
-        run: go test -v -race github.com/Notifuse/liquidgo/v5/liquid/tag/... github.com/Notifuse/liquidgo/v5/liquid/tags/...
-
-      - name: Run integration tests
-        run: go test -v -race github.com/Notifuse/liquidgo/v5/integration
-
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'
-        uses: codecov/codecov-action@v4
+  windows:
+    # The paths of LocalFileSystem.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
         with:
-          file: ./coverage.txt
-          flags: unittests
-          name: codecov-umbrella
+          submodules: true
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test
+        run: go test -short ./...
+
+  reference:
+    # The expected outputs of the differential corpus are those of Shopify
+    # Liquid 5.11.0, which liquidgo ports, and every result of liquidgo
+    # matches them or is a listed divergence. The reference-liquid submodule
+    # is at another version, so the job checks out 5.11.0 itself.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install Shopify Liquid 5.11.0
+        run: |
+          git clone -q --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
+          gem install --no-document strscan:'>= 3.1.1' bigdecimal
+      - name: Check the expected outputs
+        run: TZ=UTC ruby -I "$RUNNER_TEMP/shopify-liquid/lib" scripts/differential_reference.rb --check
+      - name: Compare with Shopify
+        run: go test ./integration -run '^(TestShopifyConformance|TestShopifyDifferential)$' -v
+
+  fuzz:
+    # Two minutes of fuzzing find no panic and no output that changes from
+    # one parse to the next.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Fuzz the render
+        run: go test ./integration -run '^$' -fuzz FuzzRender -fuzztime 2m
+      - name: Keep the input the fuzzer failed on
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-findings
+          path: integration/testdata/fuzz/FuzzRender
+          if-no-files-found: ignore
 
   lint:
-    name: Lint
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
-          cache: true
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v7
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.6.2
           args: --timeout=5m
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-          cache: true
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Build examples
-        run: |
-          cd examples/basic && go build -v .
-          cd ../filters && go build -v .
-          cd ../loops && go build -v .
