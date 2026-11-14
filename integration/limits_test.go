@@ -88,10 +88,7 @@ var boundedCases = []boundedCase{
 
 // knownUnbounded lists the cases known to fail, with the reason. A listed
 // case that passes fails the test until its line is removed.
-var knownUnbounded = map[string]string{
-	"brackets-101": "expressions have no nesting limit",
-	"liquid-101":   "liquid tags have no nesting limit",
-}
+var knownUnbounded = map[string]string{}
 
 // TestHostileTemplatesAreBounded renders each case and checks its result,
 // and that the render allocated less than its budget.
@@ -153,9 +150,9 @@ var cacheRun int
 
 // TestParseCachesAreBounded parses and renders templates with distinct
 // variable names, and evaluates as many expressions with Context.Get, and
-// checks that the heap does not keep them once they are unreachable. The
-// template lookups have no brackets, which the variable lookup cache leaves
-// out; the expressions have one, so that only the expression cache keeps them.
+// checks that the heap does not keep them once they are unreachable: no
+// cache outlives a parse. The template lookups have no brackets and the
+// expressions have one, the two shapes that global caches kept.
 func TestParseCachesAreBounded(t *testing.T) {
 	cacheRun++
 	env := newEnv("", limits{})
@@ -167,10 +164,10 @@ func TestParseCachesAreBounded(t *testing.T) {
 		return int64(m.HeapAlloc)
 	}
 	for _, c := range []struct {
-		name, known string
-		fill        func(i int)
+		name string
+		fill func(i int)
 	}{
-		{"variable lookups", "the variable lookup cache is global and never evicted", func(i int) {
+		{"variable lookups", func(i int) {
 			// About 100 KB of distinct lookups.
 			var b strings.Builder
 			for j := range 4000 {
@@ -178,7 +175,7 @@ func TestParseCachesAreBounded(t *testing.T) {
 			}
 			requireNoPanicEscapes(t, func() { renderWith(env, b.String(), nil) })
 		}},
-		{"Context.Get", "the expression cache is global and never evicted", func(i int) {
+		{"Context.Get", func(i int) {
 			ctx := newContext(env)
 			for j := range 4000 {
 				ctx.Get(fmt.Sprintf("r%d_w%d_%d.k[0]", cacheRun, i, j))
@@ -192,14 +189,9 @@ func TestParseCachesAreBounded(t *testing.T) {
 			}
 			retained := heap() - before
 			const budget = 5 << 20
-			switch {
-			case retained > budget && c.known != "":
-				t.Logf("known (%s): %s retained", c.known, mb(uint64(retained)))
-			case retained > budget:
+			if retained > budget {
 				t.Errorf("%s retained after GC, over the budget of %s", mb(uint64(retained)), mb(budget))
-			case c.known != "":
-				t.Errorf("known as %q, but only %s is retained: clear it", c.known, mb(uint64(max(retained, 0))))
-			default:
+			} else {
 				t.Logf("%s retained", mb(uint64(max(retained, 0))))
 			}
 		})

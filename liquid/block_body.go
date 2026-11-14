@@ -527,6 +527,14 @@ func (bb *BlockBody) RemoveBlankStrings() {
 // parseLiquidTag parses a liquid tag by creating a new tokenizer for the markup
 // and recursively parsing it as if it were inside a liquid tag context.
 func (bb *BlockBody) parseLiquidTag(markup string, parseContext ParseContextInterface) {
+	// Each nested liquid tag parses the rest of the markup again: the depth
+	// of blocks bounds them, so that the cost stays linear.
+	if parseContext.Depth() >= blockMaxDepth {
+		panic(NewStackLevelError("Nesting too deep"))
+	}
+	parseContext.IncrementDepth()
+	defer parseContext.DecrementDepth()
+
 	// Create a new tokenizer with for_liquid_tag: true
 	lineNumber := parseContext.LineNumber()
 	liquidTagTokenizer := parseContext.NewTokenizer(markup, lineNumber != nil, lineNumber, true)

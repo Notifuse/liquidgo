@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 var (
@@ -12,10 +11,6 @@ var (
 	expressionIntegerRegex = regexp.MustCompile(`^(-?\d+)$`)
 	expressionFloatRegex   = regexp.MustCompile(`^(-?\d+)\.\d+$`)
 )
-
-// globalExprCache provides thread-safe caching of parsed expressions across templates.
-// Optimization: Avoids re-parsing the same expressions repeatedly when cache parameter is nil.
-var globalExprCache sync.Map // map[string]interface{}
 
 // Expression literals map
 var expressionLiterals = map[string]interface{}{
@@ -40,8 +35,9 @@ func SafeParse(parser *Parser, ss *StringScanner, cache map[string]interface{}) 
 	return Parse(expr, ss, cache)
 }
 
-// Parse parses a markup string into an expression value.
-// Optimization: Uses global cache when local cache is nil for better performance across templates.
+// Parse parses a markup string into an expression value. cache, when set,
+// keeps the expressions of one parse; nothing is kept across parses, so that
+// the memory a template takes goes with it.
 func Parse(markup string, ss *StringScanner, cache map[string]interface{}) interface{} {
 	if markup == "" {
 		return nil
@@ -70,14 +66,7 @@ func Parse(markup string, ss *StringScanner, cache map[string]interface{}) inter
 		return result
 	}
 
-	// Use global cache when local cache is nil (cross-template caching)
-	if cached, ok := globalExprCache.Load(markup); ok {
-		return cached
-	}
-
-	result := innerParse(markup, ss, nil)
-	globalExprCache.Store(markup, result)
-	return result
+	return innerParse(markup, ss, nil)
 }
 
 func innerParse(markup string, ss *StringScanner, cache map[string]interface{}) interface{} {

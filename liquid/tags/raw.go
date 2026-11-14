@@ -2,6 +2,7 @@ package tags
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
@@ -39,20 +40,22 @@ func NewRawTag(tagName, markup string, parseContext liquid.ParseContextInterface
 // Parse parses the raw tag body, up to the first tag named endraw, as Ruby: text before
 // that tag in the same token belongs to the body, and the body is kept as written.
 func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
-	r.body = ""
+	var body strings.Builder
 	blockDelimiter := r.BlockDelimiter()
 
 	for !tokenizer.Exhausted() {
 		token := tokenizer.Shift()
 		if before, tagName, ok := liquid.MatchTagPossiblyInvalid(token); ok && tagName == blockDelimiter {
 			r.ParseContext().SetTrimWhitespace(liquid.TrimsAfter(token))
-			r.body += before
+			body.WriteString(before)
+			r.body = body.String()
 			return nil
 		}
-		r.body += token
+		body.WriteString(token)
 	}
 
 	// Tag never closed
+	r.body = body.String()
 	return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
 }
 

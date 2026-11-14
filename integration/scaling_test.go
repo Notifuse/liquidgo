@@ -75,12 +75,8 @@ var scalingFamilies = []scalingFamily{
 // with the reason. A listed family that becomes linear fails the test until
 // its line is removed.
 var knownSuperLinear = map[string]string{
-	"slice-loop":      "slice copies the string to runes",
-	"truncate-loop":   "truncate copies the string to runes",
-	"nested-brackets": "nested lookups are parsed again at each level",
-	"nested-liquid":   "nested liquid tags are parsed again at each level",
-	"raw-body":        "the raw body is built by string concatenation",
-	"unclosed-raw":    "the raw body is built by string concatenation",
+	"slice-loop":    "slice copies the string to runes",
+	"truncate-loop": "truncate copies the string to runes",
 }
 
 // TestRenderScalesLinearly parses and renders each family at n and 4n. A

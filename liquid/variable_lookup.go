@@ -3,17 +3,12 @@ package liquid
 import (
 	"reflect"
 	"strings"
-	"sync"
 	"unicode/utf8"
 )
 
 var (
 	variableLookupCommandMethods = []string{"size", "first", "last", "empty"}
 )
-
-// globalVariableLookupCache provides thread-safe caching of parsed variable lookups.
-// Optimization: Avoids re-parsing the same variable lookups repeatedly.
-var globalVariableLookupCache sync.Map // map[string]*VariableLookup
 
 // VariableLookup represents a variable lookup expression.
 type VariableLookup struct {
@@ -76,27 +71,33 @@ func parseVariableTokens(markup string) []string {
 	return tokens
 }
 
-// VariableLookupParse parses a markup string into a VariableLookup.
-// Optimization: Uses global cache for better performance across templates.
-func VariableLookupParse(markup string, ss *StringScanner, cache map[string]interface{}) *VariableLookup {
-	// Try global cache first for simple variable lookups (no dynamic parts)
-	// We can only cache if the markup doesn't contain dynamic expressions in brackets
-	canCache := !strings.Contains(markup, "[")
-
-	if canCache {
-		if cached, ok := globalVariableLookupCache.Load(markup); ok {
-			return cached.(*VariableLookup)
+// bracketDepth returns the deepest nesting of brackets in markup.
+func bracketDepth(markup string) int {
+	depth, deepest := 0, 0
+	for i := 0; i < len(markup); i++ {
+		switch markup[i] {
+		case '[':
+			depth++
+			deepest = max(deepest, depth)
+		case ']':
+			depth = max(depth-1, 0)
 		}
+	}
+	return deepest
+}
+
+// VariableLookupParse parses a markup string into a VariableLookup.
+func VariableLookupParse(markup string, ss *StringScanner, cache map[string]interface{}) *VariableLookup {
+	// Each level of brackets parses the markup inside it again: the depth
+	// of blocks bounds them, so that the cost stays linear.
+	if bracketDepth(markup) > blockMaxDepth {
+		panic(NewStackLevelError("Nesting too deep"))
 	}
 
 	// Tokenize the variable expression, properly handling nested brackets
 	matches := parseVariableTokens(markup)
 	if len(matches) == 0 {
-		vl := &VariableLookup{name: markup, lookups: []interface{}{}}
-		if canCache {
-			globalVariableLookupCache.Store(markup, vl)
-		}
-		return vl
+		return &VariableLookup{name: markup, lookups: []interface{}{}}
 	}
 
 	lookups := make([]interface{}, len(matches))
@@ -111,7 +112,6 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 	if nameStr, ok := name.(string); ok {
 		if strings.HasPrefix(nameStr, "[") && strings.HasSuffix(nameStr, "]") {
 			name = Parse(nameStr[1:len(nameStr)-1], ss, cache)
-			canCache = false // Can't cache variable lookups with dynamic names
 		}
 	}
 
@@ -127,17 +127,11 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 			if strings.HasPrefix(lookupStr, "[") && strings.HasSuffix(lookupStr, "]") {
 				// Parse bracket expression
 				vl.lookups[i] = Parse(lookupStr[1:len(lookupStr)-1], ss, cache)
-				canCache = false // Can't cache variable lookups with dynamic expressions
 			} else if isCommandMethod(lookupStr) {
 				// Mark as command method
 				vl.commandFlags |= 1 << i
 			}
 		}
-	}
-
-	// Cache the result if it's cacheable (no dynamic parts)
-	if canCache {
-		globalVariableLookupCache.Store(markup, vl)
 	}
 
 	return vl
