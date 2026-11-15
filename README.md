@@ -580,6 +580,8 @@ where every number is a `float64`, and render text meant for people (emails, pag
   kept in the template for the next render, so a value assigned while rendering for one recipient
   never reaches the next. Ruby keeps it; `TemplateOptions.PersistInstanceAssigns` (or
   `Template.SetPersistInstanceAssigns`) restores Ruby's behaviour.
+- **`RenderBang` raises the errors of its own render only**; Ruby's `render!` leaves the template
+  raising them in later renders.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same

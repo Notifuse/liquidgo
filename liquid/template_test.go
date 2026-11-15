@@ -147,6 +147,11 @@ func TestParseTemplate(t *testing.T) {
 	}
 }
 
+// raisingDrop raises a Liquid error when a template reads its now property.
+type raisingDrop struct{ *Drop }
+
+func (d *raisingDrop) Now() interface{} { panic(NewStandardError("boom")) }
+
 // TestTemplateRenderBang tests RenderBang with rethrow_errors enabled
 func TestTemplateRenderBang(t *testing.T) {
 	env := NewEnvironment()
@@ -162,9 +167,27 @@ func TestTemplateRenderBang(t *testing.T) {
 		t.Errorf("Expected 'Hello world', got %q", result)
 	}
 
-	// Verify rethrowErrors is set
-	if !template.rethrowErrors {
-		t.Error("Expected rethrowErrors to be true after RenderBang")
+	// RenderBang applies to its own render only: a later Render of the same
+	// template records its error instead of raising it out of Render
+	failing := NewTemplate(&TemplateOptions{Environment: env})
+	if err := failing.Parse("[{{ boom.now }}]", nil); err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	data := map[string]interface{}{"boom": &raisingDrop{Drop: NewDrop()}}
+	raised := func(render func()) (r interface{}) {
+		defer func() { r = recover() }()
+		render()
+		return nil
+	}
+	if r := raised(func() { failing.RenderBang(data, nil) }); r == nil {
+		t.Fatal("RenderBang of a drop that raises did not raise")
+	}
+	var out string
+	if r := raised(func() { out = failing.Render(data, nil) }); r != nil {
+		t.Fatalf("Render after RenderBang raised %v", r)
+	}
+	if want := "[Liquid error: boom]"; out != want {
+		t.Errorf("Render after RenderBang = %q, want %q", out, want)
 	}
 }
 
@@ -480,13 +503,10 @@ func TestTemplateBuildContextWithRethrowErrors(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	// Set rethrowErrors
-	template.rethrowErrors = true
-
-	// Test with Context as assigns
+	// Test with Context as assigns, rendered with rethrow_errors
 	ctx := NewContext()
 	ctx.Set("name", "test")
-	result := template.Render(ctx, nil)
+	result := template.RenderBang(ctx, nil)
 	if result != "test" {
 		t.Errorf("Expected 'test', got %q", result)
 	}
