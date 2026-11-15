@@ -93,10 +93,17 @@ func (t *Template) RenderContext(ctx gocontext.Context, data map[string]interfac
 	if cfg.limits != nil {
 		limits = NewResourceLimits(*cfg.limits)
 	}
-	registers := NewRegisters(t.registers)
+	// The file system goes in the static registers, which the isolated
+	// context of a render tag inherits, so that nested partials find it too.
+	static := t.registers
 	if cfg.fileSystem != nil {
-		registers.Set("file_system", cfg.fileSystem)
+		static = make(map[string]interface{}, len(t.registers)+1)
+		for k, v := range t.registers {
+			static[k] = v
+		}
+		static["file_system"] = cfg.fileSystem
 	}
+	registers := NewRegisters(static)
 	if data == nil {
 		data = map[string]interface{}{}
 	}

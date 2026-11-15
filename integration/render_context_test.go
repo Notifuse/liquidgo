@@ -226,7 +226,7 @@ func TestRenderContextGoPanicIsFatal(t *testing.T) {
 	}
 }
 
-// WithFileSystem gives the partials of one render.
+// WithFileSystem gives the partials of one render, nested ones included.
 func TestRenderContextWithFileSystem(t *testing.T) {
 	tpl := rcParse(t, rcEnv(), `[{% render "p" %}]`)
 	for _, body := range []string{"one", "two"} {
@@ -234,6 +234,16 @@ func TestRenderContextWithFileSystem(t *testing.T) {
 		if err != nil || res.Output != "["+body+"]" {
 			t.Errorf("with partial %q: output %q, err %v", body, res.Output, err)
 		}
+	}
+	nested := rcParse(t, rcEnv(), `[{% render "outer", name: "x" %}|{% include "outer" %}]`)
+	fs := &mapFileSystem{templates: map[string]string{
+		"outer": `<{% render "inner", name: name %}>`,
+		"inner": `{% render "leaf", name: name %}`,
+		"leaf":  `leaf {{ name }}`,
+	}}
+	res, err := nested.RenderContext(gocontext.Background(), map[string]interface{}{"name": "y"}, liquid.WithFileSystem(fs))
+	if want := "[<leaf x>|<leaf y>]"; err != nil || res.Output != want {
+		t.Errorf("nested partials: output %q, err %v, want %q", res.Output, err, want)
 	}
 }
 

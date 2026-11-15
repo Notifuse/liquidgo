@@ -9,7 +9,7 @@
   errors the render recorded (`Result`), and an error when the render could not complete: a
   `*MemoryError` for a limit, a `*CanceledError` when `ctx` is done, or the new `*PanicError`, with the
   Go stack, when Go code panics during the render. `Render` keeps writing such a panic as
-  `Liquid error: internal`, as Ruby does. Options: `WithFileSystem` (partials of the render),
+  `Liquid error: internal`, as Ruby does. Options: `WithFileSystem` (partials of the render, nested ones included),
   `WithLimits` (limits of the render) and `RaiseErrors` (the first recorded error ends the render, as
   Ruby's `render!`).
 
