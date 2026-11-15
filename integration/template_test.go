@@ -9,13 +9,15 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
+// Ruby keeps a render's assigns in the template for the next render; liquidgo
+// does so only with PersistInstanceAssigns (each render is isolated by default).
 func TestInstanceAssignsPersistOnSameTemplateObjectBetweenParses(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
+	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 
 	// First parse and render
-	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -25,7 +27,7 @@ func TestInstanceAssignsPersistOnSameTemplateObjectBetweenParses(t *testing.T) {
 	}
 
 	// Second parse and render - instance assigns should persist
-	err = tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err = tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -67,12 +69,14 @@ func TestWarningsIsNotExponentialTime(t *testing.T) {
 	}
 }
 
+// Ruby keeps a render's assigns in the template for the next render; liquidgo
+// does so only with PersistInstanceAssigns (each render is isolated by default).
 func TestInstanceAssignsPersistOnSameTemplateParsingBetweenRenders(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
+	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 
-	err := tmpl.Parse(`{{ foo }}{% assign foo = 'foo' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err := tmpl.Parse(`{{ foo }}{% assign foo = 'foo' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -461,18 +465,13 @@ func TestCanUseDropAsContext(t *testing.T) {
 		t.Errorf("Expected 'bar', got %q", result)
 	}
 
-	// Set registers on context for baz test
-	ctx := liquid.BuildContext(liquid.ContextConfig{
-		Environment: env,
-		Registers:   liquid.NewRegisters(map[string]interface{}{"lulz": "haha"}),
-	})
-	drop.SetContext(ctx)
-
+	// baz reads the template's registers, as in Ruby's test, which renders
+	// the drop again: a drop given to one render is not kept for the next
 	err = tmpl.Parse(`{{baz}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(ctx, &liquid.RenderOptions{})
+	result = tmpl.RenderBang(drop, &liquid.RenderOptions{})
 	if result != "haha" {
 		t.Errorf("Expected 'haha', got %q", result)
 	}

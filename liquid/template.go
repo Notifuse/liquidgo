@@ -63,6 +63,8 @@ type Template struct {
 	rethrowErrors   bool
 	lineNumbers     bool
 	profiling       bool
+	// persistInstanceAssigns: see TemplateOptions.PersistInstanceAssigns.
+	persistInstanceAssigns bool
 }
 
 // TemplateOptions contains options for parsing a template.
@@ -76,6 +78,11 @@ type TemplateOptions struct {
 	LineNumbers       bool
 	StrictVariables   bool
 	StrictFilters     bool
+	// PersistInstanceAssigns keeps what a render assigns (assign, capture) in
+	// the template and gives it to the next render, as Ruby's Template does.
+	// Off by default: each render starts from its own data only, so a value
+	// assigned while rendering for one recipient never reaches the next.
+	PersistInstanceAssigns bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
@@ -109,14 +116,15 @@ func NewTemplate(options *TemplateOptions) *Template {
 	resourceLimits = NewResourceLimits(config)
 
 	return &Template{
-		environment:     env,
-		rethrowErrors:   false,
-		resourceLimits:  resourceLimits,
-		registers:       make(map[string]interface{}, 4), // Pre-allocate map
-		assigns:         make(map[string]interface{}, 8), // Pre-allocate for typical assigns
-		instanceAssigns: make(map[string]interface{}, 8), // Pre-allocate for instance assigns
-		errors:          make([]error, 0, 2),             // Pre-allocate errors
-		warnings:        make([]error, 0, 2),             // Pre-allocate warnings
+		persistInstanceAssigns: options != nil && options.PersistInstanceAssigns,
+		environment:            env,
+		rethrowErrors:          false,
+		resourceLimits:         resourceLimits,
+		registers:              make(map[string]interface{}, 4), // Pre-allocate map
+		assigns:                make(map[string]interface{}, 8), // Pre-allocate for typical assigns
+		instanceAssigns:        make(map[string]interface{}, 8), // Pre-allocate for instance assigns
+		errors:                 make([]error, 0, 2),             // Pre-allocate errors
+		warnings:               make([]error, 0, 2),             // Pre-allocate warnings
 	}
 }
 
@@ -238,6 +246,29 @@ func (t *Template) Assigns() map[string]interface{} {
 	return t.assigns
 }
 
+// SetPersistInstanceAssigns turns on or off Ruby's persistence of a render's
+// assigns into the next render (see TemplateOptions.PersistInstanceAssigns).
+// Turning it off forgets what earlier renders kept.
+func (t *Template) SetPersistInstanceAssigns(on bool) {
+	t.mu.Lock()
+	t.persistInstanceAssigns = on
+	if !on {
+		t.instanceAssigns = make(map[string]interface{}, 8)
+	}
+	t.mu.Unlock()
+}
+
+// outerScope returns the outer scope a render starts from: a copy of what
+// earlier renders kept with PersistInstanceAssigns, empty otherwise.
+func (t *Template) outerScope() map[string]interface{} {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if !t.persistInstanceAssigns {
+		return make(map[string]interface{})
+	}
+	return cloneStringMap(t.instanceAssigns)
+}
+
 // InstanceAssigns returns the instance assigns map.
 func (t *Template) InstanceAssigns() map[string]interface{} {
 	if t.instanceAssigns == nil {
@@ -247,7 +278,10 @@ func (t *Template) InstanceAssigns() map[string]interface{} {
 }
 
 // Errors returns the errors.
+// With concurrent renders, they are those of the render that ended last.
 func (t *Template) Errors() []error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if t.errors == nil {
 		t.errors = []error{}
 	}
@@ -361,8 +395,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 			// Only merge back instance assigns and resource limits when we created the context,
 			// not when user passed their own Context
 			if !userProvidedContext {
-				// Merge back instance assigns from the render scope to persist across renders
-				if len(ctx.Scopes()) > 0 {
+				// Merge back instance assigns from the render scope to persist across
+				// renders, only when the template asks for Ruby's behaviour
+				if t.persistInstanceAssigns && len(ctx.Scopes()) > 0 {
 					lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
 					for k, v := range lastScope {
 						if k != "__drop__" { // Don't persist internal drop reference
@@ -477,39 +512,19 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 				panic(err)
 			})
 		}
-		// Check if context has a drop associated with it (for drop-as-context pattern)
-		// If the context doesn't already have a __drop__, check if template has one stored
-		if len(ctx.Scopes()) > 0 {
-			lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
-			if _, hasDropAlready := lastScope["__drop__"]; !hasDropAlready {
-				// If template has a __drop__ in instanceAssigns, copy it to this context
-				t.mu.Lock()
-				drop, hasDrop := t.instanceAssigns["__drop__"]
-				t.mu.Unlock()
-				if hasDrop {
-					lastScope["__drop__"] = drop
-				}
-			}
-		}
 	case map[string]interface{}:
-		t.mu.Lock()
-		outerScope := cloneStringMap(t.instanceAssigns)
-		t.mu.Unlock()
 		ctx = BuildContext(ContextConfig{
 			Environments:   []map[string]interface{}{v, t.assigns},
-			OuterScope:     outerScope,
+			OuterScope:     t.outerScope(),
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
 			RethrowErrors:  t.rethrowErrors,
 		})
 	case nil:
-		t.mu.Lock()
-		outerScope := cloneStringMap(t.instanceAssigns)
-		t.mu.Unlock()
 		ctx = BuildContext(ContextConfig{
 			Environments:   []map[string]interface{}{t.assigns},
-			OuterScope:     outerScope,
+			OuterScope:     t.outerScope(),
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
@@ -540,11 +555,9 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			drop.SetContext(ctx)
 			// Make the drop available as the primary lookup source
 			// by putting it in the outer scope with a special key
+			// The drop belongs to this render only: it is not kept for the next
+			// one, as in Ruby, where it is one of the render's environments
 			ctx.Scopes()[len(ctx.Scopes())-1]["__drop__"] = dropToStore
-			// Store in template's instance assigns for future renders (with mutex protection)
-			t.mu.Lock()
-			t.instanceAssigns["__drop__"] = dropToStore
-			t.mu.Unlock()
 		}
 	}
 
@@ -595,6 +608,9 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 
 	t.profiling = options.Profile
 	t.lineNumbers = options.LineNumbers || t.profiling
+	if options.PersistInstanceAssigns {
+		t.persistInstanceAssigns = true
+	}
 
 	// Create parse context
 	templateOpts := make(map[string]interface{})
