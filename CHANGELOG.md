@@ -13,6 +13,11 @@
   `WithLimits` (limits of the render) and `RaiseErrors` (the first recorded error ends the render, as
   Ruby's `render!`).
 
+## [5.11.0-port.8]
+
+`RenderBang` no longer changes the template, and a template's limits and profiler can be read while
+other renders of it run. Tagged `v5.11.7`.
+
 ### Fixed
 - **`RenderBang` applies to its own render.** It left the template raising its errors: the next
   `Render` of the same template raised an error out of `Render` instead of recording it. Ruby's
