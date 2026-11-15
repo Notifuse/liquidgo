@@ -2,7 +2,6 @@ package liquid
 
 import (
 	"encoding/base64"
-	"html"
 	"math"
 	"math/big"
 	"net/url"
@@ -74,8 +73,12 @@ func (sf *StandardFilters) Escape(input interface{}) string {
 	if input == nil {
 		return ""
 	}
-	return html.EscapeString(ToS(input, nil))
+	return htmlEscaper.Replace(ToS(input, nil))
 }
+
+// htmlEscaper escapes as Ruby's CGI.escapeHTML: the quote as &quot; and the
+// apostrophe as &#39; (Go's html.EscapeString writes &#34;).
+var htmlEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&#39;")
 
 // H is an alias for Escape.
 func (sf *StandardFilters) H(input interface{}) string {
@@ -141,11 +144,49 @@ func (sf *StandardFilters) URLDecode(input interface{}) (string, error) {
 	if input == nil {
 		return "", nil
 	}
-	decoded, err := url.QueryUnescape(ToS(input, nil))
-	if err != nil {
-		return "", NewArgumentError("invalid URL encoding")
+	decoded := cgiUnescape(ToS(input, nil))
+	if !utf8.ValidString(decoded) {
+		return "", NewArgumentError("invalid byte sequence in UTF-8")
 	}
 	return decoded, nil
+}
+
+// cgiUnescape decodes as Ruby's CGI.unescape: + is a space and %XX the byte XX;
+// a % that two hexadecimal digits do not follow stays as written. Go's
+// url.QueryUnescape fails on it, which lost the whole value.
+func cgiUnescape(s string) string {
+	if !strings.ContainsAny(s, "+%") {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case c == '+':
+			b.WriteByte(' ')
+		case c == '%' && i+2 < len(s) && isHexDigit(s[i+1]) && isHexDigit(s[i+2]):
+			b.WriteByte(unhex(s[i+1])<<4 | unhex(s[i+2]))
+			i += 2
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
+
+func isHexDigit(c byte) bool {
+	return '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F'
+}
+
+func unhex(c byte) byte {
+	switch {
+	case c <= '9':
+		return c - '0'
+	case c <= 'F':
+		return c - 'A' + 10
+	default:
+		return c - 'a' + 10
+	}
 }
 
 // Base64Encode encodes a string to Base64 format.

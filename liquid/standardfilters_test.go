@@ -130,10 +130,20 @@ func TestStandardFiltersURLDecode(t *testing.T) {
 		t.Errorf("URLDecode(nil) = %q, want empty string", result2)
 	}
 
-	// Test with invalid encoding
-	_, err3 := sf.URLDecode("%invalid")
-	if err3 == nil {
-		t.Error("Expected error for invalid URL encoding")
+	// A % that two hexadecimal digits do not follow stays as written, as Ruby's
+	// CGI.unescape leaves it (before, the whole value was lost to an error).
+	result3, err3 := sf.URLDecode("%invalid")
+	if err3 != nil || result3 != "%invalid" {
+		t.Errorf("URLDecode(%%invalid) = %q, %v; want \"%%invalid\", no error", result3, err3)
+	}
+	result4, err4 := sf.URLDecode("%E2%82%AC%2")
+	if err4 != nil || result4 != "€%2" {
+		t.Errorf("URLDecode(%%E2%%82%%AC%%2) = %q, %v; want \"€%%2\"", result4, err4)
+	}
+
+	// Bytes that are not UTF-8 are an error, as in Ruby.
+	if _, err5 := sf.URLDecode("a%FFb"); err5 == nil {
+		t.Error("Expected an error for a decoded byte sequence that is not UTF-8")
 	}
 }
 
