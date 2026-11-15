@@ -1499,6 +1499,8 @@ const (
 // property. An integer gives its bit at an integer property and raises a
 // TypeError for any other property, as Integer#[].
 func indexItem(item, property interface{}) (interface{}, indexKind) {
+	// Ruby's array filters read each item's to_liquid
+	item = ToLiquid(item)
 	switch v := item.(type) {
 	case nil, bool, float32, float64:
 		return nil, noIndex
@@ -1578,7 +1580,11 @@ func supportsIndexing(item interface{}) bool {
 		if v.Kind() == reflect.Ptr && !v.IsNil() {
 			v = v.Elem()
 		}
-		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
+		if v.Kind() == reflect.Map {
+			return true
+		}
+		// Only a drop gives its properties; a plain Go struct exposes nothing
+		if v.Kind() == reflect.Struct && isDrop(item) {
 			return true
 		}
 	}

@@ -118,6 +118,27 @@ func main() {
 }
 ```
 
+### What a Template Reads
+
+A template reads maps (of any key and value type), slices and arrays, strings, numbers, booleans
+and `time.Time`, which renders and takes the `date` filter. A Go struct exposes nothing to a
+template, neither fields nor methods, and renders as nothing, as in Ruby, where only a
+`Liquid::Drop` has its methods invoked. To give a struct to a template:
+
+- implement `ToLiquid() interface{}` (with a value receiver) and return a map of what the template
+  may read:
+
+  ```go
+  func (u User) ToLiquid() interface{} {
+      return map[string]interface{}{"name": u.Name}
+  }
+  ```
+
+- or make it a drop by embedding `*liquid.Drop`: its exported methods without arguments and its
+  exported fields become readable (`{{ user.first_name }}` calls `FirstName()`).
+
+A type with a `String()` or `Error()` method renders that text.
+
 ### Custom Filters
 
 ```go

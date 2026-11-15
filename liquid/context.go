@@ -513,9 +513,16 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 				delete(c.dropInvokeStack, keyStr)
 			}()
 
-			// Always try to invoke on the drop - if the method doesn't exist,
-			// InvokeDropOn will call LiquidMethodMissing as a fallback
-			return InvokeDropOn(drop, keyStr)
+			// Invoke on the drop - if the method doesn't exist,
+			// InvokeDropOn will call LiquidMethodMissing as a fallback.
+			// Data given as a plain Go struct exposes nothing.
+			if isDrop(drop) {
+				return InvokeDropOn(drop, keyStr)
+			}
+			if missing, ok := methodMissing(drop); ok {
+				return missing(keyStr)
+			}
+			return nil
 		}
 	}
 

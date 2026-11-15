@@ -526,6 +526,13 @@ func (m *mapFileSystem) FullPath(name string) (string, error) {
 // This tests the issues identified in SLICE_TYPE_COMPATIBILITY_REPORT.md.
 
 // TestBlogPostStandardFilters tests standard filters with []BlogPost.
+//
+// BlogPost is a plain Go struct, not a drop: a template reads none of its
+// fields, as in Ruby, where only a Liquid::Drop has its methods invoked.
+// These cases keep their data and check that the filters and tags still
+// count, slice and loop over the posts without reading a property. The same
+// templates over posts that implement ToLiquid or are drops are in
+// plain_struct_test.go.
 func TestBlogPostStandardFilters(t *testing.T) {
 	posts := SampleBlogPosts()
 	emptyPosts := []BlogPost{}
@@ -539,27 +546,26 @@ func TestBlogPostStandardFilters(t *testing.T) {
 
 	// First filter
 	t.Run("First filter", func(t *testing.T) {
-		assertTemplateResult(t, "Getting Started with Go", `{{ posts | first | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Getting Started with Go", `{{ posts | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | first | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Last filter
 	t.Run("Last filter", func(t *testing.T) {
-		assertTemplateResult(t, "Performance Optimization", `{{ posts | last | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Performance Optimization", `{{ posts | last | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | last | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | last | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Join filter
 	t.Run("Join filter", func(t *testing.T) {
-		expected := "Getting Started with Go, Advanced Liquid Templates, Understanding Reflection, Testing Best Practices, Performance Optimization"
-		assertTemplateResult(t, expected, `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, expected, `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, ", , , , ", `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, ", , , , ", `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Slice filter
 	t.Run("Slice filter", func(t *testing.T) {
-		assertTemplateResult(t, "Getting Started with Go, Advanced Liquid Templates", `{{ posts | slice: 0, 2 | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Getting Started with Go, Advanced Liquid Templates", `{{ posts | slice: 0, 2 | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, ", ", `{{ posts | slice: 0, 2 | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, ", ", `{{ posts | slice: 0, 2 | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Concat filter
@@ -572,27 +578,27 @@ func TestBlogPostStandardFilters(t *testing.T) {
 
 	// Reverse filter
 	t.Run("Reverse filter", func(t *testing.T) {
-		assertTemplateResult(t, "Performance Optimization", `{{ posts | reverse | first | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Performance Optimization", `{{ posts | reverse | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | reverse | first | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | reverse | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Sort filter
 	t.Run("Sort filter", func(t *testing.T) {
-		assertTemplateResult(t, "Advanced Liquid Templates", `{{ posts | sort: 'title' | first | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Advanced Liquid Templates", `{{ posts | sort: 'title' | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | sort: 'title' | first | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | sort: 'title' | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// SortNatural filter
 	t.Run("SortNatural filter", func(t *testing.T) {
-		assertTemplateResult(t, "Advanced Liquid Templates", `{{ posts | sort_natural: 'title' | first | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Advanced Liquid Templates", `{{ posts | sort_natural: 'title' | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | sort_natural: 'title' | first | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | sort_natural: 'title' | first | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Uniq filter
 	t.Run("Uniq filter", func(t *testing.T) {
 		duplicatePosts := []BlogPost{posts[0], posts[1], posts[0]}
-		assertTemplateResult(t, "2", `{{ posts | uniq: 'author' | size }}`, map[string]interface{}{"posts": duplicatePosts})
-		assertTemplateResult(t, "2", `{{ posts | uniq: 'author' | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(duplicatePosts)})
+		assertTemplateResult(t, "0", `{{ posts | uniq: 'author' | size }}`, map[string]interface{}{"posts": duplicatePosts})
+		assertTemplateResult(t, "0", `{{ posts | uniq: 'author' | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(duplicatePosts)})
 	})
 
 	// Compact filter
@@ -603,72 +609,74 @@ func TestBlogPostStandardFilters(t *testing.T) {
 
 	// Map filter
 	t.Run("Map filter", func(t *testing.T) {
-		expected := "Getting Started with Go, Advanced Liquid Templates, Understanding Reflection, Testing Best Practices, Performance Optimization"
-		assertTemplateResult(t, expected, `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Alice, Bob, Charlie, Alice, Bob", `{{ posts | map: 'author' | join: ', ' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, expected, `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, ", , , , ", `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, ", , , , ", `{{ posts | map: 'author' | join: ', ' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, ", , , , ", `{{ posts | map: 'title' | join: ', ' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Where filter
 	t.Run("Where filter", func(t *testing.T) {
-		assertTemplateResult(t, "4", `{{ posts | where: 'published', true | size }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "2", `{{ posts | where: 'author', 'Alice' | size }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "4", `{{ posts | where: 'published', true | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "0", `{{ posts | where: 'published', true | size }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "0", `{{ posts | where: 'author', 'Alice' | size }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "0", `{{ posts | where: 'published', true | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Reject filter
 	t.Run("Reject filter", func(t *testing.T) {
-		assertTemplateResult(t, "1", `{{ posts | reject: 'published', true | size }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "1", `{{ posts | reject: 'published', true | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "0", `{{ posts | reject: 'published', true | size }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "0", `{{ posts | reject: 'published', true | size }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Has filter
 	t.Run("Has filter", func(t *testing.T) {
-		assertTemplateResult(t, "found", `{% if posts | has: 'author', 'Alice' %}found{% else %}not found{% endif %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "not found", `{% if posts | has: 'author', 'Alice' %}found{% else %}not found{% endif %}`, map[string]interface{}{"posts": posts})
 		assertTemplateResult(t, "not found", `{% if posts | has: 'author', 'David' %}found{% else %}not found{% endif %}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "found", `{% if posts | has: 'author', 'Alice' %}found{% else %}not found{% endif %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "not found", `{% if posts | has: 'author', 'Alice' %}found{% else %}not found{% endif %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Find filter
 	t.Run("Find filter", func(t *testing.T) {
-		assertTemplateResult(t, "Getting Started with Go", `{{ posts | find: 'author', 'Alice' | title }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "Getting Started with Go", `{{ posts | find: 'author', 'Alice' | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | find: 'author', 'Alice' | title }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | find: 'author', 'Alice' | title }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// FindIndex filter
 	t.Run("FindIndex filter", func(t *testing.T) {
-		assertTemplateResult(t, "1", `{{ posts | find_index: 'author', 'Bob' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "1", `{{ posts | find_index: 'author', 'Bob' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "", `{{ posts | find_index: 'author', 'Bob' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{{ posts | find_index: 'author', 'Bob' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 
 	// Sum filter
 	t.Run("Sum filter", func(t *testing.T) {
-		assertTemplateResult(t, "43", `{{ posts | sum: 'comments_count' }}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, "43", `{{ posts | sum: 'comments_count' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "0", `{{ posts | sum: 'comments_count' }}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "0", `{{ posts | sum: 'comments_count' }}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 	})
 }
 
 // TestBlogPostTags tests tags that process slices with []BlogPost.
+//
+// BlogPost is a plain Go struct, not a drop: a template reads none of its
+// fields, as in Ruby, where only a Liquid::Drop has its methods invoked.
+// These cases keep their data and check that the filters and tags still
+// count, slice and loop over the posts without reading a property. The same
+// templates over posts that implement ToLiquid or are drops are in
+// plain_struct_test.go.
 func TestBlogPostTags(t *testing.T) {
 	posts := SampleBlogPosts()
 
 	// For tag
 	t.Run("For tag", func(t *testing.T) {
-		expected := "Getting Started with Go by AliceAdvanced Liquid Templates by BobUnderstanding Reflection by CharlieTesting Best Practices by AlicePerformance Optimization by Bob"
-		assertTemplateResult(t, expected, `{% for post in posts %}{{ post.title }} by {{ post.author }}{% endfor %}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, expected, `{% for post in posts %}{{ post.title }} by {{ post.author }}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% for post in posts %}{{ post.title }} by {{ post.author }}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% for post in posts %}{{ post.title }} by {{ post.author }}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 
-		expected = "[1] Getting Started with Go[2] Advanced Liquid Templates[3] Understanding Reflection[4] Testing Best Practices[5] Performance Optimization"
-		assertTemplateResult(t, expected, `{% for post in posts %}[{{ forloop.index }}] {{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, expected, `{% for post in posts %}[{{ forloop.index }}] {{ post.title }}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		assertTemplateResult(t, "[1] [2] [3] [4] [5] ", `{% for post in posts %}[{{ forloop.index }}] {{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "[1] [2] [3] [4] [5] ", `{% for post in posts %}[{{ forloop.index }}] {{ post.title }}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 
-		expected = "FIRST: Getting Started with GoAdvanced Liquid TemplatesUnderstanding ReflectionTesting Best PracticesPerformance Optimization :LAST"
-		assertTemplateResult(t, expected, `{% for post in posts %}{% if forloop.first %}FIRST: {% endif %}{{ post.title }}{% if forloop.last %} :LAST{% endif %}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "FIRST:  :LAST", `{% for post in posts %}{% if forloop.first %}FIRST: {% endif %}{{ post.title }}{% if forloop.last %} :LAST{% endif %}{% endfor %}`, map[string]interface{}{"posts": posts})
 
-		assertTemplateResult(t, "Advanced Liquid TemplatesUnderstanding Reflection", `{% for post in posts offset:1 limit:2 %}{{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{% for post in posts offset:1 limit:2 %}{{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
 
-		expected = "Performance OptimizationTesting Best PracticesUnderstanding ReflectionAdvanced Liquid TemplatesGetting Started with Go"
-		assertTemplateResult(t, expected, `{% for post in posts reversed %}{{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{% for post in posts reversed %}{{ post.title }}{% endfor %}`, map[string]interface{}{"posts": posts})
 
 		assertTemplateResult(t, "EMPTY", `{% for post in posts %}{{ post.title }}{% endfor %}{% if posts.size == 0 %}EMPTY{% endif %}`, map[string]interface{}{"posts": []BlogPost{}})
 	})
@@ -678,10 +686,9 @@ func TestBlogPostTags(t *testing.T) {
 		partials := map[string]string{
 			"post": "{{ post.title }} by {{ post.author }}",
 		}
-		expected := "Getting Started with Go by AliceAdvanced Liquid Templates by BobUnderstanding Reflection by CharlieTesting Best Practices by AlicePerformance Optimization by Bob"
-		assertTemplateResult(t, expected, `{% render "post" for posts %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
-		assertTemplateResult(t, expected, `{% render "post" for posts %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)}, TemplateResultOptions{Partials: partials})
-		assertTemplateResult(t, "Getting Started with Go by Alice", `{% render "post" with posts[0] %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% render "post" for posts %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% render "post" for posts %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by ", `{% render "post" with posts[0] %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
 	})
 
 	// Include tag
@@ -689,23 +696,20 @@ func TestBlogPostTags(t *testing.T) {
 		partials := map[string]string{
 			"post_item": "{{ post_item.title }} by {{ post_item.author }}",
 		}
-		expected := "Getting Started with Go by AliceAdvanced Liquid Templates by BobUnderstanding Reflection by CharlieTesting Best Practices by AlicePerformance Optimization by Bob"
-		assertTemplateResult(t, expected, `{% include "post_item" with posts %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
-		assertTemplateResult(t, expected, `{% include "post_item" with posts %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)}, TemplateResultOptions{Partials: partials})
-		assertTemplateResult(t, "Getting Started with Go by Alice", `{% include "post_item" with posts[0] %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% include "post_item" with posts %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by  by  by  by  by ", `{% include "post_item" with posts %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)}, TemplateResultOptions{Partials: partials})
+		assertTemplateResult(t, " by ", `{% include "post_item" with posts[0] %}`, map[string]interface{}{"posts": posts}, TemplateResultOptions{Partials: partials})
 	})
 
 	// Cycle tag
 	t.Run("Cycle tag", func(t *testing.T) {
-		// When cycling with the same expression repeated, each iteration evaluates the expression
-		// in the current loop context, so we get each post's title
-		expected := "Getting Started with GoAdvanced Liquid TemplatesUnderstanding ReflectionTesting Best PracticesPerformance Optimization"
-		assertTemplateResult(t, expected, `{% for post in posts %}{% cycle post.title, post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": posts})
-		assertTemplateResult(t, expected, `{% for post in posts %}{% cycle post.title, post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
+		// Each iteration evaluates the cycle expression in the current loop
+		// context; post.title of a plain struct is nil
+		assertTemplateResult(t, "", `{% for post in posts %}{% cycle post.title, post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": posts})
+		assertTemplateResult(t, "", `{% for post in posts %}{% cycle post.title, post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": BlogPostsToInterfaceSlice(posts)})
 
-		// With 2 cycle values and 5 posts, the cycle alternates between evaluating variables[0] and variables[1]
-		// Since both are post.title, each evaluates to the current post's title
-		expected = "Getting Started with GoAdvanced Liquid TemplatesUnderstanding ReflectionTesting Best PracticesPerformance Optimization"
-		assertTemplateResult(t, expected, `{% for post in posts %}{% cycle 'colors': post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": posts})
+		// With 2 cycle values and 5 posts, the cycle alternates between
+		// variables[0] and variables[1], both post.title, nil here
+		assertTemplateResult(t, "", `{% for post in posts %}{% cycle 'colors': post.title, post.title %}{% endfor %}`, map[string]interface{}{"posts": posts})
 	})
 }

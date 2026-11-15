@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+- **A plain Go struct exposes nothing to a template.** A template read every exported field of
+  any struct and called its methods without arguments (`{{ user.password_hash }}`,
+  `{{ user.delete }}`), and `{{ user }}` wrote all its fields. As in Ruby, only a drop (a type that
+  embeds `liquid.Drop`) now exposes its methods and fields; a struct renders as nothing, also
+  inside a map or a list. An unknown filter no longer reads a property of its input
+  (`{{ posts | first | title }}`). To migrate, implement `ToLiquid()` with a value receiver and
+  return a map, or embed `*liquid.Drop`. `ToLiquid()` is now applied at each step of a lookup and
+  to the items read by `map`, `where`, `sort` and the other array filters, as in Ruby.
+  `time.Time` still renders and takes `date`; `{{ t.year }}` renders nothing, as in Ruby.
+
 ## [5.11.0-port.5]
 
 An option to HTML-escape every output, for HTML templates that output untrusted data. Off by

@@ -399,8 +399,59 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 			}
 			return arrayInspect(items, seen)
 		}
+		if isPlainStruct(obj) {
+			return ""
+		}
+		if rv := reflect.ValueOf(obj); rv.Kind() == reflect.Map {
+			if seen == nil {
+				seen = make(map[uintptr]bool)
+			}
+			return mapInspect(rv, seen)
+		}
 		return fmt.Sprintf("%v", obj)
 	}
+}
+
+// isPlainStruct reports whether obj is a Go struct, or a pointer to one, that
+// a template may not read: neither a drop nor a value with a String or an
+// Error method. It renders as nothing, so that fmt never writes its fields.
+func isPlainStruct(obj interface{}) bool {
+	switch obj.(type) {
+	case fmt.Stringer, error:
+		return false
+	}
+	rv := reflect.ValueOf(obj)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	return rv.Kind() == reflect.Struct && !isDrop(obj)
+}
+
+// mapInspect writes a map of any type as hashInspect does, so that the
+// values it holds are written as Liquid writes them.
+func mapInspect(rv reflect.Value, seen map[uintptr]bool) string {
+	ptr := rv.Pointer()
+	if seen[ptr] {
+		return "{...}"
+	}
+	seen[ptr] = true
+	defer delete(seen, ptr)
+
+	var b strings.Builder
+	b.WriteString("{")
+	iter := rv.MapRange()
+	first := true
+	for iter.Next() {
+		if !first {
+			b.WriteString(", ")
+		}
+		first = false
+		b.WriteString(Inspect(iter.Key().Interface(), seen))
+		b.WriteString("=>")
+		b.WriteString(Inspect(iter.Value().Interface(), seen))
+	}
+	b.WriteString("}")
+	return b.String()
 }
 
 // sliceItems returns the items of a typed slice or array, which Ruby has as
@@ -450,6 +501,12 @@ func Inspect(obj interface{}, seen map[uintptr]bool) string {
 		}
 		if rv := reflect.ValueOf(obj); rv.Kind() == reflect.String {
 			return strconv.Quote(rv.String())
+		}
+		if isPlainStruct(obj) {
+			return "nil"
+		}
+		if rv := reflect.ValueOf(obj); rv.Kind() == reflect.Map {
+			return mapInspect(rv, seen)
 		}
 		return fmt.Sprintf("%v", obj)
 	}

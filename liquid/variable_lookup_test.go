@@ -308,7 +308,7 @@ func TestVariableLookupTypedSlices(t *testing.T) {
 			name:     "[]struct index access",
 			data:     map[string]interface{}{"structs": []TestStruct{{Name: "first", Value: 1}, {Name: "second", Value: 2}}},
 			markup:   "structs[1].Name",
-			expected: "second",
+			expected: nil, // a plain struct, not a drop, exposes no field
 		},
 		{
 			name:     "[]string .size command",
@@ -376,7 +376,9 @@ func TestVariableLookupTypedSlices(t *testing.T) {
 	}
 }
 
-// TestVariableLookupStructFieldAccess tests that struct fields can be accessed with snake_case
+// TestVariableLookupStructFieldAccess checks that the fields of a plain Go
+// struct, which is not a drop, are not readable under any spelling, as in
+// Ruby, where only a Liquid::Drop has its methods invoked.
 func TestVariableLookupStructFieldAccess(t *testing.T) {
 	type BlogPost struct {
 		Title         string
@@ -394,19 +396,19 @@ func TestVariableLookupStructFieldAccess(t *testing.T) {
 			name:     "CamelCase field",
 			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
 			markup:   "post.Title",
-			expected: "Test Post",
+			expected: nil,
 		},
 		{
 			name:     "snake_case to CamelCase",
 			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
 			markup:   "post.comments_count",
-			expected: 5,
+			expected: nil,
 		},
 		{
 			name:     "lowercase to CamelCase",
 			post:     BlogPost{Title: "Test Post", Author: "Alice", CommentsCount: 5},
 			markup:   "post.author",
-			expected: "Alice",
+			expected: nil,
 		},
 	}
 
