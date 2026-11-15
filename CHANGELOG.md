@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.4]
+
+`url_decode` no longer loses a value that holds a lone `%`, and `escape` writes quotes as Ruby does.
+Tagged `v5.11.3`.
+
 ### Fixed
 - **`url_decode`** decodes as Ruby's `CGI.unescape`: a `%` that two hexadecimal digits do not
   follow stays as written (`'%E2%82%AC%2'` gives `€%2`). Before, such a `%` made the filter fail,
