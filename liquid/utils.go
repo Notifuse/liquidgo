@@ -385,6 +385,10 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		return "false"
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64)
+	case time.Time:
+		return rubyTime(v, false)
+	case *time.Time:
+		return rubyTime(*v, false)
 	case map[string]interface{}:
 		if seen == nil {
 			seen = make(map[uintptr]bool)
@@ -416,6 +420,20 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		}
 		return fmt.Sprintf("%v", obj)
 	}
+}
+
+// rubyTime writes a time as Ruby's Time#to_s, or Time#inspect, which adds
+// the fraction of a second: "2026-11-15 10:00:00 UTC" for a time in UTC,
+// "2026-11-15 11:00:00 +0100" otherwise.
+func rubyTime(t time.Time, inspect bool) string {
+	layout := "2006-01-02 15:04:05"
+	if inspect {
+		layout += ".999999999"
+	}
+	if t.Location() == time.UTC {
+		return t.Format(layout) + " UTC"
+	}
+	return t.Format(layout + " -0700")
 }
 
 // indirect returns what a pointer that renders as its target points to:
@@ -537,6 +555,10 @@ func Inspect(obj interface{}, seen map[uintptr]bool) string {
 		return arrayInspect(v, seen)
 	case string:
 		return strconv.Quote(v)
+	case time.Time:
+		return rubyTime(v, true)
+	case *time.Time:
+		return rubyTime(*v, true)
 	default:
 		// A Go value is written without its Go type: a value with a String
 		// method as a string, a number or a boolean as it renders, a typed

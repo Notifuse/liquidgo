@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- **A time renders as in Ruby.** `{{ t }}` with a `time.Time` wrote Go's form,
+  `2026-11-15 10:00:00 +0000 UTC`; it writes Ruby's `Time#to_s`, `2026-11-15 10:00:00 UTC` for a
+  time in UTC and `2026-11-15 11:00:00 +0100` otherwise. Inside a list or a hash it writes
+  `Time#inspect`, which adds the fraction of a second. The `date` filter is unchanged.
+
 ## [5.11.0-port.6]
 
 Fixes from an architecture audit, for templates written by untrusted users. Each render starts
