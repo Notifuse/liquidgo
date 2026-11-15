@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.6]
+
+Fixes from an architecture audit, for templates written by untrusted users. Each render starts
+from its own data, a plain Go struct exposes nothing to a template, and local filters work on every
+render, also concurrently. Behaviour changes for Go integrations: see Changed. Tagged `v5.11.5`.
+
 ### Changed
 - **A plain Go struct exposes nothing to a template.** A template read every exported field of
   any struct and called its methods without arguments (`{{ user.password_hash }}`,
