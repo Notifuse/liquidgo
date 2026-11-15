@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Local filters on every render.** `RenderOptions.Filters` applied only to the render that
+  built the environment's strainer cache entry: the next renders with the same filters rendered
+  their input unchanged. The cache is also read and written under a lock, so concurrent renders
+  with local filters no longer race.
+
 ## [5.11.0-port.5]
 
 An option to HTML-escape every output, for HTML templates that output untrusted data. Off by

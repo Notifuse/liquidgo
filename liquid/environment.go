@@ -2,6 +2,7 @@ package liquid
 
 import (
 	"reflect"
+	"sync"
 )
 
 // Environment is the container for all configuration options of Liquid, such as
@@ -13,10 +14,13 @@ type Environment struct {
 	exceptionRenderer          func(error) interface{}
 	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
-	errorMode                  string
-	outputEscape               bool
-	rawFilterRegistered        bool
-	registeredFilters          []interface{} // Store filter instances for use when creating strainers
+	// cacheMu guards strainerTemplateClassCache, which renders read and write
+	// concurrently.
+	cacheMu             sync.RWMutex
+	errorMode           string
+	outputEscape        bool
+	rawFilterRegistered bool
+	registeredFilters   []interface{} // Store filter instances for use when creating strainers
 }
 
 // NewEnvironment creates a new environment instance.
@@ -70,7 +74,9 @@ func (e *Environment) RegisterTag(name string, tagClass interface{}) {
 // RegisterFilter registers a new filter with the environment.
 func (e *Environment) RegisterFilter(filter interface{}) error {
 	// Clear cache
+	e.cacheMu.Lock()
 	e.strainerTemplateClassCache = make(map[string]*StrainerTemplateClass)
+	e.cacheMu.Unlock()
 	// Store the filter instance
 	e.registeredFilters = append(e.registeredFilters, filter)
 	return e.strainerTemplate.AddFilter(filter)
@@ -78,7 +84,9 @@ func (e *Environment) RegisterFilter(filter interface{}) error {
 
 // RegisterFilters registers multiple filters with this environment.
 func (e *Environment) RegisterFilters(filters []interface{}) error {
+	e.cacheMu.Lock()
 	e.strainerTemplateClassCache = make(map[string]*StrainerTemplateClass)
+	e.cacheMu.Unlock()
 	for _, filter := range filters {
 		// Store the filter instance
 		e.registeredFilters = append(e.registeredFilters, filter)
@@ -102,9 +110,13 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	// Create a key for caching based on filters
 	cacheKey := e.createStrainerCacheKey(filters)
 
-	// Check cache first
-	if cached, ok := e.strainerTemplateClassCache[cacheKey]; ok {
-		return NewStrainerTemplate(cached, context, strictFilters)
+	// Check cache first. A cached class holds the filter methods only: the
+	// filter instances of this render are given to the strainer as on a miss.
+	e.cacheMu.RLock()
+	cached, ok := e.strainerTemplateClassCache[cacheKey]
+	e.cacheMu.RUnlock()
+	if ok {
+		return NewStrainerTemplateWithFilters(cached, context, strictFilters, filters)
 	}
 
 	// Create new class and cache it
@@ -119,7 +131,9 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	}
 
 	// Cache the class
+	e.cacheMu.Lock()
 	e.strainerTemplateClassCache[cacheKey] = class
+	e.cacheMu.Unlock()
 
 	return NewStrainerTemplateWithFilters(class, context, strictFilters, filters)
 }
