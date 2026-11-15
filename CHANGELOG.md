@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- **`RenderBang` applies to its own render.** It left the template raising its errors: the next
+  `Render` of the same template raised an error out of `Render` instead of recording it. Ruby's
+  `render!` also sticks, but there raising is part of the API.
+
 ## [5.11.0-port.7]
 
 A time written without the `date` filter renders as in Ruby. Tagged `v5.11.6`.

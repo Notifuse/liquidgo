@@ -60,7 +60,6 @@ type Template struct {
 	name            string
 	warnings        []error
 	errors          []error
-	rethrowErrors   bool
 	lineNumbers     bool
 	profiling       bool
 	// persistInstanceAssigns: see TemplateOptions.PersistInstanceAssigns.
@@ -118,7 +117,6 @@ func NewTemplate(options *TemplateOptions) *Template {
 	return &Template{
 		persistInstanceAssigns: options != nil && options.PersistInstanceAssigns,
 		environment:            env,
-		rethrowErrors:          false,
 		resourceLimits:         resourceLimits,
 		registers:              make(map[string]interface{}, 4), // Pre-allocate map
 		assigns:                make(map[string]interface{}, 8), // Pre-allocate for typical assigns
@@ -296,7 +294,13 @@ func (t *Template) Errors() []error {
 //   - Filters: array with local filters
 //   - Registers: hash with register variables. Those can be accessed from
 //     filters and tags and might be useful to integrate liquid more with its host application
-func (t *Template) Render(assigns interface{}, options *RenderOptions) (output string) {
+func (t *Template) Render(assigns interface{}, options *RenderOptions) string {
+	return t.render(assigns, options, false)
+}
+
+// render renders the template; rethrow makes an error raise out of the
+// render, as Ruby's render!, for this render only.
+func (t *Template) render(assigns interface{}, options *RenderOptions, rethrow bool) (output string) {
 	if t.root == nil {
 		return ""
 	}
@@ -307,7 +311,7 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		defer func() { ctx.cancel, ctx.done = cancel, done }()
 	}
 
-	context := t.buildContext(assigns, options)
+	context := t.buildContext(assigns, options, rethrow)
 
 	// Track whether we should merge back state (only when we create the context, not when user passes one)
 	_, userProvidedContext := assigns.(*Context)
@@ -440,10 +444,11 @@ type RenderOptions struct {
 	StrictFilters     bool
 }
 
-// RenderBang renders the template with rethrow_errors enabled.
+// RenderBang renders the template with rethrow_errors enabled: an error
+// raises out of the render, as Ruby's render!. Unlike Ruby, this applies to
+// this render only, and a later Render of the template records its errors.
 func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) string {
-	t.rethrowErrors = true
-	return t.Render(assigns, options)
+	return t.render(assigns, options, true)
 }
 
 // RenderToOutputBuffer renders the template with context and appends the
@@ -501,13 +506,13 @@ func (t *Template) RenderToOutput(context TagContext, output *OutputBuffer) {
 }
 
 // buildContext builds a Context from assigns and options.
-func (t *Template) buildContext(assigns interface{}, options *RenderOptions) TagContext {
+func (t *Template) buildContext(assigns interface{}, options *RenderOptions, rethrow bool) TagContext {
 	var ctx *Context
 
 	switch v := assigns.(type) {
 	case *Context:
 		ctx = v
-		if t.rethrowErrors {
+		if rethrow {
 			ctx.SetExceptionRenderer(func(err error) interface{} {
 				panic(err)
 			})
@@ -519,7 +524,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
-			RethrowErrors:  t.rethrowErrors,
+			RethrowErrors:  rethrow,
 		})
 	case nil:
 		ctx = BuildContext(ContextConfig{
@@ -528,7 +533,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
-			RethrowErrors:  t.rethrowErrors,
+			RethrowErrors:  rethrow,
 		})
 	default:
 		// Check if it's a drop - if so, we need to make it accessible for variable lookups
@@ -545,7 +550,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions) Tag
 			Registers:      NewRegisters(t.registers),
 			ResourceLimits: t.resourceLimits,
 			Environment:    t.environment,
-			RethrowErrors:  t.rethrowErrors,
+			RethrowErrors:  rethrow,
 		})
 
 		// If assigns is a drop, we need special handling for variable lookups
