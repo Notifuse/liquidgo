@@ -238,14 +238,25 @@ func TestToLiquidAndDropsStayReadable(t *testing.T) {
 	}
 }
 
-// A time.Time renders and takes the date filter; its methods are not read,
-// as in Ruby, where Time is not a drop.
+// A time.Time renders as Ruby's Time#to_s and takes the date filter; its
+// methods are not read, as in Ruby, where Time is not a drop.
 func TestATimeRendersButExposesNoMethod(t *testing.T) {
 	now := time.Date(2026, 11, 15, 10, 0, 0, 0, time.UTC)
-	data := map[string]interface{}{"t": now, "tp": &now}
+	paris := time.FixedZone("CET", 3600)
+	var unset *time.Time
+	data := map[string]interface{}{
+		"t":     now,
+		"tp":    &now,
+		"local": now.In(paris),
+		"frac":  map[string]interface{}{"at": now.Add(500 * time.Millisecond)},
+		"unset": unset,
+	}
 	for _, c := range []struct{ src, want string }{
 		{`{{ t | date: "%Y-%m-%d" }}|{{ tp | date: "%Y-%m-%d" }}`, "2026-11-15|2026-11-15"},
-		{`{{ t }}|{{ tp }}`, "2026-11-15 10:00:00 +0000 UTC|2026-11-15 10:00:00 +0000 UTC"},
+		{`{{ t }}|{{ tp }}`, "2026-11-15 10:00:00 UTC|2026-11-15 10:00:00 UTC"},
+		{`{{ local }}|{{ t | append: "" }}|[{{ unset }}]`, "2026-11-15 11:00:00 +0100|2026-11-15 10:00:00 UTC|[]"},
+		// inside a hash, a time is written as Time#inspect, with its fraction of a second
+		{`{{ frac }}`, `{"at"=>2026-11-15 10:00:00.5 UTC}`},
 		{`[{{ t.year }}][{{ tp.year }}]`, "[][]"},
 	} {
 		if got := renderPlain(t, c.src, data); got != c.want {
