@@ -63,3 +63,69 @@ func TestAuditPersistInstanceAssignsKeepsRubyBehaviour(t *testing.T) {
 		t.Errorf("render B = %q, want %q with PersistInstanceAssigns", got, "[T]")
 	}
 }
+
+type auditRecipientDrop struct {
+	*liquid.Drop
+	Email string
+}
+
+// Data given as a drop belongs to its render only: a later render of the
+// same template, with a map, nil or a Context, does not see it.
+func TestAuditDropDoesNotLeakBetweenRenders(t *testing.T) {
+	for _, persist := range []bool{false, true} {
+		tpl := auditParse(t, auditEnv(), `[{{ email }}{{ __drop__.email }}]`, liquid.TemplateOptions{PersistInstanceAssigns: persist})
+		if got := tpl.Render(&auditRecipientDrop{Drop: liquid.NewDrop(), Email: "alice@example.com"}, nil); got != "[alice@example.comalice@example.com]" {
+			t.Fatalf("persist %v: render A = %q", persist, got)
+		}
+		for name, data := range map[string]interface{}{
+			"map":     map[string]interface{}{"name": "bob"},
+			"nil":     nil,
+			"context": liquid.NewContext(),
+		} {
+			if got := tpl.Render(data, nil); got != "[]" {
+				t.Errorf("persist %v: render B with %s = %q, want %q: the drop of A leaks into B", persist, name, got, "[]")
+			}
+		}
+	}
+}
+
+// Turning PersistInstanceAssigns off forgets what earlier renders kept.
+func TestAuditTurningPersistenceOffForgetsAssigns(t *testing.T) {
+	src := `{% if admin %}{% assign secret = token %}{% endif %}[{{ secret }}]`
+	tpl := auditParse(t, auditEnv(), src, liquid.TemplateOptions{PersistInstanceAssigns: true})
+	tpl.Render(map[string]interface{}{"admin": true, "token": "T"}, nil)
+	tpl.SetPersistInstanceAssigns(false)
+	if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[]" {
+		t.Errorf("render after SetPersistInstanceAssigns(false) = %q, want %q", got, "[]")
+	}
+	tpl.SetPersistInstanceAssigns(true)
+	if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[]" {
+		t.Errorf("render after turning it on again = %q, want %q", got, "[]")
+	}
+}
+
+// Without PersistInstanceAssigns, a render does not start from instance
+// assigns, even ones the caller set through InstanceAssigns.
+func TestAuditInstanceAssignsUnusedWithoutPersistence(t *testing.T) {
+	tpl := auditParse(t, auditEnv(), `[{{ secret }}]`)
+	tpl.InstanceAssigns()["secret"] = "T"
+	if got := tpl.Render(map[string]interface{}{}, nil); got != "[]" {
+		t.Errorf("render = %q, want %q", got, "[]")
+	}
+}
+
+// Errors can be read while other renders run.
+func TestAuditErrorsDuringConcurrentRenders(t *testing.T) {
+	tpl := auditParse(t, auditEnv(), `{{ 1 | divided_by: x }}{{ a.b.c }}`)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			tpl.Render(map[string]interface{}{"x": 0}, nil)
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		_ = tpl.Errors()
+	}
+	<-done
+}

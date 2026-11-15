@@ -465,18 +465,13 @@ func TestCanUseDropAsContext(t *testing.T) {
 		t.Errorf("Expected 'bar', got %q", result)
 	}
 
-	// Set registers on context for baz test
-	ctx := liquid.BuildContext(liquid.ContextConfig{
-		Environment: env,
-		Registers:   liquid.NewRegisters(map[string]interface{}{"lulz": "haha"}),
-	})
-	drop.SetContext(ctx)
-
+	// baz reads the template's registers, as in Ruby's test, which renders
+	// the drop again: a drop given to one render is not kept for the next
 	err = tmpl.Parse(`{{baz}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(ctx, &liquid.RenderOptions{})
+	result = tmpl.RenderBang(drop, &liquid.RenderOptions{})
 	if result != "haha" {
 		t.Errorf("Expected 'haha', got %q", result)
 	}
