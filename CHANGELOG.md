@@ -3,6 +3,21 @@
 ## [Unreleased]
 
 ### Changed
+- **A plain Go struct exposes nothing to a template.** A template read every exported field of
+  any struct and called its methods without arguments (`{{ user.password_hash }}`,
+  `{{ user.delete }}`), the array filters called its `Get` method, and `{{ user }}` wrote all its
+  fields. As in Ruby, only a drop (a type that embeds `liquid.Drop`) now exposes its methods and
+  fields. A struct renders as nothing, and as `nil` inside a list or a hash, where Ruby raises an
+  internal error for an object without `to_liquid`. An unknown filter no longer reads a property
+  of its input (`{{ posts | first | title }}`). To migrate, implement `ToLiquid()` with a value
+  receiver and return a map, or embed `*liquid.Drop`. `ToLiquid()` is now applied at each step of
+  a lookup, to the items the array filters read and to a value written in the output, as Ruby
+  calls `to_liquid`. `time.Time` still renders and takes `date`; `{{ t.year }}` renders nothing,
+  as in Ruby.
+- **Pointers and hashes render the same on every run.** A pointer renders as what it points to (a
+  pointer to a pointer wrote an address) and a nil pointer as nothing (it wrote `<nil>`). A typed
+  map renders as a Liquid hash, and every hash with its keys in sorted order: a Go map has no
+  order, so `{{ hash }}` could change from one render to the next.
 - **Each render starts from its own data.** A `Template` no longer keeps what a render assigns
   (`assign`, `capture`) for its next render: rendered for one recipient who sets a variable, then for
   another who does not, it showed the first recipient's value to the second. Data given as a drop

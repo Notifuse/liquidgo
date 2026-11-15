@@ -47,7 +47,42 @@ func (d *Drop) LiquidMethodMissing(method string) interface{} {
 	return nil
 }
 
-// InvokeDropOn invokes a method on any drop type.
+// dropInvoker is the method every drop has: a type that embeds Drop gets it,
+// and ForloopDrop and TablerowloopDrop declare it.
+type dropInvoker interface {
+	InvokeDrop(methodOrKey string) interface{}
+}
+
+var dropInvokerType = reflect.TypeOf((*dropInvoker)(nil)).Elem()
+
+// isDrop reports whether a template may read the methods and fields of obj:
+// only a drop exposes them, as in Ruby, where only a Liquid::Drop has its
+// methods invoked. A plain Go struct exposes nothing; give it a ToLiquid
+// method that returns a map, or make it a drop. A struct value whose
+// pointer is a drop (a typed slice of drops) counts as a drop.
+func isDrop(obj interface{}) bool {
+	if obj == nil {
+		return false
+	}
+	if _, ok := obj.(dropInvoker); ok {
+		return true
+	}
+	t := reflect.TypeOf(obj)
+	return t.Kind() == reflect.Struct && reflect.PointerTo(t).Implements(dropInvokerType)
+}
+
+// methodMissing returns the LiquidMethodMissing method of obj, if it has one.
+func methodMissing(obj interface{}) (func(string) interface{}, bool) {
+	m, ok := obj.(interface{ LiquidMethodMissing(string) interface{} })
+	if !ok {
+		return nil, false
+	}
+	return m.LiquidMethodMissing, true
+}
+
+// InvokeDropOn invokes a method on any drop type. It reads the methods and
+// fields of whatever it is given: the template lookups call it on drops only
+// (see isDrop).
 // Optimization: Uses cached method lookups to avoid repeated reflection.
 func InvokeDropOn(drop interface{}, methodOrKey string) interface{} {
 	if !IsInvokable(drop, methodOrKey) {

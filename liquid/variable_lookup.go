@@ -215,6 +215,9 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 	obj := context.FindVariable(ToString(name, nil), false)
 
 	for i, lookup := range vl.lookups {
+		// Each step reads the liquid form of the object it reached, as Ruby
+		// calls to_liquid on every result of a lookup
+		obj = ToLiquid(obj)
 		key := context.Evaluate(lookup)
 		key = ToLiquidValue(key)
 
@@ -364,9 +367,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				}
 			}
 
-			// Try drop method invocation (for drops like forloop.last)
-			// This handles objects that respond to methods
-			if IsInvokable(obj, keyStr) {
+			// Try drop method invocation (for drops like forloop.last).
+			// Only a drop exposes its methods and fields: a plain Go
+			// struct exposes nothing, as a Ruby object that is not a Drop
+			if isDrop(obj) && IsInvokable(obj, keyStr) {
 				dropResult := InvokeDropOn(obj, keyStr)
 				// Even if result is nil, we found the method, so use it
 				obj = dropResult
@@ -374,10 +378,8 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			}
 
 			// Check for LiquidMethodMissing
-			if dropWithMissing, ok := obj.(interface {
-				LiquidMethodMissing(string) interface{}
-			}); ok {
-				obj = dropWithMissing.LiquidMethodMissing(keyStr)
+			if missing, ok := methodMissing(obj); ok {
+				obj = missing(keyStr)
 				continue
 			}
 		}

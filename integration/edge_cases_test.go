@@ -46,7 +46,9 @@ type post struct {
 
 // TestAStringerOrATypedSliceRendersAsBefore checks that a value with a
 // String method renders it, even when it is a slice or an array, and that a
-// typed slice given to a string filter writes its items without Go types.
+// typed slice given to a string filter writes its items without Go types. A
+// post is a plain Go struct, not a drop: it writes nothing of its fields,
+// and nil in a list.
 func TestAStringerOrATypedSliceRendersAsBefore(t *testing.T) {
 	data := map[string]interface{}{
 		"id":    stringerBytes{1, 2, 3, 4},
@@ -58,7 +60,7 @@ func TestAStringerOrATypedSliceRendersAsBefore(t *testing.T) {
 		{"{{ id }}|{{ ip }}", "id-1234|10.0.0.1"},
 		{`{{ id | append: "" }}|{{ ip | append: "" }}`, "id-1234|10.0.0.1"},
 		{`{{ uints | append: "" }}`, "[5, 6]"},
-		{`{{ posts | append: "" }}`, "[{b 2}]"},
+		{`{{ posts | append: "" }}`, "[nil]"},
 		{"{{ uints }}", "56"},
 	} {
 		r := renderWith(newEnv("lax", limits{}), c.source, data)
@@ -70,18 +72,19 @@ func TestAStringerOrATypedSliceRendersAsBefore(t *testing.T) {
 
 type titled struct{ Title string }
 
-// TestTheArrayFiltersReadAPropertyOfAPointer checks that a pointer to a
-// struct and a drop have a property for the array filters.
+// TestTheArrayFiltersReadAPropertyOfAPointer checks that a drop has a
+// property for the array filters, and that a pointer to a plain Go struct,
+// which is not a drop, has none, as in Ruby.
 func TestTheArrayFiltersReadAPropertyOfAPointer(t *testing.T) {
 	data := map[string]interface{}{
 		"pposts": []interface{}{&titled{"a"}, &titled{"b"}, &titled{"a"}},
 		"drops":  []interface{}{NewObjectWrapperDrop(2), NewObjectWrapperDrop(1), NewObjectWrapperDrop(2)},
 	}
 	for _, c := range []struct{ source, want string }{
-		{`{{ pposts | uniq: "title" | size }}`, "2"},
-		{`{{ pposts | where: "title", "a" | size }}`, "2"},
-		{`{{ pposts | sort: "title" | map: "title" | join: "," }}`, "a,a,b"},
-		{`{{ pposts | compact: "title" | size }}`, "3"},
+		{`{{ pposts | uniq: "title" | size }}`, "0"},
+		{`{{ pposts | where: "title", "a" | size }}`, "0"},
+		{`{{ pposts | sort: "title" | map: "title" | join: "," }}`, ""},
+		{`{{ pposts | compact: "title" | size }}`, "0"},
 		{`{{ drops | uniq: "value" | size }}`, "2"},
 		{`{{ drops | sort: "value" | map: "value" | join: "," }}`, "1,2,2"},
 		{`{{ drops | where: "value", 2 | size }}`, "2"},

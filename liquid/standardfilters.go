@@ -971,8 +971,8 @@ func appendFlattened(result, arr []interface{}, seen map[flattenKey]bool) []inte
 // Each iterates over items, converting them to liquid values.
 func (it *InputIterator) Each(fn func(interface{})) {
 	for _, item := range it.input {
-		// Convert to liquid if needed
-		liquidItem := ToLiquidValue(item)
+		// Convert to liquid, as Ruby's InputIterator yields each item's to_liquid
+		liquidItem := ToLiquidValue(ToLiquid(item))
 
 		// Set context if supported
 		if it.context != nil {
@@ -1499,6 +1499,8 @@ const (
 // property. An integer gives its bit at an integer property and raises a
 // TypeError for any other property, as Integer#[].
 func indexItem(item, property interface{}) (interface{}, indexKind) {
+	// Ruby's array filters read each item's to_liquid
+	item = ToLiquid(item)
 	switch v := item.(type) {
 	case nil, bool, float32, float64:
 		return nil, noIndex
@@ -1569,16 +1571,20 @@ func supportsIndexing(item interface{}) bool {
 	case map[string]interface{}:
 		return true
 	default:
-		// Check if it has indexable methods via reflection
-		// Check for Drop interface
-		if _, ok := item.(interface{ Get(string) interface{} }); ok {
+		// A drop with a Get method gives its properties through it; Get on
+		// any other type is never called
+		if _, ok := item.(interface{ Get(string) interface{} }); ok && isDrop(item) {
 			return true
 		}
 		v := reflect.ValueOf(item)
 		if v.Kind() == reflect.Ptr && !v.IsNil() {
 			v = v.Elem()
 		}
-		if v.Kind() == reflect.Map || v.Kind() == reflect.Struct {
+		if v.Kind() == reflect.Map {
+			return true
+		}
+		// Only a drop gives its properties; a plain Go struct exposes nothing
+		if v.Kind() == reflect.Struct && isDrop(item) {
 			return true
 		}
 	}

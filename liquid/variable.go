@@ -454,6 +454,7 @@ func WriteValue(output *OutputBuffer, value interface{}) {
 }
 
 func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
+	value = ToLiquid(value)
 	switch v := value.(type) {
 	case nil:
 		return

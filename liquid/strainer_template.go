@@ -146,16 +146,8 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 		}
 	}
 	if !methodInvokable {
-		// Before failing, try property access on the first argument
-		// This enables patterns like: {{ posts | first | title }}
-		if len(args) > 0 && args[0] != nil {
-			// Try to access property using InvokeDropOn
-			result := InvokeDropOn(args[0], method)
-			if result != nil {
-				return result, nil
-			}
-		}
-
+		// An unknown filter stays an unknown filter: it never reads a
+		// property or calls a method of its input, as in Ruby.
 		if st.strictFilters {
 			return nil, NewUndefinedFilter("undefined filter " + method)
 		}
