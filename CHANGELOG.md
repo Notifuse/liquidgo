@@ -7,6 +7,13 @@
   built the environment's strainer cache entry: the next renders with the same filters rendered
   their input unchanged. The cache is also read and written under a lock, so concurrent renders
   with local filters no longer race.
+- **Environment filters with local filters.** A render that passed `RenderOptions.Filters` lost the
+  filters registered on the environment (`RegisterFilter`): they rendered their input unchanged.
+  Both now apply, the local ones first for a name both define, as in Ruby.
+- **Filter types with the same name.** The strainer cache told filter types apart by their Go name
+  only: two `filters.Filters` from two packages shared one method table.
+- **Concurrent renders of partials.** Loading a partial for `render` or `include` wrote to the
+  tag's parse state, which every render of the template shares; it no longer does.
 
 ## [5.11.0-port.5]
 

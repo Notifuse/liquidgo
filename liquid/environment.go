@@ -109,6 +109,11 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 
 	// Create a key for caching based on filters
 	cacheKey := e.createStrainerCacheKey(filters)
+	// The strainer holds the environment's filter instances, then the
+	// render's, which take precedence, as Ruby's class for local filters
+	// subclasses the environment's strainer
+	instances := make([]interface{}, 0, len(e.registeredFilters)+len(filters))
+	instances = append(append(instances, e.registeredFilters...), filters...)
 
 	// Check cache first. A cached class holds the filter methods only: the
 	// filter instances of this render are given to the strainer as on a miss.
@@ -116,7 +121,7 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	cached, ok := e.strainerTemplateClassCache[cacheKey]
 	e.cacheMu.RUnlock()
 	if ok {
-		return NewStrainerTemplateWithFilters(cached, context, strictFilters, filters)
+		return NewStrainerTemplateWithFilters(cached, context, strictFilters, instances)
 	}
 
 	// Create new class and cache it
@@ -135,7 +140,7 @@ func (e *Environment) CreateStrainer(context interface{ Context() interface{} },
 	e.strainerTemplateClassCache[cacheKey] = class
 	e.cacheMu.Unlock()
 
-	return NewStrainerTemplateWithFilters(class, context, strictFilters, filters)
+	return NewStrainerTemplateWithFilters(class, context, strictFilters, instances)
 }
 
 // FilterMethodNames returns the names of all filter methods.
@@ -180,11 +185,17 @@ func (e *Environment) createStrainerCacheKey(filters []interface{}) string {
 		return ""
 	}
 
-	// Create a key based on filter types
+	// Create a key based on filter types. A type's String() is not unique:
+	// two packages may both have a filters.Filters, so the key has the
+	// import path of the type too.
 	key := ""
 	for _, filter := range filters {
 		filterType := reflect.TypeOf(filter)
-		key += filterType.String() + ":"
+		named := filterType
+		for named.Kind() == reflect.Ptr {
+			named = named.Elem()
+		}
+		key += named.PkgPath() + " " + filterType.String() + ":"
 	}
 	return key
 }

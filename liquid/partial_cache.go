@@ -44,12 +44,9 @@ func (pc *PartialCache) Load(templateName string, context interface {
 		return nil, err
 	}
 
-	// Set partial flag
-	if pc, ok := parseContext.(*ParseContext); ok {
-		pc.SetPartial(true)
-		defer pc.SetPartial(false)
-	}
-
+	// The partial is parsed with a parse context of its own (Template.Parse
+	// below): the tag's parse context, which every render of the template
+	// shares, is only read.
 	// Get template factory
 	templateFactory := registers.Get("template_factory")
 	var tf interface {
