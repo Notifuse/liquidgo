@@ -182,9 +182,8 @@ func TestRenderContextLimitsAndCancellation(t *testing.T) {
 type rcPanicFilters struct{}
 
 func (f *rcPanicFilters) Explode(input interface{}) interface{} {
-	var m map[string]int
-	m["x"] = 1 // a Go panic: assignment to a nil map
-	return input
+	items := []string{}
+	return items[len(fmt.Sprint(input))] // a Go panic: index out of range
 }
 
 type rcPanicDrop struct{ *liquid.Drop }
