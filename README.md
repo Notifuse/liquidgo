@@ -545,9 +545,12 @@ where every number is a `float64`, and render text meant for people (emails, pag
   copied as written, a `round` precision beyond ±400 digits is not computed, and a filter builds
   at most 1,048,576 integers of a range (`join` writes at most as many), raising `Memory limits
   exceeded` beyond, where Ruby would build them.
+- **Each render starts from its own data**: what a render assigns (`assign`, `capture`) is not
+  kept in the template for the next render, so a value assigned while rendering for one recipient
+  never reaches the next. Ruby keeps it; `TemplateOptions.PersistInstanceAssigns` (or
+  `Template.SetPersistInstanceAssigns`) restores Ruby's behaviour.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
-- **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same
   name.
 - **Partials share the resource limits** of the template that renders them: `render` and `include`

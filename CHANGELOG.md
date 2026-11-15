@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+- **Each render starts from its own data.** A `Template` no longer keeps what a render assigns
+  (`assign`, `capture`) for its next render: rendered for one recipient who sets a variable, then for
+  another who does not, it showed the first recipient's value to the second. Data given as a drop
+  (`Render(drop)`) was also kept, and answered every later render of the template, with a map, nil
+  or a `Context`; Ruby never kept it. Ruby keeps the assigns;
+  `TemplateOptions.PersistInstanceAssigns: true` (or `Template.SetPersistInstanceAssigns(true)`)
+  restores that behaviour, and turning it off forgets what earlier renders kept.
+- `Template.Errors` takes the template's lock: it raced with concurrent renders. With concurrent
+  renders, it returns the errors of the render that ended last.
+
 ## [5.11.0-port.5]
 
 An option to HTML-escape every output, for HTML templates that output untrusted data. Off by
