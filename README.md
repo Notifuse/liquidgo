@@ -547,8 +547,8 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.11.0**, port revision 5 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 5 is `v5.11.4`. Revision 2 has no tag of its own: it ships
+Current version: **5.11.0**, port revision 6 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 6 is `v5.11.5`. Revision 2 has no tag of its own: it ships
 in `v5.11.2` with revision 3.
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.
@@ -580,7 +580,6 @@ where every number is a `float64`, and render text meant for people (emails, pag
   kept in the template for the next render, so a value assigned while rendering for one recipient
   never reaches the next. Ruby keeps it; `TemplateOptions.PersistInstanceAssigns` (or
   `Template.SetPersistInstanceAssigns`) restores Ruby's behaviour.
->>>>>>> origin/main
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same
