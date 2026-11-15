@@ -10,8 +10,9 @@
   `*MemoryError` for a limit, a `*CanceledError` when `ctx` is done, or the new `*PanicError`, with the
   Go stack, when Go code panics during the render. `Render` keeps writing such a panic as
   `Liquid error: internal`, as Ruby does. Options: `WithFileSystem` (partials of the render, nested ones included),
-  `WithLimits` (limits of the render) and `RaiseErrors` (the first recorded error ends the render, as
-  Ruby's `render!`).
+  `WithLimits` (limits that replace the template's) and `RaiseErrors` (the first recorded error ends
+  the render, as Ruby's `render!`). A drop is bound to the render that reads it: give each render its
+  own drop instances.
 
 ## [5.11.0-port.8]
 

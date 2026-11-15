@@ -373,14 +373,16 @@ env.SetErrorMode("strict")
 
 ### Rendering with errors returned (RenderContext)
 
-`Template.RenderContext` renders in a state of its own and changes nothing in the template: concurrent
-renders never see each other's assigns, errors or limits. It returns what the render produced and an
-error when the render could not complete:
+`Template.RenderContext` renders in a state of its own and changes nothing in the template or in the data:
+concurrent renders never see each other's assigns, errors or limits. It reads the template's assigns and
+registers, but not the instance assigns `Render` keeps with `PersistInstanceAssigns`. A drop is bound to
+the render that reads it: give each render its own drop instances. It returns what the render produced
+and an error when the render could not complete:
 
 ```go
 res, err := tmpl.RenderContext(ctx, data,
     liquid.WithFileSystem(partials), // partials of this render
-    liquid.WithLimits(limits),       // limits of this render
+    liquid.WithLimits(limits),       // limits set here replace the template's
 )
 switch {
 case err != nil:
@@ -389,7 +391,7 @@ case err != nil:
     // what was written before the render stopped
 case len(res.Errors) > 0:
     // errors the render recorded and went on, as Ruby: each wrote
-    // "Liquid error: ..." in res.Output, or nothing in strict mode
+    // "Liquid error: ..." in res.Output
 }
 ```
 
