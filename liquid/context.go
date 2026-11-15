@@ -22,6 +22,9 @@ type Context struct {
 	resourceLimits *ResourceLimits
 	cancel         gocontext.Context
 	done           <-chan struct{}
+	// fatalPanics makes a Go panic in a node end the render (RenderContext)
+	// instead of being written as "Liquid error: internal".
+	fatalPanics bool
 	// diagnostics is the context whose errors and warnings this one adds
 	// to: an isolated subcontext reports to the context that made it, as
 	// Ruby's subcontexts share the errors array.
@@ -627,6 +630,7 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	subCtx.disabledTags = c.disabledTags
 	subCtx.profiler = c.profiler
 	subCtx.cancel, subCtx.done = c.cancel, c.done
+	subCtx.fatalPanics = c.fatalPanics
 
 	return subCtx
 }

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+- **`Template.RenderContext(ctx, data, opts...) (*Result, error)`**, a render with errors returned. It
+  renders in a state of its own and changes nothing in the template, so concurrent renders of one
+  template never see each other's assigns, errors, limits or profiler. It returns the output and the
+  errors the render recorded (`Result`), and an error when the render could not complete: a
+  `*MemoryError` for a limit, a `*CanceledError` when `ctx` is done, or the new `*PanicError`, with the
+  Go stack, when Go code panics during the render. `Render` keeps writing such a panic as
+  `Liquid error: internal`, as Ruby does. Options: `WithFileSystem` (partials of the render),
+  `WithLimits` (limits of the render) and `RaiseErrors` (the first recorded error ends the render, as
+  Ruby's `render!`).
+
 ## [5.11.0-port.8]
 
 `RenderBang` no longer changes the template, and a template's limits and profiler can be read while
