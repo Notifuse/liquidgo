@@ -349,9 +349,16 @@ func (v *Variable) Evaluate(context *Context) interface{} {
 }
 
 func (v *Variable) Render(context TagContext) interface{} {
+	return v.render(context, nil)
+}
+
+// render is Render; with safe set, it also reports whether the value is HTML that
+// the output escape writes as it is (see escapeTracker).
+func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 	// Evaluate the variable name expression directly (like Ruby: context.evaluate(@name))
 	nameExpr := v.Name()
 	value := context.Evaluate(nameExpr)
+	safe.start(value)
 
 	// Apply filters
 	for _, filter := range v.Filters() {
@@ -386,10 +393,14 @@ func (v *Variable) Render(context TagContext) interface{} {
 
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
+		safe.filter(filterName, filterArgs)
 	}
 
 	// Apply global filter (like Ruby: context.apply_global_filter(obj))
 	ctx := context.Context().(*Context)
+	if ctx.GlobalFilter() != nil {
+		safe.unsafe()
+	}
 	value = ctx.ApplyGlobalFilter(value)
 
 	return value
@@ -409,9 +420,29 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 	})
 }
 
-// RenderToOutput writes the value of the variable to output.
+// RenderToOutput writes the value of the variable to output. With the
+// environment's output escape on (see Environment.SetOutputEscape), the
+// written text is HTML-escaped unless it is HTML on purpose (see
+// escapeTracker).
 func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {
-	WriteValue(output, v.Render(context))
+	ctx, ok := context.Context().(*Context)
+	if !ok || !ctx.OutputEscape() {
+		WriteValue(output, v.Render(context))
+		return
+	}
+	safe := &escapeTracker{ctx: ctx}
+	value := v.render(context, safe)
+	if safe.safe {
+		WriteValue(output, value)
+		return
+	}
+	writeValue(escapingWriter{output}, value, nil)
+}
+
+// stringWriter is what writeValue writes to: the output buffer, or a writer
+// that escapes on the way.
+type stringWriter interface {
+	WriteString(s string)
 }
 
 // WriteValue writes a value to output as Ruby's render_obj_to_output: nil
@@ -422,7 +453,7 @@ func WriteValue(output *OutputBuffer, value interface{}) {
 	writeValue(output, value, nil)
 }
 
-func writeValue(output *OutputBuffer, value interface{}, seen map[uintptr]bool) {
+func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
 	switch v := value.(type) {
 	case nil:
 		return

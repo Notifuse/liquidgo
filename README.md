@@ -391,6 +391,35 @@ env.SetDefaultResourceLimits(map[string]interface{}{
 })
 ```
 
+### Output Escape
+
+For HTML templates that output untrusted data (contact fields, form input, feeds), turn on the
+output escape, as LiquidJS's `outputEscape` option:
+
+```go
+env := liquid.NewEnvironment()
+env.SetOutputEscape(true)
+```
+
+Every `{{ }}` output, `echo` and `cycle` is then HTML-escaped, so a value cannot add markup to the
+page. An output is written as it is when its value is HTML on purpose:
+
+- the result of `raw` (`{{ feed.html | raw }}`), or of `escape`, `escape_once` or `h`, which have
+  escaped it already;
+- the text of a `capture` (its outputs were escaped when it was captured), also after an `assign`
+  copies it, and in the partials of the render;
+- either of these through `strip`, `lstrip`, `rstrip`, `strip_newlines`, `newline_to_br`,
+  `truncate` or `truncatewords` (`{{ bio | escape | newline_to_br }}`), as long as the ellipsis
+  of `truncate` and `truncatewords` is written in the template.
+
+A capture is recognised by its text: an output equal to the text of a capture of the render is
+written as it is, so data can only repeat markup the template itself captured.
+
+Any other filter after them makes the result ordinary text again, escaped unless `raw` follows.
+`assign`, conditions and filters see the data as it is: only what an output writes is escaped. The
+escape is for HTML: a value written into CSS (`<style>`) or a script needs `raw`, and only for data
+you trust. The option is off by default, as in Shopify Liquid, which has no `raw` filter.
+
 ### File System
 
 ```go
@@ -490,8 +519,8 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.11.0**, port revision 4 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 4 is `v5.11.3`. Revision 2 has no tag of its own: it ships
+Current version: **5.11.0**, port revision 5 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 5 is `v5.11.4`. Revision 2 has no tag of its own: it ships
 in `v5.11.2` with revision 3.
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.

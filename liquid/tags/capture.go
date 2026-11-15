@@ -60,6 +60,10 @@ func (c *CaptureTag) To() string {
 func (c *CaptureTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
 	captured := liquid.RenderCaptured(context, func(o *liquid.OutputBuffer) { c.Block.RenderToOutput(context, o) })
+	if ctx.OutputEscape() {
+		// Its outputs are escaped already; the rest is the template's markup.
+		ctx.MarkSafeHTML(captured)
+	}
 	ctx.SetLast(c.to, captured)
 }
 

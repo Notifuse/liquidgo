@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.5]
+
+An option to HTML-escape every output, for HTML templates that output untrusted data. Off by
+default: nothing changes without it. Tagged `v5.11.4`.
+
+### Added
+- **Output escape** (`Environment.SetOutputEscape`), off by default: every `{{ }}` output, `echo`
+  and `cycle` is HTML-escaped, except HTML on purpose: the result of the new `raw` filter, of
+  `escape`, `escape_once` or `h` (no double escaping), and the text of a `capture`, also through
+  `strip`, `newline_to_br`, `truncate` and the like. `assign`, conditions and filters still see the
+  data as it is. For HTML templates that output untrusted data, as LiquidJS's `outputEscape`.
+
 ## [5.11.0-port.4]
 
 `url_decode` no longer loses a value that holds a lone `%`, and `escape` writes quotes as Ruby does.
