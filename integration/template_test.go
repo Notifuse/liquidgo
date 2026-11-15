@@ -9,13 +9,15 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
+// Ruby keeps a render's assigns in the template for the next render; liquidgo
+// does so only with PersistInstanceAssigns (each render is isolated by default).
 func TestInstanceAssignsPersistOnSameTemplateObjectBetweenParses(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
+	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 
 	// First parse and render
-	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -25,7 +27,7 @@ func TestInstanceAssignsPersistOnSameTemplateObjectBetweenParses(t *testing.T) {
 	}
 
 	// Second parse and render - instance assigns should persist
-	err = tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err = tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -67,12 +69,14 @@ func TestWarningsIsNotExponentialTime(t *testing.T) {
 	}
 }
 
+// Ruby keeps a render's assigns in the template for the next render; liquidgo
+// does so only with PersistInstanceAssigns (each render is isolated by default).
 func TestInstanceAssignsPersistOnSameTemplateParsingBetweenRenders(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
+	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 
-	err := tmpl.Parse(`{{ foo }}{% assign foo = 'foo' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
+	err := tmpl.Parse(`{{ foo }}{% assign foo = 'foo' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}

@@ -63,6 +63,8 @@ type Template struct {
 	rethrowErrors   bool
 	lineNumbers     bool
 	profiling       bool
+	// persistInstanceAssigns: see TemplateOptions.PersistInstanceAssigns.
+	persistInstanceAssigns bool
 }
 
 // TemplateOptions contains options for parsing a template.
@@ -76,6 +78,11 @@ type TemplateOptions struct {
 	LineNumbers       bool
 	StrictVariables   bool
 	StrictFilters     bool
+	// PersistInstanceAssigns keeps what a render assigns (assign, capture) in
+	// the template and gives it to the next render, as Ruby's Template does.
+	// Off by default: each render starts from its own data only, so a value
+	// assigned while rendering for one recipient never reaches the next.
+	PersistInstanceAssigns bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
@@ -109,14 +116,15 @@ func NewTemplate(options *TemplateOptions) *Template {
 	resourceLimits = NewResourceLimits(config)
 
 	return &Template{
-		environment:     env,
-		rethrowErrors:   false,
-		resourceLimits:  resourceLimits,
-		registers:       make(map[string]interface{}, 4), // Pre-allocate map
-		assigns:         make(map[string]interface{}, 8), // Pre-allocate for typical assigns
-		instanceAssigns: make(map[string]interface{}, 8), // Pre-allocate for instance assigns
-		errors:          make([]error, 0, 2),             // Pre-allocate errors
-		warnings:        make([]error, 0, 2),             // Pre-allocate warnings
+		persistInstanceAssigns: options != nil && options.PersistInstanceAssigns,
+		environment:            env,
+		rethrowErrors:          false,
+		resourceLimits:         resourceLimits,
+		registers:              make(map[string]interface{}, 4), // Pre-allocate map
+		assigns:                make(map[string]interface{}, 8), // Pre-allocate for typical assigns
+		instanceAssigns:        make(map[string]interface{}, 8), // Pre-allocate for instance assigns
+		errors:                 make([]error, 0, 2),             // Pre-allocate errors
+		warnings:               make([]error, 0, 2),             // Pre-allocate warnings
 	}
 }
 
@@ -236,6 +244,14 @@ func (t *Template) Assigns() map[string]interface{} {
 		t.assigns = make(map[string]interface{})
 	}
 	return t.assigns
+}
+
+// SetPersistInstanceAssigns turns on or off Ruby's persistence of a render's
+// assigns into the next render (see TemplateOptions.PersistInstanceAssigns).
+func (t *Template) SetPersistInstanceAssigns(on bool) {
+	t.mu.Lock()
+	t.persistInstanceAssigns = on
+	t.mu.Unlock()
 }
 
 // InstanceAssigns returns the instance assigns map.
@@ -361,8 +377,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 			// Only merge back instance assigns and resource limits when we created the context,
 			// not when user passed their own Context
 			if !userProvidedContext {
-				// Merge back instance assigns from the render scope to persist across renders
-				if len(ctx.Scopes()) > 0 {
+				// Merge back instance assigns from the render scope to persist across
+				// renders, only when the template asks for Ruby's behaviour
+				if t.persistInstanceAssigns && len(ctx.Scopes()) > 0 {
 					lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
 					for k, v := range lastScope {
 						if k != "__drop__" { // Don't persist internal drop reference
@@ -595,6 +612,9 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 
 	t.profiling = options.Profile
 	t.lineNumbers = options.LineNumbers || t.profiling
+	if options.PersistInstanceAssigns {
+		t.persistInstanceAssigns = true
+	}
 
 	// Create parse context
 	templateOpts := make(map[string]interface{})
