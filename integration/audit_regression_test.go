@@ -130,6 +130,28 @@ func TestAuditErrorsDuringConcurrentRenders(t *testing.T) {
 	<-done
 }
 
+// RenderBang raises the errors of its own render only: a later Render of the
+// same template records its errors, and nothing raises out of Render.
+func TestAuditRenderBangDoesNotStick(t *testing.T) {
+	tpl := auditParse(t, auditEnv(), `[{{ errors.standard_error }}]`)
+	data := map[string]interface{}{"errors": NewErrorDrop()}
+	raised := func(render func()) (r interface{}) {
+		defer func() { r = recover() }()
+		render()
+		return nil
+	}
+	if r := raised(func() { tpl.RenderBang(data, nil) }); r == nil {
+		t.Fatal("RenderBang of a drop that raises did not raise")
+	}
+	var got string
+	if r := raised(func() { got = tpl.Render(data, nil) }); r != nil {
+		t.Fatalf("Render after RenderBang raised %v", r)
+	}
+	if want := "[Liquid error: standard error]"; got != want {
+		t.Errorf("Render after RenderBang = %q, want %q", got, want)
+	}
+}
+
 // The resource limits and the profiler of a template can be read while other
 // renders of it run (detected under -race). Each is read alone, so that the
 // lock of one does not order the reads of the other.
