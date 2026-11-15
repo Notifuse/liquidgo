@@ -547,8 +547,8 @@ liquidgo/
 
 ## Version Compatibility
 
-Current version: **5.11.0**, port revision 6 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 6 is `v5.11.5`. Revision 2 has no tag of its own: it ships
+Current version: **5.11.0**, port revision 7 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 7 is `v5.11.6`. Revision 2 has no tag of its own: it ships
 in `v5.11.2` with revision 3.
 
 Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.

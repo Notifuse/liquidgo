@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.7]
+
+A time written without the `date` filter renders as in Ruby. Tagged `v5.11.6`.
+
 ### Fixed
 - **A time renders as in Ruby.** `{{ t }}` with a `time.Time` wrote Go's form,
   `2026-11-15 10:00:00 +0000 UTC`; it writes Ruby's `Time#to_s`, `2026-11-15 10:00:00 UTC` for a
