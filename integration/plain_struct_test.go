@@ -3,8 +3,9 @@ package integration
 // Regression tests for what a template may read of Go values (audit of
 // 2026-11-15, finding 2). As in Ruby, where only a Liquid::Drop has its
 // methods invoked, a plain Go struct exposes nothing: no field, no method,
-// and no text of its fields. A drop, a value with ToLiquid, a String or an
-// Error method keep their behaviour.
+// and no text of its fields (Ruby raises an internal error for an object
+// without to_liquid). A drop, a value with ToLiquid, a String or an Error
+// method keep their behaviour.
 
 import (
 	"testing"
@@ -26,10 +27,20 @@ func (u *secretUser) Delete() string { u.deleted = true; return "deleted" }
 // liquidUser is the migration of secretUser: ToLiquid gives what a template reads.
 type liquidUser struct {
 	Name         string
+	N            int
 	PasswordHash string
 }
 
-func (u liquidUser) ToLiquid() interface{} { return map[string]interface{}{"name": u.Name} }
+func (u liquidUser) ToLiquid() interface{} { return map[string]interface{}{"name": u.Name, "n": u.N} }
+
+// getterUser is a plain struct with a Get method, such as a configuration
+// object: a template never calls it.
+type getterUser struct {
+	PasswordHash string
+	calls        *int
+}
+
+func (g getterUser) Get(key string) interface{} { *g.calls++; return "get:" + key }
 
 // userDrop is a drop: its methods and fields are readable.
 type userDrop struct {
@@ -50,6 +61,9 @@ func renderPlain(t *testing.T, src string, data interface{}) string {
 	t.Helper()
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
+	env.SetFileSystem(&mapFileSystem{templates: map[string]string{
+		"u": "{{ u.name }}{{ u.password_hash }};",
+	}})
 	tpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", src, err)
@@ -67,16 +81,20 @@ func TestAPlainStructExposesNothing(t *testing.T) {
 		"m":     map[string]interface{}{"u": u},
 		"tm":    map[string]secretUser{"u": u},
 		"mm":    map[string]interface{}{"tm": map[string]secretUser{"u": u}},
+		"list":  []interface{}{u, &u, map[string]interface{}{"u": u}},
 	}
 	for _, src := range []string{
 		`{{ u.password_hash }}{{ pu.password_hash }}{{ u.PasswordHash }}{{ u.name }}`,
 		`{{ users[0].password_hash }}{{ users.first.password_hash }}{{ pus[0].password_hash }}`,
 		`{{ users | map: "password_hash" | join }}{{ pus | map: "password_hash" | join }}`,
 		`{{ users | where: "name", "bob" | size }}{{ users | sort: "password_hash" | map: "name" | join }}`,
-		`{{ users | first | password_hash }}`,
-		`{% for x in users %}{{ x.password_hash }}{% endfor %}`,
-		`{{ u }}{{ pu }}{{ users }}{{ users | join: "," }}{{ u | append: "" }}`,
-		`{{ m }}{{ m | inspect }}{{ tm }}{{ tm | inspect }}{{ mm }}`,
+		`{{ users | first | password_hash }}{{ users | find: "name", "bob" | size }}`,
+		`{% for x in users %}{{ x.password_hash }}{% cycle x.name, x.password_hash %}{% endfor %}`,
+		`{% tablerow x in users %}{{ x.password_hash }}{% endtablerow %}`,
+		`{% render "u" for users as u %}{% render "u", u: u %}{% include "u" with pu %}`,
+		`{% case u.name %}{% when "bob" %}bob{% endcase %}{% if u.name == "bob" %}bob{% endif %}`,
+		`{{ u }}{{ pu }}{{ users }}{{ users | join: "," }}{{ u | append: "" }}{{ users | append: "" }}`,
+		`{{ m }}{{ tm }}{{ mm }}{{ list }}{{ list | append: "" }}{{ u | default: "x" }}`,
 	} {
 		if got := renderPlain(t, src, data); containsAny(got, "secret$hash", "bob") {
 			t.Errorf("%s gives %q, which shows a field of a plain struct", src, got)
@@ -96,6 +114,104 @@ func TestATemplateCannotCallAMethodOfAPlainStruct(t *testing.T) {
 	u := &secretUser{Name: "bob", PasswordHash: "secret$hash"}
 	if got := renderPlain(t, `{{ password_hash }}{{ name }}{{ delete }}`, u); got != "" || u.deleted {
 		t.Errorf("a plain struct as data gives %q (deleted: %v)", got, u.deleted)
+	}
+}
+
+// listUser gives a list as its liquid form.
+type listUser struct{ Names []string }
+
+func (u listUser) ToLiquid() interface{} {
+	out := make([]interface{}, len(u.Names))
+	for i, n := range u.Names {
+		out[i] = n
+	}
+	return out
+}
+
+// A value whose ToLiquid gives a list renders as that list.
+func TestToLiquidGivingAList(t *testing.T) {
+	data := map[string]interface{}{"l": listUser{[]string{"a", "b"}}}
+	if got, want := renderPlain(t, `{{ l }}|{{ l | size }}|{{ l | join: "," }}`, data), "ab|2|a,b"; got != want {
+		t.Errorf("gives %q, want %q", got, want)
+	}
+	// A list of them renders as the list of their lists
+	ls := []listUser{{[]string{"a", "b"}}, {[]string{"c"}}}
+	lists := []interface{}{[]interface{}{"a", "b"}, []interface{}{"c"}}
+	src := `{{ X }}|{{ X | size }}|{{ X | first | join: "," }}`
+	got := renderPlain(t, src, map[string]interface{}{"X": ls})
+	if want := renderPlain(t, src, map[string]interface{}{"X": lists}); got != want {
+		t.Errorf("%s gives %q, want %q as with the lists", src, got, want)
+	}
+}
+
+// The array filters never call Get on a plain struct, whatever its key.
+func TestTheArrayFiltersDoNotCallGetOnAPlainStruct(t *testing.T) {
+	calls := 0
+	gs := []getterUser{{PasswordHash: "PW", calls: &calls}}
+	got := renderPlain(t, `{{ gs | map: "password" | join }}|{{ gs | where: "password", "get:password" | size }}`, map[string]interface{}{"gs": gs})
+	if got != "|0" || calls != 0 {
+		t.Errorf("gives %q with %d calls of Get, want %q and none", got, calls, "|0")
+	}
+}
+
+// A pointer renders as what it points to, and a nil pointer as nothing.
+func TestAPointerRendersAsItsTarget(t *testing.T) {
+	u := &secretUser{Name: "bob", PasswordHash: "secret$hash"}
+	n := 42
+	pn := &n
+	data := map[string]interface{}{
+		"pps": &u,
+		"np":  (*secretUser)(nil),
+		"ntp": (*time.Time)(nil),
+		"ppn": &pn,
+		"nl":  []interface{}{(*secretUser)(nil), &u},
+	}
+	src := `[{{ pps }}][{{ pps.name }}][{{ np }}][{{ ntp }}][{{ ppn }}][{{ nl | append: "" }}]`
+	if got, want := renderPlain(t, src, data), "[][][][][42][[nil, nil]]"; got != want {
+		t.Errorf("gives %q, want %q", got, want)
+	}
+}
+
+// A hash renders with its keys in order, so that a render does not change
+// from one run to the next, for a map of any type.
+func TestAHashRendersInKeyOrder(t *testing.T) {
+	data := map[string]interface{}{
+		"tm": map[string]string{"c": "3", "a": "1", "b": "2", "e": "5", "d": "4"},
+		"m":  map[string]interface{}{"c": 3, "a": 1, "b": 2, "e": 5, "d": 4},
+	}
+	for i := 0; i < 20; i++ {
+		got := renderPlain(t, `{{ tm }}|{{ m }}`, data)
+		if want := `{"a"=>"1", "b"=>"2", "c"=>"3", "d"=>"4", "e"=>"5"}|{"a"=>1, "b"=>2, "c"=>3, "d"=>4, "e"=>5}`; got != want {
+			t.Fatalf("gives %q, want %q", got, want)
+		}
+	}
+}
+
+// A list of values with ToLiquid renders as the list of the maps they give,
+// for every filter and tag that reads list items.
+func TestToLiquidBehavesAsItsMap(t *testing.T) {
+	// The first and the last differ as structs but give the same map
+	users := []liquidUser{{Name: "bea", N: 2, PasswordHash: "secret$hash"}, {Name: "ann", N: 1}, {Name: "bea", N: 2}}
+	maps := make([]interface{}, len(users))
+	for i, u := range users {
+		maps[i] = u.ToLiquid()
+	}
+	for _, src := range []string{
+		`{{ X | size }}|{{ X | uniq | size }}|{{ X | join: "," }}|{{ X | reverse | first | map: "name" }}`,
+		`{{ X | first | map: "name" }}|{{ X | last | map: "name" }}|{{ X[1].name }}|{{ X.first.name }}`,
+		`{{ X | map: "name" | join: "," }}|{{ X | where: "name", "bea" | size }}|{{ X | reject: "name", "bea" | size }}`,
+		`{{ X | sort: "n" | map: "name" | join }}|{{ X | sort_natural: "name" | map: "n" | join }}`,
+		`{{ X | uniq: "name" | size }}|{{ X | compact: "name" | size }}|{{ X | sum: "n" }}`,
+		`{{ X | find: "name", "ann" | map: "n" }}|{{ X | find_index: "name", "ann" }}|{% if X | has: "name", "ann" %}has{% endif %}`,
+		`{% for u in X %}{{ u.name }}{% cycle u.n, "-" %}{% endfor %}|{% tablerow u in X %}{{ u.name }}{% endtablerow %}`,
+		`{% render "u" for X as u %}|{% for u in X %}{% include "u" %}{% endfor %}`,
+		`{{ X }}|{{ X | append: "" }}|{{ X | first | append: "" }}`,
+	} {
+		got := renderPlain(t, src, map[string]interface{}{"X": users})
+		want := renderPlain(t, src, map[string]interface{}{"X": maps})
+		if got != want || containsAny(got, "secret$hash") {
+			t.Errorf("%s gives %q, want %q as with the maps", src, got, want)
+		}
 	}
 }
 

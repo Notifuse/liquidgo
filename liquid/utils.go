@@ -5,6 +5,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -365,6 +366,11 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 	if obj == nil {
 		return ""
 	}
+	// A value writes its liquid form, also as an item of a list or a hash
+	obj = ToLiquid(obj)
+	if target, ok := indirect(obj); ok {
+		return ToS(target, seen)
+	}
 
 	// Fast path for common types (helps with inlining)
 	switch v := obj.(type) {
@@ -412,6 +418,37 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 	}
 }
 
+// indirect returns what a pointer that renders as its target points to:
+// nil for a nil pointer, the end of a chain of pointers otherwise. A pointer
+// whose type has a String or an Error method, or is a drop, renders itself;
+// indirect then reports false, as for a value that is not a pointer.
+func indirect(obj interface{}) (interface{}, bool) {
+	rv := reflect.ValueOf(obj)
+	if rv.Kind() != reflect.Ptr {
+		return nil, false
+	}
+	for rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil, true
+		}
+		switch v := rv.Interface(); v.(type) {
+		case fmt.Stringer, error:
+			if rv.Interface() == obj {
+				return nil, false
+			}
+			return v, true
+		}
+		if isDrop(rv.Interface()) {
+			if rv.Interface() == obj {
+				return nil, false
+			}
+			return rv.Interface(), true
+		}
+		rv = rv.Elem()
+	}
+	return rv.Interface(), true
+}
+
 // isPlainStruct reports whether obj is a Go struct, or a pointer to one, that
 // a template may not read: neither a drop nor a value with a String or an
 // Error method. It renders as nothing, so that fmt never writes its fields.
@@ -437,18 +474,31 @@ func mapInspect(rv reflect.Value, seen map[uintptr]bool) string {
 	seen[ptr] = true
 	defer delete(seen, ptr)
 
+	keys := make([]string, 0, rv.Len())
+	values := make(map[string]interface{}, rv.Len())
+	iter := rv.MapRange()
+	for iter.Next() {
+		k := Inspect(iter.Key().Interface(), seen)
+		keys = append(keys, k)
+		values[k] = iter.Value().Interface()
+	}
+	return writeInspectedHash(keys, values, seen)
+}
+
+// writeInspectedHash writes a hash from its inspected keys, in sorted order:
+// a Go map has no order of its own, and the output must not change from one
+// render to the next.
+func writeInspectedHash(keys []string, values map[string]interface{}, seen map[uintptr]bool) string {
+	sort.Strings(keys)
 	var b strings.Builder
 	b.WriteString("{")
-	iter := rv.MapRange()
-	first := true
-	for iter.Next() {
-		if !first {
+	for i, k := range keys {
+		if i > 0 {
 			b.WriteString(", ")
 		}
-		first = false
-		b.WriteString(Inspect(iter.Key().Interface(), seen))
+		b.WriteString(k)
 		b.WriteString("=>")
-		b.WriteString(Inspect(iter.Value().Interface(), seen))
+		b.WriteString(Inspect(values[k], seen))
 	}
 	b.WriteString("}")
 	return b.String()
@@ -472,6 +522,10 @@ func sliceItems(obj interface{}) ([]interface{}, bool) {
 func Inspect(obj interface{}, seen map[uintptr]bool) string {
 	if seen == nil {
 		seen = make(map[uintptr]bool)
+	}
+	obj = ToLiquid(obj)
+	if target, ok := indirect(obj); ok {
+		return Inspect(target, seen)
 	}
 
 	switch v := obj.(type) {
@@ -542,18 +596,12 @@ func hashInspect(hash map[string]interface{}, seen map[uintptr]bool) string {
 	seen[ptr] = true
 	defer delete(seen, ptr)
 
-	var b strings.Builder
-	b.WriteString("{")
-	first := true
+	keys := make([]string, 0, len(hash))
+	values := make(map[string]interface{}, len(hash))
 	for key, value := range hash {
-		if !first {
-			b.WriteString(", ")
-		}
-		first = false
-		b.WriteString(Inspect(key, seen))
-		b.WriteString("=>")
-		b.WriteString(Inspect(value, seen))
+		k := Inspect(key, seen)
+		keys = append(keys, k)
+		values[k] = value
 	}
-	b.WriteString("}")
-	return b.String()
+	return writeInspectedHash(keys, values, seen)
 }

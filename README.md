@@ -122,8 +122,10 @@ func main() {
 
 A template reads maps (of any key and value type), slices and arrays, strings, numbers, booleans
 and `time.Time`, which renders and takes the `date` filter. A Go struct exposes nothing to a
-template, neither fields nor methods, and renders as nothing, as in Ruby, where only a
-`Liquid::Drop` has its methods invoked. To give a struct to a template:
+template, neither fields nor methods, and renders as nothing (`nil` inside a list or a hash). As
+in Ruby, only a drop has its methods invoked; Ruby raises an internal error for an object without
+`to_liquid`, where liquidgo renders nothing. A pointer renders as what it points to, and a nil
+pointer as nothing. A hash renders with its keys in sorted order. To give a struct to a template:
 
 - implement `ToLiquid() interface{}` (with a value receiver) and return a map of what the template
   may read:
@@ -134,10 +136,15 @@ template, neither fields nor methods, and renders as nothing, as in Ruby, where 
   }
   ```
 
-- or make it a drop by embedding `*liquid.Drop`: its exported methods without arguments and its
-  exported fields become readable (`{{ user.first_name }}` calls `FirstName()`).
+- or make it a drop by embedding `*liquid.Drop`, initialised with `liquid.NewDrop()`: its exported
+  methods without arguments and its exported fields become readable (`{{ user.first_name }}` calls
+  `FirstName()`), the methods it gets from embedded types included. Give a drop only the methods a
+  template may call.
 
-A type with a `String()` or `Error()` method renders that text.
+`ToLiquid()` is applied at each step of a lookup, to the items the array filters read and to a
+value written in the output. A type with a `String()` or `Error()` method renders that text: a
+generated type whose `String()` writes all its fields (protobuf messages, for example) shows them
+all, so give a template a map or a drop instead.
 
 ### Custom Filters
 
@@ -566,6 +573,9 @@ where every number is a `float64`, and render text meant for people (emails, pag
   copied as written, a `round` precision beyond ±400 digits is not computed, and a filter builds
   at most 1,048,576 integers of a range (`join` writes at most as many), raising `Memory limits
   exceeded` beyond, where Ruby would build them.
+- **A Go struct renders as nothing**, unless it is a drop or has `ToLiquid()`, `String()` or
+  `Error()`; Ruby raises an internal error for an object without `to_liquid`. See
+  [What a Template Reads](#what-a-template-reads).
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`escape`** writes `"` as `&#34;` (Ruby: `&quot;`), which is equivalent in HTML.
