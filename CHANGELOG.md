@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Fixed
+- **`url_decode`** decodes as Ruby's `CGI.unescape`: a `%` that two hexadecimal digits do not
+  follow stays as written (`'%E2%82%AC%2'` gives `€%2`). Before, such a `%` made the filter fail,
+  which renders nothing: the whole value was lost. A decoded byte sequence that is not UTF-8 is still
+  an error, as in Ruby.
+- **`escape`** writes a quote as `&quot;`, as Ruby's `CGI.escapeHTML`; it wrote `&#34;`.
+
+### Tests
+- The differential corpus has templates for escaping (`escape`, `escape_once`, `url_encode`,
+  `url_decode`, `strip_html`), for markup that could lose content (unclosed tags and outputs, extra
+  braces, `{%22` in a URL) and for unusual input (control characters, NUL, BOM, CRLF, U+2028, a
+  5,000-character name), compared with Shopify Liquid 5.11.0.
+- `TestRecursivePartialsAreBounded`: partials that render themselves stop with "Nesting too deep";
+  without the scope depth check, they overflow the Go stack, which ends the process.
+
 ## [5.11.0-port.3]
 
 Lookups, parse errors and rendering of lists, ranges and conditions follow Shopify Liquid 5.11.0.

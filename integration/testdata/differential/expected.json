@@ -2414,6 +2414,534 @@
       "output": "3|1"
     },
     {
+      "id": "escape-01",
+      "mode": "lax",
+      "template": "{{ name | escape }}",
+      "output": "&lt;b&gt;"
+    },
+    {
+      "id": "escape-01",
+      "mode": "strict",
+      "template": "{{ name | escape }}",
+      "output": "&lt;b&gt;"
+    },
+    {
+      "id": "escape-02",
+      "mode": "lax",
+      "template": "{{ 'a\"b<c>d&e' | escape }}",
+      "output": "a&quot;b&lt;c&gt;d&amp;e"
+    },
+    {
+      "id": "escape-02",
+      "mode": "strict",
+      "template": "{{ 'a\"b<c>d&e' | escape }}",
+      "output": "a&quot;b&lt;c&gt;d&amp;e"
+    },
+    {
+      "id": "escape-03",
+      "mode": "lax",
+      "template": "{{ \"it's\" | escape }}",
+      "output": "it&#39;s"
+    },
+    {
+      "id": "escape-03",
+      "mode": "strict",
+      "template": "{{ \"it's\" | escape }}",
+      "output": "it&#39;s"
+    },
+    {
+      "id": "escape-04",
+      "mode": "lax",
+      "template": "{{ '&amp; &lt; &#39; &#x27; &bogus; & x' | escape_once }}",
+      "output": "&amp; &lt; &#39; &amp;#x27; &bogus; &amp; x"
+    },
+    {
+      "id": "escape-04",
+      "mode": "strict",
+      "template": "{{ '&amp; &lt; &#39; &#x27; &bogus; & x' | escape_once }}",
+      "output": "&amp; &lt; &#39; &amp;#x27; &bogus; &amp; x"
+    },
+    {
+      "id": "escape-05",
+      "mode": "lax",
+      "template": "{{ 'a b&c/é?=#+%' | url_encode }}",
+      "output": "a+b%26c%2F%C3%A9%3F%3D%23%2B%25"
+    },
+    {
+      "id": "escape-05",
+      "mode": "strict",
+      "template": "{{ 'a b&c/é?=#+%' | url_encode }}",
+      "output": "a+b%26c%2F%C3%A9%3F%3D%23%2B%25"
+    },
+    {
+      "id": "escape-06",
+      "mode": "lax",
+      "template": "{{ 'a%20b+c%2Fd%' | url_decode }}",
+      "output": "a b c/d%"
+    },
+    {
+      "id": "escape-06",
+      "mode": "strict",
+      "template": "{{ 'a%20b+c%2Fd%' | url_decode }}",
+      "output": "a b c/d%"
+    },
+    {
+      "id": "escape-07",
+      "mode": "lax",
+      "template": "{{ '<p onclick=\"x\">t</p><script>alert(1)</script>u' | strip_html }}",
+      "output": "tu"
+    },
+    {
+      "id": "escape-07",
+      "mode": "strict",
+      "template": "{{ '<p onclick=\"x\">t</p><script>alert(1)</script>u' | strip_html }}",
+      "output": "tu"
+    },
+    {
+      "id": "escape-08",
+      "mode": "lax",
+      "template": "{{ '<!-- c --><style>p{}</style>x<br/>y' | strip_html }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Variable '{{ '<!-- c --><style>p{}' was not properly terminated with regexp: /\\}\\}/"
+    },
+    {
+      "id": "escape-08",
+      "mode": "strict",
+      "template": "{{ '<!-- c --><style>p{}</style>x<br/>y' | strip_html }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Variable '{{ '<!-- c --><style>p{}' was not properly terminated with regexp: /\\}\\}/"
+    },
+    {
+      "id": "escape-09",
+      "mode": "lax",
+      "template": "{{ name | escape | escape }}",
+      "output": "&amp;lt;b&amp;gt;"
+    },
+    {
+      "id": "escape-09",
+      "mode": "strict",
+      "template": "{{ name | escape | escape }}",
+      "output": "&amp;lt;b&amp;gt;"
+    },
+    {
+      "id": "escape-10",
+      "mode": "lax",
+      "template": "{{ name | h }}",
+      "output": "&lt;b&gt;"
+    },
+    {
+      "id": "escape-10",
+      "mode": "strict",
+      "template": "{{ name | h }}",
+      "output": "&lt;b&gt;"
+    },
+    {
+      "id": "escape-11",
+      "mode": "lax",
+      "template": "{{ s | escape }}",
+      "output": "héllo wörld"
+    },
+    {
+      "id": "escape-11",
+      "mode": "strict",
+      "template": "{{ s | escape }}",
+      "output": "héllo wörld"
+    },
+    {
+      "id": "escape-12",
+      "mode": "lax",
+      "template": "{{ nothing | escape }}|{{ arr | escape }}|{{ n | escape }}",
+      "output": "|[1, 2, 3]|3"
+    },
+    {
+      "id": "escape-12",
+      "mode": "strict",
+      "template": "{{ nothing | escape }}|{{ arr | escape }}|{{ n | escape }}",
+      "output": "|[1, 2, 3]|3"
+    },
+    {
+      "id": "escape-13",
+      "mode": "lax",
+      "template": "{{ 'x' | replace: 'x', '<b>' }}",
+      "output": "<b>"
+    },
+    {
+      "id": "escape-13",
+      "mode": "strict",
+      "template": "{{ 'x' | replace: 'x', '<b>' }}",
+      "output": "<b>"
+    },
+    {
+      "id": "escape-14",
+      "mode": "lax",
+      "template": "{{ 'a<b' | escape_once | escape_once }}",
+      "output": "a&lt;b"
+    },
+    {
+      "id": "escape-14",
+      "mode": "strict",
+      "template": "{{ 'a<b' | escape_once | escape_once }}",
+      "output": "a&lt;b"
+    },
+    {
+      "id": "loss-01",
+      "mode": "lax",
+      "template": "before {% if x %}inside",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'if' tag was never closed"
+    },
+    {
+      "id": "loss-01",
+      "mode": "strict",
+      "template": "before {% if x %}inside",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'if' tag was never closed"
+    },
+    {
+      "id": "loss-02",
+      "mode": "lax",
+      "template": "before {% comment %}hidden",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'comment' tag was never closed"
+    },
+    {
+      "id": "loss-02",
+      "mode": "strict",
+      "template": "before {% comment %}hidden",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'comment' tag was never closed"
+    },
+    {
+      "id": "loss-03",
+      "mode": "lax",
+      "template": "before {% raw %}raw",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'raw' tag was never closed"
+    },
+    {
+      "id": "loss-03",
+      "mode": "strict",
+      "template": "before {% raw %}raw",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'raw' tag was never closed"
+    },
+    {
+      "id": "loss-04",
+      "mode": "lax",
+      "template": "before {{ x after",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Variable '{{' was not properly terminated with regexp: /\\}\\}/"
+    },
+    {
+      "id": "loss-04",
+      "mode": "strict",
+      "template": "before {{ x after",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Variable '{{' was not properly terminated with regexp: /\\}\\}/"
+    },
+    {
+      "id": "loss-05",
+      "mode": "lax",
+      "template": "before {% x after",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Tag '{%' was not properly terminated with regexp: /\\%\\}/"
+    },
+    {
+      "id": "loss-05",
+      "mode": "strict",
+      "template": "before {% x after",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Tag '{%' was not properly terminated with regexp: /\\%\\}/"
+    },
+    {
+      "id": "loss-06",
+      "mode": "lax",
+      "template": "a {{ x }} b {% c",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Tag '{%' was not properly terminated with regexp: /\\%\\}/"
+    },
+    {
+      "id": "loss-06",
+      "mode": "strict",
+      "template": "a {{ x }} b {% c",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Tag '{%' was not properly terminated with regexp: /\\%\\}/"
+    },
+    {
+      "id": "loss-07",
+      "mode": "lax",
+      "template": "<a href=\"/s?q={%22a%22}\">{{ x }}</a> tail {% if x %}y{% endif %} end",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag '22a'"
+    },
+    {
+      "id": "loss-07",
+      "mode": "strict",
+      "template": "<a href=\"/s?q={%22a%22}\">{{ x }}</a> tail {% if x %}y{% endif %} end",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag '22a'"
+    },
+    {
+      "id": "loss-08",
+      "mode": "lax",
+      "template": "<a href=\"/s?q=%7B%25%22x\">{{ x }}</a> end",
+      "output": "<a href=\"/s?q=%7B%25%22x\">a</a> end"
+    },
+    {
+      "id": "loss-08",
+      "mode": "strict",
+      "template": "<a href=\"/s?q=%7B%25%22x\">{{ x }}</a> end",
+      "output": "<a href=\"/s?q=%7B%25%22x\">a</a> end"
+    },
+    {
+      "id": "loss-09",
+      "mode": "lax",
+      "template": "text {% endif %} more",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endif'"
+    },
+    {
+      "id": "loss-09",
+      "mode": "strict",
+      "template": "text {% endif %} more",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endif'"
+    },
+    {
+      "id": "loss-10",
+      "mode": "lax",
+      "template": "{% for i in arr %}{{ i }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'for' tag was never closed"
+    },
+    {
+      "id": "loss-10",
+      "mode": "strict",
+      "template": "{% for i in arr %}{{ i }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'for' tag was never closed"
+    },
+    {
+      "id": "loss-11",
+      "mode": "lax",
+      "template": "{{ x }}} end",
+      "output": "a} end"
+    },
+    {
+      "id": "loss-11",
+      "mode": "strict",
+      "template": "{{ x }}} end",
+      "output": "a} end"
+    },
+    {
+      "id": "loss-12",
+      "mode": "lax",
+      "template": "{{{ x }}} end",
+      "output": "} end"
+    },
+    {
+      "id": "loss-12",
+      "mode": "strict",
+      "template": "{{{ x }}} end",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character { in \"{{{ x }}\""
+    },
+    {
+      "id": "loss-13",
+      "mode": "lax",
+      "template": "a {%- comment -%} b {%- endcomment -%} c",
+      "output": "ac"
+    },
+    {
+      "id": "loss-13",
+      "mode": "strict",
+      "template": "a {%- comment -%} b {%- endcomment -%} c",
+      "output": "ac"
+    },
+    {
+      "id": "loss-14",
+      "mode": "lax",
+      "template": "{% if x %}a{% else %}b{% else %}c{% endif %} end",
+      "output": "a end"
+    },
+    {
+      "id": "loss-14",
+      "mode": "strict",
+      "template": "{% if x %}a{% else %}b{% else %}c{% endif %} end",
+      "output": "a end"
+    },
+    {
+      "id": "loss-15",
+      "mode": "lax",
+      "template": "{{ x | }} end",
+      "output": "a end"
+    },
+    {
+      "id": "loss-15",
+      "mode": "strict",
+      "template": "{{ x | }} end",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected id but found end_of_string in \"{{ x | }}\""
+    },
+    {
+      "id": "loss-16",
+      "mode": "lax",
+      "template": "{% assign y = %}{{ y }}tail",
+      "output": "tail"
+    },
+    {
+      "id": "loss-16",
+      "mode": "strict",
+      "template": "{% assign y = %}{{ y }}tail",
+      "output": "tail"
+    },
+    {
+      "id": "loss-17",
+      "mode": "lax",
+      "template": "{% capture %}a{% endcapture %}tail",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var]"
+    },
+    {
+      "id": "loss-17",
+      "mode": "strict",
+      "template": "{% capture %}a{% endcapture %}tail",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var]"
+    },
+    {
+      "id": "loss-18",
+      "mode": "lax",
+      "template": "{% if x %}{% endunless %}tail",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'endunless' is not a valid delimiter for if tags. use endif"
+    },
+    {
+      "id": "loss-18",
+      "mode": "strict",
+      "template": "{% if x %}{% endunless %}tail",
+      "error": "Liquid::SyntaxError: Liquid syntax error: 'endunless' is not a valid delimiter for if tags. use endif"
+    },
+    {
+      "id": "loss-19",
+      "mode": "lax",
+      "template": "a {% raw %}{{ x }}{% endraw b %} c {% endraw %} d",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endraw'"
+    },
+    {
+      "id": "loss-19",
+      "mode": "strict",
+      "template": "a {% raw %}{{ x }}{% endraw b %} c {% endraw %} d",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endraw'"
+    },
+    {
+      "id": "loss-20",
+      "mode": "lax",
+      "template": "a {% comment %}{% endcomment b %} c {% endcomment %} d",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endcomment'"
+    },
+    {
+      "id": "loss-20",
+      "mode": "strict",
+      "template": "a {% comment %}{% endcomment b %} c {% endcomment %} d",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag 'endcomment'"
+    },
+    {
+      "id": "input-01",
+      "mode": "lax",
+      "template": "a\u0001b{{ x }}c",
+      "output": "a\u0001bac"
+    },
+    {
+      "id": "input-01",
+      "mode": "strict",
+      "template": "a\u0001b{{ x }}c",
+      "output": "a\u0001bac"
+    },
+    {
+      "id": "input-02",
+      "mode": "lax",
+      "template": "a\u0000b{{ x }}c",
+      "output": "a\u0000bac"
+    },
+    {
+      "id": "input-02",
+      "mode": "strict",
+      "template": "a\u0000b{{ x }}c",
+      "output": "a\u0000bac"
+    },
+    {
+      "id": "input-03",
+      "mode": "lax",
+      "template": "﻿{{ x }}",
+      "output": "﻿a"
+    },
+    {
+      "id": "input-03",
+      "mode": "strict",
+      "template": "﻿{{ x }}",
+      "output": "﻿a"
+    },
+    {
+      "id": "input-04",
+      "mode": "lax",
+      "template": "a￾b{{ x }}",
+      "output": "a￾ba"
+    },
+    {
+      "id": "input-04",
+      "mode": "strict",
+      "template": "a￾b{{ x }}",
+      "output": "a￾ba"
+    },
+    {
+      "id": "input-05",
+      "mode": "lax",
+      "template": "{{ x }}\r\n{% if x %}\r\ny\r\n{% endif %}",
+      "output": "a\r\n\r\ny\r\n"
+    },
+    {
+      "id": "input-05",
+      "mode": "strict",
+      "template": "{{ x }}\r\n{% if x %}\r\ny\r\n{% endif %}",
+      "output": "a\r\n\r\ny\r\n"
+    },
+    {
+      "id": "input-06",
+      "mode": "lax",
+      "template": "{{ ' ' }}{{ x }}",
+      "output": " a"
+    },
+    {
+      "id": "input-06",
+      "mode": "strict",
+      "template": "{{ ' ' }}{{ x }}",
+      "output": " a"
+    },
+    {
+      "id": "input-07",
+      "mode": "lax",
+      "template": "{{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }}end",
+      "output": "end"
+    },
+    {
+      "id": "input-07",
+      "mode": "strict",
+      "template": "{{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }}end",
+      "output": "end"
+    },
+    {
+      "id": "escape-15",
+      "mode": "lax",
+      "template": "{{ 'a%FFb' | url_decode }}",
+      "output": "Liquid error: invalid byte sequence in UTF-8"
+    },
+    {
+      "id": "escape-15",
+      "mode": "strict",
+      "template": "{{ 'a%FFb' | url_decode }}",
+      "output": "Liquid error: invalid byte sequence in UTF-8"
+    },
+    {
+      "id": "escape-16",
+      "mode": "lax",
+      "template": "{{ '%E2%82%AC%2' | url_decode }}",
+      "output": "€%2"
+    },
+    {
+      "id": "escape-16",
+      "mode": "strict",
+      "template": "{{ '%E2%82%AC%2' | url_decode }}",
+      "output": "€%2"
+    },
+    {
+      "id": "escape-17",
+      "mode": "lax",
+      "template": "{{ '%invalid' | url_decode }}",
+      "output": "%invalid"
+    },
+    {
+      "id": "escape-17",
+      "mode": "strict",
+      "template": "{{ '%invalid' | url_decode }}",
+      "output": "%invalid"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",
