@@ -51,6 +51,10 @@ type Context struct {
 	strictFilters   bool
 	strictVariables bool
 	partial         bool
+	// safeHTML holds the texts of the captures of the render, which an
+	// output does not escape (see Environment.SetOutputEscape). Only the
+	// reporter context of the render keeps it.
+	safeHTML map[string]struct{}
 }
 
 // BuildContext creates a new Context with the given configuration.

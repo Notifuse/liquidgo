@@ -14,6 +14,8 @@ type Environment struct {
 	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
 	errorMode                  string
+	outputEscape               bool
+	rawFilterRegistered        bool
 	registeredFilters          []interface{} // Store filter instances for use when creating strainers
 }
 

@@ -391,6 +391,27 @@ env.SetDefaultResourceLimits(map[string]interface{}{
 })
 ```
 
+### Output Escape
+
+For HTML templates that output untrusted data (contact fields, form input, feeds), turn on the
+output escape, as LiquidJS's `outputEscape` option:
+
+```go
+env := liquid.NewEnvironment()
+env.SetOutputEscape(true)
+```
+
+Every `{{ }}` output and `echo` is then HTML-escaped, so a value cannot add markup to the page.
+Not escaped:
+
+- an output whose last filter is `raw` (`{{ feed.html | raw }}`), for HTML written on purpose, or
+  `escape`, `escape_once` or `h`, which have escaped it already;
+- the text of a `capture` (its outputs were escaped when it was captured), also after an `assign`
+  copies it. A filter that changes that text makes it ordinary text again.
+
+`assign`, conditions and filters see the data as it is: only what an output writes is escaped. The
+option is off by default, as in Shopify Liquid, which has no `raw` filter.
+
 ### File System
 
 ```go

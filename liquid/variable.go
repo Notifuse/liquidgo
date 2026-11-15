@@ -409,10 +409,45 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 	})
 }
 
-// RenderToOutput writes the value of the variable to output.
+// RenderToOutput writes the value of the variable to output. With the
+// environment's output escape on (see Environment.SetOutputEscape), the
+// written text is HTML-escaped unless its last filter is raw, escape,
+// escape_once or h, or it is the text of a capture of the render.
 func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {
-	WriteValue(output, v.Render(context))
+	value := v.Render(context)
+	if ctx, ok := context.Context().(*Context); ok && ctx.OutputEscape() && !v.escapeExempt() {
+		var b strings.Builder
+		writeValue(builderWriter{&b}, value, nil)
+		text := b.String()
+		if !ctx.isSafeHTML(text) {
+			text = htmlEscaper.Replace(text)
+		}
+		output.WriteString(text)
+		return
+	}
+	WriteValue(output, value)
 }
+
+// escapeExempt reports whether the last filter of the variable already
+// decides its escaping: raw writes it as is, escape, escape_once and h have
+// escaped it.
+func (v *Variable) escapeExempt() bool {
+	filters := v.Filters()
+	if len(filters) == 0 || len(filters[len(filters)-1]) == 0 {
+		return false
+	}
+	return outputEscapeExempt[ToS(filters[len(filters)-1][0], nil)]
+}
+
+// stringWriter is what writeValue writes to: the output buffer, or a builder
+// when the text is escaped first.
+type stringWriter interface {
+	WriteString(s string)
+}
+
+type builderWriter struct{ b *strings.Builder }
+
+func (w builderWriter) WriteString(s string) { w.b.WriteString(s) }
 
 // WriteValue writes a value to output as Ruby's render_obj_to_output: nil
 // writes nothing, and an array writes its items one after the other, nested
@@ -422,7 +457,7 @@ func WriteValue(output *OutputBuffer, value interface{}) {
 	writeValue(output, value, nil)
 }
 
-func writeValue(output *OutputBuffer, value interface{}, seen map[uintptr]bool) {
+func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
 	switch v := value.(type) {
 	case nil:
 		return

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+- **Output escape** (`Environment.SetOutputEscape`), off by default: every `{{ }}` output and
+  `echo` is HTML-escaped, except after the new `raw` filter, after `escape`, `escape_once` or `h`
+  (no double escaping), and the text of a `capture`. `assign`, conditions and filters still see
+  the data as it is. For HTML templates that output untrusted data, as LiquidJS's `outputEscape`.
+
 ## [5.11.0-port.4]
 
 `url_decode` no longer loses a value that holds a lone `%`, and `escape` writes quotes as Ruby does.
