@@ -209,13 +209,22 @@ func (t *Template) SetName(name string) {
 }
 
 // ResourceLimits returns the resource limits.
+//
+// After a render, it holds the limits and the scores of the render that
+// ended last, in a value no later render changes. With concurrent renders,
+// that may be another render: to know whether a render reached a limit, give
+// it a Context and read the Context's limits.
 func (t *Template) ResourceLimits() *ResourceLimits {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.resourceLimits
 }
 
 // SetResourceLimits sets the resource limits.
 func (t *Template) SetResourceLimits(rl *ResourceLimits) {
+	t.mu.Lock()
 	t.resourceLimits = rl
+	t.mu.Unlock()
 }
 
 // Warnings returns the warnings.
@@ -224,7 +233,10 @@ func (t *Template) Warnings() []error {
 }
 
 // Profiler returns the profiler (if profiling was enabled).
+// With concurrent renders, it is the profiler of the render that started last.
 func (t *Template) Profiler() *Profiler {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.profiler
 }
 
@@ -320,7 +332,7 @@ func (t *Template) render(assigns interface{}, options *RenderOptions, rethrow b
 	// when the same template is rendered concurrently
 	if !userProvidedContext {
 		if ctx, ok := context.(*Context); ok {
-			ctx.SetResourceLimits(cloneResourceLimits(t.resourceLimits))
+			ctx.SetResourceLimits(cloneResourceLimits(t.ResourceLimits()))
 		}
 	}
 
@@ -330,8 +342,11 @@ func (t *Template) render(assigns interface{}, options *RenderOptions, rethrow b
 	// Handle profiling
 	if t.profiling {
 		if ctx, ok := context.(*Context); ok && ctx.Profiler() == nil {
-			t.profiler = NewProfiler()
-			ctx.SetProfiler(t.profiler)
+			profiler := NewProfiler()
+			t.mu.Lock()
+			t.profiler = profiler
+			t.mu.Unlock()
+			ctx.SetProfiler(profiler)
 		}
 	}
 
@@ -410,11 +425,15 @@ func (t *Template) render(assigns interface{}, options *RenderOptions, rethrow b
 					}
 				}
 				// Update template's resource limits from context's resource limits
+				// Publish a new value rather than write into the one callers
+				// may be reading
 				if ctx.ResourceLimits() != nil && t.resourceLimits != nil {
 					ctxRL := ctx.ResourceLimits()
-					t.resourceLimits.assignScore = ctxRL.AssignScore()
-					t.resourceLimits.renderScore = ctxRL.RenderScore()
-					t.resourceLimits.reachedLimit = ctxRL.Reached()
+					published := *t.resourceLimits
+					published.assignScore = ctxRL.AssignScore()
+					published.renderScore = ctxRL.RenderScore()
+					published.reachedLimit = ctxRL.Reached()
+					t.resourceLimits = &published
 				}
 			}
 			t.mu.Unlock()
@@ -522,7 +541,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions, ret
 			Environments:   []map[string]interface{}{v, t.assigns},
 			OuterScope:     t.outerScope(),
 			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.resourceLimits,
+			ResourceLimits: t.ResourceLimits(),
 			Environment:    t.environment,
 			RethrowErrors:  rethrow,
 		})
@@ -531,7 +550,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions, ret
 			Environments:   []map[string]interface{}{t.assigns},
 			OuterScope:     t.outerScope(),
 			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.resourceLimits,
+			ResourceLimits: t.ResourceLimits(),
 			Environment:    t.environment,
 			RethrowErrors:  rethrow,
 		})
@@ -548,7 +567,7 @@ func (t *Template) buildContext(assigns interface{}, options *RenderOptions, ret
 			Environments:   []map[string]interface{}{t.assigns},
 			OuterScope:     outerScope,
 			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.resourceLimits,
+			ResourceLimits: t.ResourceLimits(),
 			Environment:    t.environment,
 			RethrowErrors:  rethrow,
 		})

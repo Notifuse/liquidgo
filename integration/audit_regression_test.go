@@ -151,3 +151,36 @@ func TestAuditRenderBangDoesNotStick(t *testing.T) {
 		t.Errorf("Render after RenderBang = %q, want %q", got, want)
 	}
 }
+
+// The resource limits and the profiler of a template can be read while other
+// renders of it run (detected under -race). Each is read alone, so that the
+// lock of one does not order the reads of the other.
+func TestAuditTemplateStateDuringConcurrentRenders(t *testing.T) {
+	reads := map[string]func(tpl *liquid.Template){
+		"limits": func(tpl *liquid.Template) {
+			if rl := tpl.ResourceLimits(); rl != nil {
+				_ = rl.Reached()
+				_ = rl.RenderScore()
+			}
+		},
+		"profiler": func(tpl *liquid.Template) { _ = tpl.Profiler() },
+	}
+	for name, read := range reads {
+		t.Run(name, func(t *testing.T) {
+			env := auditEnv()
+			env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 50})
+			tpl := auditParse(t, env, `{% for i in (1..n) %}x{% endfor %}`, liquid.TemplateOptions{Profile: true})
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				for i := 0; i < 200; i++ {
+					tpl.Render(map[string]interface{}{"n": i % 100}, nil)
+				}
+			}()
+			for i := 0; i < 200; i++ {
+				read(tpl)
+			}
+			<-done
+		})
+	}
+}

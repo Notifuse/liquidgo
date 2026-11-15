@@ -6,6 +6,12 @@
 - **`RenderBang` applies to its own render.** It left the template raising its errors: the next
   `Render` of the same template raised an error out of `Render` instead of recording it. Ruby's
   `render!` also sticks, but there raising is part of the API.
+- **`Template.ResourceLimits` and `Template.Profiler` during concurrent renders.** Each render wrote
+  its scores into the limits value the template returns, and its profiler into the template,
+  without the lock: reading them while another render ran was a data race. A render now publishes a
+  new limits value under the lock, and the profiler is written and read under it. Both still give
+  the state of the last render, which with concurrent renders may be another one: give a render a
+  `Context` to read its own limits.
 
 ## [5.11.0-port.7]
 
