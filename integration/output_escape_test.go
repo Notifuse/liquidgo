@@ -2,6 +2,7 @@ package integration
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -50,6 +51,10 @@ func TestOutputEscape(t *testing.T) {
 		{"a capture through a filter that changes it, then raw", `{% capture block %}<i>x</i>{% endcapture %}{{ block | upcase | raw }}`, `<I>X</I>`},
 		{"escape then newline_to_br", "{{ '<a>\nb' | escape | newline_to_br }}", "&lt;a&gt;<br />\nb"},
 		{"escape then truncate", `{{ name | escape | truncate: 13 }}`, `&lt;b&gt;A...`},
+		{"escape then lstrip", `{{ '  <b>' | escape | lstrip }}`, `&lt;b&gt;`},
+		{"escape then truncate with a literal ellipsis", `{{ 'Hello world here' | escape | truncate: 13, '<i>…</i>' }}`, `Hello<i>…</i>`},
+		{"escape then truncate with an ellipsis from the data", `{{ 'Hello world here' | escape | truncate: 8, name }}`, `&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
+		{"escape then truncatewords with an ellipsis from the data", `{{ 'Hello world' | escape | truncatewords: 1, name }}`, `Hello&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
 		{"escape then append", `{{ name | escape | append: '<br>' }}`, `&amp;lt;b&amp;gt;Ann&amp;lt;/b&amp;gt; &amp;amp; &amp;quot;co&amp;quot; &amp;#39;x&amp;#39;&lt;br&gt;`},
 		{"cycle", `{% cycle name, 'y' %}`, `&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
 		{"cycle of a literal", `{% cycle '<i>', 'y' %}`, `&lt;i&gt;`},
@@ -166,5 +171,52 @@ func TestOutputEscapeOfAListStaysWithinTheLimit(t *testing.T) {
 	off, on := allocated(false), allocated(true)
 	if on > 2*off {
 		t.Errorf("the escaped list allocated %d bytes, %d without the output escape", on, off)
+	}
+}
+
+// A long string is escaped a chunk at a time, so the render length limit stops it
+// before all of it is escaped. (Without the option, the limit refuses it before
+// any copy.)
+func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
+	allocated := func(on bool) uint64 {
+		env := liquid.NewEnvironment()
+		tags.RegisterStandardTags(env)
+		env.SetOutputEscape(on)
+		env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 1 << 20})
+		long := strings.Repeat("<", 8<<20)
+		tmpl, err := liquid.ParseTemplate(`{{ long }}`, &liquid.TemplateOptions{Environment: env})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var before, after runtime.MemStats
+		runtime.GC()
+		runtime.ReadMemStats(&before)
+		tmpl.Render(map[string]interface{}{"long": long}, nil)
+		runtime.ReadMemStats(&after)
+		if !tmpl.ResourceLimits().Reached() {
+			t.Fatalf("output escape %v: the string passes the render length limit without reaching it", on)
+		}
+		return after.TotalAlloc - before.TotalAlloc
+	}
+	// Escaped whole, the 8 MB string would take 32 MB before the limit refuses it;
+	// a chunk at a time, about the 1 MB limit's worth of chunks.
+	if on := allocated(true); on > 8<<20 {
+		t.Errorf("the escaped string allocated %d bytes before the limit stopped it", on)
+	}
+}
+
+// A global filter can change any value, so with one set an output is escaped even
+// after raw.
+func TestOutputEscapeWithAGlobalFilter(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+	env.SetOutputEscape(true)
+	tmpl, err := liquid.ParseTemplate(`{{ v | raw }}`, &liquid.TemplateOptions{Environment: env})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := tmpl.Render(map[string]interface{}{"v": "<b>"}, &liquid.RenderOptions{GlobalFilter: func(v interface{}) interface{} { return v }})
+	if got != "&lt;b&gt;" {
+		t.Errorf("got %q", got)
 	}
 }

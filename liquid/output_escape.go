@@ -95,7 +95,11 @@ func (t *escapeTracker) start(value interface{}) {
 	t.safe = ok && t.ctx.isSafeHTML(text)
 }
 
-func (t *escapeTracker) filter(name string) {
+// filter follows the value through a filter; args are the filter's arguments
+// as parsed. truncate and truncatewords keep the value safe only when their
+// ellipsis, the second argument, is written in the template: from the data, it
+// would add markup.
+func (t *escapeTracker) filter(name string, args []interface{}) {
 	if t == nil {
 		return
 	}
@@ -103,6 +107,11 @@ func (t *escapeTracker) filter(name string) {
 	case outputEscapeSafeFilters[name]:
 		t.safe = true
 	case outputEscapeKeepingFilters[name]:
+		if (name == "truncate" || name == "truncatewords") && len(args) > 1 {
+			if _, literal := args[1].(string); !literal {
+				t.safe = false
+			}
+		}
 	default:
 		t.safe = false
 	}

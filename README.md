@@ -409,7 +409,11 @@ page. An output is written as it is when its value is HTML on purpose:
 - the text of a `capture` (its outputs were escaped when it was captured), also after an `assign`
   copies it, and in the partials of the render;
 - either of these through `strip`, `lstrip`, `rstrip`, `strip_newlines`, `newline_to_br`,
-  `truncate` or `truncatewords` (`{{ bio | escape | newline_to_br }}`).
+  `truncate` or `truncatewords` (`{{ bio | escape | newline_to_br }}`), as long as the ellipsis
+  of `truncate` and `truncatewords` is written in the template.
+
+A capture is recognised by its text: an output equal to the text of a capture of the render is
+written as it is, so data can only repeat markup the template itself captured.
 
 Any other filter after them makes the result ordinary text again, escaped unless `raw` follows.
 `assign`, conditions and filters see the data as it is: only what an output writes is escaped. The

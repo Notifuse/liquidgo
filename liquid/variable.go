@@ -393,7 +393,7 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
-		safe.filter(filterName)
+		safe.filter(filterName, filterArgs)
 	}
 
 	// Apply global filter (like Ruby: context.apply_global_filter(obj))
