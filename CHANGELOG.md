@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.9]
+
+`Template.RenderContext`, a render with errors returned that changes nothing in the template. Tagged
+`v5.11.8`.
+
 ### Added
 - **`Template.RenderContext(ctx, data, opts...) (*Result, error)`**, a render with errors returned. It
   renders in a state of its own and changes nothing in the template, so concurrent renders of one
