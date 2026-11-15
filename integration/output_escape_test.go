@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -44,8 +45,17 @@ func TestOutputEscape(t *testing.T) {
 		{"a string literal", `{{ '<br>' }}`, `&lt;br&gt;`},
 		{"a capture", `{% capture block %}<i>{{ name }}</i>{% endcapture %}{{ block }}`, `<i>&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;</i>`},
 		{"a capture through an assign", `{% capture block %}<i>x</i>{% endcapture %}{% assign copy = block %}{{ copy }}`, `<i>x</i>`},
-		{"a capture changed by a filter", `{% capture block %} <i>x</i> {% endcapture %}{{ block | strip }}`, `&lt;i&gt;x&lt;/i&gt;`},
-		{"a capture changed by a filter, then raw", `{% capture block %} <i>x</i> {% endcapture %}{{ block | strip | raw }}`, `<i>x</i>`},
+		{"a capture through strip", `{% capture block %} <i>{{ name }}</i> {% endcapture %}{{ block | strip }}`, `<i>&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;</i>`},
+		{"a capture through a filter that changes it", `{% capture block %}<i>x</i>{% endcapture %}{{ block | upcase }}`, `&lt;I&gt;X&lt;/I&gt;`},
+		{"a capture through a filter that changes it, then raw", `{% capture block %}<i>x</i>{% endcapture %}{{ block | upcase | raw }}`, `<I>X</I>`},
+		{"escape then newline_to_br", "{{ '<a>\nb' | escape | newline_to_br }}", "&lt;a&gt;<br />\nb"},
+		{"escape then truncate", `{{ name | escape | truncate: 13 }}`, `&lt;b&gt;A...`},
+		{"escape then append", `{{ name | escape | append: '<br>' }}`, `&amp;lt;b&amp;gt;Ann&amp;lt;/b&amp;gt; &amp;amp; &amp;quot;co&amp;quot; &amp;#39;x&amp;#39;&lt;br&gt;`},
+		{"cycle", `{% cycle name, 'y' %}`, `&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
+		{"cycle of a literal", `{% cycle '<i>', 'y' %}`, `&lt;i&gt;`},
+		{"cycle in a liquid tag", "{% liquid\ncycle name, 'y'\n%}", `&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
+		{"cycle of a capture", `{% capture c %}<i>x</i>{% endcapture %}{% cycle c, 'y' %}`, `<i>x</i>`},
+		{"a capture of a cycle", `{% capture c %}{% cycle name %}{% endcapture %}{{ c }}`, `&lt;b&gt;Ann&lt;/b&gt; &amp; &quot;co&quot; &#39;x&#39;`},
 		{"raw in an assign", `{% assign v = html | raw %}{{ v }}`, `&lt;p&gt;Feed&lt;/p&gt;`},
 		{"conditions see the data", `{% if html == '<p>Feed</p>' %}same{% endif %}`, `same`},
 		{"url_encode sees the data", `{{ html | url_encode }}`, `%3Cp%3EFeed%3C%2Fp%3E`},
@@ -94,5 +104,67 @@ func TestOutputEscapeCountsInTheLimits(t *testing.T) {
 	tmpl.Render(map[string]interface{}{"q": `""""""""""`}, nil)
 	if !tmpl.ResourceLimits().Reached() {
 		t.Error("the escaped output passes the render length limit without reaching it")
+	}
+}
+
+// The output escape holds in partials, which share the capture record of the
+// render.
+func TestOutputEscapeInPartials(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+	env.SetOutputEscape(true)
+	partials := recursivePartials{
+		"show":    `[{{ name }}]`,
+		"capture": `{% capture c %}<u>{{ name }}</u>{% endcapture %}{{ c }}`,
+	}
+	for template, want := range map[string]string{
+		`{% render 'show', name: name %}`:                                     `[&lt;b&gt;]`,
+		`{% include 'show' %}`:                                                `[&lt;b&gt;]`,
+		`{% render 'capture', name: name %}`:                                  `<u>&lt;b&gt;</u>`,
+		`{% capture c %}<u>x</u>{% endcapture %}{% render 'show', name: c %}`: `[<u>x</u>]`,
+		`{% include 'capture' %}`:                                             `<u>&lt;b&gt;</u>`,
+	} {
+		tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
+		if err != nil {
+			t.Fatal(err)
+		}
+		tmpl.Registers()["file_system"] = partials
+		if got := tmpl.Render(map[string]interface{}{"name": "<b>"}, nil); got != want {
+			t.Errorf("%s: got %q, want %q", template, got, want)
+		}
+	}
+}
+
+// A list is escaped and written item by item, so the render length limit stops
+// it before all of it is built: the render allocates about what it does with the
+// option off, where escaping the whole list first allocated thousands of times
+// more on long lists.
+func TestOutputEscapeOfAListStaysWithinTheLimit(t *testing.T) {
+	allocated := func(on bool) uint64 {
+		env := liquid.NewEnvironment()
+		tags.RegisterStandardTags(env)
+		env.SetOutputEscape(on)
+		env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 1 << 20})
+		items := make([]interface{}, 400000)
+		for i := range items {
+			items[i] = "<b>0123456789</b>"
+		}
+		tmpl, err := liquid.ParseTemplate(`{{ items }}`, &liquid.TemplateOptions{Environment: env})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var before, after runtime.MemStats
+		runtime.GC()
+		runtime.ReadMemStats(&before)
+		tmpl.Render(map[string]interface{}{"items": items}, nil)
+		runtime.ReadMemStats(&after)
+		if !tmpl.ResourceLimits().Reached() {
+			t.Fatalf("output escape %v: the list passes the render length limit without reaching it", on)
+		}
+		return after.TotalAlloc - before.TotalAlloc
+	}
+	off, on := allocated(false), allocated(true)
+	if on > 2*off {
+		t.Errorf("the escaped list allocated %d bytes, %d without the output escape", on, off)
 	}
 }

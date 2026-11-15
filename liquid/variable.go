@@ -349,9 +349,16 @@ func (v *Variable) Evaluate(context *Context) interface{} {
 }
 
 func (v *Variable) Render(context TagContext) interface{} {
+	return v.render(context, nil)
+}
+
+// render is Render; with safe set, it also reports whether the value is HTML that
+// the output escape writes as it is (see escapeTracker).
+func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 	// Evaluate the variable name expression directly (like Ruby: context.evaluate(@name))
 	nameExpr := v.Name()
 	value := context.Evaluate(nameExpr)
+	safe.start(value)
 
 	// Apply filters
 	for _, filter := range v.Filters() {
@@ -386,10 +393,14 @@ func (v *Variable) Render(context TagContext) interface{} {
 
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
+		safe.filter(filterName)
 	}
 
 	// Apply global filter (like Ruby: context.apply_global_filter(obj))
 	ctx := context.Context().(*Context)
+	if ctx.GlobalFilter() != nil {
+		safe.unsafe()
+	}
 	value = ctx.ApplyGlobalFilter(value)
 
 	return value
@@ -411,43 +422,28 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 
 // RenderToOutput writes the value of the variable to output. With the
 // environment's output escape on (see Environment.SetOutputEscape), the
-// written text is HTML-escaped unless its last filter is raw, escape,
-// escape_once or h, or it is the text of a capture of the render.
+// written text is HTML-escaped unless it is HTML on purpose (see
+// escapeTracker).
 func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {
-	value := v.Render(context)
-	if ctx, ok := context.Context().(*Context); ok && ctx.OutputEscape() && !v.escapeExempt() {
-		var b strings.Builder
-		writeValue(builderWriter{&b}, value, nil)
-		text := b.String()
-		if !ctx.isSafeHTML(text) {
-			text = htmlEscaper.Replace(text)
-		}
-		output.WriteString(text)
+	ctx, ok := context.Context().(*Context)
+	if !ok || !ctx.OutputEscape() {
+		WriteValue(output, v.Render(context))
 		return
 	}
-	WriteValue(output, value)
-}
-
-// escapeExempt reports whether the last filter of the variable already
-// decides its escaping: raw writes it as is, escape, escape_once and h have
-// escaped it.
-func (v *Variable) escapeExempt() bool {
-	filters := v.Filters()
-	if len(filters) == 0 || len(filters[len(filters)-1]) == 0 {
-		return false
+	safe := &escapeTracker{ctx: ctx}
+	value := v.render(context, safe)
+	if safe.safe {
+		WriteValue(output, value)
+		return
 	}
-	return outputEscapeExempt[ToS(filters[len(filters)-1][0], nil)]
+	writeValue(escapingWriter{output}, value, nil)
 }
 
-// stringWriter is what writeValue writes to: the output buffer, or a builder
-// when the text is escaped first.
+// stringWriter is what writeValue writes to: the output buffer, or a writer
+// that escapes on the way.
 type stringWriter interface {
 	WriteString(s string)
 }
-
-type builderWriter struct{ b *strings.Builder }
-
-func (w builderWriter) WriteString(s string) { w.b.WriteString(s) }
 
 // WriteValue writes a value to output as Ruby's render_obj_to_output: nil
 // writes nothing, and an array writes its items one after the other, nested

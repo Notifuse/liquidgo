@@ -401,16 +401,20 @@ env := liquid.NewEnvironment()
 env.SetOutputEscape(true)
 ```
 
-Every `{{ }}` output and `echo` is then HTML-escaped, so a value cannot add markup to the page.
-Not escaped:
+Every `{{ }}` output, `echo` and `cycle` is then HTML-escaped, so a value cannot add markup to the
+page. An output is written as it is when its value is HTML on purpose:
 
-- an output whose last filter is `raw` (`{{ feed.html | raw }}`), for HTML written on purpose, or
-  `escape`, `escape_once` or `h`, which have escaped it already;
+- the result of `raw` (`{{ feed.html | raw }}`), or of `escape`, `escape_once` or `h`, which have
+  escaped it already;
 - the text of a `capture` (its outputs were escaped when it was captured), also after an `assign`
-  copies it. A filter that changes that text makes it ordinary text again.
+  copies it, and in the partials of the render;
+- either of these through `strip`, `lstrip`, `rstrip`, `strip_newlines`, `newline_to_br`,
+  `truncate` or `truncatewords` (`{{ bio | escape | newline_to_br }}`).
 
+Any other filter after them makes the result ordinary text again, escaped unless `raw` follows.
 `assign`, conditions and filters see the data as it is: only what an output writes is escaped. The
-option is off by default, as in Shopify Liquid, which has no `raw` filter.
+escape is for HTML: a value written into CSS (`<style>`) or a script needs `raw`, and only for data
+you trust. The option is off by default, as in Shopify Liquid, which has no `raw` filter.
 
 ### File System
 

@@ -715,6 +715,7 @@ func (c *Context) Reset() {
 	c.staticEnvironments = c.staticEnvironments[:0]
 
 	c.counters = nil
+	c.safeHTML = nil
 
 	// Clear maps
 	if c.disabledTags != nil {

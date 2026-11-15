@@ -87,7 +87,7 @@ func (c *CycleTag) RenderToOutput(context liquid.TagContext, output *liquid.Outp
 	}
 	val := context.Evaluate(c.variables[iter])
 
-	liquid.WriteValue(output, val)
+	liquid.WriteOutput(context, output, val)
 
 	// Increment iteration
 	iter++
