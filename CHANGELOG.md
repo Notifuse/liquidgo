@@ -18,6 +18,28 @@
   pointer to a pointer wrote an address) and a nil pointer as nothing (it wrote `<nil>`). A typed
   map renders as a Liquid hash, and every hash with its keys in sorted order: a Go map has no
   order, so `{{ hash }}` could change from one render to the next.
+- **Each render starts from its own data.** A `Template` no longer keeps what a render assigns
+  (`assign`, `capture`) for its next render: rendered for one recipient who sets a variable, then for
+  another who does not, it showed the first recipient's value to the second. Data given as a drop
+  (`Render(drop)`) was also kept, and answered every later render of the template, with a map, nil
+  or a `Context`; Ruby never kept it. Ruby keeps the assigns;
+  `TemplateOptions.PersistInstanceAssigns: true` (or `Template.SetPersistInstanceAssigns(true)`)
+  restores that behaviour, and turning it off forgets what earlier renders kept.
+- `Template.Errors` takes the template's lock: it raced with concurrent renders. With concurrent
+  renders, it returns the errors of the render that ended last.
+
+### Fixed
+- **Local filters on every render.** `RenderOptions.Filters` applied only to the render that
+  built the environment's strainer cache entry: the next renders with the same filters rendered
+  their input unchanged. The cache is also read and written under a lock, so concurrent renders
+  with local filters no longer race.
+- **Environment filters with local filters.** A render that passed `RenderOptions.Filters` lost the
+  filters registered on the environment (`RegisterFilter`): they rendered their input unchanged.
+  Both now apply, the local ones first for a name both define, as in Ruby.
+- **Filter types with the same name.** The strainer cache told filter types apart by their Go name
+  only: two `filters.Filters` from two packages shared one method table.
+- **Concurrent renders of partials.** Loading a partial for `render` or `include` wrote to the
+  tag's parse state, which every render of the template shares; it no longer does.
 
 ## [5.11.0-port.5]
 
