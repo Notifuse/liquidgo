@@ -371,6 +371,32 @@ env.SetErrorMode("warn")
 env.SetErrorMode("strict")
 ```
 
+### Rendering with errors returned (RenderContext)
+
+`Template.RenderContext` renders in a state of its own and changes nothing in the template: concurrent
+renders never see each other's assigns, errors or limits. It returns what the render produced and an
+error when the render could not complete:
+
+```go
+res, err := tmpl.RenderContext(ctx, data,
+    liquid.WithFileSystem(partials), // partials of this render
+    liquid.WithLimits(limits),       // limits of this render
+)
+switch {
+case err != nil:
+    // *liquid.MemoryError (a limit), *liquid.CanceledError (ctx is done),
+    // *liquid.PanicError (Go code panicked, with its Stack); res.Output is
+    // what was written before the render stopped
+case len(res.Errors) > 0:
+    // errors the render recorded and went on, as Ruby: each wrote
+    // "Liquid error: ..." in res.Output, or nothing in strict mode
+}
+```
+
+`liquid.RaiseErrors()` makes the first recorded error end the render, as Ruby's `render!`. A Go panic in a
+tag, a filter or a drop ends the render with a `*liquid.PanicError`, where `Render` writes
+`Liquid error: internal` and goes on, as Ruby does; a Liquid error they raise is recorded as in Ruby.
+
 ## Performance
 
 Liquid Go is optimized for performance:

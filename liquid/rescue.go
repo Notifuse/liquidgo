@@ -30,6 +30,9 @@ func stopsRender(err error) bool {
 // any other error is recorded and its message written in place of the node,
 // unless the node is a blank tag.
 func rescueRenderNode(context TagContext, output *OutputBuffer, node interface{}, r interface{}) {
+	if p := fatalPanic(context, r); p != nil {
+		panic(p)
+	}
 	err := errorFromPanic(r)
 	if stopsRender(err) {
 		panic(r)
