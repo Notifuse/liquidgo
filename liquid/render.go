@@ -58,7 +58,10 @@ type renderConfig struct {
 }
 
 // WithRegisters gives the render registers, read by tags and filters next to
-// the template's (Template.Registers), which they take precedence over.
+// the template's (Template.Registers), which they take precedence over. As
+// in Ruby, they are static registers: a partial of render, which inherits
+// only those, reads them too. WithFileSystem takes precedence over a
+// "file_system" register.
 func WithRegisters(registers map[string]interface{}) RenderOption {
 	return func(c *renderConfig) { c.registers = registers }
 }
@@ -127,20 +130,24 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 		limitsConfig = mergeLimits(limitsConfig, *cfg.limits)
 	}
 	limits := NewResourceLimits(limitsConfig)
-	// The file system goes in the static registers, which the isolated
-	// context of a render tag inherits, so that nested partials find it too.
+	// The registers of the render and the file system go in the static
+	// registers, as Ruby's, which the isolated context of a render tag
+	// inherits, so that partials find them too. The template's own are
+	// copied, never written.
 	static := t.registers
-	if cfg.fileSystem != nil {
-		static = make(map[string]interface{}, len(t.registers)+1)
+	if cfg.fileSystem != nil || len(cfg.registers) > 0 {
+		static = make(map[string]interface{}, len(t.registers)+len(cfg.registers)+1)
 		for k, v := range t.registers {
 			static[k] = v
 		}
-		static["file_system"] = cfg.fileSystem
+		for k, v := range cfg.registers {
+			static[k] = v
+		}
+		if cfg.fileSystem != nil {
+			static["file_system"] = cfg.fileSystem
+		}
 	}
 	registers := NewRegisters(static)
-	for key, value := range cfg.registers {
-		registers.Set(key, value)
-	}
 	// The render never writes data or the template's assigns: a func's value
 	// is kept with the render (Context.funcValueOf), so concurrent renders may
 	// share them.

@@ -435,3 +435,28 @@ func TestRenderCallsTheFuncOfEachScope(t *testing.T) {
 		t.Errorf("a func of a pushed scope renders a value of an earlier scope:\n got %q\nwant %q", res.Output, want.String())
 	}
 }
+
+// The registers of a render reach a partial of render and include, as Ruby
+// writes them in the static registers, which the isolated context of a
+// render inherits; and a file system given as a register serves nested
+// partials too.
+func TestRenderRegistersReachPartials(t *testing.T) {
+	env := rcEnv()
+	env.RegisterTag("marker", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
+	})
+	fs := &mapFileSystem{templates: map[string]string{"p": "<{% marker %}>", "outer": "[{% render 'inner' %}]", "inner": "I"}}
+	tpl := rcParse(t, env, `<{% marker %}>{% render 'p' %}{% include 'p' %}`)
+	res, err := tpl.Render(gocontext.Background(), nil, liquid.WithFileSystem(fs), liquid.WithRegisters(map[string]interface{}{"marker": "me"}))
+	if want := "<me><me><me>"; err != nil || res.Output != want {
+		t.Errorf("output %q (%v), want %q", res.Output, err, want)
+	}
+	nested := rcParse(t, env, `{% render 'outer' %}`)
+	res, err = nested.Render(gocontext.Background(), nil, liquid.WithRegisters(map[string]interface{}{"file_system": fs}))
+	if want := "[I]"; err != nil || res.Output != want {
+		t.Errorf("a file system given as a register: output %q (%v), want %q", res.Output, err, want)
+	}
+	if len(tpl.Registers()) != 0 {
+		t.Errorf("the template's registers changed: %v", tpl.Registers())
+	}
+}
