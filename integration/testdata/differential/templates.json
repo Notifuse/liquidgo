@@ -978,5 +978,95 @@
  {
   "id": "escape-17",
   "template": "{{ '%invalid' | url_decode }}"
+ },
+ {
+  "id": "strict-variables-01",
+  "template": "a{{ nope }}b",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-02",
+  "template": "{% if nope %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-03",
+  "template": "{% unless missing %}u{% endunless %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-04",
+  "template": "{% case nope %}{% when 1 %}one{% else %}e{% endcase %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-05",
+  "template": "{% for i in nope %}{{ i }}{% else %}e{% endfor %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-06",
+  "template": "[{{ nope | default: 1 }}]",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-07",
+  "template": "{% assign a = nope %}[{{ a }}]",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-08",
+  "template": "{% assign a = 1 %}{{ a }}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-09",
+  "template": "{% capture c %}x{% endcapture %}{{ c }}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-10",
+  "template": "{% increment c %}{{ c }}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-11",
+  "template": "{% for i in (1..2) %}{{ forloop.index }}{% endfor %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-12",
+  "template": "{% if nothing %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-13",
+  "template": "{% if h.k %}y{% endif %}{% if h.nope %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-14",
+  "template": "{% if x.size == 1 %}y{% endif %}{% if x.nope %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-15",
+  "template": "{% if arr.first == 1 %}y{% endif %}{% if arr.nope %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-16",
+  "template": "{% if arr[9] %}y{% else %}n{% endif %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-17",
+  "template": "{% for i in arr %}{% if i == nope %}z{% endif %}{{ i }}{% endfor %}",
+  "strict_variables": true
+ },
+ {
+  "id": "strict-variables-18",
+  "template": "{% liquid\nif nope\necho 'y'\nelse\necho 'n'\nendif\n%}",
+  "strict_variables": true
  }
 ]

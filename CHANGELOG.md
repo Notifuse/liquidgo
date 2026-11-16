@@ -65,6 +65,17 @@ changes; templates render as before.
     its body in place of its `Render`, as in v5.11.0; with one render method, a block renders
     through it.
 
+### Fixed
+- **Strict variables record an undefined name of the first level**, as Ruby's `find_variable`:
+  `{{ nope }}` recorded nothing, only `{{ a.nope }}` did. Like Ruby, the error is recorded and not
+  written, and it ends its node: `{% if nope %}` renders neither branch.
+- **A key that holds nil is not undefined** under strict variables, as in Ruby (`{% if nothing %}` with
+  `nothing: nil` renders its else branch).
+- **An integer index reads an array as Ruby's `Array#[]`**: a negative index counts from the end
+  (`{{ arr[-1] }}` is the last item), and an index out of range is nil, which strict variables do not
+  raise. Three listed divergences from Shopify are gone.
+- A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
+
 ### Changed
 - **A func in the data is called once per render**, its value kept with the render: the data and the
   template's assigns are never written. Ruby writes a proc's value back into the hash; so did
@@ -72,6 +83,8 @@ changes; templates render as before.
   wrote one map.
 
 ### Tests
+- **The differential corpus renders with strict variables** the templates that ask for it
+  (`"strict_variables": true`): 18 templates, checked against Shopify Liquid 5.11.0.
 - **The render benchmark renders the same data on every run.** It picked the current collection,
   product and blog, and the cart's items, in the order of a Go map, so its output and its allocations
   changed from one run to the next (30,900 to 38,400 allocations per run of `BenchmarkRender`). It

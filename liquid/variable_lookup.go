@@ -212,7 +212,9 @@ func (vl *VariableLookup) Lookups() []interface{} {
 // Evaluate evaluates the variable lookup in the given context.
 func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 	name := context.Evaluate(vl.name)
-	obj := context.FindVariable(ToString(name, nil), false)
+	// As Ruby's find_variable, whose raise_on_not_found is true: with strict
+	// variables, a name that resolves to nothing is an UndefinedVariable
+	obj := context.FindVariable(ToString(name, nil), true)
 
 	for i, lookup := range vl.lookups {
 		// Each step reads the liquid form of the object it reached, as Ruby
@@ -242,8 +244,14 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			}
 		}
 
-		// Array index access
+		// Array index access. An Integer key reads the array as Ruby's
+		// Array#[]: a negative index counts from the end, and an index out
+		// of range gives nil, which strict variables do not raise.
 		if arr, ok := obj.([]interface{}); ok {
+			if idx, ok := integerKey(key); ok {
+				obj = indexOf(len(arr), idx, func(i int) interface{} { return arr[i] })
+				continue
+			}
 			if idx, err := ToInteger(key); err == nil {
 				if idx >= 0 && idx < len(arr) {
 					obj = arr[idx]
@@ -255,6 +263,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			// This matches Ruby's duck-typing behavior: arrays respond to []
 			v := reflect.ValueOf(obj)
 			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+				if idx, ok := integerKey(key); ok {
+					obj = indexOf(v.Len(), idx, func(i int) interface{} { return v.Index(i).Interface() })
+					continue
+				}
 				if idx, err := ToInteger(key); err == nil {
 					if idx >= 0 && idx < v.Len() {
 						obj = v.Index(idx).Interface()
@@ -397,4 +409,34 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 // ToString converts a value to string.
 func ToString(v interface{}, ctx *Context) string {
 	return ToS(v, nil)
+}
+
+// integerKey returns key as an index when it is an integer, as Ruby's
+// key.is_a?(Integer) in a lookup of an array.
+func integerKey(key interface{}) (int, bool) {
+	switch k := key.(type) {
+	case int:
+		return k, true
+	case int64:
+		return int(k), true
+	case int32:
+		return int(k), true
+	case int16:
+		return int(k), true
+	case int8:
+		return int(k), true
+	}
+	return 0, false
+}
+
+// indexOf returns item idx of a list of n items, as Ruby's Array#[]: a
+// negative index counts from the end, and one out of range gives nil.
+func indexOf(n, idx int, item func(int) interface{}) interface{} {
+	if idx < 0 {
+		idx += n
+	}
+	if idx < 0 || idx >= n {
+		return nil
+	}
+	return item(idx)
 }
