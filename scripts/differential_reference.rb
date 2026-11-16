@@ -10,7 +10,8 @@
 #   TZ=UTC ruby -I <shopify-liquid>/lib scripts/differential_reference.rb --check # compare
 #
 # The corpus is integration/testdata/differential/templates.json, written by
-# hand, plus generated templates (see Generator below), built at random from a
+# hand (a template with "strict_variables": true renders with that option),
+# plus generated templates (see Generator below), built at random from a
 # fixed seed, so that every run writes the same file.
 
 require "json"
@@ -100,9 +101,9 @@ def generated
   (1..GENERATED).map { |i| { "id" => format("generated-%03d", i), "template" => generator.template } }
 end
 
-def render(template, data, mode)
+def render(template, data, mode, strict_variables)
   parsed = Liquid::Template.parse(template, error_mode: mode.to_sym)
-  output = parsed.render(Marshal.load(Marshal.dump(data)))
+  output = parsed.render(Marshal.load(Marshal.dump(data)), strict_variables: strict_variables)
   { "output" => output.dup.force_encoding("UTF-8").scrub("�") }
 rescue Liquid::Error => e
   { "error" => "#{e.class}: #{e.message}" }
@@ -113,7 +114,12 @@ end
 templates = JSON.parse(File.read(File.join(DIR, "templates.json"), encoding: "UTF-8")) + generated
 data = JSON.parse(File.read(File.join(DIR, "data.json"), encoding: "UTF-8"))
 results = templates.flat_map do |t|
-  MODES.map { |mode| { "id" => t["id"], "mode" => mode, "template" => t["template"] }.merge(render(t["template"], data, mode)) }
+  strict = t["strict_variables"] == true
+  MODES.map do |mode|
+    result = { "id" => t["id"], "mode" => mode, "template" => t["template"] }
+    result["strict_variables"] = true if strict
+    result.merge(render(t["template"], data, mode, strict))
+  end
 end
 text = JSON.pretty_generate({ "liquid" => Liquid::VERSION, "results" => results }) + "\n"
 

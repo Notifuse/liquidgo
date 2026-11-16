@@ -16,7 +16,8 @@ import (
 
 // The differential corpus is rendered by Shopify Liquid in Ruby
 // (scripts/differential_reference.rb) and by liquidgo, in lax and strict
-// mode, with the data of data.json. Every result of liquidgo that differs
+// mode, with the data of data.json, and with strict variables for the
+// templates that ask for them. Every result of liquidgo that differs
 // from Shopify's must be listed in differential_divergences.json with the
 // reason and liquidgo's actual result, so that any change, a fix or a
 // regression, fails the test. Error messages are not compared: a result
@@ -25,11 +26,14 @@ import (
 const differentialDir = "testdata/differential"
 
 type differentialResult struct {
-	ID       string  `json:"id"`
-	Mode     string  `json:"mode"`
-	Template string  `json:"template"`
-	Output   *string `json:"output,omitempty"`
-	Error    string  `json:"error,omitempty"`
+	ID       string `json:"id"`
+	Mode     string `json:"mode"`
+	Template string `json:"template"`
+	// StrictVariables renders with strict variables, as Ruby's
+	// strict_variables: true.
+	StrictVariables bool    `json:"strict_variables,omitempty"`
+	Output          *string `json:"output,omitempty"`
+	Error           string  `json:"error,omitempty"`
 }
 
 type differentialDivergence struct {
@@ -125,7 +129,7 @@ func renderDifferential(t *testing.T, r differentialResult, data map[string]inte
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.UseNumber()
 	_ = dec.Decode(&copied)
-	out := renderRuby(tmpl, withIntegers(copied), nil)
+	out := renderRuby(tmpl, withIntegers(copied), &rubyOptions{StrictVariables: r.StrictVariables})
 	return &out, ""
 }
 

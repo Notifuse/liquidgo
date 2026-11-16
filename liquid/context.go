@@ -50,8 +50,7 @@ type Context struct {
 	scopes             []map[string]interface{}
 	staticEnvironments []map[string]interface{}
 	baseScopeDepth     int
-	renderDepth        int             // Track nesting depth during rendering
-	dropInvokeStack    map[string]bool // Track drop method invocations to prevent infinite recursion
+	renderDepth        int // Track nesting depth during rendering
 	// counters holds the increment and decrement counters of the render.
 	// Ruby keeps them in the first environment; they are read after the
 	// scopes and before the environments, as there.
@@ -72,9 +71,12 @@ func BuildContext(config ContextConfig) *Context {
 		env = NewEnvironment()
 	}
 
+	// As Ruby's Context.new, whose environments default to {}: a context
+	// given none has one empty environment, which strict variables look a
+	// name up in (and nothing writes)
 	environments := config.Environments
 	if environments == nil {
-		environments = []map[string]interface{}{}
+		environments = []map[string]interface{}{emptyData}
 	}
 
 	staticEnvironments := config.StaticEnvironments
@@ -124,7 +126,6 @@ func BuildContext(config ContextConfig) *Context {
 		strainer:           nil,
 		stringScanner:      NewStringScanner(""),
 		templateName:       "",
-		dropInvokeStack:    make(map[string]bool),
 	}
 
 	// Initialize registers
@@ -453,10 +454,6 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// capture; the instance assigns kept from an earlier render were
 	// replaced by the render data when the context was built
 	// (squashInstanceAssignsWithEnvironments).
-	var outerScope map[string]interface{}
-	if len(c.scopes) > 0 {
-		outerScope = c.scopes[len(c.scopes)-1]
-	}
 	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
@@ -466,47 +463,10 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 		return n
 	}
 
-	variable := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
-	if variable != nil {
-		return variable
-	}
-
-	// Check if there's a drop in the outermost scope that can handle this key
-	// This allows drops to be used as context (Ruby behavior)
-	if outerScope != nil {
-		if drop, ok := outerScope["__drop__"]; ok {
-			// Check for infinite recursion in drop invocation
-			// This prevents cycles like: FindVariable -> InvokeDropOn -> LiquidMethodMissing -> Context.Get -> FindVariable
-			if c.dropInvokeStack[keyStr] {
-				// Already invoking drop for this key, return nil to break the cycle
-				return nil
-			}
-
-			// Mark this key as being invoked on the drop
-			c.dropInvokeStack[keyStr] = true
-			defer func() {
-				// Clean up after invocation
-				delete(c.dropInvokeStack, keyStr)
-			}()
-
-			// Invoke on the drop - if the method doesn't exist,
-			// InvokeDropOn will call LiquidMethodMissing as a fallback.
-			// Data given as a plain Go struct exposes nothing.
-			if isDrop(drop) {
-				return InvokeDropOn(drop, keyStr)
-			}
-			if missing, ok := methodMissing(drop); ok {
-				return missing(keyStr)
-			}
-			return nil
-		}
-	}
-
-	if raiseOnNotFound && c.strictVariables {
-		panic(NewUndefinedVariable("undefined variable " + keyStr))
-	}
-
-	return nil
+	// As Ruby: a name that an environment holds, nil included, is found;
+	// with strict variables, a name the first environment lacks is an
+	// UndefinedVariable (tryVariableFindInEnvironments)
+	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
 // LookupAndEvaluate looks up and evaluates a value from an object.

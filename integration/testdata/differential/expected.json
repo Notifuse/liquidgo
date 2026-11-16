@@ -2942,6 +2942,258 @@
       "output": "%invalid"
     },
     {
+      "id": "strict-variables-01",
+      "mode": "lax",
+      "template": "a{{ nope }}b",
+      "strict_variables": true,
+      "output": "ab"
+    },
+    {
+      "id": "strict-variables-01",
+      "mode": "strict",
+      "template": "a{{ nope }}b",
+      "strict_variables": true,
+      "output": "ab"
+    },
+    {
+      "id": "strict-variables-02",
+      "mode": "lax",
+      "template": "{% if nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-02",
+      "mode": "strict",
+      "template": "{% if nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-03",
+      "mode": "lax",
+      "template": "{% unless missing %}u{% endunless %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-03",
+      "mode": "strict",
+      "template": "{% unless missing %}u{% endunless %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-04",
+      "mode": "lax",
+      "template": "{% case nope %}{% when 1 %}one{% else %}e{% endcase %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-04",
+      "mode": "strict",
+      "template": "{% case nope %}{% when 1 %}one{% else %}e{% endcase %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-05",
+      "mode": "lax",
+      "template": "{% for i in nope %}{{ i }}{% else %}e{% endfor %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-05",
+      "mode": "strict",
+      "template": "{% for i in nope %}{{ i }}{% else %}e{% endfor %}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-06",
+      "mode": "lax",
+      "template": "[{{ nope | default: 1 }}]",
+      "strict_variables": true,
+      "output": "[]"
+    },
+    {
+      "id": "strict-variables-06",
+      "mode": "strict",
+      "template": "[{{ nope | default: 1 }}]",
+      "strict_variables": true,
+      "output": "[]"
+    },
+    {
+      "id": "strict-variables-07",
+      "mode": "lax",
+      "template": "{% assign a = nope %}[{{ a }}]",
+      "strict_variables": true,
+      "output": "[]"
+    },
+    {
+      "id": "strict-variables-07",
+      "mode": "strict",
+      "template": "{% assign a = nope %}[{{ a }}]",
+      "strict_variables": true,
+      "output": "[]"
+    },
+    {
+      "id": "strict-variables-08",
+      "mode": "lax",
+      "template": "{% assign a = 1 %}{{ a }}",
+      "strict_variables": true,
+      "output": "1"
+    },
+    {
+      "id": "strict-variables-08",
+      "mode": "strict",
+      "template": "{% assign a = 1 %}{{ a }}",
+      "strict_variables": true,
+      "output": "1"
+    },
+    {
+      "id": "strict-variables-09",
+      "mode": "lax",
+      "template": "{% capture c %}x{% endcapture %}{{ c }}",
+      "strict_variables": true,
+      "output": "x"
+    },
+    {
+      "id": "strict-variables-09",
+      "mode": "strict",
+      "template": "{% capture c %}x{% endcapture %}{{ c }}",
+      "strict_variables": true,
+      "output": "x"
+    },
+    {
+      "id": "strict-variables-10",
+      "mode": "lax",
+      "template": "{% increment c %}{{ c }}",
+      "strict_variables": true,
+      "output": "01"
+    },
+    {
+      "id": "strict-variables-10",
+      "mode": "strict",
+      "template": "{% increment c %}{{ c }}",
+      "strict_variables": true,
+      "output": "01"
+    },
+    {
+      "id": "strict-variables-11",
+      "mode": "lax",
+      "template": "{% for i in (1..2) %}{{ forloop.index }}{% endfor %}",
+      "strict_variables": true,
+      "output": "12"
+    },
+    {
+      "id": "strict-variables-11",
+      "mode": "strict",
+      "template": "{% for i in (1..2) %}{{ forloop.index }}{% endfor %}",
+      "strict_variables": true,
+      "output": "12"
+    },
+    {
+      "id": "strict-variables-12",
+      "mode": "lax",
+      "template": "{% if nothing %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "n"
+    },
+    {
+      "id": "strict-variables-12",
+      "mode": "strict",
+      "template": "{% if nothing %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "n"
+    },
+    {
+      "id": "strict-variables-13",
+      "mode": "lax",
+      "template": "{% if h.k %}y{% endif %}{% if h.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-13",
+      "mode": "strict",
+      "template": "{% if h.k %}y{% endif %}{% if h.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-14",
+      "mode": "lax",
+      "template": "{% if x.size == 1 %}y{% endif %}{% if x.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-14",
+      "mode": "strict",
+      "template": "{% if x.size == 1 %}y{% endif %}{% if x.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-15",
+      "mode": "lax",
+      "template": "{% if arr.first == 1 %}y{% endif %}{% if arr.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-15",
+      "mode": "strict",
+      "template": "{% if arr.first == 1 %}y{% endif %}{% if arr.nope %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "y"
+    },
+    {
+      "id": "strict-variables-16",
+      "mode": "lax",
+      "template": "{% if arr[9] %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "n"
+    },
+    {
+      "id": "strict-variables-16",
+      "mode": "strict",
+      "template": "{% if arr[9] %}y{% else %}n{% endif %}",
+      "strict_variables": true,
+      "output": "n"
+    },
+    {
+      "id": "strict-variables-17",
+      "mode": "lax",
+      "template": "{% for i in arr %}{% if i == nope %}z{% endif %}{{ i }}{% endfor %}",
+      "strict_variables": true,
+      "output": "123"
+    },
+    {
+      "id": "strict-variables-17",
+      "mode": "strict",
+      "template": "{% for i in arr %}{% if i == nope %}z{% endif %}{{ i }}{% endfor %}",
+      "strict_variables": true,
+      "output": "123"
+    },
+    {
+      "id": "strict-variables-18",
+      "mode": "lax",
+      "template": "{% liquid\nif nope\necho 'y'\nelse\necho 'n'\nendif\n%}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
+      "id": "strict-variables-18",
+      "mode": "strict",
+      "template": "{% liquid\nif nope\necho 'y'\nelse\necho 'n'\nendif\n%}",
+      "strict_variables": true,
+      "output": ""
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",
