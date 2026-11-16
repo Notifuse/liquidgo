@@ -1,9 +1,7 @@
 package integration
 
 import (
-	"bytes"
 	gocontext "context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
