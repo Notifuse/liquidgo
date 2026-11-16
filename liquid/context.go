@@ -320,11 +320,29 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 	}
 
 	r := c.reporter()
-	r.errors = append(r.errors, liquidErr)
 	if c.rethrowErrors {
+		// an error raised through enclosing blocks comes back here from
+		// each of them: it is recorded once
+		if !recorded(r.errors, liquidErr) {
+			r.errors = append(r.errors, liquidErr)
+		}
 		panic(liquidErr)
 	}
+	r.errors = append(r.errors, liquidErr)
 	return ToS(liquidErr, nil)
+}
+
+// recorded reports whether err is already in errs, the same value.
+func recorded(errs []error, err error) bool {
+	if !reflect.TypeOf(err).Comparable() {
+		return false
+	}
+	for _, e := range errs {
+		if reflect.TypeOf(e).Comparable() && e == err {
+			return true
+		}
+	}
+	return false
 }
 
 // Invoke invokes a filter method. A call the filter cannot take (too many arguments)
