@@ -300,7 +300,7 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 		}
 	} else {
 		// Unknown error type, wrap as InternalError
-		liquidErr = NewInternalError("internal")
+		liquidErr = asLiquidError(err)
 		le := liquidErr.(LiquidError)
 		e := le.GetError()
 		e.TemplateName = c.templateName
@@ -318,6 +318,17 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 	}
 	r.errors = append(r.errors, liquidErr)
 	return ToS(liquidErr, nil)
+}
+
+// recordError records err, a Liquid error, without writing or raising it.
+func (c *Context) recordError(err error) {
+	if le, ok := err.(LiquidError); ok {
+		if e := le.GetError(); e != nil && e.TemplateName == "" {
+			e.TemplateName = c.templateName
+		}
+	}
+	r := c.reporter()
+	r.errors = append(r.errors, err)
 }
 
 // recorded reports whether err is already in errs, the same value.
@@ -346,8 +357,8 @@ func sameError(a, b error) (same bool) {
 }
 
 // Invoke invokes a filter method. A call the filter cannot take (too many arguments)
-// gives nil, as a filter that fails does, rather than passing its input through: a
-// filter such as escape must not be skipped silently.
+// gives nil and is recorded, as a filter that fails is, rather than passing its input
+// through: a filter such as escape must not be skipped silently.
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
 	var result interface{}
 	var err error
@@ -361,9 +372,14 @@ func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) in
 		result = obj
 	}
 	if err != nil {
+		// An error of a filter is raised with strict filters; otherwise it
+		// is recorded and the filter gives nil, so that no error text is
+		// written (a deliberate divergence from Ruby).
+		err = asLiquidError(err)
 		if c.strictFilters {
 			panic(err)
 		}
+		c.recordError(err)
 		return nil
 	}
 	// A filter result is checked as a write to the output would be, so that

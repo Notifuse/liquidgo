@@ -438,8 +438,9 @@ func rubyTime(t time.Time, inspect bool) string {
 
 // indirect returns what a pointer that renders as its target points to:
 // nil for a nil pointer, the end of a chain of pointers otherwise. A pointer
-// whose type has a String or an Error method, or is a drop, renders itself;
-// indirect then reports false, as for a value that is not a pointer.
+// whose type has a String or an Error method renders itself; indirect then
+// reports false, as for a value that is not a pointer. A drop renders as
+// what it points to: never through fmt, which writes the fields it holds.
 func indirect(obj interface{}) (interface{}, bool) {
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() != reflect.Ptr {
@@ -455,12 +456,6 @@ func indirect(obj interface{}) (interface{}, bool) {
 				return nil, false
 			}
 			return v, true
-		}
-		if isDrop(rv.Interface()) {
-			if rv.Interface() == obj {
-				return nil, false
-			}
-			return rv.Interface(), true
 		}
 		rv = rv.Elem()
 	}

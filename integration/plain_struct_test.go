@@ -320,3 +320,40 @@ func TestADropNeverWritesItsFields(t *testing.T) {
 		t.Errorf("%s gives %q: the key of the drop is not readable", src, got)
 	}
 }
+
+// secretOrders is a drop on a named slice of plain structs.
+type secretOrder struct {
+	ID         int
+	CardNumber string
+}
+
+type secretOrders []secretOrder
+
+func (o *secretOrders) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	if key == "count" {
+		return len(*o), true, nil
+	}
+	return nil, false, nil
+}
+
+type secretOrderMap map[string]secretOrder
+
+func (o *secretOrderMap) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	return nil, false, nil
+}
+
+// A drop on a slice or a map of plain structs, given by pointer, never writes
+// the fields of what it holds, in the output, through a filter or in a hash.
+func TestADropOnASliceNeverWritesTheFieldsItHolds(t *testing.T) {
+	orders := secretOrders{{1, "4242-S3CR3T"}}
+	byKey := secretOrderMap{"k": {2, "4343-S3CR3T"}}
+	data := map[string]interface{}{"o": &orders, "m": &byKey, "h": map[string]interface{}{"o": &orders}, "list": []interface{}{&orders}}
+	src := `{{ o }}|{{ o | append: "" }}|{{ o | upcase }}|{{ o | default: "" }}|{{ list | join: "," }}|{{ list | first }}|{{ h }}|{{ m }}|{{ o.count }}`
+	got := renderPlain(t, src, data)
+	if containsAny(got, "S3CR3T") {
+		t.Errorf("%s gives %q: a drop wrote the fields it holds", src, got)
+	}
+	if !containsAny(got, "|1") {
+		t.Errorf("%s gives %q: the key of the drop is not readable", src, got)
+	}
+}

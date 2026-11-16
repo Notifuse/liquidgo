@@ -51,7 +51,7 @@ func isDrop(obj interface{}) bool {
 func dropGet(ctx *Context, g LiquidGetter, key string) interface{} {
 	value, found, err := g.LiquidGet(ctx, key)
 	if err != nil {
-		panic(err)
+		panic(asLiquidError(err))
 	}
 	if !found {
 		if ctx != nil && ctx.StrictVariables() {

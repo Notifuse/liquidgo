@@ -4,9 +4,10 @@
 package liquid
 
 // standardFilters are the filters of every environment: each calls its
-// method of StandardFilters, with nil for a missing argument, as the
-// strainer did; an argument too many is an ArgumentError, and the error a
-// method returns renders nothing (a filter error writes no text).
+// method of StandardFilters, with Ruby's default for an argument it is
+// not given, or nil when Ruby has none, and an argument given as nil as
+// Ruby reads it; an argument too many is an ArgumentError, and the error
+// a method returns is the filter's error.
 var standardFilters = map[string]FilterFunc{
 	"abs": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -39,8 +40,7 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)
 		}
-		v, _ := ctx.standard().Base64Decode(input)
-		return v, nil
+		return ctx.standard().Base64Decode(input)
 	},
 	"base64_encode": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -52,8 +52,7 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)
 		}
-		v, _ := ctx.standard().Base64URLSafeDecode(input)
-		return v, nil
+		return ctx.standard().Base64URLSafeDecode(input)
 	},
 	"base64_url_safe_encode": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -71,24 +70,21 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)
 		}
-		v, _ := ctx.standard().Ceil(input)
-		return v, nil
+		return ctx.standard().Ceil(input)
 	},
 	"compact": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Compact(input, a[0])
-		return v, nil
+		return ctx.standard().Compact(input, a[0])
 	},
 	"concat": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Concat(input, a[0])
-		return v, nil
+		return ctx.standard().Concat(input, a[0])
 	},
 	"date": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
@@ -102,6 +98,9 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
+		if len(args) < 1 {
+			a[0] = ""
+		}
 		return ctx.standard().Default(input, a[0], a[1]), nil
 	},
 	"divided_by": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -109,8 +108,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().DividedBy(input, a[0])
-		return v, nil
+		return ctx.standard().DividedBy(input, a[0])
 	},
 	"downcase": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -135,16 +133,14 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
-		v, _ := ctx.standard().Find(input, a[0], a[1])
-		return v, nil
+		return ctx.standard().Find(input, a[0], a[1])
 	},
 	"find_index": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
-		v, _ := ctx.standard().FindIndex(input, a[0], a[1])
-		return v, nil
+		return ctx.standard().FindIndex(input, a[0], a[1])
 	},
 	"first": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -156,8 +152,7 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)
 		}
-		v, _ := ctx.standard().Floor(input)
-		return v, nil
+		return ctx.standard().Floor(input)
 	},
 	"h": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -170,14 +165,18 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
-		v, _ := ctx.standard().Has(input, a[0], a[1])
-		return v, nil
+		return ctx.standard().Has(input, a[0], a[1])
 	},
 	"join": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
+		if len(args) < 1 {
+			a[0] = " "
+		} else if a[0] == nil {
+			a[0] = ""
+		}
 		return ctx.standard().Join(input, a[0]), nil
 	},
 	"last": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -197,8 +196,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Map(input, a[0])
-		return v, nil
+		return ctx.standard().Map(input, a[0])
 	},
 	"minus": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
@@ -212,8 +210,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Modulo(input, a[0])
-		return v, nil
+		return ctx.standard().Modulo(input, a[0])
 	},
 	"newline_to_br": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -240,8 +237,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
-		v, _ := ctx.standard().Reject(input, a[0], a[1])
-		return v, nil
+		return ctx.standard().Reject(input, a[0], a[1])
 	},
 	"remove": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
@@ -269,6 +265,9 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
+		if len(args) < 2 {
+			a[1] = ""
+		}
 		return ctx.standard().Replace(input, a[0], a[1]), nil
 	},
 	"replace_first": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -276,6 +275,9 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
+		if len(args) < 2 {
+			a[1] = ""
+		}
 		return ctx.standard().ReplaceFirst(input, a[0], a[1]), nil
 	},
 	"replace_last": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -296,8 +298,10 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Round(input, a[0])
-		return v, nil
+		if len(args) < 1 {
+			a[0] = 0
+		}
+		return ctx.standard().Round(input, a[0])
 	},
 	"rstrip": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -323,16 +327,14 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Sort(input, a[0])
-		return v, nil
+		return ctx.standard().Sort(input, a[0])
 	},
 	"sort_natural": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().SortNatural(input, a[0])
-		return v, nil
+		return ctx.standard().SortNatural(input, a[0])
 	},
 	"split": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
@@ -364,8 +366,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Sum(input, a[0])
-		return v, nil
+		return ctx.standard().Sum(input, a[0])
 	},
 	"times": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
@@ -379,6 +380,16 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
+		if len(args) < 1 {
+			a[0] = 50
+		} else if a[0] == nil {
+			a[0] = ""
+		}
+		if len(args) < 2 {
+			a[1] = "..."
+		} else if a[1] == nil {
+			a[1] = ""
+		}
 		return ctx.standard().Truncate(input, a[0], a[1]), nil
 	},
 	"truncatewords": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -386,6 +397,16 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
+		if len(args) < 1 {
+			a[0] = 15
+		} else if a[0] == nil {
+			a[0] = ""
+		}
+		if len(args) < 2 {
+			a[1] = "..."
+		} else if a[1] == nil {
+			a[1] = ""
+		}
 		return ctx.standard().TruncateWords(input, a[0], a[1]), nil
 	},
 	"uniq": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -393,8 +414,7 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
 		a := filterArgs(args, 1)
-		v, _ := ctx.standard().Uniq(input, a[0])
-		return v, nil
+		return ctx.standard().Uniq(input, a[0])
 	},
 	"upcase": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -406,8 +426,7 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)
 		}
-		v, _ := ctx.standard().URLDecode(input)
-		return v, nil
+		return ctx.standard().URLDecode(input)
 	},
 	"url_encode": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -420,7 +439,6 @@ var standardFilters = map[string]FilterFunc{
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
 		a := filterArgs(args, 2)
-		v, _ := ctx.standard().Where(input, a[0], a[1])
-		return v, nil
+		return ctx.standard().Where(input, a[0], a[1])
 	},
 }
