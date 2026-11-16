@@ -101,3 +101,39 @@ func TestRenderWithStrictVariablesRecordsAnUndefinedName(t *testing.T) {
 		t.Errorf("without strict variables: errors %v, want none", res.Errors)
 	}
 }
+
+// An array index follows Ruby's VariableLookup: an Integer key reads the
+// array as Array#[] (a JSON number comes to Go as an integral float64), and
+// any other key is no index: nil, or an undefined variable with strict
+// variables.
+func TestAnArrayIndexFollowsRuby(t *testing.T) {
+	data := map[string]interface{}{
+		"arr":   []interface{}{1, 2, 3},
+		"typed": []int{1, 2, 3},
+		"fm1":   float64(-1), "f9": float64(9), "u1": uint(1), "half": 1.5,
+	}
+	for _, c := range []struct {
+		source, want, strictErr string
+	}{
+		{"{{ arr[fm1] }}", "3", ""},
+		{"{{ typed[fm1] }}", "3", ""},
+		{"{{ arr[u1] }}", "2", ""},
+		{"[{{ arr[f9] }}]", "[]", ""},
+		{"[{{ arr['1'] }}]", "[]", "Liquid error: undefined variable 1"},
+		{"[{{ typed['1'] }}]", "[]", "Liquid error: undefined variable 1"},
+		{"[{{ arr[half] }}]", "[]", "Liquid error: undefined variable 1.5"},
+	} {
+		tmpl := strictTemplate(t, c.source)
+		if got := renderRuby(tmpl, data, nil); got != c.want {
+			t.Errorf("%s renders %q, want %q", c.source, got, c.want)
+		}
+		renderRuby(tmpl, data, &rubyOptions{StrictVariables: true})
+		errs := rubyErrors(tmpl)
+		switch {
+		case c.strictErr == "" && len(errs) != 0:
+			t.Errorf("%s with strict variables: errors %v, want none", c.source, errs)
+		case c.strictErr != "" && (len(errs) != 1 || errs[0].Error() != c.strictErr):
+			t.Errorf("%s with strict variables: errors %v, want %q", c.source, errs, c.strictErr)
+		}
+	}
+}

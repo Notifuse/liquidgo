@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"math"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -246,17 +247,12 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 
 		// Array index access. An Integer key reads the array as Ruby's
 		// Array#[]: a negative index counts from the end, and an index out
-		// of range gives nil, which strict variables do not raise.
+		// of range gives nil, which strict variables do not raise. Any other
+		// key, such as '1' or 1.5, is no index, as in Ruby.
 		if arr, ok := obj.([]interface{}); ok {
 			if idx, ok := integerKey(key); ok {
 				obj = indexOf(len(arr), idx, func(i int) interface{} { return arr[i] })
 				continue
-			}
-			if idx, err := ToInteger(key); err == nil {
-				if idx >= 0 && idx < len(arr) {
-					obj = arr[idx]
-					continue
-				}
 			}
 		} else if obj != nil {
 			// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
@@ -266,12 +262,6 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				if idx, ok := integerKey(key); ok {
 					obj = indexOf(v.Len(), idx, func(i int) interface{} { return v.Index(i).Interface() })
 					continue
-				}
-				if idx, err := ToInteger(key); err == nil {
-					if idx >= 0 && idx < v.Len() {
-						obj = v.Index(idx).Interface()
-						continue
-					}
 				}
 			}
 
@@ -412,19 +402,27 @@ func ToString(v interface{}, ctx *Context) string {
 }
 
 // integerKey returns key as an index when it is an integer, as Ruby's
-// key.is_a?(Integer) in a lookup of an array.
+// key.is_a?(Integer) in a lookup of an array: a Go integer of any size, or
+// a float64 with no fraction, which is how a JSON number comes to Go.
 func integerKey(key interface{}) (int, bool) {
 	switch k := key.(type) {
 	case int:
 		return k, true
-	case int64:
-		return int(k), true
-	case int32:
-		return int(k), true
-	case int16:
-		return int(k), true
-	case int8:
-		return int(k), true
+	case float64:
+		if k == math.Trunc(k) && math.Abs(k) < 1<<53 {
+			return int(k), true
+		}
+		return 0, false
+	}
+	v := reflect.ValueOf(key)
+	switch v.Kind() {
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return int(v.Int()), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		if v.Uint() <= math.MaxInt32 {
+			return int(v.Uint()), true
+		}
+		return math.MaxInt32, true // out of range of any list
 	}
 	return 0, false
 }
