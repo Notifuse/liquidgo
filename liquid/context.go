@@ -31,7 +31,7 @@ type Context struct {
 	// func was read from and its key: the data itself is never written.
 	funcValues map[funcValueKey]funcValue
 	// argScratch is the slice lent to the calls of standard filters, and
-	// argLent whether a call holds it (see standardFilterArgs).
+	// argLent whether a call holds it (see lendFilterArgs).
 	argScratch []interface{}
 	argLent    bool
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
@@ -255,26 +255,31 @@ func (c *Context) standard() *StandardFilters {
 // filter returns the function of the filter name: a local filter of the
 // render, the last added first, then the environment's, then the standard
 // one; nil for an unknown filter.
-// standardFilterArgs returns a slice of n arguments for a call of the
-// standard filter name, when no local or environment filter takes its
-// place: a standard filter never keeps its arguments, so the context lends
-// it the same slice at each call; give it back with returnFilterArgs. It
-// returns nil otherwise, and the caller makes a slice of its own.
-func (c *Context) standardFilterArgs(name string, n int) []interface{} {
-	if c.argLent {
-		return nil // a call made while the slice is lent makes its own
-	}
-	for i := range c.filters {
+// resolveFilter returns the filter name, and whether it is a standard
+// filter that no local or environment filter takes the place of: such a
+// filter never keeps its arguments (see lendFilterArgs). The local filters
+// come first, the last added first, then the environment's.
+func (c *Context) resolveFilter(name string) (FilterFunc, bool) {
+	for i := len(c.filters) - 1; i >= 0; i-- {
 		if c.filters[i].name == name {
-			return nil
+			return c.filters[i].fn, false
 		}
 	}
 	if c.environment != nil {
-		if _, ok := c.environment.filters[name]; ok {
-			return nil
+		if fn, ok := c.environment.filters[name]; ok {
+			return fn, false
 		}
 	}
-	if _, ok := standardFilters[name]; !ok {
+	fn, ok := standardFilters[name]
+	return fn, ok
+}
+
+// lendFilterArgs returns a slice of n arguments for a call of a standard
+// filter, which never keeps them: the context lends the same slice at each
+// call; give it back with returnFilterArgs. It returns nil while the slice is
+// lent, and the caller makes a slice of its own.
+func (c *Context) lendFilterArgs(n int) []interface{} {
+	if c.argLent {
 		return nil
 	}
 	if cap(c.argScratch) < n {
@@ -284,25 +289,11 @@ func (c *Context) standardFilterArgs(name string, n int) []interface{} {
 	return c.argScratch[:n]
 }
 
-// returnFilterArgs takes back the slice standardFilterArgs lent, emptied so
-// that it keeps no value alive.
+// returnFilterArgs takes back the slice lendFilterArgs lent, emptied so that
+// it keeps no value alive.
 func (c *Context) returnFilterArgs(args []interface{}) {
 	clear(args)
 	c.argLent = false
-}
-
-func (c *Context) filter(name string) FilterFunc {
-	for i := len(c.filters) - 1; i >= 0; i-- {
-		if c.filters[i].name == name {
-			return c.filters[i].fn
-		}
-	}
-	if c.environment != nil {
-		if fn, ok := c.environment.filters[name]; ok {
-			return fn
-		}
-	}
-	return standardFilters[name]
 }
 
 // Interrupt returns true if there are any unhandled interrupts.
@@ -408,9 +399,16 @@ func sameError(a, b error) (same bool) {
 // gives nil and is recorded, as a filter that fails is, rather than passing its input
 // through: a filter such as escape must not be skipped silently.
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
+	fn, _ := c.resolveFilter(method)
+	return c.invokeFilter(method, fn, obj, args)
+}
+
+// invokeFilter is Invoke for fn, the filter method resolves to (nil for an
+// unknown one).
+func (c *Context) invokeFilter(method string, fn FilterFunc, obj interface{}, args []interface{}) interface{} {
 	var result interface{}
 	var err error
-	if fn := c.filter(method); fn != nil {
+	if fn != nil {
 		result, err = fn(c, obj, args...)
 	} else if c.strictFilters {
 		// An unknown filter stays an unknown filter: it never reads a
