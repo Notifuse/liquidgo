@@ -29,7 +29,10 @@ type Condition struct {
 	attachment     interface{}
 	childCondition *Condition
 	operator       string
-	childRelation  string
+	// operate is the operator, found once when the condition is made (nil
+	// for an unknown one).
+	operate       ConditionOperator
+	childRelation string
 }
 
 // NewCondition creates a new Condition.
@@ -37,6 +40,7 @@ func NewCondition(left interface{}, operator string, right interface{}) *Conditi
 	return &Condition{
 		left:     left,
 		operator: operator,
+		operate:  getConditionOperator(operator),
 		right:    right,
 	}
 }
@@ -100,7 +104,7 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	var err error
 
 	for {
-		result, err = c.interpretCondition(condition.left, condition.right, condition.operator, context)
+		result, err = c.interpretCondition(condition.left, condition.right, condition.operator, condition.operate, context)
 		if err != nil {
 			return false, err
 		}
@@ -127,7 +131,7 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	return result, nil
 }
 
-func (c *Condition) interpretCondition(left, right interface{}, op string, context ConditionContext) (bool, error) {
+func (c *Condition) interpretCondition(left, right interface{}, op string, operator ConditionOperator, context ConditionContext) (bool, error) {
 	// If operator is empty, just evaluate the left side
 	if op == "" {
 		result := context.Evaluate(left)
@@ -142,7 +146,6 @@ func (c *Condition) interpretCondition(left, right interface{}, op string, conte
 	leftVal := ToLiquidValue(context.Evaluate(left))
 	rightVal := ToLiquidValue(context.Evaluate(right))
 
-	operator := getConditionOperator(op)
 	if operator == nil {
 		return false, NewArgumentError("Unknown operator " + op)
 	}
