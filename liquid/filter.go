@@ -40,14 +40,12 @@ func (f FilterDef) check() error {
 // the lexer.
 var filterName = regexp.MustCompile(`^[a-zA-Z_][\w-]*\??$`)
 
-// filterArgs returns the first n arguments of args, nil for the missing ones.
-func filterArgs(args []interface{}, n int) []interface{} {
-	if len(args) >= n {
-		return args
+// filterArg returns argument i of args, nil when it is missing.
+func filterArg(args []interface{}, i int) interface{} {
+	if i < len(args) {
+		return args[i]
 	}
-	padded := make([]interface{}, n)
-	copy(padded, args)
-	return padded
+	return nil
 }
 
 // tooManyFilterArgs is the error of a filter given more arguments than it

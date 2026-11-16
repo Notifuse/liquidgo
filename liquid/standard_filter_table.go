@@ -19,22 +19,22 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Append(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Append(input, a0), nil
 	},
 	"at_least": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().AtLeast(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().AtLeast(input, a0), nil
 	},
 	"at_most": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().AtMost(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().AtMost(input, a0), nil
 	},
 	"base64_decode": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -76,39 +76,40 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Compact(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Compact(input, a0)
 	},
 	"concat": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Concat(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Concat(input, a0)
 	},
 	"date": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Date(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Date(input, a0), nil
 	},
 	"default": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
 		if len(args) < 1 {
-			a[0] = ""
+			a0 = ""
 		}
-		return ctx.standard().Default(input, a[0], a[1]), nil
+		return ctx.standard().Default(input, a0, a1), nil
 	},
 	"divided_by": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().DividedBy(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().DividedBy(input, a0)
 	},
 	"downcase": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -132,15 +133,17 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().Find(input, a[0], a[1])
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().Find(input, a0, a1)
 	},
 	"find_index": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().FindIndex(input, a[0], a[1])
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().FindIndex(input, a0, a1)
 	},
 	"first": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -164,20 +167,21 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().Has(input, a[0], a[1])
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().Has(input, a0, a1)
 	},
 	"join": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
+		a0 := filterArg(args, 0)
 		if len(args) < 1 {
-			a[0] = " "
-		} else if a[0] == nil {
-			a[0] = ""
+			a0 = " "
+		} else if a0 == nil {
+			a0 = ""
 		}
-		return ctx.standard().Join(input, a[0]), nil
+		return ctx.standard().Join(input, a0), nil
 	},
 	"last": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -195,22 +199,22 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Map(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Map(input, a0)
 	},
 	"minus": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Minus(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Minus(input, a0), nil
 	},
 	"modulo": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Modulo(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Modulo(input, a0)
 	},
 	"newline_to_br": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -222,70 +226,74 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Plus(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Plus(input, a0), nil
 	},
 	"prepend": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Prepend(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Prepend(input, a0), nil
 	},
 	"reject": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().Reject(input, a[0], a[1])
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().Reject(input, a0, a1)
 	},
 	"remove": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Remove(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Remove(input, a0), nil
 	},
 	"remove_first": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().RemoveFirst(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().RemoveFirst(input, a0), nil
 	},
 	"remove_last": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().RemoveLast(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().RemoveLast(input, a0), nil
 	},
 	"replace": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
 		if len(args) < 2 {
-			a[1] = ""
+			a1 = ""
 		}
-		return ctx.standard().Replace(input, a[0], a[1]), nil
+		return ctx.standard().Replace(input, a0, a1), nil
 	},
 	"replace_first": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
 		if len(args) < 2 {
-			a[1] = ""
+			a1 = ""
 		}
-		return ctx.standard().ReplaceFirst(input, a[0], a[1]), nil
+		return ctx.standard().ReplaceFirst(input, a0, a1), nil
 	},
 	"replace_last": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().ReplaceLast(input, a[0], a[1]), nil
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().ReplaceLast(input, a0, a1), nil
 	},
 	"reverse": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -297,11 +305,11 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
+		a0 := filterArg(args, 0)
 		if len(args) < 1 {
-			a[0] = 0
+			a0 = 0
 		}
-		return ctx.standard().Round(input, a[0])
+		return ctx.standard().Round(input, a0)
 	},
 	"rstrip": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -319,29 +327,30 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().Slice(input, a[0], a[1]), nil
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().Slice(input, a0, a1), nil
 	},
 	"sort": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Sort(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Sort(input, a0)
 	},
 	"sort_natural": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().SortNatural(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().SortNatural(input, a0)
 	},
 	"split": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Split(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Split(input, a0), nil
 	},
 	"strip": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -365,56 +374,58 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Sum(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Sum(input, a0)
 	},
 	"times": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Times(input, a[0]), nil
+		a0 := filterArg(args, 0)
+		return ctx.standard().Times(input, a0), nil
 	},
 	"truncate": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
 		if len(args) < 1 {
-			a[0] = 50
-		} else if a[0] == nil {
-			a[0] = ""
+			a0 = 50
+		} else if a0 == nil {
+			a0 = ""
 		}
 		if len(args) < 2 {
-			a[1] = "..."
-		} else if a[1] == nil {
-			a[1] = ""
+			a1 = "..."
+		} else if a1 == nil {
+			a1 = ""
 		}
-		return ctx.standard().Truncate(input, a[0], a[1]), nil
+		return ctx.standard().Truncate(input, a0, a1), nil
 	},
 	"truncatewords": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
 		if len(args) < 1 {
-			a[0] = 15
-		} else if a[0] == nil {
-			a[0] = ""
+			a0 = 15
+		} else if a0 == nil {
+			a0 = ""
 		}
 		if len(args) < 2 {
-			a[1] = "..."
-		} else if a[1] == nil {
-			a[1] = ""
+			a1 = "..."
+		} else if a1 == nil {
+			a1 = ""
 		}
-		return ctx.standard().TruncateWords(input, a[0], a[1]), nil
+		return ctx.standard().TruncateWords(input, a0, a1), nil
 	},
 	"uniq": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 1 {
 			return nil, tooManyFilterArgs(len(args)+1, 2)
 		}
-		a := filterArgs(args, 1)
-		return ctx.standard().Uniq(input, a[0])
+		a0 := filterArg(args, 0)
+		return ctx.standard().Uniq(input, a0)
 	},
 	"upcase": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
@@ -438,7 +449,8 @@ var standardFilters = map[string]FilterFunc{
 		if len(args) > 2 {
 			return nil, tooManyFilterArgs(len(args)+1, 3)
 		}
-		a := filterArgs(args, 2)
-		return ctx.standard().Where(input, a[0], a[1])
+		a0 := filterArg(args, 0)
+		a1 := filterArg(args, 1)
+		return ctx.standard().Where(input, a0, a1)
 	},
 }

@@ -150,31 +150,28 @@ func (c *Condition) interpretCondition(left, right interface{}, op string, conte
 	return operator(c, leftVal, rightVal)
 }
 
+// conditionOperators are the operators of a condition, made once.
+var conditionOperators = map[string]ConditionOperator{
+	"==": func(cond *Condition, left, right interface{}) (bool, error) {
+		return cond.equalVariables(left, right), nil
+	},
+	"!=": notEqualOperator,
+	"<>": notEqualOperator,
+	"<":  orderOperator(func(cmp int) bool { return cmp < 0 }),
+	">":  orderOperator(func(cmp int) bool { return cmp > 0 }),
+	">=": orderOperator(func(cmp int) bool { return cmp >= 0 }),
+	"<=": orderOperator(func(cmp int) bool { return cmp <= 0 }),
+	"contains": func(_ *Condition, left, right interface{}) (bool, error) {
+		return containsOperator(left, right), nil
+	},
+}
+
+func notEqualOperator(cond *Condition, left, right interface{}) (bool, error) {
+	return !cond.equalVariables(left, right), nil
+}
+
 func getConditionOperator(op string) ConditionOperator {
-	switch op {
-	case "==":
-		return func(cond *Condition, left, right interface{}) (bool, error) {
-			return cond.equalVariables(left, right), nil
-		}
-	case "!=", "<>":
-		return func(cond *Condition, left, right interface{}) (bool, error) {
-			return !cond.equalVariables(left, right), nil
-		}
-	case "<":
-		return orderOperator(func(cmp int) bool { return cmp < 0 })
-	case ">":
-		return orderOperator(func(cmp int) bool { return cmp > 0 })
-	case ">=":
-		return orderOperator(func(cmp int) bool { return cmp >= 0 })
-	case "<=":
-		return orderOperator(func(cmp int) bool { return cmp <= 0 })
-	case "contains":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return containsOperator(left, right), nil
-		}
-	default:
-		return nil
-	}
+	return conditionOperators[op]
 }
 
 func (c *Condition) equalVariables(left, right interface{}) bool {

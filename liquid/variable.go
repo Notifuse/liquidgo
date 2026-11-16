@@ -373,10 +373,14 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 			}
 		}
 
-		// Evaluate filter arguments
-		evaluatedArgs := make([]interface{}, len(filterArgs), len(filterArgs)+1)
-		for i, arg := range filterArgs {
-			evaluatedArgs[i] = context.Evaluate(arg)
+		// Evaluate filter arguments; a filter without any gets none, so
+		// that its call allocates nothing for them
+		var evaluatedArgs []interface{}
+		if len(filterArgs) > 0 {
+			evaluatedArgs = make([]interface{}, len(filterArgs), len(filterArgs)+1)
+			for i, arg := range filterArgs {
+				evaluatedArgs[i] = context.Evaluate(arg)
+			}
 		}
 
 		// Keyword arguments are passed as one trailing map, as in Ruby

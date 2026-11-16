@@ -547,6 +547,9 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 	if r, ok := input.(*Range); ok {
 		return sf.joinRange(r, sep)
 	}
+	if arr, ok := input.([]interface{}); ok && !hasNestedList(arr) {
+		return sf.joinItems(arr, sep)
+	}
 	iter := NewInputIterator(input, sf.context)
 	parts := make([]string, 0, len(iter.input))
 	iter.Each(func(item interface{}) {
@@ -558,6 +561,35 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 
 // joinRange joins the integers of a range without building them first, and
 // stops at the render length limit, or past maxRangeItems integers.
+// joinItems joins the items of a list without a nested list, as Join does,
+// writing each item once, within the render length limit.
+func (sf *StandardFilters) joinItems(arr []interface{}, sep string) string {
+	var b strings.Builder
+	for i, item := range arr {
+		s := ToS(ToLiquidValue(ToLiquid(item)), nil)
+		n := len(s)
+		if i > 0 {
+			n += len(sep)
+		}
+		sf.checkLength(b.Len() + n)
+		if i > 0 {
+			b.WriteString(sep)
+		}
+		b.WriteString(s)
+	}
+	return b.String()
+}
+
+// hasNestedList reports whether arr holds a list, which Join flattens.
+func hasNestedList(arr []interface{}) bool {
+	for _, item := range arr {
+		if _, ok := item.([]interface{}); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (sf *StandardFilters) joinRange(r *Range, sep string) string {
 	n := r.Len()
 	if n > maxRangeItems {
@@ -937,7 +969,11 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 // itself is left out where it recurs, instead of recursing without end.
 func flattenArray(arr []interface{}) []interface{} {
 	result := make([]interface{}, 0, len(arr))
-	return appendFlattened(result, arr, map[flattenKey]bool{})
+	if hasNestedList(arr) {
+		return appendFlattened(result, arr, map[flattenKey]bool{})
+	}
+	// no nested list: a copy, without the map that stops a list holding itself
+	return append(result, arr...)
 }
 
 // flattenKey names an array being flattened by its first item and length.
