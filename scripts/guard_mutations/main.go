@@ -162,7 +162,7 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	defer os.RemoveAll(tmp)
+	defer func() { _ = os.RemoveAll(tmp) }()
 
 	bad := 0
 	for i, g := range guards {

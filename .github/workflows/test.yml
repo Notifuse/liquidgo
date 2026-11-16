@@ -98,6 +98,20 @@ jobs:
           path: integration/testdata/fuzz/FuzzRender
           if-no-files-found: ignore
 
+  guards:
+    # Each guard of the library (resource limits, depth, the end of a
+    # render, what a template reads of Go values, output escaping, template
+    # files) is removed in turn, and a test must fail without it.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Remove each guard and run the tests
+        run: go run ./scripts/guard_mutations
+
   lint:
     runs-on: ubuntu-latest
     steps:
