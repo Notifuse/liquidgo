@@ -102,7 +102,7 @@ func TestOutput_VariablePiping(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -111,7 +111,7 @@ func TestOutput_VariablePiping(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -136,7 +136,7 @@ func TestOutput_VariablePipingWithInput(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -145,7 +145,7 @@ func TestOutput_VariablePipingWithInput(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -170,7 +170,7 @@ func TestOutput_VariablePipingWithArgs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -179,7 +179,7 @@ func TestOutput_VariablePipingWithArgs(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -204,7 +204,7 @@ func TestOutput_VariablePipingWithNoArgs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -213,7 +213,7 @@ func TestOutput_VariablePipingWithNoArgs(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -238,7 +238,7 @@ func TestOutput_MultipleVariablePipingWithArgs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -247,7 +247,7 @@ func TestOutput_MultipleVariablePipingWithArgs(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -272,7 +272,7 @@ func TestOutput_VariablePipingWithMultipleArgs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -281,7 +281,7 @@ func TestOutput_VariablePipingWithMultipleArgs(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -306,7 +306,7 @@ func TestOutput_VariablePipingWithVariableArgs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment: env,
 		StaticEnvironments: []map[string]interface{}{{
 			"car": map[string]interface{}{
@@ -315,7 +315,7 @@ func TestOutput_VariablePipingWithVariableArgs(t *testing.T) {
 			},
 		}},
 		RethrowErrors: false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -341,11 +341,11 @@ func TestOutput_MultiplePipings(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{assigns},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
@@ -370,11 +370,11 @@ func TestOutput_LinkTo(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {

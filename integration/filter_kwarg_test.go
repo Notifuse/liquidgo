@@ -41,11 +41,11 @@ func TestFilterKwarg_CanParseDataKwargs(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {

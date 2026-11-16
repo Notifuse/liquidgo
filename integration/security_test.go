@@ -63,11 +63,11 @@ func TestSecurity_NoInstanceEvalLaterInChain(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -100,11 +100,11 @@ func TestSecurity_DoesNotPermanentlyAddFiltersToSymbolTable(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	// Should not panic or crash
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
@@ -154,11 +154,11 @@ func TestSecurity_MaxDepthNestedBlocksDoesNotRaiseException(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "rendered"
@@ -195,11 +195,11 @@ func TestSecurity_MoreThanMaxDepthNestedBlocksRaisesException(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 

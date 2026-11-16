@@ -178,11 +178,11 @@ func renderTemplateForDropTest(template string, assigns map[string]interface{}) 
 		return "ERROR: " + err.Error()
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{assigns},
 		RethrowErrors:      false,
-	})
+	}
 
 	return renderRuby(tmpl, ctx, &rubyOptions{})
 }

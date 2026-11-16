@@ -147,11 +147,11 @@ func TestVariable_PresetAssigns(t *testing.T) {
 
 	// In Go, we don't have template.assigns like Ruby
 	// Instead, we pass assigns to Render
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"test": "worked"}},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != "worked" {
@@ -173,33 +173,33 @@ func TestVariable_ReuseParsedTemplate(t *testing.T) {
 	}
 
 	// First render
-	ctx1 := liquid.BuildContext(liquid.ContextConfig{
+	ctx1 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "name": "Tobi"}},
 		RethrowErrors:      false,
-	})
+	}
 	output1 := renderRuby(tmpl, ctx1, &rubyOptions{})
 	if output1 != "Hello Tobi" {
 		t.Errorf("Expected 'Hello Tobi', got %q", output1)
 	}
 
 	// Second render with missing variable
-	ctx2 := liquid.BuildContext(liquid.ContextConfig{
+	ctx2 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "unknown": "Tobi"}},
 		RethrowErrors:      false,
-	})
+	}
 	output2 := renderRuby(tmpl, ctx2, &rubyOptions{})
 	if output2 != "Hello " {
 		t.Errorf("Expected 'Hello ', got %q", output2)
 	}
 
 	// Third render
-	ctx3 := liquid.BuildContext(liquid.ContextConfig{
+	ctx3 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "name": "Brian"}},
 		RethrowErrors:      false,
-	})
+	}
 	output3 := renderRuby(tmpl, ctx3, &rubyOptions{})
 	if output3 != "Hello Brian" {
 		t.Errorf("Expected 'Hello Brian', got %q", output3)
@@ -221,44 +221,44 @@ func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 	}
 
 	// First render with preset assign
-	ctx1 := liquid.BuildContext(liquid.ContextConfig{
+	ctx1 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
-	})
+	}
 	output1 := renderRuby(tmpl, ctx1, &rubyOptions{})
 	if output1 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output1)
 	}
 
 	// Second render - should be same
-	ctx2 := liquid.BuildContext(liquid.ContextConfig{
+	ctx2 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
-	})
+	}
 	output2 := renderRuby(tmpl, ctx2, &rubyOptions{})
 	if output2 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output2)
 	}
 
 	// Third render with different assign
-	ctx3 := liquid.BuildContext(liquid.ContextConfig{
+	ctx3 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"test": "foo"}},
 		RethrowErrors:      false,
-	})
+	}
 	output3 := renderRuby(tmpl, ctx3, &rubyOptions{})
 	if output3 != "foobar" {
 		t.Errorf("Expected 'foobar', got %q", output3)
 	}
 
 	// Fourth render - should revert to preset
-	ctx4 := liquid.BuildContext(liquid.ContextConfig{
+	ctx4 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
-	})
+	}
 	output4 := renderRuby(tmpl, ctx4, &rubyOptions{})
 	if output4 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output4)

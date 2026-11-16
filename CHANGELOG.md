@@ -34,6 +34,14 @@ changes; templates render as before.
 - **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`
   and `Filters`.
 - **Added**: `Template.Environment()`.
+- **A template renders only through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
+  render with a `Context` built by hand, is gone. A tag still receives the render's `TagContext`.
+- **The exception renderer and the global filter are gone**: `Environment.ExceptionRenderer`,
+  `Environment.SetExceptionRenderer`, `Context.ExceptionRenderer`, `Context.SetExceptionRenderer`,
+  `Context.GlobalFilter`, `Context.SetGlobalFilter`, `Context.ApplyGlobalFilter`, and
+  `TagContext.ApplyGlobalFilter`. An error is written as its message, or raised with `RaiseErrors`
+  (`ContextConfig.RethrowErrors` for a `Context`); `Result.Errors` lists them; output escaping
+  replaces a global filter.
 - **A tag is a `liquid.Node`**, with one render method:
   `RenderToOutput(context TagContext, output *OutputBuffer)`. liquidgo no longer looks up, by
   reflection, a `Render(context) string` or a `RenderToOutputBuffer(context, *string)` that a tag

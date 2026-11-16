@@ -77,7 +77,7 @@ func TestRenderWithACancelledContextOfItsOwn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx := newContext(newEnv("", limits{}))
+	ctx := newRubyContext(newEnv("", limits{}))
 	cancelled, cancel := gocontext.WithCancel(gocontext.Background())
 	cancel()
 	ctx.SetCancellation(cancelled)
@@ -90,8 +90,8 @@ func TestRenderWithACancelledContextOfItsOwn(t *testing.T) {
 
 // TestACancellationEndsWithItsRender checks that RenderOptions.Context stops
 // only the render it is given, on a Context of the caller too; that the
-// RenderToOutputBuffer of a template records the stop, as it records a
-// MemoryError; and that the cause of the cancellation is wrapped.
+// render of a Context whose cancellation is set records the stop, as it
+// records a MemoryError; and that the cause of the cancellation is wrapped.
 func TestACancellationEndsWithItsRender(t *testing.T) {
 	env := newEnv("", limits{})
 	tmpl, err := liquid.ParseTemplate("a{{ 1 }}b", &liquid.TemplateOptions{Environment: env})
@@ -101,18 +101,17 @@ func TestACancellationEndsWithItsRender(t *testing.T) {
 	cancelled, cancel := gocontext.WithCancel(gocontext.Background())
 	cancel()
 
-	ctx := newContext(env)
+	ctx := newRubyContext(env)
 	renderRuby(tmpl, ctx, &rubyOptions{Context: cancelled})
 	if out := renderRuby(tmpl, ctx, nil); out != "a1b" {
 		t.Errorf("a second render of the same Context renders %q, want %q", out, "a1b")
 	}
 
-	ctx = newContext(env)
+	ctx = newRubyContext(env)
 	ctx.SetCancellation(cancelled)
-	output := ""
-	tmpl.RenderToOutputBuffer(ctx, &output)
+	renderRuby(tmpl, ctx, nil)
 	if errs := ctx.Errors(); len(errs) == 0 || !errors.Is(errs[len(errs)-1], gocontext.Canceled) {
-		t.Errorf("RenderToOutputBuffer: errors %v, want one that wraps context.Canceled", errs)
+		t.Errorf("a render of a cancelled Context: errors %v, want one that wraps context.Canceled", errs)
 	}
 
 	cause := errors.New("the request ended")

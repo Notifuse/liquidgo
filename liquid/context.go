@@ -30,17 +30,18 @@ type Context struct {
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
+	// rethrowErrors makes HandleError raise (panic with) the error it
+	// records, where it returns its message: Ruby's rethrow_errors.
+	rethrowErrors bool
 	// diagnostics is the context whose errors and warnings this one adds
 	// to: an isolated subcontext reports to the context that made it, as
 	// Ruby's subcontexts share the errors array.
 	diagnostics        *Context
 	profiler           *Profiler
-	exceptionRenderer  func(error) interface{}
 	registers          *Registers
 	stringScanner      *StringScanner
 	strainer           *StrainerTemplate
 	environment        *Environment
-	globalFilter       func(interface{}) interface{}
 	templateName       string
 	warnings           []error
 	environments       []map[string]interface{}
@@ -120,12 +121,10 @@ func BuildContext(config ContextConfig) *Context {
 		baseScopeDepth:     0,
 		interrupts:         make([]interface{}, 0, 4), // Pre-allocate for interrupts
 		filters:            make([]interface{}, 0, 4), // Pre-allocate for filters
-		globalFilter:       nil,
-		disabledTags:       make(map[string]int, 4), // Pre-allocate map
+		disabledTags:       make(map[string]int, 4),   // Pre-allocate map
 		strainer:           nil,
 		stringScanner:      NewStringScanner(""),
 		templateName:       "",
-		exceptionRenderer:  env.ExceptionRenderer(),
 		dropInvokeStack:    make(map[string]bool),
 	}
 
@@ -140,11 +139,7 @@ func BuildContext(config ContextConfig) *Context {
 		registers.Set("template_factory", NewTemplateFactory())
 	}
 
-	if config.RethrowErrors {
-		ctx.exceptionRenderer = func(err error) interface{} {
-			panic(err)
-		}
-	}
+	ctx.rethrowErrors = config.RethrowErrors
 
 	ctx.squashInstanceAssignsWithEnvironments()
 	return ctx
@@ -257,26 +252,6 @@ func (c *Context) SetStrictFilters(strict bool) {
 	c.strictFilters = strict
 }
 
-// GlobalFilter returns the global filter function.
-func (c *Context) GlobalFilter() func(interface{}) interface{} {
-	return c.globalFilter
-}
-
-// SetGlobalFilter sets the global filter function.
-func (c *Context) SetGlobalFilter(filter func(interface{}) interface{}) {
-	c.globalFilter = filter
-}
-
-// ExceptionRenderer returns the exception renderer.
-func (c *Context) ExceptionRenderer() func(error) interface{} {
-	return c.exceptionRenderer
-}
-
-// SetExceptionRenderer sets the exception renderer.
-func (c *Context) SetExceptionRenderer(renderer func(error) interface{}) {
-	c.exceptionRenderer = renderer
-}
-
 // Strainer returns the strainer (creates if needed).
 func (c *Context) Strainer() *StrainerTemplate {
 	if c.strainer == nil {
@@ -292,14 +267,6 @@ func (c *Context) AddFilters(filters []interface{}) {
 	}
 	c.filters = append(c.filters, filters...)
 	c.strainer = nil // Reset strainer so it's recreated with new filters
-}
-
-// ApplyGlobalFilter applies the global filter to an object.
-func (c *Context) ApplyGlobalFilter(obj interface{}) interface{} {
-	if c.globalFilter == nil {
-		return obj
-	}
-	return c.globalFilter(obj)
 }
 
 // Interrupt returns true if there are any unhandled interrupts.
@@ -354,8 +321,10 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 
 	r := c.reporter()
 	r.errors = append(r.errors, liquidErr)
-	result := c.exceptionRenderer(liquidErr)
-	return ToS(result, nil)
+	if c.rethrowErrors {
+		panic(liquidErr)
+	}
+	return ToS(liquidErr, nil)
 }
 
 // Invoke invokes a filter method. A call the filter cannot take (too many arguments)
@@ -655,7 +624,7 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	})
 
 	subCtx.baseScopeDepth = c.baseScopeDepth + 1
-	subCtx.exceptionRenderer = c.exceptionRenderer
+	subCtx.rethrowErrors = c.rethrowErrors
 	subCtx.filters = c.filters
 	subCtx.strainer = nil
 	subCtx.diagnostics = c.reporter()
@@ -770,12 +739,10 @@ func (c *Context) Reset() {
 	// Nil out pointer fields
 	c.resourceLimits = nil
 	c.profiler = nil
-	c.exceptionRenderer = nil
 	c.registers = nil
 	c.stringScanner = nil
 	c.strainer = nil
 	c.environment = nil
-	c.globalFilter = nil
 	c.diagnostics = nil
 	c.cancel, c.done = nil, nil
 

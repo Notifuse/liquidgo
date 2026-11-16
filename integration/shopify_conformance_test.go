@@ -132,22 +132,42 @@ func runConformance(c conformanceCase, mode, typing string) (out string, value i
 	env.SetErrorMode(mode)
 	tags.RegisterStandardTags(env)
 
-	tmpl, perr := liquid.ParseTemplate(c.Template, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
+	source := c.Template
+	if c.Kind == "filter" {
+		// the value of __result is read during the render, by a tag after
+		// the assign: a render keeps no assigns once it ends
+		env.RegisterTag(keepTagName, func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+			return &keepTag{Tag: liquid.NewTag(name, markup, pc), value: &value}, nil
+		})
+		source += "{% " + keepTagName + " %}"
+	}
+	tmpl, perr := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if perr != nil {
 		return "", nil, fmt.Errorf("parse: %v", perr)
 	}
 	assigns, _ := conformanceValue(c.Assigns, typing).(map[string]interface{})
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{assigns},
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fs}),
 		RethrowErrors:      !c.RenderErrors,
-	})
-	out = renderRuby(tmpl, ctx, &rubyOptions{})
-	if c.Kind == "filter" {
-		value = ctx.FindVariable("__result", false)
 	}
+	out = renderRuby(tmpl, ctx, &rubyOptions{})
 	return out, value, nil
+}
+
+// keepTagName names the tag that reads the value of a filter case.
+const keepTagName = "__keep"
+
+// keepTag keeps the value of __result where the render is, and writes
+// nothing.
+type keepTag struct {
+	*liquid.Tag
+	value *interface{}
+}
+
+func (k *keepTag) RenderToOutput(context liquid.TagContext, _ *liquid.OutputBuffer) {
+	*k.value = context.FindVariable("__result", false)
 }
 
 // goPanic is a panic that is not a Liquid error, such as an index out of range.

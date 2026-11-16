@@ -370,7 +370,7 @@ func TestRenderLengthUsesNumberOfBytesNotCharacters(t *testing.T) {
 func TestDefaultResourceLimitsUnaffectedByRenderWithContext(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	ctx := liquid.BuildContext(liquid.ContextConfig{Environment: env})
+	ctx := &rubyContext{Environment: env}
 	tmpl, err := liquid.ParseTemplate(`{% for a in (1..100) %}x{% assign foo = 1 %} {% endfor %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)

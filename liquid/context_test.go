@@ -205,18 +205,6 @@ func TestContextResourceLimits(t *testing.T) {
 	}
 }
 
-func TestContextApplyGlobalFilter(t *testing.T) {
-	ctx := NewContext()
-	ctx.SetGlobalFilter(func(obj interface{}) interface{} {
-		return "filtered"
-	})
-
-	result := ctx.ApplyGlobalFilter("test")
-	if result != "filtered" {
-		t.Errorf("Expected 'filtered', got %v", result)
-	}
-}
-
 func TestContextNewIsolatedSubcontext(t *testing.T) {
 	ctx := NewContext()
 	ctx.Set("parent", "parent_value")
@@ -278,14 +266,19 @@ func TestContextHandleErrorComprehensive(t *testing.T) {
 		t.Error("Expected error message, got empty string")
 	}
 
-	// Test with ExceptionRenderer
-	ctx4 := NewContext()
-	ctx4.SetExceptionRenderer(func(err error) interface{} {
-		return "custom error"
-	})
-	result4 := ctx4.HandleError(NewSyntaxError("test"), nil)
-	if result4 != "custom error" {
-		t.Errorf("Expected 'custom error', got %q", result4)
+	// Test with RethrowErrors: the error is recorded and raised
+	ctx4 := BuildContext(ContextConfig{RethrowErrors: true})
+	raised := NewSyntaxError("test")
+	func() {
+		defer func() {
+			if r := recover(); r != raised {
+				t.Errorf("Expected the error to be raised, got %v", r)
+			}
+		}()
+		ctx4.HandleError(raised, nil)
+	}()
+	if errs := ctx4.Errors(); len(errs) != 1 || errs[0] != raised {
+		t.Errorf("Expected the raised error to be recorded, got %v", errs)
 	}
 
 	// Test with line number
@@ -417,30 +410,6 @@ func TestContextGettersSetters(t *testing.T) {
 	ctx.SetStrictFilters(true)
 	if !ctx.StrictFilters() {
 		t.Error("Expected StrictFilters to be true after SetStrictFilters")
-	}
-
-	// Test GlobalFilter
-	if ctx.GlobalFilter() != nil {
-		t.Error("Expected GlobalFilter to be nil initially")
-	}
-	filter := func(obj interface{}) interface{} {
-		return "filtered"
-	}
-	ctx.SetGlobalFilter(filter)
-	if ctx.GlobalFilter() == nil {
-		t.Error("Expected GlobalFilter to be set")
-	}
-
-	// Test ExceptionRenderer
-	if ctx.ExceptionRenderer() == nil {
-		t.Error("Expected ExceptionRenderer to be set")
-	}
-	renderer := func(err error) interface{} {
-		return "rendered"
-	}
-	ctx.SetExceptionRenderer(renderer)
-	if ctx.ExceptionRenderer() == nil {
-		t.Error("Expected ExceptionRenderer to be set")
 	}
 
 	// Test AddFilters
