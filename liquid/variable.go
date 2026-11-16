@@ -373,11 +373,18 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 			}
 		}
 
-		// Evaluate filter arguments; a filter without any gets none, so
-		// that its call allocates nothing for them
-		var evaluatedArgs []interface{}
+		// Evaluate filter arguments; a filter without any gets none, and a
+		// standard filter without keyword arguments the context's slice,
+		// so that its call allocates nothing for them
+		var evaluatedArgs, lent []interface{}
 		if len(filterArgs) > 0 {
-			evaluatedArgs = make([]interface{}, len(filterArgs), len(filterArgs)+1)
+			if ctx, ok := context.(*Context); ok && len(filter) <= 2 {
+				lent = ctx.standardFilterArgs(filterName, len(filterArgs))
+				evaluatedArgs = lent
+			}
+			if evaluatedArgs == nil {
+				evaluatedArgs = make([]interface{}, len(filterArgs), len(filterArgs)+1)
+			}
 			for i, arg := range filterArgs {
 				evaluatedArgs[i] = context.Evaluate(arg)
 			}
@@ -397,6 +404,9 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 
 		// Invoke filter
 		value = context.Invoke(filterName, value, evaluatedArgs...)
+		if lent != nil {
+			context.(*Context).returnFilterArgs(lent)
+		}
 		safe.filter(filterName, filterArgs)
 	}
 

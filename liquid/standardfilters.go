@@ -565,6 +565,10 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 // writing each item once, within the render length limit.
 func (sf *StandardFilters) joinItems(arr []interface{}, sep string) string {
 	var b strings.Builder
+	if n, ok := joinedStrings(arr, sep); ok {
+		sf.checkLength(n)
+		b.Grow(n)
+	}
 	for i, item := range arr {
 		s := ToS(ToLiquidValue(ToLiquid(item)), nil)
 		n := len(s)
@@ -578,6 +582,30 @@ func (sf *StandardFilters) joinItems(arr []interface{}, sep string) string {
 		b.WriteString(s)
 	}
 	return b.String()
+}
+
+// joinedStrings returns the length of arr joined by sep when every item is a
+// string, so that the result is made at once, saturated.
+func joinedStrings(arr []interface{}, sep string) (int, bool) {
+	total := 0
+	for _, item := range arr {
+		s, ok := item.(string)
+		if !ok {
+			return 0, false
+		}
+		if total > math.MaxInt-len(s) {
+			return math.MaxInt, true
+		}
+		total += len(s)
+	}
+	if len(arr) > 1 && len(sep) > 0 {
+		gaps := len(arr) - 1
+		if gaps > (math.MaxInt-total)/len(sep) {
+			return math.MaxInt, true
+		}
+		total += gaps * len(sep)
+	}
+	return total, true
 }
 
 // hasNestedList reports whether arr holds a list, which Join flattens.

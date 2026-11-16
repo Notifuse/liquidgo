@@ -30,6 +30,10 @@ type Context struct {
 	// on the root context of the render (see reporter), keyed by the map the
 	// func was read from and its key: the data itself is never written.
 	funcValues map[funcValueKey]funcValue
+	// argScratch is the slice lent to the calls of standard filters, and
+	// argLent whether a call holds it (see standardFilterArgs).
+	argScratch []interface{}
+	argLent    bool
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
@@ -251,6 +255,42 @@ func (c *Context) standard() *StandardFilters {
 // filter returns the function of the filter name: a local filter of the
 // render, the last added first, then the environment's, then the standard
 // one; nil for an unknown filter.
+// standardFilterArgs returns a slice of n arguments for a call of the
+// standard filter name, when no local or environment filter takes its
+// place: a standard filter never keeps its arguments, so the context lends
+// it the same slice at each call; give it back with returnFilterArgs. It
+// returns nil otherwise, and the caller makes a slice of its own.
+func (c *Context) standardFilterArgs(name string, n int) []interface{} {
+	if c.argLent {
+		return nil // a call made while the slice is lent makes its own
+	}
+	for i := range c.filters {
+		if c.filters[i].name == name {
+			return nil
+		}
+	}
+	if c.environment != nil {
+		if _, ok := c.environment.filters[name]; ok {
+			return nil
+		}
+	}
+	if _, ok := standardFilters[name]; !ok {
+		return nil
+	}
+	if cap(c.argScratch) < n {
+		c.argScratch = make([]interface{}, 0, max(n, 4))
+	}
+	c.argLent = true
+	return c.argScratch[:n]
+}
+
+// returnFilterArgs takes back the slice standardFilterArgs lent, emptied so
+// that it keeps no value alive.
+func (c *Context) returnFilterArgs(args []interface{}) {
+	clear(args)
+	c.argLent = false
+}
+
 func (c *Context) filter(name string) FilterFunc {
 	for i := len(c.filters) - 1; i >= 0; i-- {
 		if c.filters[i].name == name {
