@@ -4,7 +4,8 @@
 and strict mode, and compares the result with the one Shopify Liquid 5.11.0 gives.
 
 - `templates.json`: templates written by hand, grouped by area (variable lookup, unknown tags,
-  ranges, numbers, filters, lax markup, nesting...).
+  ranges, numbers, filters, lax markup, nesting...). A template with `"strict_variables": true` renders
+  with strict variables, in Ruby and in liquidgo; its results carry the same key.
 - `data.json`: the data every template is rendered with. Its integers are given to liquidgo as
   `int`, as Ruby has them.
 - `expected.json`: the results of Shopify Liquid, written by `scripts/differential_reference.rb`,
