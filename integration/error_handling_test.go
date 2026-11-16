@@ -742,7 +742,8 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateName(t *testing.T) {
 }
 
 // TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory tests
-// that syntax errors include template name from template factory.
+// that a syntax error of a partial names the partial (Ruby's test names the
+// template factory, which liquidgo no longer has).
 // Ported from: test_syntax_error_is_raised_with_template_name_from_template_factory
 func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t *testing.T) {
 	fileSystem := NewStubFileSystem(map[string]string{

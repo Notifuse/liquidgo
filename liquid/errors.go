@@ -335,10 +335,26 @@ func (e *DisabledError) Error() string {
 
 func (e *DisabledError) GetError() *Error { return e.Err }
 
-// InternalError represents an internal error.
+// InternalError represents an internal error: a Go error a drop or a filter
+// returned, which is its cause, written as "internal" as Ruby writes an
+// error that is not a Liquid error.
 type InternalError struct {
-	Err *Error
+	Err   *Error
+	cause error
 }
+
+// asLiquidError returns err if it is a Liquid error, or an InternalError
+// caused by it.
+func asLiquidError(err error) error {
+	switch err.(type) {
+	case LiquidError, *Error:
+		return err
+	}
+	return &InternalError{Err: &Error{Message: "internal"}, cause: err}
+}
+
+// Unwrap returns the Go error the internal error stands for, if any.
+func (e *InternalError) Unwrap() error { return e.cause }
 
 // NewInternalError creates a new InternalError with the given message.
 func NewInternalError(message string) *InternalError {

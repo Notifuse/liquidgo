@@ -147,9 +147,12 @@ pointer as nothing. A hash renders with its keys in sorted order. To give a stru
 - or make it a drop, as a `Liquid::Drop` in Ruby, by declaring the keys a template reads with
   `LiquidGet`, which gets the context of the render. It returns the value and whether the key
   exists: a missing key is nil, or an `UndefinedDropMethod` with strict variables. An error it
-  returns is recorded as the error of the render. A key is read when a template reads it, so a
+  returns is recorded and the render goes on; a Go error is recorded as a `*liquid.InternalError`,
+  written `Liquid error: internal` as Ruby writes it, which unwraps to your error. A key is read when a template reads it, so a
   drop can load what it gives lazily; nothing else of the struct is readable, and a drop without
-  a `String()` method renders as nothing. The items of a `[]User` are drops when `*User` is.
+  a `String()` method renders as nothing (`nil` inside a list or a hash, where Ruby writes its class
+  name). The items of a `[]User` are drops when `*User` is: a template reads the items of the slice
+  themselves, so what a key loads stays for the next key. A nil `*User` is nil.
 
   ```go
   func (u *User) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
@@ -172,9 +175,11 @@ all, so give a template a map or a drop instead.
 ### Custom Filters
 
 A filter is declared with its name and a function, which gets the context of the render, the
-value it is applied to and its arguments. A filter of the environment takes the place of a standard
-one of the same name, and a local filter of a render (`WithFilters`) takes the place of both. An
-error the function returns renders nothing, and is raised with strict filters.
+value it is applied to and its arguments (keyword arguments come as a last `map[string]interface{}`).
+A filter of the environment takes the place of a standard one of the same name, and a local filter of
+a render (`WithFilters`) takes the place of both; its name is written exactly, as in Ruby. An error
+the function returns renders nothing and is recorded in `Result.Errors` (a Go error as a
+`*liquid.InternalError` that unwraps to it); with strict filters it is raised, as Ruby raises it.
 
 ```go
 package main
@@ -419,8 +424,8 @@ env.SetErrorMode("strict")
 `Template.Render(ctx, data, opts...)` renders in a state of its own and changes nothing in the template or
 in the data: a template is parsed once and rendered from any number of goroutines, and renders never see
 each other's assigns, errors or limits. It reads the template's assigns and registers. The data is a map;
-a drop goes under a key (`{"page": drop}`), and is bound to the render that reads it: give each render its
-own drop instances.
+a drop goes under a key (`{"page": drop}`). A drop gets the context of the render at each key it gives and
+keeps none, so renders can share a drop that is safe for concurrent use.
 
 ```go
 res, err := tmpl.Render(ctx, data,
@@ -556,7 +561,9 @@ func main() {
 
 Each item of `Visit` pairs what the callback returned for a node with the visit of its children, so a
 callback can also rebuild the tree. A tag of your own gives its children with `ParseTreeChildren()
-[]interface{}` (`liquid.ParseTreeNode`); a block gives its body by default.
+[]interface{}` (`liquid.ParseTreeNode`); a block gives its body by default. As in Ruby, the keyword
+arguments of a filter are not visited (`{{ a | default: b, allow_false: c }}` lists `a` and `b`), nor
+is the group name of a `cycle`.
 
 ### File System
 

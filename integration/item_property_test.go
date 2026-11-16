@@ -1,6 +1,12 @@
 package integration
 
-import "testing"
+import (
+	"errors"
+	"strings"
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestTheArrayFiltersReadAPropertyAsRuby checks the results of Shopify Liquid
 // 5.11.0 for the filters that read a property of each item, over items that
@@ -160,8 +166,20 @@ func TestTheArrayFiltersReadAPropertyAsRuby(t *testing.T) {
 		{"{{ hi | sum: 'a' | join: ',' }}", ""},
 	} {
 		r := renderWith(newEnv("lax", limits{}), c.source, data())
-		if r.parseErr != nil || r.output != c.want || len(r.errors) > 0 {
+		if r.parseErr != nil || r.output != c.want || !onlyFilterArgumentErrors(r.errors) {
 			t.Errorf("%q gives %q (%v, %v), want %q", c.source, r.output, r.parseErr, r.errors, c.want)
 		}
 	}
+}
+
+// onlyFilterArgumentErrors reports whether errs holds only the ArgumentErrors
+// a filter that cannot select a property records.
+func onlyFilterArgumentErrors(errs []error) bool {
+	for _, e := range errs {
+		var argument *liquid.ArgumentError
+		if !errors.As(e, &argument) || !strings.Contains(e.Error(), "cannot select the property") {
+			return false
+		}
+	}
+	return true
 }

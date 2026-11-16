@@ -1096,5 +1096,17 @@
  {
   "id": "drop-04",
   "template": "{% tablerow i in (1..1) %}{{ tablerowloop }}{% endtablerow %}"
+ },
+ {
+  "id": "nil-args-01",
+  "template": "{{ words | join }}|{{ words | join: nothing }}|{{ arr | join: nothing }}"
+ },
+ {
+  "id": "nil-args-02",
+  "template": "{{ s | truncate: 5 }}|{{ s | truncate: 5, nothing }}|{{ s | truncatewords: 1 }}|{{ s | truncatewords: 1, nothing }}"
+ },
+ {
+  "id": "nil-args-03",
+  "template": "{{ \"ab\" | replace: \"a\" }}|{{ \"ab\" | replace: \"a\", nothing }}|{{ f | round }}|{{ nothing | default: nothing }}"
  }
 ]

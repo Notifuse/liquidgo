@@ -14,7 +14,7 @@ func (m *mockContextForPartial) Registers() *Registers {
 
 func TestPartialCacheLoad(t *testing.T) {
 	registers := NewRegisters(nil)
-	registers.Set("cached_partials", make(map[string]interface{}))
+	registers.Set("cached_partials", make(map[string]*Template))
 	registers.Set("file_system", &BlankFileSystem{})
 
 	ctx := &mockContextForPartial{registers: registers}
@@ -30,7 +30,7 @@ func TestPartialCacheLoad(t *testing.T) {
 
 func TestLoadPartial(t *testing.T) {
 	registers := NewRegisters(nil)
-	registers.Set("cached_partials", make(map[string]interface{}))
+	registers.Set("cached_partials", make(map[string]*Template))
 	registers.Set("file_system", &BlankFileSystem{})
 
 	ctx := &mockContextForPartial{registers: registers}

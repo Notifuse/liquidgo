@@ -88,7 +88,7 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 		}
 
 		if from <= index {
-			segments = append(segments, v.Index(i).Interface())
+			segments = append(segments, itemAt(v, i))
 		}
 
 		index++
@@ -403,7 +403,7 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		if _, ok := obj.(fmt.Stringer); ok {
 			return fmt.Sprintf("%v", obj)
 		}
-		if items, ok := sliceItems(obj); ok {
+		if items, ok := SliceItems(obj); ok {
 			if seen == nil {
 				seen = make(map[uintptr]bool)
 			}
@@ -438,8 +438,9 @@ func rubyTime(t time.Time, inspect bool) string {
 
 // indirect returns what a pointer that renders as its target points to:
 // nil for a nil pointer, the end of a chain of pointers otherwise. A pointer
-// whose type has a String or an Error method, or is a drop, renders itself;
-// indirect then reports false, as for a value that is not a pointer.
+// whose type has a String or an Error method renders itself; indirect then
+// reports false, as for a value that is not a pointer. A drop renders as
+// what it points to: never through fmt, which writes the fields it holds.
 func indirect(obj interface{}) (interface{}, bool) {
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() != reflect.Ptr {
@@ -455,12 +456,6 @@ func indirect(obj interface{}) (interface{}, bool) {
 				return nil, false
 			}
 			return v, true
-		}
-		if isDrop(rv.Interface()) {
-			if rv.Interface() == obj {
-				return nil, false
-			}
-			return rv.Interface(), true
 		}
 		rv = rv.Elem()
 	}
@@ -522,16 +517,16 @@ func writeInspectedHash(keys []string, values map[string]interface{}, seen map[u
 	return b.String()
 }
 
-// sliceItems returns the items of a typed slice or array, which Ruby has as
-// an Array.
-func sliceItems(obj interface{}) ([]interface{}, bool) {
+// SliceItems returns the items of a typed slice or array, which Ruby has as
+// an Array; an item whose pointer is a drop is given by its address.
+func SliceItems(obj interface{}) ([]interface{}, bool) {
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
 		return nil, false
 	}
 	items := make([]interface{}, rv.Len())
 	for i := range items {
-		items[i] = rv.Index(i).Interface()
+		items[i] = itemAt(rv, i)
 	}
 	return items, true
 }
@@ -572,7 +567,7 @@ func Inspect(obj interface{}, seen map[uintptr]bool) string {
 		if b, ok := obj.(bool); ok {
 			return strconv.FormatBool(b)
 		}
-		if items, ok := sliceItems(obj); ok {
+		if items, ok := SliceItems(obj); ok {
 			return arrayInspect(items, seen)
 		}
 		if rv := reflect.ValueOf(obj); rv.Kind() == reflect.String {

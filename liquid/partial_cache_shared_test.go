@@ -53,7 +53,8 @@ func TestRendersShareTheParseOfAPartial(t *testing.T) {
 }
 
 // The shared cache keeps at most partialCacheSize partials and
-// partialCacheBytes bytes of their text, the least recently used going first.
+// partialCacheBytes bytes of their text, the least recently used going first;
+// the index of the cache keeps no evicted entry.
 func TestThePartialCacheIsBounded(t *testing.T) {
 	env := NewEnvironment()
 	fs := mapPartials{}
@@ -61,17 +62,106 @@ func TestThePartialCacheIsBounded(t *testing.T) {
 		fs[fmt.Sprintf("p%d", i)] = fmt.Sprintf("text %d", i)
 		partialFor(t, env, fs, fmt.Sprintf("p%d", i))
 	}
-	if n := env.partials.len(); n > partialCacheSize {
-		t.Errorf("the cache holds %d partials, more than %d", n, partialCacheSize)
+	if n, m := env.partials.len(), len(env.partials.entries); n > partialCacheSize || m != n {
+		t.Errorf("the cache holds %d partials and indexes %d, at most %d", n, m, partialCacheSize)
 	}
 	big := mapPartials{}
-	for i := 0; i < 5; i++ {
-		big[fmt.Sprintf("big%d", i)] = fmt.Sprintf("%d%s", i, string(make([]byte, partialCacheBytes/4)))
+	for i := 0; i < 20; i++ {
+		big[fmt.Sprintf("big%d", i)] = fmt.Sprintf("%d%s", i, string(make([]byte, partialCacheBytes/10)))
 		partialFor(t, env, big, fmt.Sprintf("big%d", i))
 	}
 	if b := env.partials.size(); b > partialCacheBytes {
 		t.Errorf("the cache holds %d bytes of text, more than %d", b, partialCacheBytes)
 	}
+	if len(env.partials.entries) != env.partials.len() {
+		t.Errorf("the cache indexes %d partials and holds %d", len(env.partials.entries), env.partials.len())
+	}
+}
+
+// A partial larger than an eighth of the byte bound is parsed for its render
+// and not kept: one partial cannot fill the cache.
+func TestAPartialTooLargeIsNotCached(t *testing.T) {
+	env := NewEnvironment()
+	fs := mapPartials{"big": string(make([]byte, partialCacheBytes/8+1)), "small": "x"}
+	first := partialFor(t, env, fs, "big")
+	if again := partialFor(t, env, fs, "big"); again == first || env.partials.len() != 0 {
+		t.Errorf("a partial of %d bytes was cached", len(fs["big"]))
+	}
+	small := partialFor(t, env, fs, "small")
+	if again := partialFor(t, env, fs, "small"); again != small {
+		t.Error("a small partial was not cached")
+	}
+}
+
+// The bounds of the cache can be set; 0 turns the cache off.
+func TestThePartialCacheLimitsCanBeSet(t *testing.T) {
+	env := NewEnvironment()
+	env.SetPartialCacheLimits(2, 1<<20)
+	fs := mapPartials{"a": "a", "b": "b", "c": "c"}
+	a := partialFor(t, env, fs, "a")
+	partialFor(t, env, fs, "b")
+	partialFor(t, env, fs, "a") // a is now the most recently used
+	partialFor(t, env, fs, "c") // b goes
+	if env.partials.len() != 2 || partialFor(t, env, fs, "a") != a {
+		t.Errorf("the least recently used partial was not the one to go: %d cached", env.partials.len())
+	}
+	env.SetPartialCacheLimits(0, 0)
+	off := partialFor(t, env, fs, "a")
+	if again := partialFor(t, env, fs, "a"); env.partials.len() != 0 || again == off {
+		t.Error("a cache turned off kept a partial")
+	}
+}
+
+// Two parses of one text that differ by an option that changes the parse
+// (line numbers, error mode) are two entries.
+func TestThePartialCacheKeysTheParseOptions(t *testing.T) {
+	env := NewEnvironment()
+	fs := mapPartials{"p": "{{ x }}"}
+	load := func(lineNumbers bool) *Template {
+		opts := ParseContextOptions{Environment: env, TemplateOptions: map[string]interface{}{"line_numbers": lineNumbers}}
+		tmpl, err := LoadPartial("p", &mockContextForPartial{registers: NewRegisters(map[string]interface{}{"file_system": fs})}, NewParseContext(opts))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tmpl
+	}
+	plain := load(false)
+	numbered := load(true)
+	if plain == numbered {
+		t.Error("the parse with line numbers shared the entry of the parse without")
+	}
+	env.SetErrorMode("strict")
+	if strict := load(false); strict == plain {
+		t.Error("the strict parse shared the entry of the lax parse")
+	}
+}
+
+// A render reads a partial it includes several times once.
+func TestARenderReadsAPartialOnce(t *testing.T) {
+	env := NewEnvironment()
+	fs := &countingPartials{texts: map[string]string{"p": "{{ x }}"}, reads: map[string]int{}}
+	registers := NewRegisters(map[string]interface{}{"file_system": fs})
+	ctx := &mockContextForPartial{registers: registers}
+	pc := NewParseContext(ParseContextOptions{Environment: env})
+	for i := 0; i < 3; i++ {
+		if _, err := LoadPartial("p", ctx, pc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if fs.reads["p"] != 1 {
+		t.Errorf("the partial was read %d times in one render", fs.reads["p"])
+	}
+}
+
+// countingPartials counts the reads of each partial.
+type countingPartials struct {
+	texts map[string]string
+	reads map[string]int
+}
+
+func (c *countingPartials) ReadTemplateFile(name string) (string, error) {
+	c.reads[name]++
+	return c.texts[name], nil
 }
 
 // Concurrent renders load partials safely (run with -race).

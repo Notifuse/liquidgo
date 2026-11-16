@@ -128,13 +128,13 @@ This document provides a phased implementation order that allows incremental tes
 **Files to implement** (in order):
 
 1. `liquid/standardfilters.go` - Standard filter implementations
-2. `liquid/strainer_template.go` - Filter strainer
+2. `liquid/filter.go` - Declared filters
 3. `liquid/environment.go` - Environment configuration (partial - without tags dependency)
 
 **Tests to write**:
 
 - `liquid/standardfilters_test.go`
-- `liquid/strainer_template_test.go`
+- `liquid/filter_test.go`
 - `liquid/environment_test.go` (partial)
 - `liquid/standard_filter_integration_test.go`
 
@@ -179,7 +179,7 @@ This document provides a phased implementation order that allows incremental tes
 1. `liquid/registers.go` - Template registers
 2. `liquid/resource_limits.go` - Resource limiting
 3. `liquid/partial_cache.go` - Partial template caching
-4. `liquid/template_factory.go` - Template factory
+4. (template factory: none, partials are cached by the environment)
 5. `liquid/usage.go` - Usage tracking
 6. `liquid/parse_tree_visitor.go` - AST visitor pattern
 
@@ -188,7 +188,7 @@ This document provides a phased implementation order that allows incremental tes
 - `liquid/registers_test.go`
 - `liquid/resource_limits_test.go`
 - `liquid/partial_cache_test.go`
-- `liquid/template_factory_test.go`
+- `liquid/partial_cache_shared_test.go`
 - `liquid/usage_test.go`
 - `liquid/parse_tree_visitor_test.go`
 
@@ -397,7 +397,7 @@ This document provides a phased implementation order that allows incremental tes
 
 **Test milestone**: ✅ Template inclusion works
 
-**Rationale**: These need file system and template factory.
+**Rationale**: These need the file system and the partial cache.
 
 ---
 
@@ -468,9 +468,9 @@ Phase 1:  utils, interrupts, extensions, i18n, file_system
 Phase 2:  lexer → tokenizer → parser_switching → parser
 Phase 3:  expression → variable_lookup → range_lookup
 Phase 4:  variable, condition
-Phase 5:  standardfilters → strainer_template → environment
+Phase 5:  standardfilters → filter → environment
 Phase 6:  tag/disableable → tag/disabler → tag → block_body → block
-Phase 7:  registers, resource_limits, partial_cache, template_factory, usage, parse_tree_visitor
+Phase 7:  registers, resource_limits, partial_cache, usage, parse_tree_visitor
 Phase 8:  parse_context
 Phase 9:  context
 Phase 10: drop → forloop_drop, tablerowloop_drop, snippet_drop

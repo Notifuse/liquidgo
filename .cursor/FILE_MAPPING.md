@@ -22,7 +22,7 @@ This document provides a complete mapping between Ruby files in `reference-liqui
 | Ruby Path                          | Go Path                        | Notes                             |
 | ---------------------------------- | ------------------------------ | --------------------------------- |
 | `lib/liquid/template.rb`           | `liquid/template.go`           | Main Template class - primary API |
-| `lib/liquid/template_factory.rb`   | `liquid/template_factory.go`   | Template factory pattern          |
+| `lib/liquid/template_factory.rb`   | (none: partials are cached by the environment, `liquid/partial_cache.go`) | Template factory pattern |
 | `lib/liquid/parser.rb`             | `liquid/parser.go`             | Template parser                   |
 | `lib/liquid/parser_switching.rb`   | `liquid/parser_switching.go`   | Parser mode switching             |
 | `lib/liquid/lexer.rb`              | `liquid/lexer.go`              | Lexical analyzer                  |
@@ -73,7 +73,7 @@ This document provides a complete mapping between Ruby files in `reference-liqui
 | Ruby Path                         | Go Path                       | Notes                           |
 | --------------------------------- | ----------------------------- | ------------------------------- |
 | `lib/liquid/standardfilters.rb`   | `liquid/standardfilters.go`   | Standard filter implementations |
-| `lib/liquid/strainer_template.rb` | `liquid/strainer_template.go` | Filter strainer                 |
+| `lib/liquid/strainer_template.rb` | `liquid/filter.go`, `liquid/standard_filter_table.go` | Declared filters |
 
 ### File System & I18n
 
@@ -210,9 +210,9 @@ Ruby: `test/unit/*_unit_test.rb` → Go: `liquid/*_unit_test.go`
 | `test/unit/partial_cache_unit_test.rb`     | `liquid/partial_cache_unit_test.go`      |
 | `test/unit/regexp_unit_test.rb`            | `liquid/regexp_unit_test.go`             |
 | `test/unit/registers_unit_test.rb`         | `liquid/registers_unit_test.go`          |
-| `test/unit/strainer_template_unit_test.rb` | `liquid/strainer_template_unit_test.go`  |
+| `test/unit/strainer_template_unit_test.rb` | `liquid/filter_test.go`  |
 | `test/unit/tag_unit_test.rb`               | `liquid/tag_unit_test.go`                |
-| `test/unit/template_factory_unit_test.rb`  | `liquid/template_factory_unit_test.go`   |
+| `test/unit/template_factory_unit_test.rb`  | (none)   |
 | `test/unit/template_unit_test.rb`          | `liquid/template_unit_test.go`           |
 | `test/unit/tokenizer_unit_test.rb`         | `liquid/tokenizer_unit_test.go`          |
 | `test/unit/variable_unit_test.rb`          | `liquid/variable_unit_test.go`           |

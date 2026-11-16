@@ -245,7 +245,7 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 			}
 			result := make([]interface{}, end-start)
 			for i := start; i < end; i++ {
-				result[i-start] = val.Index(i).Interface()
+				result[i-start] = itemAt(val, i)
 			}
 			return result
 		}
@@ -510,7 +510,7 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 	if input != nil {
 		v := reflect.ValueOf(input)
 		if (v.Kind() == reflect.Slice || v.Kind() == reflect.Array) && v.Len() > 0 {
-			return v.Index(0).Interface()
+			return itemAt(v, 0)
 		}
 	}
 	return nil
@@ -530,7 +530,7 @@ func (sf *StandardFilters) Last(input interface{}) interface{} {
 	if input != nil {
 		v := reflect.ValueOf(input)
 		if (v.Kind() == reflect.Slice || v.Kind() == reflect.Array) && v.Len() > 0 {
-			return v.Index(v.Len() - 1).Interface()
+			return itemAt(v, v.Len()-1)
 		}
 	}
 	return nil
@@ -886,11 +886,9 @@ func (sf *StandardFilters) Default(input interface{}, defaultValue interface{}, 
 	return input
 }
 
-// InputIterator wraps input for iteration with context support.
-// Mirrors Ruby's InputIterator class from standardfilters.rb:1032-1094
+// InputIterator wraps input for iteration, as Ruby's InputIterator.
 type InputIterator struct {
-	input   []interface{}
-	context *Context
+	input []interface{}
 }
 
 // NewInputIterator creates a new InputIterator.
@@ -919,7 +917,7 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 			items = make([]interface{}, v.Len())
 			for i := 0; i < v.Len(); i++ {
-				items[i] = v.Index(i).Interface()
+				items[i] = itemAt(v, i)
 			}
 		} else {
 			// Single item
@@ -931,8 +929,7 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 	}
 
 	return &InputIterator{
-		input:   items,
-		context: context,
+		input: items,
 	}
 }
 
@@ -1017,7 +1014,7 @@ func (it *InputIterator) Concat(args interface{}) []interface{} {
 		v := reflect.ValueOf(args)
 		if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 			for i := 0; i < v.Len(); i++ {
-				result = append(result, v.Index(i).Interface())
+				result = append(result, itemAt(v, i))
 			}
 		}
 	}

@@ -330,3 +330,42 @@ func TestArrayFiltersReadTheKeysOfDrops(t *testing.T) {
 		t.Errorf("strict: errors %v, want an UndefinedDropMethod", res.Errors)
 	}
 }
+
+var errDBDown = errors.New("db down")
+
+// failingDrop returns a Go error that is not a Liquid error.
+type failingDrop struct{}
+
+func (failingDrop) LiquidGet(*Context, string) (interface{}, bool, error) {
+	return nil, true, errDBDown
+}
+
+// A Go error a drop returns is recorded as an internal error, which keeps it
+// as its cause, and the render goes on, as Ruby rescues a StandardError.
+func TestAGoErrorOfADropIsAnInternalError(t *testing.T) {
+	tmpl, err := ParseTemplate(`{{ d.orders }}|{{ ds | map: "orders" | size }}|after`, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := tmpl.Render(gocontext.Background(), map[string]interface{}{"d": failingDrop{}, "ds": []failingDrop{{}}})
+	if err != nil {
+		t.Fatalf("the render ended: %v", err)
+	}
+	var internal *InternalError
+	if len(res.Errors) != 2 || !errors.As(res.Errors[0], &internal) || !errors.Is(res.Errors[0], errDBDown) {
+		t.Errorf("errors %v, want two internal errors caused by %v", res.Errors, errDBDown)
+	}
+	if res.Output != "Liquid error: internal|Liquid error: internal|after" {
+		t.Errorf("output %q", res.Output)
+	}
+}
+
+// A drop value that has no address (in a map, in an array) is read through a
+// copy of it, when its pointer is the drop.
+func TestADropValueWithoutAnAddressIsRead(t *testing.T) {
+	data := map[string]interface{}{"v": keysDrop{}, "a": [1]keysDrop{}}
+	res := renderDrop(t, `{{ v.a }}|{{ a[0].a }}|{{ a | map: "a" | join }}`, data)
+	if res.Output != "A|A|A" || len(res.Errors) != 0 {
+		t.Errorf("got %q %v", res.Output, res.Errors)
+	}
+}

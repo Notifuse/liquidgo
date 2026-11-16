@@ -123,6 +123,11 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	for _, opt := range opts {
 		opt(&cfg)
 	}
+	for _, f := range cfg.filters {
+		if err := f.check(); err != nil {
+			return res, err
+		}
+	}
 	if t.root == nil {
 		return res, nil
 	}
@@ -170,7 +175,7 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	c.fatalPanics = true
 	c.SetTemplateName(t.name)
 	if len(cfg.filters) > 0 {
-		c.AddFilters(cfg.filters)
+		c.filters = append(c.filters, cfg.filters...)
 	}
 	if cfg.strictVariables {
 		c.SetStrictVariables(true)

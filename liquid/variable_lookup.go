@@ -267,7 +267,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			v := reflect.ValueOf(obj)
 			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 				if idx, ok := vl.indexKey(i, key); ok {
-					obj = indexOf(v.Len(), idx, func(i int) interface{} { return v.Index(i).Interface() })
+					obj = indexOf(v.Len(), idx, func(i int) interface{} { return itemAt(v, i) })
 					continue
 				}
 			}
@@ -344,12 +344,12 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 							continue
 						case "first":
 							if v.Len() > 0 {
-								obj = v.Index(0).Interface()
+								obj = itemAt(v, 0)
 								continue
 							}
 						case "last":
 							if v.Len() > 0 {
-								obj = v.Index(v.Len() - 1).Interface()
+								obj = itemAt(v, v.Len()-1)
 								continue
 							}
 						case "empty":
@@ -382,6 +382,11 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				obj = dropGet(context, g, keyStr)
 				continue
 			}
+		} else if g, ok := asDrop(obj); ok {
+			// A key that is not a string is a key the drop does not
+			// declare, as Ruby's invoke_drop(0)
+			obj = dropGet(context, g, ToString(key, nil))
+			continue
 		}
 
 		// Not found

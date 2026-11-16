@@ -8,10 +8,10 @@ import (
 // when called with fewer arguments than their method signatures require.
 // This tests the filter invocation system, not just the filter logic.
 //
-// Context: These tests expose a bug where filters with optional parameters
-// (like default, sort, where) fail when templates don't provide all arguments.
-// The bug is in strainer_template.go's Invoke method, which has a strict
-// argument count check that doesn't account for optional parameters.
+// Context: these tests were written for a bug where filters with optional
+// parameters (like default, sort, where) failed when templates did not give
+// all arguments: the argument count check did not account for optional
+// parameters.
 //
 // See: https://shopify.dev/docs/api/liquid/filters for official Liquid behavior
 func TestFiltersWithOptionalParameters(t *testing.T) {

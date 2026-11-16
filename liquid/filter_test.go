@@ -102,7 +102,8 @@ func TestRegisterFilterChecksTheFilter(t *testing.T) {
 }
 
 // The standard filter table has a filter for each exported method of
-// StandardFilters, named in snake_case, and nothing else.
+// StandardFilters, named in snake_case, and nothing else. The names only are
+// compared: a table whose calls no longer match the methods does not compile.
 func TestTheStandardFilterTableFollowsStandardFilters(t *testing.T) {
 	lowerUpper := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 	acronym := regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
@@ -138,5 +139,63 @@ func TestAnUnknownFilterReadsNothingOfADrop(t *testing.T) {
 	res, _ := tmpl.Render(gocontext.Background(), map[string]interface{}{"d": d})
 	if res.Output != "[]" || d.calls != 0 {
 		t.Errorf("got %q, %d reads of the drop, want %q and none", res.Output, d.calls, "[]")
+	}
+}
+
+// A Go error a filter returns is, with strict filters, recorded as an
+// internal error that keeps it as its cause, and the render goes on.
+func TestAGoErrorOfAFilterIsAnInternalError(t *testing.T) {
+	cause := errors.New("down")
+	failing := Filter("fail", func(*Context, interface{}, ...interface{}) (interface{}, error) { return nil, cause })
+	tmpl, err := ParseTemplate(`{{ x | fail }}|after`, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := tmpl.Render(gocontext.Background(), nil, WithFilters(failing), WithStrictFilters())
+	if err != nil {
+		t.Fatalf("the render ended: %v", err)
+	}
+	var internal *InternalError
+	if len(res.Errors) != 1 || !errors.As(res.Errors[0], &internal) || !errors.Is(res.Errors[0], cause) {
+		t.Errorf("errors %v, want an internal error caused by %v", res.Errors, cause)
+	}
+	if res.Output != "Liquid error: internal|after" {
+		t.Errorf("output %q", res.Output)
+	}
+}
+
+// An error of a filter, standard or not, writes nothing and is recorded; with
+// strict filters it is raised, as an argument too many is.
+func TestAFilterErrorIsRecorded(t *testing.T) {
+	failing := Filter("fail", func(*Context, interface{}, ...interface{}) (interface{}, error) {
+		return nil, NewArgumentError("bad")
+	})
+	src := `[{{ 1 | divided_by: 0 }}|{{ x | fail | default: "d" }}]`
+	res, _ := renderFilters(t, NewEnvironment(), src, WithFilters(failing))
+	var zero *ZeroDivisionError
+	var argument *ArgumentError
+	if res.Output != "[|d]" || len(res.Errors) != 2 || !errors.As(res.Errors[0], &zero) || !errors.As(res.Errors[1], &argument) {
+		t.Errorf("lax: %q %v, want %q and the two errors", res.Output, res.Errors, "[|d]")
+	}
+	res, _ = renderFilters(t, NewEnvironment(), `[{{ 1 | divided_by: 0 }}]`, WithStrictFilters())
+	if res.Output != "[Liquid error: divided by 0]" || len(res.Errors) != 1 {
+		t.Errorf("strict: %q %v", res.Output, res.Errors)
+	}
+}
+
+// A standard filter takes Ruby's default for an argument it is not given, and
+// an argument given as nil as nil, as Ruby does: nil is an empty separator or
+// ellipsis. (A length that is not an integer, nil included, keeps the input,
+// where Ruby raises invalid integer.)
+func TestAnArgumentGivenAsNilIsNotAMissingOne(t *testing.T) {
+	tmpl, err := ParseTemplate(`{{ arr | join }}|{{ arr | join: sep }}|{{ long | truncate: 5 }}|{{ long | truncate: 5, nil }}|{{ long | truncatewords: 2 }}|{{ long | truncatewords: 2, nil }}|{{ "ab" | replace: "a" }}|{{ 1.6 | round }}`, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]interface{}{"arr": []interface{}{"b", "a"}, "long": "0123456789 a b c"}
+	res, _ := tmpl.Render(gocontext.Background(), data)
+	want := "b a|ba|01...|01234|0123456789 a...|0123456789 a|b|2"
+	if res.Output != want || len(res.Errors) != 0 {
+		t.Errorf("got %q %v, want %q", res.Output, res.Errors, want)
 	}
 }
