@@ -498,6 +498,46 @@ an Outlook conditional comment. The escape does not cover:
   reach the template;
 - CSS and scripts, as above.
 
+### Listing the Variables of a Template
+
+`liquid.ForParseTreeVisitor` walks a parsed template, its tags and their expressions, as Ruby's
+`Liquid::ParseTreeVisitor`. A callback on `*liquid.VariableLookup` lists the variables a template
+reads:
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/Notifuse/liquidgo/v5/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid/tags"
+)
+
+func main() {
+    env := liquid.NewEnvironment()
+    tags.RegisterStandardTags(env)
+    tmpl, _ := liquid.ParseTemplate(
+        "{% if contact.vip %}{{ contact.first_name | default: fallback }}{% endif %}",
+        &liquid.TemplateOptions{Environment: env},
+    )
+
+    var names []interface{}
+    liquid.ForParseTreeVisitor(tmpl.Root(), nil).
+        AddCallbackFor([]interface{}{(*liquid.VariableLookup)(nil)}, func(node, ctx interface{}) (interface{}, interface{}) {
+            names = append(names, node.(*liquid.VariableLookup).Name())
+            return nil, ctx
+        }).
+        Visit(nil)
+
+    fmt.Println(names) // Output: [contact contact fallback]
+}
+```
+
+Each item of `Visit` pairs what the callback returned for a node with the visit of its children, so a
+callback can also rebuild the tree. A tag of your own gives its children with `ParseTreeChildren()
+[]interface{}` (`liquid.ParseTreeNode`); a block gives its body by default.
+
 ### File System
 
 ```go

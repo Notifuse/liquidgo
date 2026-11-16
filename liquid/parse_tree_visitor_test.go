@@ -9,7 +9,7 @@ func TestParseTreeVisitorBasic(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
 	node := NewTag("test", "", pc)
-	ptv := NewParseTreeVisitor(node, nil)
+	ptv := ForParseTreeVisitor(node, nil)
 	if ptv == nil {
 		t.Fatal("Expected ParseTreeVisitor, got nil")
 	}
@@ -22,8 +22,8 @@ func TestParseTreeVisitorChildren(t *testing.T) {
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
 
-	ptv := NewParseTreeVisitor(tag, nil)
-	children := ptv.children()
+	ptv := ForParseTreeVisitor(tag, nil)
+	children := parseTreeChildren(ptv.node)
 	if len(children) != 2 {
 		t.Errorf("Expected 2 children, got %d", len(children))
 	}
@@ -35,7 +35,7 @@ func TestParseTreeVisitorVisit(t *testing.T) {
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello"})
 
-	ptv := NewParseTreeVisitor(tag, nil)
+	ptv := ForParseTreeVisitor(tag, nil)
 	result := ptv.Visit(nil)
 	if len(result) != 1 {
 		t.Errorf("Expected 1 result, got %d", len(result))
@@ -52,35 +52,32 @@ func TestForParseTreeVisitor(t *testing.T) {
 	}
 }
 
-// TestForParseTreeVisitorNodeSpecific tests node-specific ParseTreeVisitor
+// TestForParseTreeVisitorNodeSpecific tests a node that gives its own
+// children (ParseTreeNode), as a per-class ParseTreeVisitor in Ruby
 func TestForParseTreeVisitorNodeSpecific(t *testing.T) {
-	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
-
-	// Create a node with a ParseTreeVisitor method
-	node := &nodeWithParseTreeVisitor{tag: NewTag("test", "", pc)}
-	callbacks := make(map[reflect.Type]ParseTreeVisitorCallback)
-	ptv := ForParseTreeVisitor(node, callbacks)
-	if ptv == nil {
-		t.Fatal("Expected ParseTreeVisitor, got nil")
+	node := &nodeWithChildren{children: []interface{}{"a", "b"}}
+	callbacks := map[reflect.Type]ParseTreeVisitorCallback{
+		reflect.TypeOf(""): func(node, context interface{}) (interface{}, interface{}) { return node, context },
+	}
+	result := ForParseTreeVisitor(node, callbacks).Visit(nil)
+	if len(result) != 2 || result[0].([]interface{})[0] != "a" || result[1].([]interface{})[0] != "b" {
+		t.Errorf("visit gives %v, want the node's own children a and b", result)
 	}
 }
 
-// nodeWithParseTreeVisitor is a test node that implements ParseTreeVisitor method
-type nodeWithParseTreeVisitor struct {
-	tag *Tag
+// nodeWithChildren is a test node that gives its children.
+type nodeWithChildren struct {
+	children []interface{}
 }
 
-func (n *nodeWithParseTreeVisitor) ParseTreeVisitor(callbacks map[reflect.Type]ParseTreeVisitorCallback) *ParseTreeVisitor {
-	return NewParseTreeVisitor(n.tag, callbacks)
-}
+func (n *nodeWithChildren) ParseTreeChildren() []interface{} { return n.children }
 
 func TestParseTreeVisitorAddCallbackFor(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
-	ptv := NewParseTreeVisitor(tag, nil)
+	ptv := ForParseTreeVisitor(tag, nil)
 
 	callback := func(node interface{}, context interface{}) (interface{}, interface{}) {
 		return node, context
@@ -96,7 +93,7 @@ func TestParseTreeVisitorAddCallbackFor(t *testing.T) {
 	}
 
 	// Test with multiple types
-	ptv2 := NewParseTreeVisitor(tag, nil)
+	ptv2 := ForParseTreeVisitor(tag, nil)
 	ptv2.AddCallbackFor([]interface{}{"test", 42}, callback)
 	result2 := ptv2.Visit(nil)
 	if len(result2) == 0 {
@@ -104,7 +101,7 @@ func TestParseTreeVisitorAddCallbackFor(t *testing.T) {
 	}
 
 	// Test with nil type
-	ptv3 := NewParseTreeVisitor(tag, nil)
+	ptv3 := ForParseTreeVisitor(tag, nil)
 	ptv3.AddCallbackFor([]interface{}{nil}, callback)
 	result3 := ptv3.Visit(nil)
 	if len(result3) == 0 {
@@ -116,7 +113,7 @@ func TestParseTreeVisitorAddCallbackForWithChaining(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
 	node := NewTag("test", "", pc)
-	ptv := NewParseTreeVisitor(node, nil)
+	ptv := ForParseTreeVisitor(node, nil)
 
 	callback := func(node interface{}, context interface{}) (interface{}, interface{}) {
 		return node, context
@@ -137,8 +134,8 @@ func TestForParseTreeVisitorWithNilNode(t *testing.T) {
 }
 
 func TestParseTreeVisitorChildrenWithInvalidNode(t *testing.T) {
-	ptv := NewParseTreeVisitor(42, nil) // int doesn't have Nodelist method
-	children := ptv.children()
+	ptv := ForParseTreeVisitor(42, nil) // int doesn't have Nodelist method
+	children := parseTreeChildren(ptv.node)
 	if len(children) != 0 {
 		t.Errorf("Expected empty children for invalid node, got %d", len(children))
 	}
@@ -155,7 +152,7 @@ func TestParseTreeVisitorVisitWithCallback(t *testing.T) {
 		return "processed:" + node.(string), context
 	}
 
-	ptv := NewParseTreeVisitor(tag, callbacks)
+	ptv := ForParseTreeVisitor(tag, callbacks)
 	result := ptv.Visit(nil)
 	if len(result) != 2 {
 		t.Errorf("Expected 2 results, got %d", len(result))

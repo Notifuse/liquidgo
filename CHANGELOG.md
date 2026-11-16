@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Breaking
+- **The parse tree visitor walks expressions, as Ruby's**: a node gives its children with
+  `ParseTreeChildren() []interface{}` (`liquid.ParseTreeNode`), where the visitor looked up a
+  `ParseTreeVisitor` method by reflection and walked only nodelists; `NewParseTreeVisitor` is gone
+  (`ForParseTreeVisitor` stays), and a node without a callback gives nil, as Ruby's. Variables, filter
+  arguments, conditions, loop collections and limits, cycle values, assigns, echoes and the partials
+  of `include` and `render` are visited, so a callback on `*VariableLookup` lists the variables a
+  template reads.
 - **`TemplateFactory` is gone**, with the `template_factory` register and the `PartialCache` type:
   `LoadPartial` returns the partial as a `*Template`. A partial is named by its name.
 
