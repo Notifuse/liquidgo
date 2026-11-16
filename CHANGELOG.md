@@ -74,7 +74,9 @@ changes; templates render as before.
   `nothing: nil` renders its else branch).
 - **An integer index reads an array as Ruby's `Array#[]`**: a negative index counts from the end
   (`{{ arr[-1] }}` is the last item), and an index out of range is nil, which strict variables do not
-  raise. Three listed divergences from Shopify are gone.
+  raise. An integer is a Go integer of any size or a float64 with no fraction (a JSON number). Any
+  other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
+  read the item at 1. Three listed divergences from Shopify are gone.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
 
 ### Changed
