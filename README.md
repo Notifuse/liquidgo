@@ -201,8 +201,8 @@ Every difference, deliberate or not, is listed with its reason:
 
 ## Version
 
-Current version: **5.11.0**, port revision 11 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 11 is `v5.11.10`. Revision 2 has no tag of its own: it ships
+Current version: **5.11.0**, port revision 12 (`liquid.Version`, `liquid.PortRevision`). Port
+revision N is tagged `v5.11.(N-1)`: revision 12 is `v5.11.11`. Revision 2 has no tag of its own: it ships
 in `v5.11.2` with revision 3.
 
 ## Contributing

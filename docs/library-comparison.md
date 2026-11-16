@@ -1,13 +1,12 @@
 # Go Liquid libraries compared
 
-Measured on 2026-11-16, with Shopify Liquid 5.11.0 as the reference; times of liquidgo at the
-commit of `perf/render` that follows v5.11.10.
+Measured on 2026-11-16, with Shopify Liquid 5.11.0 as the reference; liquidgo v5.11.11.
 
 ## Libraries
 
 | Library | Version | Error mode used | Resource limits |
 |---|---|---|---|
-| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.11.10 | lax | yes, and a deadline (`context`) |
+| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.11.11 | lax | yes, and a deadline (`context`) |
 | [tobi/liquid-go](https://github.com/tobi/liquid-go) | commit of 2026-07-10 (no tag) | lax | no |
 | [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | commit of 2026-05-11 (no tag) | lax | yes |
 | [go-liquid/liquid](https://github.com/go-liquid/liquid) | v0.2.0 | lax | no |
