@@ -26,7 +26,7 @@ type Context struct {
 	// funcValues holds the value each func of the data gave in this render,
 	// on the root context of the render (see reporter), keyed by the map the
 	// func was read from and its key: the data itself is never written.
-	funcValues map[funcValueKey]interface{}
+	funcValues map[funcValueKey]funcValue
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
@@ -456,7 +456,7 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// (squashInstanceAssignsWithEnvironments).
 	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
-			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
+			return c.lookupInScope(scope, keyStr)
 		}
 	}
 	if n, ok := c.counters[keyStr]; ok {
@@ -491,10 +491,32 @@ func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, rais
 	// may be the caller's data
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
-		value = c.funcValue(obj, key, value)
+		value = c.funcValueOf(obj, key, value)
 	}
+	return c.liquidValue(value)
+}
 
-	// Convert to liquid
+// lookupInScope returns the value of key in scope, a scope of the render
+// that holds it. A func there is called and its value written back in the
+// scope, as Ruby's lookup_and_evaluate: a scope belongs to the render, and
+// the next value the render sets under the key (a loop variable, an assign)
+// is read anew.
+func (c *Context) lookupInScope(scope map[string]interface{}, key string) interface{} {
+	value := scope[key]
+	switch f := value.(type) {
+	case func() interface{}:
+		value = f()
+		scope[key] = value
+	case func(*Context) interface{}:
+		value = f(c)
+		scope[key] = value
+	}
+	return c.liquidValue(value)
+}
+
+// liquidValue returns the liquid form of a value read from a map, a drop
+// bound to this render.
+func (c *Context) liquidValue(value interface{}) interface{} {
 	liquidValue := ToLiquid(value)
 
 	// Set context on drops
@@ -513,13 +535,23 @@ type funcValueKey struct {
 	key string
 }
 
-// funcValue returns the value of fn, read from obj[key], calling it the first
-// time the render reads it.
-func (c *Context) funcValue(obj map[string]interface{}, key string, fn interface{}) interface{} {
+// funcValue is the value a func of the data gave, with the map it was read
+// from: the memo keeps the map alive, so that no other map takes its address
+// during the render.
+type funcValue struct {
+	m map[string]interface{}
+	v interface{}
+}
+
+// funcValueOf returns the value of fn, read from obj[key], calling it the
+// first time the render reads it. obj is a map the render does not own (the
+// data, the template's assigns): the caller does not change it during the
+// render, so its func at key stays the same.
+func (c *Context) funcValueOf(obj map[string]interface{}, key string, fn interface{}) interface{} {
 	root := c.reporter()
 	k := funcValueKey{m: reflect.ValueOf(obj).Pointer(), key: key}
-	if v, ok := root.funcValues[k]; ok {
-		return v
+	if kept, ok := root.funcValues[k]; ok {
+		return kept.v
 	}
 	var v interface{}
 	switch f := fn.(type) {
@@ -529,9 +561,9 @@ func (c *Context) funcValue(obj map[string]interface{}, key string, fn interface
 		v = f(c)
 	}
 	if root.funcValues == nil {
-		root.funcValues = make(map[funcValueKey]interface{})
+		root.funcValues = make(map[funcValueKey]funcValue)
 	}
-	root.funcValues[k] = v
+	root.funcValues[k] = funcValue{m: obj, v: v}
 	return v
 }
 

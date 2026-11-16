@@ -4,6 +4,7 @@ import (
 	gocontext "context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -384,5 +385,53 @@ func TestRenderOptions(t *testing.T) {
 	loop := rcParse(t, env, `{% for i in (1..10) %}{% assign x = i %}{% endfor %}`)
 	if res, _ := loop.Render(gocontext.Background(), nil); res.RenderScore == 0 || res.AssignScore == 0 {
 		t.Errorf("scores %d and %d, want both counted", res.RenderScore, res.AssignScore)
+	}
+}
+
+// lazyTag renders its body in a scope of its own whose "lazy" is a func
+// giving the number of the render of the tag, as a host tag may do.
+type lazyTag struct {
+	*liquid.Block
+	n *int
+}
+
+func (l *lazyTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	*l.n++
+	v := *l.n
+	runtime.GC() // a freed scope must not lend its address to a later one
+	context.Context().(*liquid.Context).Stack(map[string]interface{}{"lazy": func() interface{} { return v }}, func() {
+		l.Block.RenderToOutput(context, output)
+	})
+}
+
+// A func in a scope of the render is called for the value it has there, as
+// Ruby calls a proc and writes its value back in the scope: a loop variable
+// or an assign that holds a func, and a scope a tag pushes, give each its
+// own func's value.
+func TestRenderCallsTheFuncOfEachScope(t *testing.T) {
+	funcs := map[string]interface{}{"funcs": []interface{}{
+		func() interface{} { return 1 }, func() interface{} { return 2 },
+	}}
+	tpl := rcParse(t, rcEnv(), `{% for f in funcs %}{{ f }}{% endfor %}|{% assign g = funcs[0] %}{{ g }}{% assign g = funcs[1] %}{{ g }}`)
+	if res, _ := tpl.Render(gocontext.Background(), funcs); res.Output != "12|12" {
+		t.Errorf("funcs in a loop and in assigns render %q, want %q", res.Output, "12|12")
+	}
+
+	env := rcEnv()
+	n := 0
+	env.RegisterTag("lazy", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &lazyTag{Block: liquid.NewBlock(name, markup, pc), n: &n}, nil
+	})
+	loop := rcParse(t, env, `{% for i in (1..200) %}{% lazy %}{{ lazy }}{% endlazy %},{% endfor %}`)
+	res, err := loop.Render(gocontext.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want strings.Builder
+	for i := 1; i <= 200; i++ {
+		fmt.Fprintf(&want, "%d,", i)
+	}
+	if res.Output != want.String() {
+		t.Errorf("a func of a pushed scope renders a value of an earlier scope:\n got %q\nwant %q", res.Output, want.String())
 	}
 }
