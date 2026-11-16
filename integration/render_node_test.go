@@ -118,7 +118,7 @@ func TestAnIncludeRestoresTheTemplateNameOnAnError(t *testing.T) {
 	env := newEnv("", limits{})
 	env.SetFileSystem(NewStubFileSystem(map[string]string{"part": "p"}))
 	source := "a\n{% include 'part', v: d.boom %}\nb\n{{ 'x' | nofilter }}"
-	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true, StrictFilters: true})
+	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -31,8 +31,9 @@ changes; templates render as before.
   - A render's errors and scores are in its `Result`, with the new `Result.RenderScore` and
     `Result.AssignScore`.
   - Limits come from the environment's defaults, and `WithLimits` sets them for one render.
-- **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`
-  and `Filters`.
+- **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`,
+  `Filters`, `StrictVariables` and `StrictFilters` (strict variables and filters are render options,
+  `WithStrictVariables` and `WithStrictFilters`).
 - **Added**: `Template.Environment()`.
 - **A template renders only through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
   render with a `Context` built by hand, is gone. A tag still receives the render's `TagContext`.
