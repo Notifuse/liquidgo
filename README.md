@@ -490,6 +490,14 @@ Any other filter after them makes the result ordinary text again, escaped unless
 escape is for HTML: a value written into CSS (`<style>`) or a script needs `raw`, and only for data
 you trust. The option is off by default, as in Shopify Liquid, which has no `raw` filter.
 
+A value stays inside the text of an element, an attribute in double or single quotes, a comment and
+an Outlook conditional comment. The escape does not cover:
+
+- an attribute without quotes, which a space in the value ends: quote every attribute;
+- the scheme of a URL: `<a href="{{ url }}">` keeps a `javascript:` value; check URLs before they
+  reach the template;
+- CSS and scripts, as above.
+
 ### File System
 
 ```go

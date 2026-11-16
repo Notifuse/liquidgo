@@ -128,6 +128,16 @@ partial body.
   pushes (`Context.Push`, `Context.Stack`) is a scope, and belongs to the render.
 
 ### Tests
+- **Security checks of the categories of the security plan**:
+  - each guard is removed in turn by `scripts/guard_mutations` (31 guards), which fails when no test
+    fails without it; CI runs it;
+  - the library imports no network, process or plugin, and `os` only where a host gives files
+    (`TestTheLibraryImportsNoSystemAccess`);
+  - no error shows a value of the data, but where Ruby names a key or a partial
+    (`TestErrorsShowNoValueOfTheData`);
+  - with the output escape, a value stays in its HTML destination
+    (`TestOutputEscapeKeepsAValueInItsDestination`), and the README lists what the escape does not
+    cover.
 - **A template keeps the text around its tags**: the text before its first tag starts the
   output and the text after its last one ends it, checked over the differential corpus and in
   `FuzzRender`, which found the comment trim above.
