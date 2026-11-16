@@ -20,6 +20,8 @@ type Environment struct {
 	outputEscape        bool
 	rawFilterRegistered bool
 	registeredFilters   []interface{} // Store filter instances for use when creating strainers
+	// partials keeps the partials renders parsed (LoadPartial).
+	partials partialCache
 }
 
 // NewEnvironment creates a new environment instance.

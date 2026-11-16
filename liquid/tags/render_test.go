@@ -216,8 +216,6 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create an iterable object that implements Each() and Count()
@@ -269,8 +267,6 @@ func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with nested path (no alias - should use last part "partial")
@@ -310,8 +306,6 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterable(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with for loop
@@ -352,8 +346,6 @@ func TestRenderTagRenderToOutputBufferWithForLoopNonIterable(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with for loop but non-iterable variable
@@ -394,8 +386,6 @@ func TestRenderTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with attributes
@@ -434,8 +424,6 @@ func TestRenderTagRenderToOutputBufferWithAlias(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with alias
@@ -475,8 +463,6 @@ func TestRenderTagRenderToOutputBufferWithEmptyTemplateName(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Load the template normally first to cache it (name will be empty)
@@ -620,8 +606,6 @@ func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create an iterable object that actually implements Each() and Count()
@@ -692,8 +676,6 @@ func TestRenderTagWithForLoopAndNilVariable(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag with for loop but don't set the variable (nil)
@@ -731,8 +713,6 @@ func TestRenderTagWithoutVariableExpression(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create render tag without any variable expression (no with/for)

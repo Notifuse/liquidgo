@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Breaking
+- **`TemplateFactory` is gone**, with the `template_factory` register and the `PartialCache` type:
+  `LoadPartial` returns the partial as a `*Template`. A partial is named by its name.
+
+### Changed
+- **Renders share the parse of a partial**: an environment keeps the partials it parsed, by their
+  text, so that renders that read the same text share one parse, whatever file system each render
+  reads it from. The file system is read at each render, so a changed partial is never stale. The
+  cache keeps at most 1,024 partials and 32 MiB of their text, the least recently used going first.
+
 ## [5.11.0-port.10]
 
 **Breaking**: the render API, without a new major version (see below). `Template.Render(ctx, data,

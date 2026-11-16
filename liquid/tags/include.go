@@ -105,17 +105,9 @@ func (i *IncludeTag) RenderToOutput(context liquid.TagContext, output *liquid.Ou
 	}
 
 	// Load partial from cache
-	partial, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
+	partialTemplate, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, i.LineNumber())
-		output.WriteString(errorMsg)
-		return
-	}
-
-	// Get partial as Template
-	partialTemplate, ok := partial.(*liquid.Template)
-	if !ok {
-		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), i.LineNumber())
 		output.WriteString(errorMsg)
 		return
 	}

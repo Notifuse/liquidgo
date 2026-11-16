@@ -181,8 +181,6 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create include tag with nested path (no alias - should use last part "partial")
@@ -222,8 +220,6 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create include tag without variableNameExpr - should find variable by template name
@@ -264,8 +260,6 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create include tag with array variable (for clause)
@@ -306,8 +300,6 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create include tag with attributes
@@ -346,8 +338,6 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Create include tag with alias
@@ -408,8 +398,6 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	// Set up context with file system
 	registers := liquid.NewRegisters(nil)
 	registers.Set("file_system", fs)
-	registers.Set("cached_partials", make(map[string]interface{}))
-	registers.Set("template_factory", liquid.NewTemplateFactory())
 	ctx := liquid.BuildContext(liquid.ContextConfig{Registers: registers})
 
 	// Load the template normally first to cache it
@@ -419,11 +407,9 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	}
 
 	// Get the cached template and set its name
-	cache := registers.Get("cached_partials").(map[string]interface{})
-	if cached, ok := cache["greeting:lax"]; ok {
-		if template, ok := cached.(*liquid.Template); ok {
-			template.SetName("custom_name")
-		}
+	cache := registers.Get("cached_partials").(map[string]*liquid.Template)
+	if template, ok := cache["greeting:lax"]; ok {
+		template.SetName("custom_name")
 	}
 
 	// Create include tag
