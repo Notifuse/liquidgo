@@ -77,6 +77,9 @@ changes; templates render as before.
   raise. An integer is a Go integer of any size or a float64 with no fraction (a JSON number). Any
   other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
   read the item at 1. Three listed divergences from Shopify are gone.
+- **A name that holds nil in the data is looked up in the template's assigns next**, as Ruby goes on
+  past a nil to the next environment: data `{"x": nil}` with the assign `x = "y"` renders `y`. With
+  strict variables, the data decides, nil included, as in Ruby.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
 - **With strict variables, a render given no data finds the template's assigns**, as Ruby's
   `render(nil)` makes them its one environment. Given a map, the map decides, as in Ruby.
