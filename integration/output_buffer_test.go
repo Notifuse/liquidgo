@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -187,6 +188,16 @@ func TestAConstructorThatGivesNoTagIsASyntaxError(t *testing.T) {
 	if _, err := liquid.ParseTemplate("a{% notag %}b", &liquid.TemplateOptions{Environment: env}); err == nil ||
 		!strings.Contains(err.Error(), "notag") {
 		t.Errorf("parse error %v, want a syntax error that names notag", err)
+	}
+	// a nil *T in a Node is no tag either
+	env.RegisterTag("typednil", func(string, string, liquid.ParseContextInterface) (liquid.Node, error) {
+		var tag *renderOnlyTag
+		return tag, nil
+	})
+	_, err := liquid.ParseTemplate("a{% typednil %}b", &liquid.TemplateOptions{Environment: env})
+	var syntaxErr *liquid.SyntaxError
+	if !errors.As(err, &syntaxErr) || !strings.Contains(err.Error(), "typednil") {
+		t.Errorf("parse error %v (%T), want a syntax error that names typednil", err, err)
 	}
 
 	warn := liquid.NewEnvironment()

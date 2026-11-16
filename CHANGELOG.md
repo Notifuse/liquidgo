@@ -57,8 +57,8 @@ changes; templates render as before.
   - `Environment.RegisterTag` takes a `liquid.TagConstructor`,
     `func(tagName, markup string, pc ParseContextInterface) (Node, error)`, where it took any value
     and called it by reflection; `TagForName` and `Tags` return them. `tags.TagConstructor` is now
-    an alias of it. A constructor that returns neither a tag nor an error is a syntax error that
-    names the tag, where it gave a generic `Tag`.
+    an alias of it. A constructor that returns neither a tag (nil, or a nil pointer) nor an error is a
+    syntax error that names the tag, where it gave a generic `Tag`.
   - `tag.Disableable` and `tag.Disabler` lose `RenderToOutputBuffer`, and their `RenderToOutput`
     becomes `Render`, so that a tag that embeds them keeps its own `RenderToOutput`;
     `Disabler.Render` no longer takes the output.
