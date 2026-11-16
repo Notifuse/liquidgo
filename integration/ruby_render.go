@@ -12,15 +12,13 @@ import (
 // rubyOptions are the render options of Ruby's Template#render, which the
 // ported tests give.
 type rubyOptions struct {
-	Context           gocontext.Context
-	Output            *string
-	Registers         map[string]interface{}
-	GlobalFilter      func(interface{}) interface{}
-	ExceptionRenderer func(error) interface{}
-	Filters           []interface{}
-	StrictVariables   bool
-	StrictFilters     bool
-	Limits            *liquid.ResourceLimitsConfig
+	Context         gocontext.Context
+	Output          *string
+	Registers       map[string]interface{}
+	Filters         []interface{}
+	StrictVariables bool
+	StrictFilters   bool
+	Limits          *liquid.ResourceLimitsConfig
 }
 
 // rubyResult is what a Ruby-style render gives a test besides its output.
@@ -107,11 +105,72 @@ func rubyErrors(tmpl *liquid.Template) []error {
 	return st.last.Errors
 }
 
+// rubyContext is the Liquid::Context a ported test builds and renders with,
+// with the fields of liquid.ContextConfig. liquidgo renders from data and
+// options only (Template.Render), so the helpers render with what the
+// context holds: its outer scope, environments and static environments as
+// the data, merged so that a name resolves as in Ruby's lookup order; its
+// static registers; its limits; and RethrowErrors as RaiseErrors. The
+// template's environment renders: Environment is the test's record of it.
+// Errors and ResourceLimits tell of the last render, as Ruby's
+// context.errors and context.resource_limits.
+type rubyContext struct {
+	Environment        *liquid.Environment
+	Environments       []map[string]interface{}
+	StaticEnvironments []map[string]interface{}
+	OuterScope         map[string]interface{}
+	Registers          *liquid.Registers
+	Limits             *liquid.ResourceLimitsConfig
+	RethrowErrors      bool
+
+	cancel gocontext.Context
+	last   rubyResult
+}
+
+// newRubyContext returns a context for env, as liquid.BuildContext with
+// only an environment.
+func newRubyContext(env *liquid.Environment) *rubyContext {
+	return &rubyContext{Environment: env}
+}
+
+// SetCancellation sets the context.Context the renders with c stop with.
+func (c *rubyContext) SetCancellation(ctx gocontext.Context) { c.cancel = ctx }
+
+// Errors returns the errors of the last render with c.
+func (c *rubyContext) Errors() []error {
+	if c.last.Errors == nil {
+		return []error{}
+	}
+	return c.last.Errors
+}
+
+// ResourceLimits returns the limits of the last render with c.
+func (c *rubyContext) ResourceLimits() rubyLimitsResult { return rubyLimitsResult{c.last} }
+
+// data returns the names c resolves, each to the value Ruby's lookup finds
+// first: the outer scope, then the environments, then the static ones.
+func (c *rubyContext) data() map[string]interface{} {
+	data := map[string]interface{}{}
+	for i := len(c.StaticEnvironments) - 1; i >= 0; i-- {
+		for k, v := range c.StaticEnvironments[i] {
+			data[k] = v
+		}
+	}
+	for i := len(c.Environments) - 1; i >= 0; i-- {
+		for k, v := range c.Environments[i] {
+			data[k] = v
+		}
+	}
+	for k, v := range c.OuterScope {
+		data[k] = v
+	}
+	return data
+}
+
 // renderRuby renders tmpl as Ruby's Template#render does, which the tests
 // were ported from: an error that ends the render (a resource limit, a
 // cancellation) gives its "Liquid error: ..." message as the output. assigns
-// is a map, nil, or a *liquid.Context the test built, whose state the render
-// uses and keeps.
+// is a map, nil, or a *rubyContext the test built.
 func renderRuby(tmpl *liquid.Template, assigns interface{}, o *rubyOptions) string {
 	return renderRubyResult(tmpl, assigns, o, false).Output
 }
@@ -149,20 +208,39 @@ func renderRubyResult(tmpl *liquid.Template, assigns interface{}, o *rubyOptions
 	if o.Output != nil {
 		prefix = *o.Output
 	}
-	if c, ok := assigns.(*liquid.Context); ok {
-		return renderRubyContext(tmpl, c, o, raise, prefix)
-	}
 	var data map[string]interface{}
+	var opts []liquid.RenderOption
+	registers := o.Registers
+	cancel := o.Context
 	switch v := assigns.(type) {
 	case nil:
 	case map[string]interface{}:
 		data = v
+	case *rubyContext:
+		defer func() { v.last = out }()
+		data = v.data()
+		if v.Registers != nil {
+			// the options' registers add to the context's
+			registers = map[string]interface{}{}
+			for k, r := range v.Registers.Static() {
+				registers[k] = r
+			}
+			for k, r := range o.Registers {
+				registers[k] = r
+			}
+		}
+		if v.Limits != nil && o.Limits == nil {
+			opts = append(opts, liquid.WithLimits(*v.Limits))
+		}
+		raise = raise || v.RethrowErrors
+		if cancel == nil {
+			cancel = v.cancel
+		}
 	default:
-		panic("renderRuby takes a map, nil or a *liquid.Context")
+		panic("renderRuby takes a map, nil or a *rubyContext")
 	}
-	var opts []liquid.RenderOption
-	if o.Registers != nil {
-		opts = append(opts, liquid.WithRegisters(o.Registers))
+	if registers != nil {
+		opts = append(opts, liquid.WithRegisters(registers))
 	}
 	if len(o.Filters) > 0 {
 		opts = append(opts, liquid.WithFilters(o.Filters...))
@@ -179,12 +257,7 @@ func renderRubyResult(tmpl *liquid.Template, assigns interface{}, o *rubyOptions
 	if raise {
 		opts = append(opts, liquid.RaiseErrors())
 	}
-	if o.GlobalFilter != nil || o.ExceptionRenderer != nil {
-		// Render has no such options: the Ruby hooks are only on a Context
-		c := liquid.BuildContext(liquid.ContextConfig{Environments: []map[string]interface{}{data}, Environment: tmpl.Environment()})
-		return renderRubyContext(tmpl, c, o, raise, prefix)
-	}
-	ctx := o.Context
+	ctx := cancel
 	if ctx == nil {
 		ctx = gocontext.Background()
 	}
@@ -203,41 +276,6 @@ func renderRubyResult(tmpl *liquid.Template, assigns interface{}, o *rubyOptions
 		out.Errors = append(append([]error{}, out.Errors...), err)
 	}
 	return out
-}
-
-// renderRubyContext renders tmpl with a Context the test built, as a partial
-// of that Context's render.
-func renderRubyContext(tmpl *liquid.Template, c *liquid.Context, o *rubyOptions, raise bool, prefix string) rubyResult {
-	for k, v := range o.Registers {
-		c.Registers().Set(k, v)
-	}
-	if len(o.Filters) > 0 {
-		c.AddFilters(o.Filters)
-	}
-	if o.GlobalFilter != nil {
-		c.SetGlobalFilter(o.GlobalFilter)
-	}
-	if o.ExceptionRenderer != nil {
-		c.SetExceptionRenderer(o.ExceptionRenderer)
-	}
-	if o.StrictVariables {
-		c.SetStrictVariables(true)
-	}
-	if o.StrictFilters {
-		c.SetStrictFilters(true)
-	}
-	if o.Context != nil {
-		// the cancellation applies to this render only, as Ruby's
-		c.SetCancellation(o.Context)
-		defer c.SetCancellation(gocontext.Background())
-	}
-	if raise {
-		c.SetExceptionRenderer(func(err error) interface{} { panic(err) })
-	}
-	out := prefix
-	tmpl.RenderToOutputBuffer(c, &out)
-	rl := c.ResourceLimits()
-	return rubyResult{Output: out, Errors: c.Errors(), Reached: rl.Reached(), RenderScore: rl.RenderScore(), AssignScore: rl.AssignScore()}
 }
 
 // rubyErrorText is the text Ruby writes for an error that ends a render.

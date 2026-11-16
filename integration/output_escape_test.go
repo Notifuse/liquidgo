@@ -204,19 +204,3 @@ func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
 		t.Errorf("the escaped string allocated %d bytes before the limit stopped it", on)
 	}
 }
-
-// A global filter can change any value, so with one set an output is escaped even
-// after raw.
-func TestOutputEscapeWithAGlobalFilter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(true)
-	tmpl, err := liquid.ParseTemplate(`{{ v | raw }}`, &liquid.TemplateOptions{Environment: env})
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := renderRuby(tmpl, map[string]interface{}{"v": "<b>"}, &rubyOptions{GlobalFilter: func(v interface{}) interface{} { return v }})
-	if got != "&lt;b&gt;" {
-		t.Errorf("got %q", got)
-	}
-}

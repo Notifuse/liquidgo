@@ -39,11 +39,11 @@ func TestHashOrdering_GlobalRegisterOrder(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := " 1000$ CAD "

@@ -189,42 +189,6 @@ func (t *Template) Assigns() map[string]interface{} {
 	return t.assigns
 }
 
-// RenderToOutputBuffer renders the template with context and appends the
-// result to output. As in Ruby, it resets the resource usage of context, and
-// a MemoryError, or a CanceledError, is recorded rather than raised.
-func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
-	if t.root == nil {
-		return
-	}
-
-	// Cast to *Context to access methods
-	if ctx, ok := context.(*Context); ok {
-		// Retrying a render resets resource usage
-		ctx.ResourceLimits().Reset()
-
-		if ctx.TemplateName() == "" {
-			ctx.SetTemplateName(t.name)
-		}
-
-		defer func() {
-			if r := recover(); r != nil {
-				switch err := r.(type) {
-				case *MemoryError:
-					ctx.HandleError(err, nil)
-				case *CanceledError:
-					ctx.HandleError(err, nil)
-				default:
-					panic(r)
-				}
-			}
-		}()
-
-		buffer := NewOutputBufferFor(context)
-		defer func() { *output += buffer.String() }()
-		t.root.RenderToOutput(context, buffer)
-	}
-}
-
 // RenderToOutput renders the template with context to output, as a partial
 // of the render that context belongs to: the resource usage goes on from
 // where it is, and an error that ends the render, such as a MemoryError, goes

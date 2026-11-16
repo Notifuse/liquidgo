@@ -92,18 +92,6 @@ func TestEnvironmentFileSystem(t *testing.T) {
 	}
 }
 
-func TestEnvironmentExceptionRenderer(t *testing.T) {
-	env := NewEnvironment()
-	renderer := func(err error) interface{} {
-		return "rendered"
-	}
-	env.SetExceptionRenderer(renderer)
-
-	if env.ExceptionRenderer() == nil {
-		t.Error("Expected exception renderer, got nil")
-	}
-}
-
 func TestEnvironmentSetErrorMode(t *testing.T) {
 	env := NewEnvironment()
 	env.SetErrorMode("strict")

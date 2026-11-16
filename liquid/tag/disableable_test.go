@@ -1,6 +1,7 @@
 package tag
 
 import (
+	gocontext "context"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -141,13 +142,8 @@ func TestBlockTagDisablingNestedTag(t *testing.T) {
 	}
 
 	// Render template
-	contextConfig := liquid.ContextConfig{
-		Environment: env,
-	}
-	ctx := liquid.BuildContext(contextConfig)
-
-	var output string
-	tmpl.RenderToOutputBuffer(ctx, &output)
+	res, _ := tmpl.Render(gocontext.Background(), nil)
+	output := res.Output
 
 	// Expected: "Liquid error (line 1): custom usage is not allowed in this context;custom2"
 	expected := "Liquid error (line 1): custom usage is not allowed in this context;custom2"
@@ -178,13 +174,8 @@ func TestBlockTagDisablingMultipleNestedTags(t *testing.T) {
 	}
 
 	// Render template
-	contextConfig := liquid.ContextConfig{
-		Environment: env,
-	}
-	ctx := liquid.BuildContext(contextConfig)
-
-	var output string
-	tmpl.RenderToOutputBuffer(ctx, &output)
+	res, _ := tmpl.Render(gocontext.Background(), nil)
+	output := res.Output
 
 	// Expected: "Liquid error (line 1): custom usage is not allowed in this context;Liquid error (line 1): custom2 usage is not allowed in this context"
 	expected := "Liquid error (line 1): custom usage is not allowed in this context;Liquid error (line 1): custom2 usage is not allowed in this context"

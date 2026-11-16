@@ -14,7 +14,6 @@ type TagContext interface {
 	Evaluate(expr interface{}) interface{}
 	FindVariable(key string, raiseOnNotFound bool) interface{}
 	Invoke(method string, obj interface{}, args ...interface{}) interface{}
-	ApplyGlobalFilter(obj interface{}) interface{}
 	Interrupt() bool
 	PushInterrupt(interrupt interface{})
 	ResourceLimits() *ResourceLimits

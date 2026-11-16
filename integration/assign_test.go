@@ -133,12 +133,12 @@ func assignScoreOf(obj interface{}) int {
 	tags.RegisterStandardTags(env) // Register tags for parsing
 	drop := NewObjectWrapperDrop(obj)
 	// Create resource limits for tracking assign score
-	rl := liquid.NewResourceLimits(liquid.ResourceLimitsConfig{})
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	rl := liquid.ResourceLimitsConfig{}
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"drop": drop}},
-		ResourceLimits:     rl,
-	})
+		Limits:             &rl,
+	}
 	tmpl, err := liquid.ParseTemplate(`{% assign obj = drop.value %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		return 0
