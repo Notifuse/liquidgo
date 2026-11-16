@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -355,7 +356,8 @@ func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 // newTag builds the tag a template names with its constructor. An error of
 // the constructor is a parse error, raised as the parser raises them, or in
 // warn mode a warning, and newTag returns nil. A constructor that returns
-// neither a tag nor an error gives a syntax error of its own.
+// neither a tag (nil, or a nil pointer) nor an error gives a syntax error of
+// its own.
 func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseContextInterface) Node {
 	var tag Node
 	var err error
@@ -371,7 +373,7 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 		}()
 		tag, err = ctor(tagName, markup, parseContext)
 	}()
-	if err == nil && tag == nil {
+	if err == nil && isNilNode(tag) {
 		err = NewSyntaxError("the constructor of the " + tagName + " tag returned no tag")
 	}
 	if err != nil {
@@ -382,6 +384,16 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 		return nil
 	}
 	return tag
+}
+
+// isNilNode reports whether tag is no tag: nil, or a nil pointer in the
+// interface, which a constructor that returns a *T gives.
+func isNilNode(tag Node) bool {
+	if tag == nil {
+		return true
+	}
+	v := reflect.ValueOf(tag)
+	return v.Kind() == reflect.Ptr && v.IsNil()
 }
 
 // renderNode renders one node that is not raw text. An error in the node is
