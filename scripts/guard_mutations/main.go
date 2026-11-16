@@ -132,9 +132,9 @@ var guards = []guard{
 	{"a drop is a struct with the drop methods", "liquid/drop.go",
 		"return t.Kind() == reflect.Struct && reflect.PointerTo(t).Implements(dropInvokerType)",
 		"return t.Kind() == reflect.Struct"},
-	{"an unknown filter calls nothing", "liquid/strainer_template.go",
-		"\t\t// An unknown filter stays an unknown filter: it never reads a\n\t\t// property or calls a method of its input, as in Ruby.\n",
-		"\t\tif len(args) > 0 && args[0] != nil {\n\t\t\tif result := InvokeDropOn(args[0], method); result != nil {\n\t\t\t\treturn result, nil\n\t\t\t}\n\t\t}\n"},
+	{"an unknown filter calls nothing", "liquid/context.go",
+		"\t} else {\n\t\tresult = obj\n\t}",
+		"\t} else if found := InvokeDropOn(obj, method); found != nil {\n\t\tresult = found\n\t} else {\n\t\tresult = obj\n\t}"},
 
 	// Escaping
 	{"output escape", "liquid/variable.go",

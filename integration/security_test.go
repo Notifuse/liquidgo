@@ -50,11 +50,11 @@ func TestSecurity_NoInstanceEvalLaterInChain(t *testing.T) {
 	tags.RegisterStandardTags(env)
 
 	// Add a simple filter that adds " + 1" to the input
-	addOneFilter := func(input interface{}) interface{} {
-		return liquid.ToS(input, nil) + " + 1"
+	addOneFilter := func(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
+		return liquid.ToS(input, nil) + " + 1", nil
 	}
 
-	_ = env.RegisterFilter(addOneFilter)
+	_ = env.RegisterFilter(liquid.Filter("add_one", addOneFilter))
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,

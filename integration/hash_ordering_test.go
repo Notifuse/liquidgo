@@ -3,6 +3,7 @@ package integration
 import (
 	"testing"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -28,8 +29,8 @@ func TestHashOrdering_GlobalRegisterOrder(t *testing.T) {
 	tags.RegisterStandardTags(env)
 
 	// Register filters in order: MoneyFilter, then CanadianMoneyFilter
-	_ = env.RegisterFilter(&MoneyFilter{})
-	_ = env.RegisterFilter(&CanadianMoneyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&MoneyFilter{})...)
+	_ = env.RegisterFilter(methodfilters.Of(&CanadianMoneyFilter{})...)
 
 	// The last registered filter should take precedence
 	tmpl, err := liquid.ParseTemplate("{{1000 | money}}", &liquid.TemplateOptions{

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -286,7 +287,7 @@ func (d *rcPanicDrop) Name() interface{} {
 // stack, and the output written before.
 func TestRenderGoPanicIsFatal(t *testing.T) {
 	env := rcEnv()
-	if err := env.RegisterFilter(&rcPanicFilters{}); err != nil {
+	if err := env.RegisterFilter(methodfilters.Of(&rcPanicFilters{})...); err != nil {
 		t.Fatal(err)
 	}
 	env.SetFileSystem(&mapFileSystem{templates: map[string]string{"p": "{{ d.name }}"}})
@@ -358,7 +359,7 @@ func TestRenderOptions(t *testing.T) {
 	}
 
 	shout := rcParse(t, env, `{{ "a" | shout }}`)
-	if res, err := shout.Render(gocontext.Background(), nil, liquid.WithFilters(&rcShoutFilters{})); err != nil || res.Output != "a!" {
+	if res, err := shout.Render(gocontext.Background(), nil, liquid.WithFilters(methodfilters.Of(&rcShoutFilters{})...)); err != nil || res.Output != "a!" {
 		t.Errorf("WithFilters: output %q, err %v", res.Output, err)
 	}
 	if res, _ := shout.Render(gocontext.Background(), nil); res.Output != "a" {

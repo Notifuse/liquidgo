@@ -54,7 +54,7 @@ type renderConfig struct {
 	limits          *ResourceLimitsConfig
 	raise           bool
 	registers       map[string]interface{}
-	filters         []interface{}
+	filters         []FilterDef
 	strictVariables bool
 	strictFilters   bool
 }
@@ -70,7 +70,7 @@ func WithRegisters(registers map[string]interface{}) RenderOption {
 
 // WithFilters gives the render local filters, next to the environment's,
 // which they take precedence over for a name both define.
-func WithFilters(filters ...interface{}) RenderOption {
+func WithFilters(filters ...FilterDef) RenderOption {
 	return func(c *renderConfig) { c.filters = append(c.filters, filters...) }
 }
 

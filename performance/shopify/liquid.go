@@ -1,6 +1,7 @@
 package shopify
 
 import (
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
@@ -23,9 +24,9 @@ func RegisterAll(env *liquid.Environment) {
 	})
 
 	// Register filters (each filter object exposes multiple methods)
-	_ = env.RegisterFilter(&JSONFilter{})
-	_ = env.RegisterFilter(&MoneyFilter{})
-	_ = env.RegisterFilter(&WeightFilter{})
-	_ = env.RegisterFilter(&ShopFilter{})
-	_ = env.RegisterFilter(&TagFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&JSONFilter{})...)
+	_ = env.RegisterFilter(methodfilters.Of(&MoneyFilter{})...)
+	_ = env.RegisterFilter(methodfilters.Of(&WeightFilter{})...)
+	_ = env.RegisterFilter(methodfilters.Of(&ShopFilter{})...)
+	_ = env.RegisterFilter(methodfilters.Of(&TagFilter{})...)
 }

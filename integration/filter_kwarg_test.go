@@ -3,6 +3,7 @@ package integration
 import (
 	"testing"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -29,7 +30,7 @@ func TestFilterKwarg_CanParseDataKwargs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&KwargFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&KwargFilter{})...)
 
 	template := `{{ 'img' | html_tag: data-src: 'src', data-widths: '100, 200' }}`
 	expected := "data-src='src' data-widths='100, 200'"

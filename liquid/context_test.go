@@ -121,7 +121,7 @@ func TestContextInvoke(t *testing.T) {
 	ctx := NewContext()
 	ctx.Set("test", "HELLO")
 
-	result := ctx.Invoke("Downcase", "HELLO")
+	result := ctx.Invoke("downcase", "HELLO")
 	if result != "hello" {
 		t.Errorf("Expected 'hello', got %v", result)
 	}
@@ -398,7 +398,7 @@ func TestContextGettersSetters(t *testing.T) {
 	}
 
 	// Test AddFilters
-	ctx.AddFilters([]interface{}{&StandardFilters{}})
+	ctx.AddFilters([]FilterDef{Filter("local", rawFilter)})
 	if len(ctx.filters) == 0 {
 		t.Error("Expected filters to be added")
 	}
