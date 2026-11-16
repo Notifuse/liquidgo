@@ -481,23 +481,23 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
-// lookupAndEvaluate returns the value of key in obj, a map the render does
-// not own, which holds the key (FindVariable and
-// tryVariableFindInEnvironments check it).
+// lookupAndEvaluate returns the liquid form of the value of key in obj, a
+// map the render does not own (see valueIn).
 func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string) interface{} {
-	value, exists := obj[key]
-	if !exists {
-		return nil
-	}
+	return c.liquidValue(c.valueIn(obj, key))
+}
 
-	// A func is called once per render, as Ruby calls a proc once and keeps
-	// its value; the value is kept with the render, not written in obj, which
-	// may be the caller's data
+// valueIn returns the value of key in obj, a map the render does not own
+// (the data, the template's assigns, a map of them), before its liquid
+// form: a func is called once per render, as Ruby calls a proc once and
+// keeps its value; the value is kept with the render, not written in obj.
+func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
+	value := obj[key]
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
 		value = c.funcValueOf(obj, key, value)
 	}
-	return c.liquidValue(value)
+	return value
 }
 
 // lookupInScope returns the value of key in scope, a scope of the render
@@ -643,8 +643,9 @@ func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool
 				}
 				continue
 			}
-			if v := c.lookupAndEvaluate(env, key); v != nil || strict {
-				return v
+			// as Ruby, the value decides before its liquid form
+			if v := c.valueIn(env, key); v != nil || strict {
+				return c.liquidValue(v)
 			}
 		}
 	}
