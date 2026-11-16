@@ -481,3 +481,17 @@ func TestRenderListsEachRecordedError(t *testing.T) {
 		t.Errorf("with RaiseErrors: errors %v (%v), want the raised error once", res.Errors, err)
 	}
 }
+
+// A func that takes the render's Context is called with it, from the data
+// and from a scope.
+func TestRenderCallsAFuncOfTheContext(t *testing.T) {
+	data := map[string]interface{}{
+		"name": func(c *liquid.Context) interface{} { return c.TemplateName() },
+		"list": []interface{}{func(c *liquid.Context) interface{} { return "item" }},
+	}
+	tpl := rcParse(t, rcEnv(), `{{ name }}|{% for f in list %}{{ f }}{% endfor %}`)
+	tpl.SetName("page")
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "page|item" {
+		t.Errorf("output %q, want %q", res.Output, "page|item")
+	}
+}
