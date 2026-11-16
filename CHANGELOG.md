@@ -89,7 +89,8 @@ partial body.
   `nothing: nil` renders its else branch).
 - **An integer index reads an array as Ruby's `Array#[]`**: a negative index counts from the end
   (`{{ arr[-1] }}` is the last item), and an index out of range is nil, which strict variables do not
-  raise. An integer is a Go integer of any size or a float64 with no fraction (a JSON number). Any
+  raise. An integer is a Go integer of any kind, named or not, or a float with no fraction (a JSON number);
+  an index beyond the range of `int` is out of range, also on 32-bit platforms. Any
   other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
   read the item at 1. Three listed divergences from Shopify are gone.
 - **A name that holds nil in the data is looked up in the template's assigns next**, as Ruby goes on

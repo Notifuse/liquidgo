@@ -402,29 +402,34 @@ func ToString(v interface{}, ctx *Context) string {
 }
 
 // integerKey returns key as an index when it is an integer, as Ruby's
-// key.is_a?(Integer) in a lookup of an array: a Go integer of any size, or
-// a float64 with no fraction, which is how a JSON number comes to Go.
+// key.is_a?(Integer) in a lookup of an array: a Go integer of any kind,
+// named or not, or a float with no fraction, which is how a JSON number comes
+// to Go. An index beyond the range of int is out of range of any list.
 func integerKey(key interface{}) (int, bool) {
 	switch k := key.(type) {
 	case int:
 		return k, true
 	case float64:
-		if k == math.Trunc(k) && math.Abs(k) < 1<<53 {
-			return int(k), true
-		}
-		return 0, false
+		return integralFloat(k)
 	}
 	v := reflect.ValueOf(key)
 	switch v.Kind() {
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return int(v.Int()), true
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return saturateInt64(v.Int()), true
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		if v.Uint() <= math.MaxInt32 {
-			return int(v.Uint()), true
-		}
-		return math.MaxInt32, true // out of range of any list
+		return saturateUint64(v.Uint()), true
+	case reflect.Float32, reflect.Float64:
+		return integralFloat(v.Float())
 	}
 	return 0, false
+}
+
+// integralFloat returns f as an index when it has no fraction.
+func integralFloat(f float64) (int, bool) {
+	if f != math.Trunc(f) || math.Abs(f) >= 1<<53 {
+		return 0, false
+	}
+	return saturateInt64(int64(f)), true
 }
 
 // indexOf returns item idx of a list of n items, as Ruby's Array#[]: a
