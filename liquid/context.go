@@ -10,12 +10,15 @@ import (
 type ContextConfig struct {
 	Registers          interface{}
 	Environment        *Environment
-	OuterScope         map[string]interface{}
 	ResourceLimits     *ResourceLimits
 	Environments       []map[string]interface{}
 	StaticEnvironments []map[string]interface{}
 	RethrowErrors      bool
 }
+
+// emptyEnvironment is the environment of a context built with none; nothing
+// writes a context's environments, so contexts share it.
+var emptyEnvironment = map[string]interface{}{}
 
 // Context keeps the variable stack and resolves variables, as well as keywords.
 type Context struct {
@@ -26,7 +29,7 @@ type Context struct {
 	// funcValues holds the value each func of the data gave in this render,
 	// on the root context of the render (see reporter), keyed by the map the
 	// func was read from and its key: the data itself is never written.
-	funcValues map[funcValueKey]interface{}
+	funcValues map[funcValueKey]funcValue
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
@@ -76,17 +79,12 @@ func BuildContext(config ContextConfig) *Context {
 	// name up in (and nothing writes)
 	environments := config.Environments
 	if environments == nil {
-		environments = []map[string]interface{}{emptyData}
+		environments = []map[string]interface{}{emptyEnvironment}
 	}
 
 	staticEnvironments := config.StaticEnvironments
 	if staticEnvironments == nil {
 		staticEnvironments = []map[string]interface{}{}
-	}
-
-	outerScope := config.OuterScope
-	if outerScope == nil {
-		outerScope = make(map[string]interface{})
 	}
 
 	var registers *Registers
@@ -111,7 +109,7 @@ func BuildContext(config ContextConfig) *Context {
 		environment:        env,
 		environments:       environments,
 		staticEnvironments: staticEnvironments,
-		scopes:             []map[string]interface{}{outerScope},
+		scopes:             []map[string]interface{}{{}},
 		registers:          registers,
 		errors:             make([]error, 0, 4), // Pre-allocate for common error count
 		warnings:           make([]error, 0, 4), // Pre-allocate for common warning count
@@ -141,7 +139,6 @@ func BuildContext(config ContextConfig) *Context {
 
 	ctx.rethrowErrors = config.RethrowErrors
 
-	ctx.squashInstanceAssignsWithEnvironments()
 	return ctx
 }
 
@@ -320,11 +317,41 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 	}
 
 	r := c.reporter()
-	r.errors = append(r.errors, liquidErr)
 	if c.rethrowErrors {
+		// an error raised through enclosing blocks comes back here from
+		// each of them: it is recorded once
+		if !recorded(r.errors, liquidErr) {
+			r.errors = append(r.errors, liquidErr)
+		}
 		panic(liquidErr)
 	}
+	r.errors = append(r.errors, liquidErr)
 	return ToS(liquidErr, nil)
+}
+
+// recorded reports whether err is already in errs, the same value.
+func recorded(errs []error, err error) bool {
+	for _, e := range errs {
+		if sameError(e, err) {
+			return true
+		}
+	}
+	return false
+}
+
+// sameError reports whether a and b are the same error value. Two values of
+// a type that holds an uncomparable value (a slice in an interface field)
+// are not the same: comparing them would panic.
+func sameError(a, b error) (same bool) {
+	if reflect.TypeOf(a) != reflect.TypeOf(b) {
+		return false
+	}
+	defer func() {
+		if recover() != nil {
+			same = false
+		}
+	}()
+	return a == b
 }
 
 // Invoke invokes a filter method. A call the filter cannot take (too many arguments)
@@ -349,7 +376,10 @@ func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) in
 	return ToLiquid(result)
 }
 
-// Push pushes a new local scope on the stack.
+// Push pushes a new local scope on the stack. newScope belongs to the
+// render from then on, as in Ruby: the render writes its assigns and the
+// value of a func it holds in it. Push a map of the render, never one that
+// renders share.
 func (c *Context) Push(newScope map[string]interface{}) {
 	if newScope == nil {
 		newScope = make(map[string]interface{})
@@ -376,7 +406,8 @@ func (c *Context) Pop() {
 	c.scopes = c.scopes[1:]
 }
 
-// Stack pushes a new scope, executes the function, then pops.
+// Stack pushes a new scope, executes the function, then pops. newScope
+// belongs to the render, as with Push.
 func (c *Context) Stack(newScope map[string]interface{}, fn func()) {
 	c.Push(newScope)
 	defer c.Pop()
@@ -451,50 +482,52 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 
 	// As Ruby's find_variable: every scope, the outer one included, before
 	// the environments. The outer scope holds the template's assign and
-	// capture; the instance assigns kept from an earlier render were
-	// replaced by the render data when the context was built
-	// (squashInstanceAssignsWithEnvironments).
+	// capture.
 	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
-			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
+			return c.lookupInScope(scope, keyStr)
 		}
 	}
 	if n, ok := c.counters[keyStr]; ok {
 		return n
 	}
 
-	// As Ruby: a name that an environment holds, nil included, is found;
-	// with strict variables, a name the first environment lacks is an
-	// UndefinedVariable (tryVariableFindInEnvironments)
+	// As Ruby: the first environment that gives a value; with strict
+	// variables, the first environment decides (tryVariableFindInEnvironments)
 	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
-// LookupAndEvaluate looks up and evaluates a value from an object.
-func (c *Context) LookupAndEvaluate(obj map[string]interface{}, key string, raiseOnNotFound bool) interface{} {
-	return c.lookupAndEvaluate(obj, key, raiseOnNotFound)
-}
-
-func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, raiseOnNotFound bool) interface{} {
-	if c.strictVariables && raiseOnNotFound {
-		if _, ok := obj[key]; !ok {
-			panic(NewUndefinedVariable("undefined variable " + key))
-		}
-	}
-
-	value, exists := obj[key]
-	if !exists {
-		return nil
-	}
-
-	// A func is called once per render, as Ruby calls a proc once and keeps
-	// its value; the value is kept with the render, not written in obj, which
-	// may be the caller's data
+// valueIn returns the value of key in obj, a map the render does not own
+// (the data, the template's assigns, a map of them), before its liquid
+// form: a func is called once per render, as Ruby calls a proc once and
+// keeps its value; the value is kept with the render, not written in obj.
+func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
+	value := obj[key]
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
-		value = c.funcValue(obj, key, value)
+		value = c.funcValueOf(obj, key, value)
 	}
+	return value
+}
 
-	// Convert to liquid
+// lookupInScope returns the value of key in scope, a scope of the render
+// that holds it. A func there is called and its value written back in the
+// scope, as Ruby's lookup_and_evaluate: a scope belongs to the render, and
+// the next value the render sets under the key (a loop variable, an assign)
+// is read anew.
+func (c *Context) lookupInScope(scope map[string]interface{}, key string) interface{} {
+	value := scope[key]
+	switch value.(type) {
+	case func() interface{}, func(*Context) interface{}:
+		value = c.callFunc(value)
+		scope[key] = value
+	}
+	return c.liquidValue(value)
+}
+
+// liquidValue returns the liquid form of a value read from a map, a drop
+// bound to this render.
+func (c *Context) liquidValue(value interface{}) interface{} {
 	liquidValue := ToLiquid(value)
 
 	// Set context on drops
@@ -507,32 +540,73 @@ func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, rais
 	return liquidValue
 }
 
-// funcValueKey identifies a func of the data: the map it is in, and its key.
-type funcValueKey struct {
-	m   uintptr
-	key string
-}
-
-// funcValue returns the value of fn, read from obj[key], calling it the first
-// time the render reads it.
-func (c *Context) funcValue(obj map[string]interface{}, key string, fn interface{}) interface{} {
-	root := c.reporter()
-	k := funcValueKey{m: reflect.ValueOf(obj).Pointer(), key: key}
-	if v, ok := root.funcValues[k]; ok {
+// itemOf returns item i of list, a list the render does not own: a func is
+// called once per render, as Ruby's lookup_and_evaluate calls a proc read by
+// an index, and the list is never written.
+func (c *Context) itemOf(list []interface{}, i int) interface{} {
+	value := list[i]
+	switch value.(type) {
+	case func() interface{}, func(*Context) interface{}:
+		root := c.reporter()
+		k := funcValueKey{m: reflect.ValueOf(list).Pointer(), index: i + 1}
+		if kept, ok := root.funcValues[k]; ok {
+			return kept.v
+		}
+		v := c.callFunc(value)
+		root.keepFuncValue(k, list, v)
 		return v
 	}
-	var v interface{}
+	return value
+}
+
+// funcValueKey identifies a func of the data: the map it is in and its key,
+// or the list it is in and its index plus one.
+type funcValueKey struct {
+	m     uintptr
+	key   string
+	index int
+}
+
+// funcValue is the value a func of the data gave, with the map or list it
+// was read from: the memo keeps it alive, so that no other map or list, one a
+// filter or a host tag makes during the render, takes its address.
+type funcValue struct {
+	in interface{}
+	v  interface{}
+}
+
+// funcValueOf returns the value of fn, read from obj[key], calling it the
+// first time the render reads it. obj is a map the render does not own (the
+// data, the template's assigns, a map of them): the caller does not change
+// it during the render, so its func at key stays the same.
+func (c *Context) funcValueOf(obj map[string]interface{}, key string, fn interface{}) interface{} {
+	root := c.reporter()
+	k := funcValueKey{m: reflect.ValueOf(obj).Pointer(), key: key}
+	if kept, ok := root.funcValues[k]; ok {
+		return kept.v
+	}
+	v := c.callFunc(fn)
+	root.keepFuncValue(k, obj, v)
+	return v
+}
+
+// callFunc returns the value of a func of the data.
+func (c *Context) callFunc(fn interface{}) interface{} {
 	switch f := fn.(type) {
 	case func() interface{}:
-		v = f()
+		return f()
 	case func(*Context) interface{}:
-		v = f(c)
+		return f(c)
 	}
-	if root.funcValues == nil {
-		root.funcValues = make(map[funcValueKey]interface{})
+	return fn
+}
+
+// keepFuncValue keeps v, the value of the func at k in in, for the render.
+func (c *Context) keepFuncValue(k funcValueKey, in interface{}, v interface{}) {
+	if c.funcValues == nil {
+		c.funcValues = make(map[funcValueKey]funcValue)
 	}
-	root.funcValues[k] = v
-	return v
+	c.funcValues[k] = funcValue{in: in, v: v}
 }
 
 // WithDisabledTags executes a function with disabled tags.
@@ -594,34 +668,25 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	return subCtx
 }
 
-// ClearInstanceAssigns clears the current scope.
-func (c *Context) ClearInstanceAssigns() {
-	if len(c.scopes) > 0 {
-		c.scopes[0] = make(map[string]interface{})
-	}
-}
-
 func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool) interface{} {
-	// Check dynamic environments
-	for _, env := range c.environments {
-		if _, ok := env[key]; ok {
-			return c.lookupAndEvaluate(env, key, raiseOnNotFound)
-		}
-		if c.strictVariables && raiseOnNotFound {
-			panic(NewUndefinedVariable("undefined variable " + key))
+	// As Ruby's try_variable_find_in_environments: the first environment
+	// that gives a value other than nil; with strict variables, the first
+	// environment decides, nil included, and one that lacks the name raises
+	strict := c.strictVariables && raiseOnNotFound
+	for _, envs := range [2][]map[string]interface{}{c.environments, c.staticEnvironments} {
+		for _, env := range envs {
+			if _, ok := env[key]; !ok {
+				if strict {
+					panic(NewUndefinedVariable("undefined variable " + key))
+				}
+				continue
+			}
+			// as Ruby, the value decides before its liquid form
+			if v := c.valueIn(env, key); v != nil || strict {
+				return c.liquidValue(v)
+			}
 		}
 	}
-
-	// Check static environments
-	for _, env := range c.staticEnvironments {
-		if _, ok := env[key]; ok {
-			return c.lookupAndEvaluate(env, key, raiseOnNotFound)
-		}
-		if c.strictVariables && raiseOnNotFound {
-			panic(NewUndefinedVariable("undefined variable " + key))
-		}
-	}
-
 	return nil
 }
 
@@ -635,21 +700,6 @@ func (c *Context) overflow() bool {
 	return c.baseScopeDepth+len(c.scopes) > blockMaxDepth
 }
 
-func (c *Context) squashInstanceAssignsWithEnvironments() {
-	if len(c.scopes) == 0 {
-		return
-	}
-	lastScope := c.scopes[len(c.scopes)-1]
-	for k := range lastScope {
-		for _, env := range c.environments {
-			if _, ok := env[k]; ok {
-				lastScope[k] = c.lookupAndEvaluate(env, k, false)
-				break
-			}
-		}
-	}
-}
-
 // Context interface for TagContext
 func (c *Context) Context() interface{} {
 	return c
@@ -660,45 +710,6 @@ func (c *Context) Context() interface{} {
 func (c *Context) ParseContext() ParseContextInterface {
 	// TODO: Create ParseContext from Context when needed
 	return nil
-}
-
-// Reset clears the Context for reuse from the pool.
-// This method must reset all fields to their zero values.
-func (c *Context) Reset() {
-	// Clear slices (keep capacity for reuse)
-	c.scopes = c.scopes[:0]
-	c.errors = c.errors[:0]
-	c.warnings = c.warnings[:0]
-	c.filters = c.filters[:0]
-	c.interrupts = c.interrupts[:0]
-	c.environments = c.environments[:0]
-	c.staticEnvironments = c.staticEnvironments[:0]
-
-	c.counters = nil
-	c.safeHTML = nil
-
-	// Clear maps
-	if c.disabledTags != nil {
-		for k := range c.disabledTags {
-			delete(c.disabledTags, k)
-		}
-	}
-
-	// Nil out pointer fields
-	c.resourceLimits = nil
-	c.registers = nil
-	c.stringScanner = nil
-	c.strainer = nil
-	c.environment = nil
-	c.diagnostics = nil
-	c.cancel, c.done = nil, nil
-
-	// Reset primitive fields
-	c.templateName = ""
-	c.baseScopeDepth = 0
-	c.strictFilters = false
-	c.strictVariables = false
-	c.partial = false
 }
 
 // SetCancellation makes the render stop once goCtx is done: the next node or

@@ -3,6 +3,7 @@ package integration
 import (
 	gocontext "context"
 	"testing"
+	"time"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
@@ -99,5 +100,112 @@ func TestRenderWithStrictVariablesRecordsAnUndefinedName(t *testing.T) {
 	}
 	if res, _ := tmpl.Render(gocontext.Background(), nil); len(res.Errors) != 0 {
 		t.Errorf("without strict variables: errors %v, want none", res.Errors)
+	}
+}
+
+// An array index follows Ruby's VariableLookup: an Integer key reads the
+// array as Array#[] (a JSON number comes to Go as an integral float64), and
+// any other key is no index: nil, or an undefined variable with strict
+// variables.
+func TestAnArrayIndexFollowsRuby(t *testing.T) {
+	data := map[string]interface{}{
+		"arr":   []interface{}{1, 2, 3},
+		"typed": []int{1, 2, 3},
+		"fm1":   float64(-1), "f9": float64(9), "u1": uint(1), "half": 1.5,
+		"i64m1": int64(-1), "i8": int8(0), "huge": uint64(1) << 40,
+	}
+	for _, c := range []struct {
+		source, want, strictErr string
+	}{
+		{"{{ arr[fm1] }}", "3", ""},
+		{"{{ typed[fm1] }}", "3", ""},
+		{"{{ arr[u1] }}", "2", ""},
+		{"{{ arr[i64m1] }}{{ typed[i8] }}", "31", ""},
+		{"[{{ arr[huge] }}]", "[]", ""},
+		{"[{{ arr[f9] }}]", "[]", ""},
+		{"[{{ arr['1'] }}]", "[]", "Liquid error: undefined variable 1"},
+		{"[{{ typed['1'] }}]", "[]", "Liquid error: undefined variable 1"},
+		{"[{{ arr[half] }}]", "[]", "Liquid error: undefined variable 1.5"},
+	} {
+		tmpl := strictTemplate(t, c.source)
+		if got := renderRuby(tmpl, data, nil); got != c.want {
+			t.Errorf("%s renders %q, want %q", c.source, got, c.want)
+		}
+		renderRuby(tmpl, data, &rubyOptions{StrictVariables: true})
+		errs := rubyErrors(tmpl)
+		switch {
+		case c.strictErr == "" && len(errs) != 0:
+			t.Errorf("%s with strict variables: errors %v, want none", c.source, errs)
+		case c.strictErr != "" && (len(errs) != 1 || errs[0].Error() != c.strictErr):
+			t.Errorf("%s with strict variables: errors %v, want %q", c.source, errs, c.strictErr)
+		}
+	}
+}
+
+// With strict variables, a render given no data finds the template's
+// assigns, as Ruby's render(nil) makes them its one environment; given a
+// map, Ruby looks a name up in the map first, which then decides.
+func TestStrictVariablesAndTheTemplateAssigns(t *testing.T) {
+	tmpl := strictTemplate(t, "[{{ x }}]")
+	tmpl.Assigns()["x"] = "from-assigns"
+	res, err := tmpl.Render(gocontext.Background(), nil, liquid.WithStrictVariables())
+	if err != nil || res.Output != "[from-assigns]" || len(res.Errors) != 0 {
+		t.Errorf("no data: output %q, errors %v (%v), want %q and no error", res.Output, res.Errors, err, "[from-assigns]")
+	}
+	res, err = tmpl.Render(gocontext.Background(), map[string]interface{}{}, liquid.WithStrictVariables())
+	if err != nil || res.Output != "[]" || len(res.Errors) != 1 {
+		t.Errorf("a map: output %q, errors %v (%v), want %q and the undefined variable", res.Output, res.Errors, err, "[]")
+	}
+}
+
+// A name that holds nil in the data is looked up in the template's assigns
+// next, as Ruby's try_variable_find_in_environments goes on past a nil;
+// with strict variables the data decides, nil included.
+func TestANilInTheDataFallsThroughToTheAssigns(t *testing.T) {
+	tmpl := strictTemplate(t, "[{{ x }}]")
+	tmpl.Assigns()["x"] = "y"
+	data := map[string]interface{}{"x": nil}
+	if res, _ := tmpl.Render(gocontext.Background(), data); res.Output != "[y]" {
+		t.Errorf("output %q, want %q", res.Output, "[y]")
+	}
+	if res, _ := tmpl.Render(gocontext.Background(), data, liquid.WithStrictVariables()); res.Output != "[]" || len(res.Errors) != 0 {
+		t.Errorf("strict variables: output %q, errors %v, want %q and no error", res.Output, res.Errors, "[]")
+	}
+}
+
+type namedInt int
+type namedInt64 int64
+type namedFloat float64
+
+// Every Go integer kind, named or not, and an integral float of any float
+// kind, is an Integer key of an array.
+func TestEveryGoIntegerIsAnArrayIndex(t *testing.T) {
+	data := map[string]interface{}{
+		"arr": []interface{}{"a", "b", "c"},
+		"ni":  namedInt(1), "ni64": namedInt64(1), "month": time.February,
+		"f32": float32(1), "nf": namedFloat(1), "f32half": float32(1.5),
+	}
+	for src, want := range map[string]string{
+		"{{ arr[ni] }}": "b", "{{ arr[ni64] }}": "b", "{{ arr[month] }}": "c",
+		"{{ arr[f32] }}": "b", "{{ arr[nf] }}": "b", "[{{ arr[f32half] }}]": "[]",
+	} {
+		if got := renderRuby(strictTemplate(t, src), data, nil); got != want {
+			t.Errorf("%s renders %q, want %q", src, got, want)
+		}
+	}
+}
+
+// liquidNil is a value whose liquid form is nil.
+type liquidNil struct{}
+
+func (liquidNil) ToLiquid() interface{} { return nil }
+
+// A value of the data whose liquid form is nil is found, as Ruby tests the
+// value itself before to_liquid: the assigns are not looked up.
+func TestAValueWhoseLiquidFormIsNilIsFound(t *testing.T) {
+	tmpl := strictTemplate(t, "[{{ x }}]")
+	tmpl.Assigns()["x"] = "A"
+	if res, _ := tmpl.Render(gocontext.Background(), map[string]interface{}{"x": liquidNil{}}); res.Output != "[]" {
+		t.Errorf("output %q, want %q", res.Output, "[]")
 	}
 }

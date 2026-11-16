@@ -4,6 +4,7 @@ import (
 	gocontext "context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -72,9 +73,8 @@ func TestRenderIsolatesConcurrentRenders(t *testing.T) {
 	}
 }
 
-// Render changes nothing in the template, even when the template keeps
-// Ruby's instance assigns for Render: no assigns, errors or registers, and
-// the template's assigns and registers are only read.
+// Render changes nothing in the template: no assigns, errors or registers,
+// and the template's assigns and registers are only read.
 func TestRenderLeavesTheTemplateAlone(t *testing.T) {
 	env := rcEnv()
 	tpl, err := liquid.ParseTemplate(`{% assign kept = "x" %}[{{ kept }}{{ greeting }}{{ errors.standard_error }}{% render "p" %}]`,
@@ -282,8 +282,8 @@ func (d *rcPanicDrop) Name() interface{} {
 	return s[3] // a Go panic: index out of range
 }
 
-// A Go panic in a filter, a drop or a partial ends the render with its stack;
-// Render writes it as "Liquid error: internal", as before.
+// A Go panic in a filter, a drop or a partial ends the render with its
+// stack, and the output written before.
 func TestRenderGoPanicIsFatal(t *testing.T) {
 	env := rcEnv()
 	if err := env.RegisterFilter(&rcPanicFilters{}); err != nil {
@@ -308,9 +308,6 @@ func TestRenderGoPanicIsFatal(t *testing.T) {
 		}
 		if res.Output != "a" {
 			t.Errorf("%s: output %q, want what was written before the panic", c.src, res.Output)
-		}
-		if got := renderRuby(tpl, data, nil); !strings.Contains(got, "Liquid error: internal") {
-			t.Errorf("%s: Render wrote %q, want the inline internal error as before", c.src, got)
 		}
 	}
 }
@@ -384,5 +381,192 @@ func TestRenderOptions(t *testing.T) {
 	loop := rcParse(t, env, `{% for i in (1..10) %}{% assign x = i %}{% endfor %}`)
 	if res, _ := loop.Render(gocontext.Background(), nil); res.RenderScore == 0 || res.AssignScore == 0 {
 		t.Errorf("scores %d and %d, want both counted", res.RenderScore, res.AssignScore)
+	}
+}
+
+// lazyTag renders its body in a scope of its own whose "lazy" is a func
+// giving the number of the render of the tag, as a host tag may do.
+type lazyTag struct {
+	*liquid.Block
+	n *int
+}
+
+func (l *lazyTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	*l.n++
+	v := *l.n
+	runtime.GC() // a freed scope must not lend its address to a later one
+	context.Context().(*liquid.Context).Stack(map[string]interface{}{"lazy": func() interface{} { return v }}, func() {
+		l.Block.RenderToOutput(context, output)
+	})
+}
+
+// A func in a scope of the render is called for the value it has there, as
+// Ruby calls a proc and writes its value back in the scope: a loop variable
+// or an assign that holds a func, and a scope a tag pushes, give each its
+// own func's value.
+func TestRenderCallsTheFuncOfEachScope(t *testing.T) {
+	funcs := map[string]interface{}{"funcs": []interface{}{
+		func() interface{} { return 1 }, func() interface{} { return 2 },
+	}}
+	tpl := rcParse(t, rcEnv(), `{% for f in funcs %}{{ f }}{% endfor %}|{% assign g = funcs[0] %}{{ g }}{% assign g = funcs[1] %}{{ g }}`)
+	if res, _ := tpl.Render(gocontext.Background(), funcs); res.Output != "12|12" {
+		t.Errorf("funcs in a loop and in assigns render %q, want %q", res.Output, "12|12")
+	}
+
+	env := rcEnv()
+	n := 0
+	env.RegisterTag("lazy", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &lazyTag{Block: liquid.NewBlock(name, markup, pc), n: &n}, nil
+	})
+	loop := rcParse(t, env, `{% for i in (1..200) %}{% lazy %}{{ lazy }}{% endlazy %},{% endfor %}`)
+	res, err := loop.Render(gocontext.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want strings.Builder
+	for i := 1; i <= 200; i++ {
+		fmt.Fprintf(&want, "%d,", i)
+	}
+	if res.Output != want.String() {
+		t.Errorf("a func of a pushed scope renders a value of an earlier scope:\n got %q\nwant %q", res.Output, want.String())
+	}
+}
+
+// The registers of a render reach a partial of render and include, as Ruby
+// writes them in the static registers, which the isolated context of a
+// render inherits; and a file system given as a register serves nested
+// partials too.
+func TestRenderRegistersReachPartials(t *testing.T) {
+	env := rcEnv()
+	env.RegisterTag("marker", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
+	})
+	fs := &mapFileSystem{templates: map[string]string{"p": "<{% marker %}>", "outer": "[{% render 'inner' %}]", "inner": "I"}}
+	tpl := rcParse(t, env, `<{% marker %}>{% render 'p' %}{% include 'p' %}`)
+	res, err := tpl.Render(gocontext.Background(), nil, liquid.WithFileSystem(fs), liquid.WithRegisters(map[string]interface{}{"marker": "me"}))
+	if want := "<me><me><me>"; err != nil || res.Output != want {
+		t.Errorf("output %q (%v), want %q", res.Output, err, want)
+	}
+	nested := rcParse(t, env, `{% render 'outer' %}`)
+	res, err = nested.Render(gocontext.Background(), nil, liquid.WithRegisters(map[string]interface{}{"file_system": fs}))
+	if want := "[I]"; err != nil || res.Output != want {
+		t.Errorf("a file system given as a register: output %q (%v), want %q", res.Output, err, want)
+	}
+	if len(tpl.Registers()) != 0 {
+		t.Errorf("the template's registers changed: %v", tpl.Registers())
+	}
+}
+
+// sameErrorDrop raises the same error value each time it is read.
+type sameErrorDrop struct{ liquid.Drop }
+
+var sameError = liquid.NewStandardError("same")
+
+func (d *sameErrorDrop) Boom() interface{} { panic(sameError) }
+
+// Each error a render records is in Result.Errors, as Ruby records each:
+// the same error value raised twice is listed twice; and with RaiseErrors,
+// an error raised through enclosing blocks and partials is listed once.
+func TestRenderListsEachRecordedError(t *testing.T) {
+	data := map[string]interface{}{"d": &sameErrorDrop{Drop: *liquid.NewDrop()}}
+	tpl := rcParse(t, rcEnv(), `{{ d.boom }}|{{ d.boom }}`)
+	res, err := tpl.Render(gocontext.Background(), data)
+	if err != nil || len(res.Errors) != 2 {
+		t.Errorf("errors %v (%v), want the error twice", res.Errors, err)
+	}
+	nested := rcParse(t, rcEnv(), `{% if true %}{% for i in (1..2) %}{% render 'p', errors: errors %}{% endfor %}{% endif %}`)
+	fs := &mapFileSystem{templates: map[string]string{"p": "{% if true %}{{ errors.standard_error }}{% endif %}"}}
+	res, err = nested.Render(gocontext.Background(), map[string]interface{}{"errors": NewErrorDrop()}, liquid.WithFileSystem(fs), liquid.RaiseErrors())
+	if err == nil || len(res.Errors) != 1 {
+		t.Errorf("with RaiseErrors: errors %v (%v), want the raised error once", res.Errors, err)
+	}
+}
+
+// A func that takes the render's Context is called with it, from the data
+// and from a scope.
+func TestRenderCallsAFuncOfTheContext(t *testing.T) {
+	data := map[string]interface{}{
+		"name": func(c *liquid.Context) interface{} { return c.TemplateName() },
+		"list": []interface{}{func(c *liquid.Context) interface{} { return "item" }},
+	}
+	tpl := rcParse(t, rcEnv(), `{{ name }}|{% for f in list %}{{ f }}{% endfor %}`)
+	tpl.SetName("page")
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "page|item" {
+		t.Errorf("output %q, want %q", res.Output, "page|item")
+	}
+}
+
+// A func read from a scope is called once there: its value is written back
+// in the scope, as Ruby does, and read again from it.
+func TestAFuncOfAScopeIsCalledOnceThere(t *testing.T) {
+	calls := 0
+	data := map[string]interface{}{"funcs": []interface{}{func() interface{} { calls++; return calls }}}
+	tpl := rcParse(t, rcEnv(), `{% for f in funcs %}{{ f }}{{ f }}{% endfor %}`)
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "11" || calls != 1 {
+		t.Errorf("output %q after %d calls, want %q after 1", res.Output, calls, "11")
+	}
+}
+
+// WithFileSystem takes precedence over a file_system register, whatever the
+// order of the options.
+func TestWithFileSystemTakesPrecedenceOverTheRegister(t *testing.T) {
+	tpl := rcParse(t, rcEnv(), `{% render 'p' %}`)
+	mine := &mapFileSystem{templates: map[string]string{"p": "mine"}}
+	theirs := &mapFileSystem{templates: map[string]string{"p": "register"}}
+	reg := liquid.WithRegisters(map[string]interface{}{"file_system": theirs})
+	for _, opts := range [][]liquid.RenderOption{{reg, liquid.WithFileSystem(mine)}, {liquid.WithFileSystem(mine), reg}} {
+		if res, err := tpl.Render(gocontext.Background(), nil, opts...); err != nil || res.Output != "mine" {
+			t.Errorf("output %q (%v), want %q", res.Output, err, "mine")
+		}
+	}
+}
+
+// A func read by a key of a nested map or an index of a list is called, as
+// Ruby's lookup_and_evaluate calls a proc at every key or index of a lookup,
+// once per render: it does not render as a Go value.
+func TestAFuncInAListOrANestedMapIsCalled(t *testing.T) {
+	calls := 0
+	count := func() interface{} { calls++; return calls }
+	data := map[string]interface{}{
+		"funcs": []interface{}{func() interface{} { return "one" }},
+		"h":     map[string]interface{}{"f": func() interface{} { return "v" }, "n": count},
+	}
+	tpl := rcParse(t, rcEnv(), `{{ funcs[0] }}|{{ h.f }}|{{ h.n }}{{ h.n }}`)
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "one|v|11" || calls != 1 {
+		t.Errorf("output %q after %d calls, want %q after 1", res.Output, calls, "one|v|11")
+	}
+	if _, isFunc := data["funcs"].([]interface{})[0].(func() interface{}); !isFunc {
+		t.Error("the list was written")
+	}
+	if _, isFunc := data["h"].(map[string]interface{})["f"].(func() interface{}); !isFunc {
+		t.Error("the data was written")
+	}
+}
+
+// uncomparableError is a Liquid error whose value holds a slice, so that
+// two of its values cannot be compared with ==.
+type uncomparableError struct {
+	*liquid.StandardError
+	detail interface{}
+}
+
+type uncomparableTag struct{ *liquid.Tag }
+
+func (u *uncomparableTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
+	panic(uncomparableError{StandardError: liquid.NewStandardError("uncomparable"), detail: []int{1}})
+}
+
+// With RaiseErrors, an error whose value cannot be compared is raised as
+// itself through enclosing blocks.
+func TestRaiseErrorsWithAnUncomparableError(t *testing.T) {
+	env := rcEnv()
+	env.RegisterTag("uncomparable", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &uncomparableTag{liquid.NewTag(name, markup, pc)}, nil
+	})
+	tpl := rcParse(t, env, `{% if true %}{% uncomparable %}{% endif %}`)
+	_, err := tpl.Render(gocontext.Background(), nil, liquid.RaiseErrors())
+	var raised uncomparableError
+	if !errors.As(err, &raised) {
+		t.Errorf("err %v (%T), want the uncomparable error", err, err)
 	}
 }

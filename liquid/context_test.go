@@ -221,21 +221,6 @@ func TestContextNewIsolatedSubcontext(t *testing.T) {
 	}
 }
 
-func TestContextClearInstanceAssigns(t *testing.T) {
-	ctx := NewContext()
-	ctx.Set("key1", "value1")
-	ctx.Set("key2", "value2")
-
-	ctx.ClearInstanceAssigns()
-
-	if ctx.Get("key1") != nil {
-		t.Error("Expected key1 to be cleared")
-	}
-	if ctx.Get("key2") != nil {
-		t.Error("Expected key2 to be cleared")
-	}
-}
-
 // TestContextHandleErrorComprehensive tests comprehensive error handling
 func TestContextHandleErrorComprehensive(t *testing.T) {
 	ctx := NewContext()
@@ -298,13 +283,13 @@ func TestContextLookupAndEvaluate(t *testing.T) {
 		"key": "value",
 	}
 
-	result := ctx.LookupAndEvaluate(obj, "key", false)
+	result := ctx.liquidValue(ctx.valueIn(obj, "key"))
 	if result != "value" {
 		t.Errorf("Expected 'value', got %v", result)
 	}
 
 	// Test with nonexistent key
-	result2 := ctx.LookupAndEvaluate(obj, "nonexistent", false)
+	result2 := ctx.liquidValue(ctx.valueIn(obj, "nonexistent"))
 	if result2 != nil {
 		t.Errorf("Expected nil, got %v", result2)
 	}
@@ -315,7 +300,7 @@ func TestContextLookupAndEvaluate(t *testing.T) {
 			return "function result"
 		},
 	}
-	result3 := ctx.LookupAndEvaluate(obj2, "func", false)
+	result3 := ctx.liquidValue(ctx.valueIn(obj2, "func"))
 	if result3 != "function result" {
 		t.Errorf("Expected 'function result', got %v", result3)
 	}
@@ -442,7 +427,7 @@ func TestContextLookupAndEvaluateMethod(t *testing.T) {
 		"key": "value",
 	}
 
-	result := ctx.LookupAndEvaluate(obj, "key", false)
+	result := ctx.liquidValue(ctx.valueIn(obj, "key"))
 	if result != "value" {
 		t.Errorf("Expected 'value', got %v", result)
 	}
@@ -773,129 +758,6 @@ func TestContextCheckOverflow(t *testing.T) {
 			ctx.Push(map[string]interface{}{})
 		}
 	}()
-}
-
-// TestContextSquashInstanceAssignsWithEnvironments tests squashInstanceAssignsWithEnvironments
-func TestContextSquashInstanceAssignsWithEnvironments(t *testing.T) {
-	ctx := BuildContext(ContextConfig{
-		Environments: []map[string]interface{}{
-			{"key": "env_value"},
-		},
-	})
-
-	ctx.Push(map[string]interface{}{"key": "scope_value"})
-	ctx.squashInstanceAssignsWithEnvironments()
-
-	// The scope value should be replaced with environment value if it exists in environment
-	// Note: squashInstanceAssignsWithEnvironments only replaces if the key exists in environments
-	val := ctx.Get("key")
-	if val != "env_value" && val != "scope_value" {
-		t.Errorf("Expected 'env_value' or 'scope_value', got %v", val)
-	}
-}
-
-// TestContextSquashInstanceAssignsWithEnvironmentsNoScopes tests with no scopes
-func TestContextSquashInstanceAssignsWithEnvironmentsNoScopes(t *testing.T) {
-	ctx := NewContext()
-	// Should not panic with no scopes
-	ctx.squashInstanceAssignsWithEnvironments()
-}
-
-// TestContextSquashInstanceAssignsWithMultipleEnvironments tests with multiple environments
-func TestContextSquashInstanceAssignsWithMultipleEnvironments(t *testing.T) {
-	ctx := BuildContext(ContextConfig{
-		Environments: []map[string]interface{}{
-			{"key": "env1_value", "key2": "env1_only"},
-			{"key": "env2_value", "key3": "env2_only"},
-		},
-	})
-
-	// Push a scope with overlapping keys
-	ctx.Push(map[string]interface{}{
-		"key":  "scope_value",
-		"key2": "scope_value2",
-	})
-
-	// Squash should replace scope values with environment values
-	ctx.squashInstanceAssignsWithEnvironments()
-
-	// key should be replaced with env1_value (first environment takes precedence)
-	val := ctx.Get("key")
-	if val != "env1_value" && val != "scope_value" {
-		t.Logf("Note: key value is %v (environment precedence may vary)", val)
-	}
-
-	// key2 should be replaced with env1_only
-	val2 := ctx.Get("key2")
-	if val2 != "env1_only" && val2 != "scope_value2" {
-		t.Logf("Note: key2 value is %v (environment precedence may vary)", val2)
-	}
-}
-
-// TestContextSquashInstanceAssignsEnvironmentPrecedence tests environment lookup order
-func TestContextSquashInstanceAssignsEnvironmentPrecedence(t *testing.T) {
-	ctx := BuildContext(ContextConfig{
-		Environments: []map[string]interface{}{
-			{"overlap": "first"},
-			{"overlap": "second"},
-		},
-	})
-
-	ctx.Push(map[string]interface{}{
-		"overlap": "scope",
-	})
-
-	ctx.squashInstanceAssignsWithEnvironments()
-
-	// First environment should take precedence
-	val := ctx.Get("overlap")
-	if val != "first" && val != "scope" {
-		t.Logf("Note: overlap value is %v (environment precedence may vary)", val)
-	}
-}
-
-// TestContextReset tests Reset method for context pooling
-func TestContextReset(t *testing.T) {
-	ctx := NewContext()
-
-	// Set up context with data
-	ctx.Set("key1", "value1")
-	ctx.Push(map[string]interface{}{"key2": "value2"})
-	ctx.AddWarning(NewSyntaxError("warning"))
-	err := NewSyntaxError("error")
-	ctx.HandleError(err, nil)
-	ctx.AddFilters([]interface{}{&StandardFilters{}})
-
-	// Verify context has data
-	if len(ctx.Scopes()) == 0 {
-		t.Error("Expected scopes before reset")
-	}
-	if len(ctx.Warnings()) == 0 {
-		t.Error("Expected warnings before reset")
-	}
-	if len(ctx.Errors()) == 0 {
-		t.Error("Expected errors before reset")
-	}
-
-	// Reset context
-	ctx.Reset()
-
-	// Verify context is cleared
-	if len(ctx.Scopes()) != 0 {
-		t.Errorf("Expected empty scopes after reset, got %d", len(ctx.Scopes()))
-	}
-	if len(ctx.Warnings()) != 0 {
-		t.Errorf("Expected empty warnings after reset, got %d", len(ctx.Warnings()))
-	}
-	if len(ctx.Errors()) != 0 {
-		t.Errorf("Expected empty errors after reset, got %d", len(ctx.Errors()))
-	}
-
-	// Verify context can still be used after reset
-	ctx.Set("newkey", "newvalue")
-	if ctx.Get("newkey") != "newvalue" {
-		t.Error("Expected context to work after reset")
-	}
 }
 
 // TestContextPopError tests Pop with insufficient scopes (should panic)

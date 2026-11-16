@@ -88,7 +88,7 @@ func TestRenderWithACancelledContextOfItsOwn(t *testing.T) {
 	}
 }
 
-// TestACancellationEndsWithItsRender checks that RenderOptions.Context stops
+// TestACancellationEndsWithItsRender checks that the ctx of a render stops
 // only the render it is given, on a Context of the caller too; that the
 // render of a Context whose cancellation is set records the stop, as it
 // records a MemoryError; and that the cause of the cancellation is wrapped.

@@ -416,8 +416,9 @@ case err != nil:
     // *liquid.PanicError (Go code panicked, with its Stack); res.Output is
     // what was written before the render stopped
 case len(res.Errors) > 0:
-    // errors the render recorded and went on, as Ruby: each wrote
-    // "Liquid error: ..." in res.Output
+    // errors the render recorded and went on, as Ruby: most wrote
+    // "Liquid error: ..." in res.Output; an undefined variable, filter or
+    // drop method writes nothing
 }
 fmt.Println(res.Output, res.RenderScore, res.AssignScore)
 ```
@@ -622,8 +623,14 @@ where every number is a `float64`, and render text meant for people (emails, pag
   never reaches the next. Ruby keeps it.
 - **A render takes a map**, where Ruby also takes a drop as the root of the variables: give the drop
   under a key.
+- **A float with no fraction is an array index**, as a JSON number is a `float64` in Go:
+  `{{ arr[1.0] }}` and an index computed with `divided_by: 2.0` read an item, where Ruby takes only an
+  Integer as an index.
 - **`RaiseErrors` raises the errors of its own render only**; Ruby's `render!` leaves the template
   raising them in later renders.
+- **A Go panic, a resource limit and a cancellation end the render** with the returned error and the
+  output written so far; Ruby writes `Liquid error: internal` for an exception and goes on, and
+  writes the message of a limit as the output.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same

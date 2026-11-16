@@ -5,8 +5,18 @@
 ### Breaking
 
 The API breaks without a new major version: a major would change the module path to `/v6`, which
-would read as Shopify Liquid 6, and liquidgo's versions follow Shopify's. Only the render API
-changes; templates render as before.
+would read as Shopify Liquid 6, and liquidgo's versions follow Shopify's. Templates render as before,
+except for the fixes below and for three outcomes, which now end the render with the returned `error`
+and `Result.Output` holding what was written before it stopped:
+
+| Outcome | `Render(data, nil)` in v5.11.8 | `Render(ctx, data)` now |
+|---|---|---|
+| A Go panic in a tag, filter or drop | `Liquid error: internal` in the output, the render goes on, an `InternalError` in `Errors()` | `err` is a `*PanicError` with the stack |
+| A resource limit | `Liquid error: Memory limits exceeded` as the output, the error in `Errors()` | `err` is the `*MemoryError` |
+| `ctx` done | `Liquid error: render stopped: ...` as the output, the error in `Errors()` | `err` is the `*CanceledError` |
+
+An application that read only `Errors()` must now check `err`: on a limit, `Result.Output` is a
+partial body.
 
 - **`Template.Render(ctx, data, opts...) (Result, error)`** is the one way to render. It is the former
   `RenderContext`, renamed, and it returns its `Result` by value (one allocation less per render). It
@@ -31,17 +41,23 @@ changes; templates render as before.
   - A render's errors and scores are in its `Result`, with the new `Result.RenderScore` and
     `Result.AssignScore`.
   - Limits come from the environment's defaults, and `WithLimits` sets them for one render.
-- **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`
-  and `Filters`.
+- **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`,
+  `Filters`, `StrictVariables` and `StrictFilters` (strict variables and filters are render options,
+  `WithStrictVariables` and `WithStrictFilters`).
 - **Added**: `Template.Environment()`.
-- **A template renders only through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
-  render with a `Context` built by hand, is gone. A tag still receives the render's `TagContext`.
+- **A template renders through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
+  render with a `Context` built by hand, is gone. `Template.RenderToOutput(context, output)` stays, for
+  a tag that renders a template as a partial of the render it runs in (`render`, `include`).
 - **The exception renderer and the global filter are gone**: `Environment.ExceptionRenderer`,
   `Environment.SetExceptionRenderer`, `Context.ExceptionRenderer`, `Context.SetExceptionRenderer`,
   `Context.GlobalFilter`, `Context.SetGlobalFilter`, `Context.ApplyGlobalFilter`, and
   `TagContext.ApplyGlobalFilter`. An error is written as its message, or raised with `RaiseErrors`
   (`ContextConfig.RethrowErrors` for a `Context`); `Result.Errors` lists them; output escaping
   replaces a global filter.
+- **The instance-assign leftovers of `Context` are gone**: `ContextConfig.OuterScope`,
+  `Context.ClearInstanceAssigns`, `Context.Reset` (for a pool that does not exist) and
+  `Context.LookupAndEvaluate`. A template keeps no assigns between renders, so a context's outer scope
+  starts empty and holds the render's assigns and captures.
 - **The profiler is gone**: `liquid.Profiler`, `liquid.Timing`, `NewProfiler`, `Context.Profiler`,
   `Context.SetProfiler` and `TemplateOptions.Profile`. `Render` no longer used it; Go's own profiler
   (`pprof`) measures a render. `Profile: true` also turned line numbers on: set `LineNumbers`.
@@ -56,8 +72,8 @@ changes; templates render as before.
   - `Environment.RegisterTag` takes a `liquid.TagConstructor`,
     `func(tagName, markup string, pc ParseContextInterface) (Node, error)`, where it took any value
     and called it by reflection; `TagForName` and `Tags` return them. `tags.TagConstructor` is now
-    an alias of it. A constructor that returns neither a tag nor an error is a syntax error that
-    names the tag, where it gave a generic `Tag`.
+    an alias of it. A constructor that returns neither a tag (nil, or a nil pointer) nor an error is a
+    syntax error that names the tag, where it gave a generic `Tag`.
   - `tag.Disableable` and `tag.Disabler` lose `RenderToOutputBuffer`, and their `RenderToOutput`
     becomes `Render`, so that a tag that embeds them keeps its own `RenderToOutput`;
     `Disabler.Render` no longer takes the output.
@@ -73,14 +89,33 @@ changes; templates render as before.
   `nothing: nil` renders its else branch).
 - **An integer index reads an array as Ruby's `Array#[]`**: a negative index counts from the end
   (`{{ arr[-1] }}` is the last item), and an index out of range is nil, which strict variables do not
-  raise. Three listed divergences from Shopify are gone.
+  raise. An integer is a Go integer of any kind, named or not, or a float with no fraction (a JSON number);
+  an index beyond the range of `int` is out of range, also on 32-bit platforms. Any
+  other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
+  read the item at 1. Three listed divergences from Shopify are gone.
+- **A name that holds nil in the data is looked up in the template's assigns next**, as Ruby goes on
+  past a nil to the next environment: data `{"x": nil}` with the assign `x = "y"` renders `y`. With
+  strict variables, the data decides, nil included, as in Ruby.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
+- **With strict variables, a render given no data finds the template's assigns**, as Ruby's
+  `render(nil)` makes them its one environment. Given a map, the map decides, as in Ruby.
 
 ### Changed
-- **A func in the data is called once per render**, its value kept with the render: the data and the
+- **`Result.Errors` lists each error the render recorded**, as Ruby's `template.errors`: the same error
+  value raised twice is listed twice, where `RenderContext` listed it once. With `RaiseErrors`, an
+  error raised through enclosing blocks and partials is still listed once.
+- **The registers of a render reach its partials**: `WithRegisters` writes them in the static
+  registers, as Ruby's `registers:` option, which a `{% render %}` partial inherits. They were in the
+  change layer, which a `render` partial does not see (as `RenderOptions.Registers` in v5.11.8). A
+  `file_system` register now serves nested partials; `WithFileSystem` takes precedence over it.
+- **A func of the data is called once per render**, its value kept with the render: the data and the
   template's assigns are never written. Ruby writes a proc's value back into the hash; so did
   liquidgo, so that two renders sharing one data map saw the first one's value, and concurrent renders
-  wrote one map.
+  wrote one map. This holds for a func read by a key of the data, of a nested map, or by an index of a
+  list, which were rendered as a Go value (`{{ funcs[0] }}` gave an address), as Ruby's
+  `lookup_and_evaluate` calls a proc there. A func that lands in a scope of the render (a loop
+  variable, an assign) is called there and its value written in the scope, as Ruby: a map a host tag
+  pushes (`Context.Push`, `Context.Stack`) is a scope, and belongs to the render.
 
 ### Tests
 - **The differential corpus renders with strict variables** the templates that ask for it

@@ -3,7 +3,6 @@ package liquid
 import (
 	gocontext "context"
 	"fmt"
-	"reflect"
 	"runtime/debug"
 )
 
@@ -12,9 +11,12 @@ type Result struct {
 	// Output is the rendered text. When the render ends with an error, it is
 	// the text written before the render stopped.
 	Output string
-	// Errors are the errors the render recorded, as Ruby's Template#errors,
-	// each once: each one wrote its message in Output ("Liquid error: ..."),
-	// unless it was raised by RaiseErrors.
+	// Errors are the errors the render recorded, as Ruby's Template#errors.
+	// As in Ruby, most wrote their message in Output ("Liquid error: ..."),
+	// but an undefined variable, filter or drop method, and an error in a
+	// blank tag (assign, capture...), write nothing. With RaiseErrors, a
+	// recorded error that ends the render is the last one; a limit, a
+	// cancellation or a Go panic ends it without being recorded.
 	Errors []error
 	// RenderScore and AssignScore are the work and the assigned size the
 	// render counted against its limits (see ResourceLimitsConfig).
@@ -58,7 +60,10 @@ type renderConfig struct {
 }
 
 // WithRegisters gives the render registers, read by tags and filters next to
-// the template's (Template.Registers), which they take precedence over.
+// the template's (Template.Registers), which they take precedence over. As
+// in Ruby, they are static registers: a partial of render, which inherits
+// only those, reads them too. WithFileSystem takes precedence over a
+// "file_system" register.
 func WithRegisters(registers map[string]interface{}) RenderOption {
 	return func(c *renderConfig) { c.registers = registers }
 }
@@ -127,29 +132,36 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 		limitsConfig = mergeLimits(limitsConfig, *cfg.limits)
 	}
 	limits := NewResourceLimits(limitsConfig)
-	// The file system goes in the static registers, which the isolated
-	// context of a render tag inherits, so that nested partials find it too.
+	// The registers of the render and the file system go in the static
+	// registers, as Ruby's, which the isolated context of a render tag
+	// inherits, so that partials find them too, in a copy of the template's.
+	// Without them the template's map is the static layer itself, which a
+	// tag reads (Registers.Static) and must not write.
 	static := t.registers
-	if cfg.fileSystem != nil {
-		static = make(map[string]interface{}, len(t.registers)+1)
+	if cfg.fileSystem != nil || len(cfg.registers) > 0 {
+		static = make(map[string]interface{}, len(t.registers)+len(cfg.registers)+1)
 		for k, v := range t.registers {
 			static[k] = v
 		}
-		static["file_system"] = cfg.fileSystem
+		for k, v := range cfg.registers {
+			static[k] = v
+		}
+		if cfg.fileSystem != nil {
+			static["file_system"] = cfg.fileSystem
+		}
 	}
 	registers := NewRegisters(static)
-	for key, value := range cfg.registers {
-		registers.Set(key, value)
-	}
 	// The render never writes data or the template's assigns: a func's value
-	// is kept with the render (Context.funcValue), so concurrent renders may
+	// is kept with the render (Context.funcValueOf), so concurrent renders may
 	// share them.
+	// As Ruby's render: the data, then the template's assigns, or with no
+	// data the assigns alone, which strict variables then look a name up in
+	environments := []map[string]interface{}{data, t.assigns}
 	if data == nil {
-		data = emptyData
+		environments = []map[string]interface{}{t.assigns}
 	}
 	c := BuildContext(ContextConfig{
-		Environments:   []map[string]interface{}{data, t.assigns},
-		OuterScope:     map[string]interface{}{},
+		Environments:   environments,
 		Registers:      registers,
 		ResourceLimits: limits,
 		Environment:    t.environment,
@@ -173,11 +185,11 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	buffer := NewOutputBufferFor(c)
 	defer func() {
 		res.Output = buffer.String()
-		res.Errors = distinctErrors(c.Errors())
+		res.Errors = c.Errors()
 		res.RenderScore = c.ResourceLimits().RenderScore()
 		res.AssignScore = c.ResourceLimits().AssignScore()
 		if r := recover(); r != nil {
-			err = renderContextError(r)
+			err = renderError(r)
 		}
 	}()
 	t.root.RenderToOutput(c, buffer)
@@ -199,38 +211,9 @@ func mergeLimits(base, set ResourceLimitsConfig) ResourceLimitsConfig {
 	return merged
 }
 
-// emptyData is the data of a render given none; a render never writes it.
-var emptyData = map[string]interface{}{}
-
-// distinctErrors returns errs with each error once: an error raised through
-// enclosing blocks (RaiseErrors) is recorded by each of them.
-func distinctErrors(errs []error) []error {
-	if len(errs) < 2 {
-		return errs
-	}
-	var out []error
-	seen := make(map[error]bool, len(errs))
-	for _, err := range errs {
-		if comparable(err) {
-			if seen[err] {
-				continue
-			}
-			seen[err] = true
-		}
-		out = append(out, err)
-	}
-	return out
-}
-
-// comparable reports whether err can be a map key: an error type with an
-// uncomparable value (a slice, a map) would make the lookup panic.
-func comparable(err error) bool {
-	return reflect.TypeOf(err).Comparable()
-}
-
-// renderContextError returns the error a panic out of a render
+// renderError returns the error a panic out of a render
 // ends it with.
-func renderContextError(r interface{}) error {
+func renderError(r interface{}) error {
 	switch e := r.(type) {
 	case *PanicError:
 		return e

@@ -1,6 +1,8 @@
 package integration
 
 import (
+	gocontext "context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -74,22 +76,13 @@ func panicEnvironment(l limits) *liquid.Environment {
 func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 	env := panicEnvironment(limits{})
 	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "{% toomuch %}"}))
-	memory := "Liquid error: Memory limits exceeded"
 	for _, c := range []struct {
 		source, want, wantError string
 	}{
-		{"a{% crash %}b", "Liquid error: internal", "panic during render"},
 		{"a{% fail %}b", "aLiquid error: bad argumentb", "Liquid error: bad argument"},
 		{"a{% blankfail %}b", "ab", "Liquid error: bad argument"},
 		{"a{% undefined %}b", "ab", "Liquid error: undefined variable y"},
-		{"a{% for i in (1..2) %}{% crash %}{% endfor %}b", "Liquid error: internal", "panic during render"},
 		{"A{% cycle a: %}B", "AB", ""},
-		{"a{% toomuch %}b", memory, memory},
-		{"a{% for i in (1..2) %}{% toomuch %}{% endfor %}b", memory, memory},
-		{"a{% capture c %}{% toomuch %}{% endcapture %}b", memory, memory},
-		{"a{% if true %}{% toomuch %}{% endif %}b", memory, memory},
-		{"a{% render 'p' %}b", memory, memory},
-		{"a{% include 'p' %}b", memory, memory},
 	} {
 		r := renderWith(env, c.source, nil)
 		if r.parseErr != nil || r.output != c.want {
@@ -100,6 +93,35 @@ func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 		}
 		if c.wantError != "" && (len(r.errors) == 0 || !strings.Contains(r.errors[0].Error(), strings.TrimPrefix(c.wantError, "Liquid error: "))) {
 			t.Errorf("%q: errors %v, want %q", c.source, r.errors, c.wantError)
+		}
+	}
+	// A Go panic and a resource limit end the render, from any block or
+	// partial, with the output written before
+	var panicked *liquid.PanicError
+	var limit *liquid.MemoryError
+	for _, c := range []struct {
+		source string
+		want   interface{}
+	}{
+		{"a{% crash %}b", &panicked},
+		{"a{% for i in (1..2) %}{% crash %}{% endfor %}b", &panicked},
+		{"a{% toomuch %}b", &limit},
+		{"a{% for i in (1..2) %}{% toomuch %}{% endfor %}b", &limit},
+		{"a{% capture c %}{% toomuch %}{% endcapture %}b", &limit},
+		{"a{% if true %}{% toomuch %}{% endif %}b", &limit},
+		{"a{% render 'p' %}b", &limit},
+		{"a{% include 'p' %}b", &limit},
+	} {
+		tmpl, err := liquid.ParseTemplate(c.source, &liquid.TemplateOptions{Environment: env})
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := tmpl.Render(gocontext.Background(), nil)
+		if !errors.As(err, c.want) {
+			t.Errorf("%q: err %v (%T), want a %T", c.source, err, err, c.want)
+		}
+		if res.Output != "a" || len(res.Errors) != 0 {
+			t.Errorf("%q: output %q, errors %v, want %q and none", c.source, res.Output, res.Errors, "a")
 		}
 	}
 }
@@ -118,7 +140,7 @@ func TestAnIncludeRestoresTheTemplateNameOnAnError(t *testing.T) {
 	env := newEnv("", limits{})
 	env.SetFileSystem(NewStubFileSystem(map[string]string{"part": "p"}))
 	source := "a\n{% include 'part', v: d.boom %}\nb\n{{ 'x' | nofilter }}"
-	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true, StrictFilters: true})
+	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if err != nil {
 		t.Fatal(err)
 	}

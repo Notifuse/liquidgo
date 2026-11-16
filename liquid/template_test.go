@@ -129,9 +129,8 @@ func TestParseTemplate(t *testing.T) {
 
 	// Test with options
 	_, err = ParseTemplate("{{ value }}", &TemplateOptions{
-		Environment:     env,
-		StrictVariables: true,
-		LineNumbers:     true,
+		Environment: env,
+		LineNumbers: true,
 	})
 	if err != nil {
 		t.Fatalf("ParseTemplate() with options error = %v", err)
