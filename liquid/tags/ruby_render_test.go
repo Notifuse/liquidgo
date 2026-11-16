@@ -166,13 +166,3 @@ func rubyErrorText(err error) string {
 	}
 	return "Liquid error: internal"
 }
-
-// mustRenderRuby fails the test when the render records an error.
-func mustRenderRuby(t *testing.T, tmpl *liquid.Template, assigns interface{}) string {
-	t.Helper()
-	res := renderRubyResult(tmpl, assigns, nil, false)
-	if len(res.Errors) > 0 {
-		t.Fatalf("render recorded %v", res.Errors)
-	}
-	return res.Output
-}
