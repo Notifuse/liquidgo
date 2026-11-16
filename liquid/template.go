@@ -34,10 +34,8 @@ type Template struct {
 
 // TemplateOptions contains options for parsing a template.
 type TemplateOptions struct {
-	Environment     *Environment
-	LineNumbers     bool
-	StrictVariables bool
-	StrictFilters   bool
+	Environment *Environment
+	LineNumbers bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
@@ -216,12 +214,6 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 
 	// Create parse context
 	templateOpts := make(map[string]interface{})
-	if options.StrictVariables {
-		templateOpts["strict_variables"] = true
-	}
-	if options.StrictFilters {
-		templateOpts["strict_filters"] = true
-	}
 	if t.lineNumbers {
 		templateOpts["line_numbers"] = true
 	}
