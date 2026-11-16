@@ -89,6 +89,13 @@ var boundedCases = []boundedCase{
 	{name: "nested-liquid-100", source: "{% liquid " + rep("liquid ", 100) + "echo 1 %}", budget: 50 << 20, wantOutput: "1"},
 	{name: "nested-liquid-101", source: "{% liquid " + rep("liquid ", 101) + "echo 1 %}", budget: 50 << 20, wantError: tooDeep},
 	{name: "liquid-if-100", source: "{% liquid\n" + rep("if true\n", 100) + "echo 1\n" + rep("endif\n", 100) + "%}", budget: 50 << 20, wantOutput: "1"},
+	// ifchanged renders its body in a scratch buffer before it keeps it: in a
+	// capture, the scratch buffer stops at the assign score limit, before
+	// the body is kept and counted.
+	{name: "ifchanged-in-capture", source: "{% capture c %}{% ifchanged %}{% for i in (1..200000) %}xxxxxxxxxx{% endfor %}{% endifchanged %}{% endcapture %}",
+		limits: limits{assignScore: 10_000}, budget: 1 << 19, wantError: memoryLimit},
+	// round computes no power of ten beyond the digits of a float64.
+	{name: "round-huge-precision", source: "{{ 1.5 | round: 100000 }}|{{ 1.5 | round: -100000 }}", budget: 1 << 16, wantOutput: "1.5|0"},
 }
 
 // knownUnbounded lists the cases known to fail, with the reason. A listed
