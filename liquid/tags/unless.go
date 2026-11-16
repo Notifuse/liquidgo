@@ -51,18 +51,11 @@ func (u *UnlessTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 			return
 		}
 
-		// Convert result to liquid value
-		resultVal := liquid.ToLiquidValue(result)
-
-		// For the first block (unless), negate the condition
-		// For elsif/else blocks, use normal logic
-		shouldRender := false
+		// The first block (unless) renders when its condition does not
+		// hold, an elsif or an else block when its condition holds
+		shouldRender := result
 		if i == 0 {
-			// First block: render if condition is false
-			shouldRender = (resultVal == nil || resultVal == false || resultVal == "")
-		} else {
-			// Elsif/else blocks: render if condition is true
-			shouldRender = (resultVal != nil && resultVal != false && resultVal != "")
+			shouldRender = !result
 		}
 
 		if shouldRender {

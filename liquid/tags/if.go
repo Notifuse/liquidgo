@@ -218,11 +218,8 @@ func (i *IfTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputB
 			return
 		}
 
-		// Convert result to liquid value
-		resultVal := liquid.ToLiquidValue(result)
-
-		// Check if condition is true
-		if resultVal != nil && resultVal != false && resultVal != "" {
+		// The condition holds: result is its truth
+		if result {
 			// Render the attachment
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
 				attachment.RenderToOutput(context, output)
