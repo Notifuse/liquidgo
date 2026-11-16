@@ -130,7 +130,7 @@ partial body.
 ### Tests
 - **Security checks of the categories of the security plan**:
   - each guard is removed in turn by `scripts/guard_mutations` (31 guards), which fails when no test
-    fails without it; CI runs it;
+    fails without it; the Guards workflow runs it on main and before a release;
   - the library imports no network, process or plugin, and `os` only where a host gives files
     (`TestTheLibraryImportsNoSystemAccess`);
   - no error shows a value of the data, but where Ruby names a key or a partial
