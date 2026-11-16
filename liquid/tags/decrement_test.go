@@ -21,14 +21,14 @@ func TestDecrementTag(t *testing.T) {
 	var output string
 
 	// First call should output -1
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "-1" {
 		t.Errorf("Expected '-1', got %q", output)
 	}
 
 	// Second call should output -2
 	output = ""
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "-2" {
 		t.Errorf("Expected '-2', got %q", output)
 	}
@@ -44,7 +44,7 @@ func TestDecrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	// Test with empty scopes (should initialize)
 	ctx.Scopes() // Ensure scopes exist
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should output -1 on first call
 	if output != "-1" {
@@ -54,7 +54,7 @@ func TestDecrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	// Test multiple decrements
 	for i := 2; i <= 5; i++ {
 		output = ""
-		tag.RenderToOutputBuffer(ctx, &output)
+		renderToString(tag, ctx, &output)
 		expected := liquid.ToS(-i, nil)
 		if output != expected {
 			t.Errorf("Expected %q on call %d, got %q", expected, i, output)

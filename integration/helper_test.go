@@ -167,7 +167,7 @@ func _assertSyntaxError(t *testing.T, template string, errorMode ...string) {
 // Prefixed with _ to indicate it's intentionally unused but kept for future use.
 //
 //nolint:unused
-func _withCustomTag(t *testing.T, tagName string, tagClass interface{}, fn func()) {
+func _withCustomTag(t *testing.T, tagName string, tagClass liquid.TagConstructor, fn func()) {
 	t.Helper()
 
 	env := liquid.NewEnvironment()

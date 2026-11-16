@@ -221,8 +221,3 @@ func (i *IncludeTag) AliasName() string {
 func (i *IncludeTag) Attributes() map[string]interface{} {
 	return i.attributes
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
-}

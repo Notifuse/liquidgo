@@ -34,6 +34,25 @@ changes; templates render as before.
 - **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`
   and `Filters`.
 - **Added**: `Template.Environment()`.
+- **A tag is a `liquid.Node`**, with one render method:
+  `RenderToOutput(context TagContext, output *OutputBuffer)`. liquidgo no longer looks up, by
+  reflection, a `Render(context) string` or a `RenderToOutputBuffer(context, *string)` that a tag
+  declares; the base `Tag`, `Block`, `BlockBody`, `Document` and the standard tags lose theirs.
+  - `Tag` has no render method: a tag that embeds it declares `RenderToOutput`, or it does not compile
+    as a `Node`. A tag of another package renames its `Render` or `RenderToOutputBuffer` to
+    `RenderToOutput` and writes to the buffer. A `Block` still renders its body by default, so a
+    block that keeps the old name compiles and renders only its body.
+  - `Environment.RegisterTag` takes a `liquid.TagConstructor`,
+    `func(tagName, markup string, pc ParseContextInterface) (Node, error)`, where it took any value
+    and called it by reflection; `TagForName` and `Tags` return them. `tags.TagConstructor` is now
+    an alias of it. A constructor that returns neither a tag nor an error is a syntax error that
+    names the tag, where it gave a generic `Tag`.
+  - `tag.Disableable` and `tag.Disabler` lose `RenderToOutputBuffer`, and their `RenderToOutput`
+    becomes `Render`, so that a tag that embeds them keeps its own `RenderToOutput`;
+    `Disabler.Render` no longer takes the output.
+  - Gone: `liquid.RenderToString`. A blank block, or one whose `Render` returned nothing, rendered
+    its body in place of its `Render`, as in v5.11.0; with one render method, a block renders
+    through it.
 
 ### Changed
 - **A func in the data is called once per render**, its value kept with the render: the data and the

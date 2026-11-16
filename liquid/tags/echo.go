@@ -22,8 +22,3 @@ func NewEchoTag(tagName, markup string, parseContext liquid.ParseContextInterfac
 func (e *EchoTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	e.variable.RenderToOutput(context, output)
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (e *EchoTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { e.RenderToOutput(context, o) })
-}

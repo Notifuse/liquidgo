@@ -12,13 +12,15 @@ type TestBlockTag struct {
 	*liquid.Block
 }
 
-func NewTestBlockTag(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewTestBlockTag(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	block := liquid.NewBlock(tagName, markup, parseContext)
 	return &TestBlockTag{Block: block}, nil
 }
 
-func (t *TestBlockTag) Render(ctx liquid.TagContext) string {
-	return "hello"
+// RenderToOutput is Ruby's render of the test, which returns 'hello': a tag
+// has one render method, liquid.Node's.
+func (t *TestBlockTag) RenderToOutput(_ liquid.TagContext, output *liquid.OutputBuffer) {
+	output.WriteString("hello")
 }
 
 func TestUnexpectedEndTag(t *testing.T) {
@@ -70,7 +72,7 @@ func TestCustomBlockTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompat
 	// Test with inheritance - TestBlockTag2 extends TestBlockTag1
 	env2 := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env2)
-	env2.RegisterTag("blabla", tags.TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+	env2.RegisterTag("blabla", tags.TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 		block1, _ := NewTestBlockTag(tagName, markup, parseContext)
 		return &TestBlockTag2{TestBlockTag: block1.(*TestBlockTag)}, nil
 	}))
@@ -100,9 +102,11 @@ type TestBlockTag2 struct {
 	*TestBlockTag
 }
 
-func (t *TestBlockTag2) Render(ctx liquid.TagContext) string {
+func (t *TestBlockTag2) RenderToOutput(ctx liquid.TagContext, output *liquid.OutputBuffer) {
 	// Ruby: 'foo' + super + 'bar' where super calls parent's render
 	// Parent (TestBlockTag) returns "hello"
 	// So result is "foo" + "hello" + "bar" = "foohellobar"
-	return "foo" + t.TestBlockTag.Render(ctx) + "bar"
+	output.WriteString("foo")
+	t.TestBlockTag.RenderToOutput(ctx, output)
+	output.WriteString("bar")
 }

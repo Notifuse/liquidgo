@@ -239,8 +239,3 @@ func (r *RenderTag) Attributes() map[string]interface{} {
 func (r *RenderTag) IsForLoop() bool {
 	return r.isForLoop
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { r.RenderToOutput(context, o) })
-}

@@ -147,7 +147,7 @@ func TestVariableRender(t *testing.T) {
 	ctx.Set("name", "bob")
 
 	output := ""
-	v.RenderToOutputBuffer(ctx, &output)
+	renderToString(v, ctx, &output)
 	if output != "bob" {
 		t.Errorf("Expected 'bob', got %q", output)
 	}
@@ -207,7 +207,7 @@ func TestRenderToOutputBufferPreservesLiquidErrorTypes(t *testing.T) {
 			v := NewVariable("panicker.trigger", pc)
 
 			output := ""
-			v.RenderToOutputBuffer(ctx, &output)
+			renderToString(v, ctx, &output)
 
 			// Error should be in context
 			if len(ctx.Errors()) == 0 {
@@ -235,5 +235,5 @@ func TestRenderToOutputBufferRaisesMemoryError(t *testing.T) {
 		}
 	}()
 	output := ""
-	v.RenderToOutputBuffer(ctx, &output)
+	renderToString(v, ctx, &output)
 }

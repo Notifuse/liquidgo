@@ -9,7 +9,7 @@ import (
 // the registered tags, filters, and the default error mode.
 type Environment struct {
 	fileSystem                 FileSystem
-	tags                       map[string]interface{}
+	tags                       map[string]TagConstructor
 	strainerTemplate           *StrainerTemplateClass
 	exceptionRenderer          func(error) interface{}
 	defaultResourceLimits      map[string]interface{}
@@ -27,7 +27,7 @@ type Environment struct {
 func NewEnvironment() *Environment {
 	env := &Environment{
 		errorMode:                  "lax",
-		tags:                       make(map[string]interface{}),
+		tags:                       make(map[string]TagConstructor),
 		strainerTemplate:           NewStrainerTemplateClass(),
 		exceptionRenderer:          func(err error) interface{} { return err },
 		fileSystem:                 &BlankFileSystem{},
@@ -62,13 +62,13 @@ func (e *Environment) SetErrorMode(mode string) {
 }
 
 // Tags returns the tags map.
-func (e *Environment) Tags() map[string]interface{} {
+func (e *Environment) Tags() map[string]TagConstructor {
 	return e.tags
 }
 
 // RegisterTag registers a new tag with the environment.
-func (e *Environment) RegisterTag(name string, tagClass interface{}) {
-	e.tags[name] = tagClass
+func (e *Environment) RegisterTag(name string, constructor TagConstructor) {
+	e.tags[name] = constructor
 }
 
 // RegisterFilter registers a new filter with the environment.
@@ -149,7 +149,7 @@ func (e *Environment) FilterMethodNames() []string {
 }
 
 // TagForName returns the tag class for the given tag name.
-func (e *Environment) TagForName(name string) interface{} {
+func (e *Environment) TagForName(name string) TagConstructor {
 	return e.tags[name]
 }
 

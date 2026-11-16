@@ -25,7 +25,7 @@ func TestCycleTag(t *testing.T) {
 	var output string
 
 	// First call should output first value
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Output should be "one" (the first literal string value)
 	if output != "one" {
 		t.Errorf("Expected \"one\", got %q", output)
@@ -33,7 +33,7 @@ func TestCycleTag(t *testing.T) {
 
 	// Second call should output second value
 	output = ""
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "two" {
 		t.Errorf("Expected \"two\", got %q", output)
 	}
@@ -116,20 +116,20 @@ func TestCycleTagRenderToOutputBufferWithArray(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "one" {
 		t.Errorf("Expected 'one', got %q", output)
 	}
 
 	// Test cycle wraps around
 	output = ""
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "two" {
 		t.Errorf("Expected 'two', got %q", output)
 	}
 
 	output = ""
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "one" {
 		t.Errorf("Expected 'one' (wrapped), got %q", output)
 	}

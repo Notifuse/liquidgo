@@ -174,14 +174,14 @@ func TestBlockRender(t *testing.T) {
 	block.body.nodelist = []interface{}{"hello", " ", "world"}
 
 	ctx := NewContext()
-	result := block.Render(ctx)
+	result := renderString(block, ctx)
 	if result != "hello world" {
 		t.Errorf("Expected 'hello world', got %q", result)
 	}
 
 	// Test with nil body
 	block2 := NewBlock("if", "condition", pc)
-	result2 := block2.Render(ctx)
+	result2 := renderString(block2, ctx)
 	if result2 != "" {
 		t.Errorf("Expected empty string for nil body, got %q", result2)
 	}
@@ -199,7 +199,7 @@ func TestBlockRenderToOutputBuffer(t *testing.T) {
 
 	ctx := NewContext()
 	output := ""
-	block.RenderToOutputBuffer(ctx, &output)
+	renderToString(block, ctx, &output)
 	if output != "test" {
 		t.Errorf("Expected 'test', got %q", output)
 	}
@@ -207,7 +207,7 @@ func TestBlockRenderToOutputBuffer(t *testing.T) {
 	// Test with nil body
 	block2 := NewBlock("if", "condition", pc)
 	output2 := ""
-	block2.RenderToOutputBuffer(ctx, &output2)
+	renderToString(block2, ctx, &output2)
 	if output2 != "" {
 		t.Errorf("Expected empty output for nil body, got %q", output2)
 	}
@@ -307,7 +307,7 @@ func TestBlockNesting(t *testing.T) {
 
 	// Test nested if blocks, with if registered as a plain block
 	env := NewEnvironment()
-	env.RegisterTag("if", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("if", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
 		return NewBlock(tagName, markup, parseContext), nil
 	})
 	pc = NewParseContext(ParseContextOptions{Environment: env})

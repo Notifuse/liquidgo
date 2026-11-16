@@ -38,7 +38,7 @@ func TestIfTagSimpleCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "content " {
 		t.Errorf("Expected output 'content ', got %q", output)
@@ -61,7 +61,7 @@ func TestIfTagFalseCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
@@ -88,7 +88,7 @@ func TestIfTagWithElse(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != " else content " {
 		t.Errorf("Expected output ' else content ', got %q", output)
@@ -115,7 +115,7 @@ func TestIfTagWithElsif(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "elsif" {
 		t.Errorf("Expected output 'elsif', got %q", output)
@@ -244,7 +244,7 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	var output string
 
 	// Test with true condition
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "content " {
 		t.Errorf("Expected 'content ', got %q", output)
 	}
@@ -256,7 +256,7 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 		t.Fatalf("tag2.Parse() error = %v", err)
 	}
 	output2 := ""
-	tag2.RenderToOutputBuffer(ctx, &output2)
+	renderToString(tag2, ctx, &output2)
 	if output2 != "else content " {
 		t.Errorf("Expected 'else content ', got %q", output2)
 	}
@@ -270,7 +270,7 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	output3 := ""
 	ctx3 := liquid.NewContext()
 	// Set var to something that causes error
-	tag3.RenderToOutputBuffer(ctx3, &output3)
+	renderToString(tag3, ctx3, &output3)
 	// Should handle error gracefully
 	_ = output3
 }
@@ -607,7 +607,7 @@ func TestIfTagRenderToOutputBufferEvaluateError(t *testing.T) {
 	var output string
 
 	// Render - if var doesn't exist, Evaluate might return error
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should handle error gracefully
 	_ = output
 }
@@ -629,7 +629,7 @@ func TestIfTagRenderToOutputBufferFalseCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should not render anything for false condition
 	if output != "" {
 		t.Errorf("Expected empty output for false condition, got %q", output)
@@ -653,7 +653,7 @@ func TestIfTagRenderToOutputBufferEmptyStringCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Empty string should be falsy
 	if output != "" {
 		t.Errorf("Expected empty output for empty string condition, got %q", output)
@@ -677,7 +677,7 @@ func TestIfTagRenderToOutputBufferNilCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Nil should be falsy
 	if output != "" {
 		t.Errorf("Expected empty output for nil condition, got %q", output)
@@ -699,7 +699,7 @@ func TestIfTagRenderToOutputBufferNonBlockBodyAttachment(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should handle gracefully - attachment won't render but no error
 	_ = output
 }
@@ -762,7 +762,7 @@ func TestIfTagParseWithMultipleElsif(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "elsif2" {
 		t.Errorf("Expected output 'elsif2', got %q", output)
 	}
@@ -785,7 +785,7 @@ func TestIfTagMultipleElsif(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render first elsif block that evaluates to true
 	if output != "elsif1 content " {
@@ -798,7 +798,9 @@ func TestIfTagMultipleElsif(t *testing.T) {
 func TestIfTagComplexNestedConditions(t *testing.T) {
 	// Create an environment and register the if tag
 	env := liquid.NewEnvironment()
-	env.RegisterTag("if", NewIfTag)
+	env.RegisterTag("if", func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return node(NewIfTag(tagName, markup, pc))
+	})
 
 	pcOpts := liquid.ParseContextOptions{
 		Environment: env,
@@ -819,7 +821,7 @@ func TestIfTagComplexNestedConditions(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render outer content but not inner
 	expected := "outer  outer end "
@@ -849,7 +851,7 @@ func TestIfTagWithOrCondition(t *testing.T) {
 	ctx.Set("b", true)
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "YES " {
 		t.Errorf("Expected 'YES ', got %q", output)
@@ -877,7 +879,7 @@ func TestIfTagWithAndCondition(t *testing.T) {
 	ctx.Set("b", true)
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "YES " {
 		t.Errorf("Expected 'YES ', got %q", output)
@@ -893,7 +895,7 @@ func TestIfTagWithAndCondition(t *testing.T) {
 	ctx2.Set("b", false)
 
 	var output2 string
-	tag2.RenderToOutputBuffer(ctx2, &output2)
+	renderToString(tag2, ctx2, &output2)
 
 	if output2 != "" {
 		t.Errorf("Expected empty output, got %q", output2)
@@ -921,7 +923,7 @@ func TestIfTagWithComplexCondition(t *testing.T) {
 	ctx.Set("b", 2)
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "YES " {
 		t.Errorf("Expected 'YES ', got %q", output)

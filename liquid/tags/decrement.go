@@ -32,8 +32,3 @@ func (d *DecrementTag) RenderToOutput(context liquid.TagContext, output *liquid.
 	ctx.SetCounter(d.variableName, value)
 	output.WriteString(liquid.ToS(value, nil))
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (d *DecrementTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { d.RenderToOutput(context, o) })
-}

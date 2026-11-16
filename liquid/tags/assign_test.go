@@ -23,7 +23,7 @@ func TestAssignTag(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that variable was assigned
 	val := ctx.Get("var")
@@ -54,7 +54,7 @@ func TestAssignTagEmptyString(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	val := ctx.Get("a")
 	if val != "" {
@@ -73,7 +73,7 @@ func TestAssignTagFromVariable(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that var2 was assigned from var
 	val := ctx.Get("var2")
@@ -97,7 +97,7 @@ func TestAssignTagWithHyphenInVariableName(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that variable was assigned
 	val := ctx.Get("this-thing")
@@ -120,7 +120,7 @@ func TestAssignTagWithArray(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that foo was assigned
 	val := ctx.Get("foo")
@@ -174,7 +174,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	tag1, _ := NewAssignTag("assign", `var = "hello"`, pc)
 	ctx.Set("var", "hello")
 	var output1 string
-	tag1.RenderToOutputBuffer(ctx, &output1)
+	renderToString(tag1, ctx, &output1)
 	// assignScoreOf is called internally, verify assignment worked
 	if ctx.Get("var") != "hello" {
 		t.Error("Expected variable to be assigned")
@@ -184,7 +184,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	tag2, _ := NewAssignTag("assign", `arr = values`, pc)
 	ctx.Set("values", []interface{}{"a", "b", "c"})
 	var output2 string
-	tag2.RenderToOutputBuffer(ctx, &output2)
+	renderToString(tag2, ctx, &output2)
 	arr := ctx.Get("arr")
 	if arr == nil {
 		t.Error("Expected array to be assigned")
@@ -194,7 +194,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	tag3, _ := NewAssignTag("assign", `map = data`, pc)
 	ctx.Set("data", map[string]interface{}{"key": "value"})
 	var output3 string
-	tag3.RenderToOutputBuffer(ctx, &output3)
+	renderToString(tag3, ctx, &output3)
 	m := ctx.Get("map")
 	if m == nil {
 		t.Error("Expected map to be assigned")
@@ -213,7 +213,7 @@ func TestAssignTagWithMap(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that r was assigned
 	val := ctx.Get("r")
@@ -244,7 +244,7 @@ func TestAssignTagWithResourceLimits(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Verify assignment worked
 	val := ctx.Get("var")

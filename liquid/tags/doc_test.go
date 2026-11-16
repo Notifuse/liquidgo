@@ -23,7 +23,7 @@ func TestDocTag(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
@@ -160,7 +160,7 @@ func TestDocTagRenderToOutputBufferExplicit(t *testing.T) {
 	ctx := liquid.NewContext()
 	var output string
 	// Explicitly test RenderToOutputBuffer (should do nothing)
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Doc should render nothing
 	if output != "" {

@@ -36,7 +36,7 @@ func TestBlockBodyRender(t *testing.T) {
 	bb.nodelist = append(bb.nodelist, " ")
 	bb.nodelist = append(bb.nodelist, "world")
 
-	output := bb.Render(nil)
+	output := renderString(bb, nil)
 	expected := "hello world"
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
@@ -113,7 +113,7 @@ func TestBlockBodyParseWithTagConstructor(t *testing.T) {
 
 	// Register a test tag constructor function
 	constructorCalled := false
-	env.RegisterTag("testtag", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("testtag", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
 		constructorCalled = true
 		if tagName != "testtag" {
 			t.Errorf("Expected tag name 'testtag', got %q", tagName)
@@ -123,7 +123,7 @@ func TestBlockBodyParseWithTagConstructor(t *testing.T) {
 			t.Errorf("Expected markup 'arg1 arg2' (with optional trailing space), got %q", markup)
 		}
 		// Return a generic tag for testing
-		return NewTag(tagName, markup, parseContext), nil
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 
 	pc := &mockParseContextForTag{env: env}
@@ -165,7 +165,7 @@ func TestBlockBodyParseWithTagConstructorError(t *testing.T) {
 	env := NewEnvironment()
 
 	// Register a tag constructor that returns an error
-	env.RegisterTag("errortag", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("errortag", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
 		return nil, NewSyntaxError("test error")
 	})
 
@@ -189,39 +189,30 @@ func TestBlockBodyParseWithTagConstructorError(t *testing.T) {
 	}()
 }
 
-// TestBlockBodyParseWithNonFunctionTagClass tests fallback to NewTag for non-function tag classes
+// TestBlockBodyParseWithNonFunctionTagClass tests a constructor that
+// returns neither a tag nor an error: a syntax error, where a tag class that
+// was not a function (which no longer compiles) gave a generic Tag.
 func TestBlockBodyParseWithNonFunctionTagClass(t *testing.T) {
 	env := NewEnvironment()
 
-	// Register a non-function tag class (just a string)
-	env.RegisterTag("stringtag", "not a function")
+	// Register a constructor that gives no tag
+	env.RegisterTag("stringtag", func(string, string, ParseContextInterface) (Node, error) { return nil, nil })
 
 	pc := &mockParseContextForTag{env: env}
 	tokenizer := pc.NewTokenizer(`{% stringtag %}`, false, nil, false)
 	bb := NewBlockBody()
 
-	unknownTagHandler := func(tagName, markup string) bool {
-		return false
-	}
-
-	err := bb.Parse(tokenizer, pc, unknownTagHandler)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Should fallback to generic Tag
-	if len(bb.Nodelist()) == 0 {
-		t.Error("Expected tag to be parsed, got empty nodelist")
-	}
-
-	tag := bb.Nodelist()[0]
-	if genericTag, ok := tag.(*Tag); ok {
-		if genericTag.TagName() != "stringtag" {
-			t.Errorf("Expected tag name 'stringtag', got %q", genericTag.TagName())
+	defer func() {
+		r := recover()
+		err, ok := r.(*SyntaxError)
+		if !ok {
+			t.Fatalf("Expected SyntaxError panic, got %T (%v)", r, r)
 		}
-	} else {
-		t.Errorf("Expected generic Tag, got %T", tag)
-	}
+		if !strings.Contains(err.Error(), "stringtag") {
+			t.Errorf("Expected the error to name the tag, got %q", err.Error())
+		}
+	}()
+	_ = bb.Parse(tokenizer, pc, func(string, string) bool { return false })
 }
 
 // TestBlockBodyParseWithUnknownTag tests unknown tag handling
@@ -258,8 +249,8 @@ func TestBlockBodyParseWithUnknownTag(t *testing.T) {
 func TestBlockBodyLiquidTagParsing(t *testing.T) {
 	env := NewEnvironment()
 	// Register echo tag for testing
-	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
-		return NewTag(tagName, markup, parseContext), nil
+	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 	pc := &mockParseContextForTag{env: env}
 
@@ -285,8 +276,8 @@ func TestBlockBodyLiquidTagParsing(t *testing.T) {
 // TestBlockBodyParseForDocument tests parseForDocument with various scenarios
 func TestBlockBodyParseForDocument(t *testing.T) {
 	env := NewEnvironment()
-	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
-		return NewTag(tagName, markup, parseContext), nil
+	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 	pc := NewParseContext(ParseContextOptions{Environment: env})
 	bb := NewBlockBody()
@@ -375,7 +366,7 @@ func TestBlockBodyInterruptChecking(t *testing.T) {
 	bb.nodelist = append(bb.nodelist, "after")
 
 	var output string
-	bb.RenderToOutputBuffer(ctx, &output)
+	renderToString(bb, ctx, &output)
 
 	// Should stop rendering after interrupt
 	if output != "before" {
@@ -440,23 +431,23 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 		t.Errorf("Expected 'value2', got %q", output2)
 	}
 
-	// Test with a tag that has RenderToOutputBuffer (Pattern 2)
+	// Test with a generic Tag
 	pc3 := NewParseContext(ParseContextOptions{})
 	tag := NewTag("test", "", pc3)
 	output3 := ""
 	ctx3 := NewContext()
 	renderNodeForTest(bb, tag, ctx3, &output3, false, ctx3)
-	// Tag.Render returns empty, so output should remain empty
+	// Tag.RenderToOutput writes nothing, so output should remain empty
 	if output3 != "" {
 		t.Logf("Tag render output: %q", output3)
 	}
 
-	// Test with a tag that has Render method (Pattern 1)
+	// Test with a tag that embeds Tag
 	type customTag struct {
 		*Tag
 	}
 	custom := &customTag{Tag: NewTag("custom", "", pc3)}
-	// Add Render method via embedding - this tests the reflection path
+	// It renders with the RenderToOutput of Tag
 	output4 := ""
 	ctx4 := NewContext()
 	renderNodeForTest(bb, custom, ctx4, &output4, false, ctx4)
@@ -473,8 +464,8 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 // TestBlockBodyParseLiquidTag tests liquid tag parsing
 func TestBlockBodyParseLiquidTag(t *testing.T) {
 	env := NewEnvironment()
-	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
-		return NewTag(tagName, markup, parseContext), nil
+	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 	pc := NewParseContext(ParseContextOptions{Environment: env})
 	bb := NewBlockBody()
@@ -545,8 +536,8 @@ func TestBlockBodyParseLiquidTag(t *testing.T) {
 // TestBlockBodyParseForLiquidTag tests parseForLiquidTag more thoroughly
 func TestBlockBodyParseForLiquidTag(t *testing.T) {
 	env := NewEnvironment()
-	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
-		return NewTag(tagName, markup, parseContext), nil
+	env.RegisterTag("echo", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 	pc := NewParseContext(ParseContextOptions{Environment: env})
 	bb := NewBlockBody()
@@ -603,7 +594,7 @@ func TestBlockBodyParseForLiquidTag(t *testing.T) {
 // interruptNode is a test node that sets an interrupt
 type interruptNode struct{}
 
-func (n *interruptNode) RenderToOutputBuffer(context TagContext, output *string) {
+func (n *interruptNode) RenderToOutput(context TagContext, output *OutputBuffer) {
 	interrupt := NewBreakInterrupt()
 	context.PushInterrupt(interrupt)
 }
@@ -669,7 +660,7 @@ func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
 	ctx.SetProfiler(profiler)
 	ctx.SetTemplateName("test_template")
 
-	bb.RenderToOutputBuffer(ctx, &output)
+	renderToString(bb, ctx, &output)
 	// Should render the tag
 	_ = output
 }
@@ -677,10 +668,10 @@ func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
 func TestBlockBodyParseForDocumentWithLiquidTag(t *testing.T) {
 	// Create environment with assign tag registered
 	env := NewEnvironment()
-	env.RegisterTag("assign", func(tagName, markup string, parseContext ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("assign", func(tagName, markup string, parseContext ParseContextInterface) (Node, error) {
 		// Import tags package to use NewAssignTag
 		// For now, create a simple tag
-		return NewTag(tagName, markup, parseContext), nil
+		return &silentTag{NewTag(tagName, markup, parseContext)}, nil
 	})
 	pc := NewParseContext(ParseContextOptions{Environment: env})
 	bb := NewBlockBody()
