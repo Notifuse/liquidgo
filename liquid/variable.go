@@ -366,7 +366,10 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 		if len(filter) == 0 {
 			continue
 		}
-		filterName := ToS(filter[0], nil)
+		filterName, ok := filter[0].(string)
+		if !ok {
+			filterName = ToS(filter[0], nil)
+		}
 		var filterArgs []interface{}
 		if len(filter) > 1 {
 			if args, ok := filter[1].([]interface{}); ok {

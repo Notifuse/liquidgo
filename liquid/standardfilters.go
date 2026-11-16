@@ -290,6 +290,28 @@ func runeOffset(s string, n int) (int, bool) {
 	return i, true
 }
 
+// runePrefix returns the byte index after the first n characters of s, as
+// []rune(s) counts them, whether s has n characters, and whether those
+// characters are valid UTF-8, which asRunes then need not check again.
+func runePrefix(s string, n int) (end int, ok, valid bool) {
+	valid = true
+	for k := 0; k < n; k++ {
+		if end >= len(s) {
+			return end, false, valid
+		}
+		if s[end] < utf8.RuneSelf { // an ASCII byte is a character
+			end++
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[end:])
+		if r == utf8.RuneError && size == 1 {
+			valid = false
+		}
+		end += size
+	}
+	return end, true, valid
+}
+
 // asRunes returns s as string([]rune(s)) does: each invalid byte becomes
 // U+FFFD.
 func asRunes(s string) string {
@@ -344,7 +366,7 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 	// The string is walked once, and only as far as the length: to the cut,
 	// then to the length, which a shorter input keeps whole. A long input is
 	// not copied to count its characters.
-	end, ok := runeOffset(inputStr, l)
+	end, ok, valid := runePrefix(inputStr, l)
 	if lengthInt >= 0 {
 		if !ok {
 			return inputStr
@@ -353,7 +375,10 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 			return inputStr
 		}
 	}
-	return asRunes(inputStr[:end]) + truncateStr
+	if valid {
+		return inputStr[:end] + truncateStr
+	}
+	return string([]rune(inputStr[:end])) + truncateStr
 }
 
 // TruncateWords shortens a string to a number of words (15 by default, at least 1).
