@@ -158,7 +158,6 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	}
 	c := BuildContext(ContextConfig{
 		Environments:   environments,
-		OuterScope:     map[string]interface{}{},
 		Registers:      registers,
 		ResourceLimits: limits,
 		Environment:    t.environment,
