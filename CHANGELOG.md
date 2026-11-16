@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.10]
+
+**Breaking**: the render API, without a new major version (see below). `Template.Render(ctx, data,
+opts...)` is the one way to render, a tag is a `liquid.Node`, and the exception renderer, the global
+filter and the profiler are gone. Strict variables follow Ruby, and the security checks of the
+library run in CI. Tagged `v5.11.9`.
+
 ### Breaking
 
 The API breaks without a new major version: a major would change the module path to `/v6`, which
