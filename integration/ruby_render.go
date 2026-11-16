@@ -108,8 +108,8 @@ func rubyErrors(tmpl *liquid.Template) []error {
 // rubyContext is the Liquid::Context a ported test builds and renders with,
 // with the fields of liquid.ContextConfig. liquidgo renders from data and
 // options only (Template.Render), so the helpers render with what the
-// context holds: its outer scope, environments and static environments as
-// the data, merged so that a name resolves as in Ruby's lookup order; its
+// context holds: its environments and static environments as the data,
+// merged so that a name resolves as in Ruby's lookup order; its
 // static registers; its limits; and RethrowErrors as RaiseErrors. The
 // template's environment renders: Environment is the test's record of it.
 // Errors and ResourceLimits tell of the last render, as Ruby's
@@ -118,7 +118,6 @@ type rubyContext struct {
 	Environment        *liquid.Environment
 	Environments       []map[string]interface{}
 	StaticEnvironments []map[string]interface{}
-	OuterScope         map[string]interface{}
 	Registers          *liquid.Registers
 	Limits             *liquid.ResourceLimitsConfig
 	RethrowErrors      bool
@@ -148,7 +147,7 @@ func (c *rubyContext) Errors() []error {
 func (c *rubyContext) ResourceLimits() rubyLimitsResult { return rubyLimitsResult{c.last} }
 
 // data returns the names c resolves, each to the value Ruby's lookup finds
-// first: the outer scope, then the environments, then the static ones.
+// first: the environments, then the static ones.
 func (c *rubyContext) data() map[string]interface{} {
 	data := map[string]interface{}{}
 	for i := len(c.StaticEnvironments) - 1; i >= 0; i-- {
@@ -160,9 +159,6 @@ func (c *rubyContext) data() map[string]interface{} {
 		for k, v := range c.Environments[i] {
 			data[k] = v
 		}
-	}
-	for k, v := range c.OuterScope {
-		data[k] = v
 	}
 	return data
 }

@@ -10,7 +10,6 @@ import (
 type ContextConfig struct {
 	Registers          interface{}
 	Environment        *Environment
-	OuterScope         map[string]interface{}
 	ResourceLimits     *ResourceLimits
 	Environments       []map[string]interface{}
 	StaticEnvironments []map[string]interface{}
@@ -88,11 +87,6 @@ func BuildContext(config ContextConfig) *Context {
 		staticEnvironments = []map[string]interface{}{}
 	}
 
-	outerScope := config.OuterScope
-	if outerScope == nil {
-		outerScope = make(map[string]interface{})
-	}
-
 	var registers *Registers
 	if config.Registers != nil {
 		if r, ok := config.Registers.(*Registers); ok {
@@ -115,7 +109,7 @@ func BuildContext(config ContextConfig) *Context {
 		environment:        env,
 		environments:       environments,
 		staticEnvironments: staticEnvironments,
-		scopes:             []map[string]interface{}{outerScope},
+		scopes:             []map[string]interface{}{{}},
 		registers:          registers,
 		errors:             make([]error, 0, 4), // Pre-allocate for common error count
 		warnings:           make([]error, 0, 4), // Pre-allocate for common warning count
@@ -145,7 +139,6 @@ func BuildContext(config ContextConfig) *Context {
 
 	ctx.rethrowErrors = config.RethrowErrors
 
-	ctx.squashInstanceAssignsWithEnvironments()
 	return ctx
 }
 
@@ -473,9 +466,7 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 
 	// As Ruby's find_variable: every scope, the outer one included, before
 	// the environments. The outer scope holds the template's assign and
-	// capture; the instance assigns kept from an earlier render were
-	// replaced by the render data when the context was built
-	// (squashInstanceAssignsWithEnvironments).
+	// capture.
 	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupInScope(scope, keyStr)
@@ -490,18 +481,10 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
-// LookupAndEvaluate looks up and evaluates a value from an object.
-func (c *Context) LookupAndEvaluate(obj map[string]interface{}, key string, raiseOnNotFound bool) interface{} {
-	return c.lookupAndEvaluate(obj, key, raiseOnNotFound)
-}
-
-func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, raiseOnNotFound bool) interface{} {
-	if c.strictVariables && raiseOnNotFound {
-		if _, ok := obj[key]; !ok {
-			panic(NewUndefinedVariable("undefined variable " + key))
-		}
-	}
-
+// lookupAndEvaluate returns the value of key in obj, a map the render does
+// not own, which holds the key (FindVariable and
+// tryVariableFindInEnvironments check it).
+func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string) interface{} {
 	value, exists := obj[key]
 	if !exists {
 		return nil
@@ -647,13 +630,6 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	return subCtx
 }
 
-// ClearInstanceAssigns clears the current scope.
-func (c *Context) ClearInstanceAssigns() {
-	if len(c.scopes) > 0 {
-		c.scopes[0] = make(map[string]interface{})
-	}
-}
-
 func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool) interface{} {
 	// As Ruby's try_variable_find_in_environments: the first environment
 	// that gives a value other than nil; with strict variables, the first
@@ -667,7 +643,7 @@ func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool
 				}
 				continue
 			}
-			if v := c.lookupAndEvaluate(env, key, raiseOnNotFound); v != nil || strict {
+			if v := c.lookupAndEvaluate(env, key); v != nil || strict {
 				return v
 			}
 		}
@@ -685,21 +661,6 @@ func (c *Context) overflow() bool {
 	return c.baseScopeDepth+len(c.scopes) > blockMaxDepth
 }
 
-func (c *Context) squashInstanceAssignsWithEnvironments() {
-	if len(c.scopes) == 0 {
-		return
-	}
-	lastScope := c.scopes[len(c.scopes)-1]
-	for k := range lastScope {
-		for _, env := range c.environments {
-			if _, ok := env[k]; ok {
-				lastScope[k] = c.lookupAndEvaluate(env, k, false)
-				break
-			}
-		}
-	}
-}
-
 // Context interface for TagContext
 func (c *Context) Context() interface{} {
 	return c
@@ -710,45 +671,6 @@ func (c *Context) Context() interface{} {
 func (c *Context) ParseContext() ParseContextInterface {
 	// TODO: Create ParseContext from Context when needed
 	return nil
-}
-
-// Reset clears the Context for reuse from the pool.
-// This method must reset all fields to their zero values.
-func (c *Context) Reset() {
-	// Clear slices (keep capacity for reuse)
-	c.scopes = c.scopes[:0]
-	c.errors = c.errors[:0]
-	c.warnings = c.warnings[:0]
-	c.filters = c.filters[:0]
-	c.interrupts = c.interrupts[:0]
-	c.environments = c.environments[:0]
-	c.staticEnvironments = c.staticEnvironments[:0]
-
-	c.counters = nil
-	c.safeHTML = nil
-
-	// Clear maps
-	if c.disabledTags != nil {
-		for k := range c.disabledTags {
-			delete(c.disabledTags, k)
-		}
-	}
-
-	// Nil out pointer fields
-	c.resourceLimits = nil
-	c.registers = nil
-	c.stringScanner = nil
-	c.strainer = nil
-	c.environment = nil
-	c.diagnostics = nil
-	c.cancel, c.done = nil, nil
-
-	// Reset primitive fields
-	c.templateName = ""
-	c.baseScopeDepth = 0
-	c.strictFilters = false
-	c.strictVariables = false
-	c.partial = false
 }
 
 // SetCancellation makes the render stop once goCtx is done: the next node or

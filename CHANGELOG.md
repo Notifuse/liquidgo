@@ -43,6 +43,10 @@ changes; templates render as before.
   `TagContext.ApplyGlobalFilter`. An error is written as its message, or raised with `RaiseErrors`
   (`ContextConfig.RethrowErrors` for a `Context`); `Result.Errors` lists them; output escaping
   replaces a global filter.
+- **The instance-assign leftovers of `Context` are gone**: `ContextConfig.OuterScope`,
+  `Context.ClearInstanceAssigns`, `Context.Reset` (for a pool that does not exist) and
+  `Context.LookupAndEvaluate`. A template keeps no assigns between renders, so a context's outer scope
+  starts empty and holds the render's assigns and captures.
 - **The profiler is gone**: `liquid.Profiler`, `liquid.Timing`, `NewProfiler`, `Context.Profiler`,
   `Context.SetProfiler` and `TemplateOptions.Profile`. `Render` no longer used it; Go's own profiler
   (`pprof`) measures a render. `Profile: true` also turned line numbers on: set `LineNumbers`.
