@@ -276,7 +276,16 @@ func (f *rcPanicFilters) Explode(input interface{}) interface{} {
 	return items[len(fmt.Sprint(input))] // a Go panic: index out of range
 }
 
-type rcPanicDrop struct{ *liquid.Drop }
+type rcPanicDrop struct{}
+
+// LiquidGet returns the key a template reads.
+func (d *rcPanicDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "name":
+		return d.Name(), true, nil
+	}
+	return nil, false, nil
+}
 
 func (d *rcPanicDrop) Name() interface{} {
 	var s []int
@@ -291,7 +300,7 @@ func TestRenderGoPanicIsFatal(t *testing.T) {
 		t.Fatal(err)
 	}
 	env.SetFileSystem(&mapFileSystem{templates: map[string]string{"p": "{{ d.name }}"}})
-	data := map[string]interface{}{"d": &rcPanicDrop{Drop: liquid.NewDrop()}}
+	data := map[string]interface{}{"d": &rcPanicDrop{}}
 	for _, c := range []struct{ src, frame string }{
 		{`a{{ "x" | explode }}b`, "Explode"},
 		{`a{{ d.name }}b`, "Name"},
@@ -459,7 +468,16 @@ func TestRenderRegistersReachPartials(t *testing.T) {
 }
 
 // sameErrorDrop raises the same error value each time it is read.
-type sameErrorDrop struct{ liquid.Drop }
+type sameErrorDrop struct{}
+
+// LiquidGet returns the key a template reads.
+func (d *sameErrorDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "boom":
+		return d.Boom(), true, nil
+	}
+	return nil, false, nil
+}
 
 var sameError = liquid.NewStandardError("same")
 
@@ -469,7 +487,7 @@ func (d *sameErrorDrop) Boom() interface{} { panic(sameError) }
 // the same error value raised twice is listed twice; and with RaiseErrors,
 // an error raised through enclosing blocks and partials is listed once.
 func TestRenderListsEachRecordedError(t *testing.T) {
-	data := map[string]interface{}{"d": &sameErrorDrop{Drop: *liquid.NewDrop()}}
+	data := map[string]interface{}{"d": &sameErrorDrop{}}
 	tpl := rcParse(t, rcEnv(), `{{ d.boom }}|{{ d.boom }}`)
 	res, err := tpl.Render(gocontext.Background(), data)
 	if err != nil || len(res.Errors) != 2 {

@@ -2,7 +2,6 @@ package liquid
 
 // TablerowloopDrop provides information about a parent tablerow loop.
 type TablerowloopDrop struct {
-	*Drop
 	length int
 	row    int
 	col    int
@@ -13,7 +12,6 @@ type TablerowloopDrop struct {
 // NewTablerowloopDrop creates a new TablerowloopDrop.
 func NewTablerowloopDrop(length int, cols int) *TablerowloopDrop {
 	return &TablerowloopDrop{
-		Drop:   NewDrop(),
 		length: length,
 		row:    1,
 		col:    1,
@@ -99,7 +97,37 @@ func (t *TablerowloopDrop) Increment() {
 	}
 }
 
-// InvokeDrop invokes a method on the tablerowloop drop.
-func (t *TablerowloopDrop) InvokeDrop(methodOrKey string) interface{} {
-	return InvokeDropOn(t, methodOrKey)
+// String writes the drop as Ruby writes it, by its class.
+func (t *TablerowloopDrop) String() string { return "Liquid::TablerowloopDrop" }
+
+// LiquidGet returns the key of tablerowloop a template reads, as Ruby's
+// TablerowloopDrop.
+func (t *TablerowloopDrop) LiquidGet(_ *Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "length":
+		return t.Length(), true, nil
+	case "col":
+		return t.Col(), true, nil
+	case "row":
+		return t.Row(), true, nil
+	case "index":
+		return t.Index(), true, nil
+	case "index0":
+		return t.Index0(), true, nil
+	case "col0":
+		return t.Col0(), true, nil
+	case "rindex":
+		return t.Rindex(), true, nil
+	case "rindex0":
+		return t.Rindex0(), true, nil
+	case "first":
+		return t.First(), true, nil
+	case "last":
+		return t.Last(), true, nil
+	case "col_first":
+		return t.ColFirst(), true, nil
+	case "col_last":
+		return t.ColLast(), true, nil
+	}
+	return nil, false, nil
 }

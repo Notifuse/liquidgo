@@ -131,8 +131,8 @@ func main() {
 A template reads maps (of any key and value type), slices and arrays, strings, numbers, booleans
 and `time.Time`, which renders and takes the `date` filter. A Go struct exposes nothing to a
 template, neither fields nor methods, and renders as nothing (`nil` inside a list or a hash). As
-in Ruby, only a drop has its methods invoked; Ruby raises an internal error for an object without
-`to_liquid`, where liquidgo renders nothing. A pointer renders as what it points to, and a nil
+in Ruby, only a drop gives keys; Ruby raises an internal error for an object without `to_liquid`,
+where liquidgo renders nothing. A pointer renders as what it points to, and a nil
 pointer as nothing. A hash renders with its keys in sorted order. To give a struct to a template:
 
 - implement `ToLiquid() interface{}` (with a value receiver) and return a map of what the template
@@ -144,10 +144,25 @@ pointer as nothing. A hash renders with its keys in sorted order. To give a stru
   }
   ```
 
-- or make it a drop by embedding `*liquid.Drop`, initialised with `liquid.NewDrop()`: its exported
-  methods without arguments and its exported fields become readable (`{{ user.first_name }}` calls
-  `FirstName()`), the methods it gets from embedded types included. Give a drop only the methods a
-  template may call.
+- or make it a drop, as a `Liquid::Drop` in Ruby, by declaring the keys a template reads with
+  `LiquidGet`, which gets the context of the render. It returns the value and whether the key
+  exists: a missing key is nil, or an `UndefinedDropMethod` with strict variables. An error it
+  returns is recorded as the error of the render. A key is read when a template reads it, so a
+  drop can load what it gives lazily; nothing else of the struct is readable, and a drop without
+  a `String()` method renders as nothing. The items of a `[]User` are drops when `*User` is.
+
+  ```go
+  func (u *User) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
+      switch key {
+      case "first_name":
+          return u.FirstName, true, nil
+      case "orders":
+          orders, err := u.loadOrders()
+          return orders, true, err
+      }
+      return nil, false, nil
+  }
+  ```
 
 `ToLiquid()` is applied at each step of a lookup, to the items the array filters read and to a
 value written in the output. A type with a `String()` or `Error()` method renders that text: a

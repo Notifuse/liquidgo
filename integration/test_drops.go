@@ -17,26 +17,24 @@ func (t *ThingWithToLiquid) ToLiquid() interface{} {
 
 // SettingsDrop is a drop that provides settings access.
 type SettingsDrop struct {
-	*liquid.Drop
 	settings map[string]interface{}
 }
 
 // NewSettingsDrop creates a new SettingsDrop.
 func NewSettingsDrop(settings map[string]interface{}) *SettingsDrop {
 	return &SettingsDrop{
-		Drop:     liquid.NewDrop(),
 		settings: settings,
 	}
 }
 
-// LiquidMethodMissing handles missing method calls.
-func (s *SettingsDrop) LiquidMethodMissing(key string) interface{} {
-	return s.settings[key]
+// LiquidGet returns any key from the settings, as Ruby's
+// liquid_method_missing.
+func (s *SettingsDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	return s.settings[key], true, nil
 }
 
 // IntegerDrop is a drop that wraps an integer value.
 type IntegerDrop struct {
-	*liquid.Drop
 	value int
 }
 
@@ -56,9 +54,13 @@ func NewIntegerDrop(value interface{}) *IntegerDrop {
 		intValue = 0
 	}
 	return &IntegerDrop{
-		Drop:  liquid.NewDrop(),
 		value: intValue,
 	}
+}
+
+// LiquidGet has no key.
+func (i *IntegerDrop) LiquidGet(*liquid.Context, string) (interface{}, bool, error) {
+	return nil, false, nil
 }
 
 // ToLiquidValue returns the integer value.
@@ -73,16 +75,19 @@ func (i *IntegerDrop) String() string {
 
 // BooleanDrop is a drop that wraps a boolean value.
 type BooleanDrop struct {
-	*liquid.Drop
 	value bool
 }
 
 // NewBooleanDrop creates a new BooleanDrop.
 func NewBooleanDrop(value bool) *BooleanDrop {
 	return &BooleanDrop{
-		Drop:  liquid.NewDrop(),
 		value: value,
 	}
+}
+
+// LiquidGet has no key.
+func (b *BooleanDrop) LiquidGet(*liquid.Context, string) (interface{}, bool, error) {
+	return nil, false, nil
 }
 
 // ToLiquidValue returns the boolean value.
@@ -100,16 +105,19 @@ func (b *BooleanDrop) String() string {
 
 // StringDrop is a drop that wraps a string value.
 type StringDrop struct {
-	*liquid.Drop
 	value string
 }
 
 // NewStringDrop creates a new StringDrop.
 func NewStringDrop(value string) *StringDrop {
 	return &StringDrop{
-		Drop:  liquid.NewDrop(),
 		value: value,
 	}
+}
+
+// LiquidGet has no key.
+func (s *StringDrop) LiquidGet(*liquid.Context, string) (interface{}, bool, error) {
+	return nil, false, nil
 }
 
 // ToLiquidValue returns the string value.
@@ -123,15 +131,28 @@ func (s *StringDrop) String() string {
 }
 
 // ErrorDrop is a drop that raises various types of errors for testing.
-type ErrorDrop struct {
-	*liquid.Drop
-}
+type ErrorDrop struct{}
 
 // NewErrorDrop creates a new ErrorDrop.
 func NewErrorDrop() *ErrorDrop {
-	return &ErrorDrop{
-		Drop: liquid.NewDrop(),
+	return &ErrorDrop{}
+}
+
+// LiquidGet calls the method of key, which raises.
+func (e *ErrorDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "standard_error":
+		return e.StandardError(), true, nil
+	case "argument_error":
+		return e.ArgumentError(), true, nil
+	case "syntax_error":
+		return e.SyntaxError(), true, nil
+	case "runtime_error":
+		return e.RuntimeError(), true, nil
+	case "exception":
+		return e.Exception(), true, nil
 	}
+	return nil, false, nil
 }
 
 // StandardError raises a StandardError.
@@ -160,110 +181,70 @@ func (e *ErrorDrop) Exception() interface{} {
 }
 
 // TemplateContextDrop is a drop that can access the template context.
-type TemplateContextDrop struct {
-	*liquid.Drop
-}
+type TemplateContextDrop struct{}
 
 // NewTemplateContextDrop creates a new TemplateContextDrop.
 func NewTemplateContextDrop() *TemplateContextDrop {
-	return &TemplateContextDrop{
-		Drop: liquid.NewDrop(),
-	}
+	return &TemplateContextDrop{}
 }
 
 // ContextProxyDrop is a proxy for context access.
-type ContextProxyDrop struct {
-	*liquid.Drop
+type ContextProxyDrop struct{}
+
+// LiquidGet reads key in the context of the render.
+func (c *ContextProxyDrop) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
+	return ctx.Get(key), true, nil
 }
 
-// LiquidMethodMissing handles missing method calls by looking up in context.
-func (c *ContextProxyDrop) LiquidMethodMissing(method string) interface{} {
-	if c.Context() != nil {
-		return c.Context().Get(method)
-	}
-	return nil
-}
-
-// LiquidMethodMissing handles missing method calls by looking up in context.
-func (t *TemplateContextDrop) LiquidMethodMissing(method string) interface{} {
-	if method == "context" {
-		proxy := &ContextProxyDrop{Drop: liquid.NewDrop()}
-		proxy.SetContext(t.Context())
-		return proxy
-	}
-	if t.Context() != nil {
-		result := t.Context().Get(method)
-		if result != nil {
-			return result
+// LiquidGet reads the methods of the drop, then key in the context of the
+// render, or gives key back.
+func (t *TemplateContextDrop) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "scopes":
+		return len(ctx.Scopes()), true, nil
+	case "loop_pos":
+		if forloop, ok := ctx.Get("forloop").(liquid.LiquidGetter); ok {
+			return forloop.LiquidGet(ctx, "index")
 		}
+		return nil, true, nil
+	case "foo":
+		return "fizzbuzz", true, nil
+	case "baz":
+		return ctx.Registers().Get("lulz"), true, nil
+	case "context":
+		return &ContextProxyDrop{}, true, nil
 	}
-	return method
-}
-
-// Scopes returns the number of scopes in the context.
-func (t *TemplateContextDrop) Scopes() interface{} {
-	if t.Context() != nil {
-		return len(t.Context().Scopes())
+	if result := ctx.Get(key); result != nil {
+		return result, true, nil
 	}
-	return 0
-}
-
-// LoopPos returns the current forloop index.
-func (t *TemplateContextDrop) LoopPos() interface{} {
-	if t.Context() != nil {
-		// Look up "forloop" variable
-		forloop := t.Context().Get("forloop")
-		if forloop != nil {
-			// Try to get "index" from forloop drop
-			return liquid.InvokeDropOn(forloop, "index")
-		}
-	}
-	return nil
-}
-
-// Foo returns a test value.
-func (t *TemplateContextDrop) Foo() interface{} {
-	return "fizzbuzz"
-}
-
-// Baz returns a value from registers.
-func (t *TemplateContextDrop) Baz() interface{} {
-	if t.Context() != nil {
-		return t.Context().Registers().Get("lulz")
-	}
-	return nil
+	return key, true, nil
 }
 
 // SomethingWithLength is a drop with a length method that returns nil.
-type SomethingWithLength struct {
-	*liquid.Drop
-}
+type SomethingWithLength struct{}
 
 // NewSomethingWithLength creates a new SomethingWithLength.
 func NewSomethingWithLength() *SomethingWithLength {
-	return &SomethingWithLength{
-		Drop: liquid.NewDrop(),
-	}
+	return &SomethingWithLength{}
 }
 
-// Length returns nil.
-func (s *SomethingWithLength) Length() interface{} {
-	return nil
+// LiquidGet has the key length, nil.
+func (s *SomethingWithLength) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	return nil, key == "length", nil
 }
 
 // DropWithUndefinedMethod is a drop with a foo method but missing other methods.
-type DropWithUndefinedMethod struct {
-	*liquid.Drop
-}
+type DropWithUndefinedMethod struct{}
 
 // NewDropWithUndefinedMethod creates a new DropWithUndefinedMethod.
 func NewDropWithUndefinedMethod() *DropWithUndefinedMethod {
-	return &DropWithUndefinedMethod{
-		Drop: liquid.NewDrop(),
-	}
+	return &DropWithUndefinedMethod{}
 }
 
-// Foo returns "foo".
-func (d *DropWithUndefinedMethod) Foo() interface{} {
-	return "foo"
+// LiquidGet has the key foo.
+func (d *DropWithUndefinedMethod) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	if key == "foo" {
+		return "foo", true, nil
+	}
+	return nil, false, nil
 }

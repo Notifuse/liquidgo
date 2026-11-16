@@ -105,9 +105,9 @@ func RaiseErrors() RenderOption {
 // Render renders the template for data in a render state of its own, and
 // changes nothing in the template or in data: renders of one template,
 // concurrent or not, never see each other's assigns, errors or limits. It
-// reads the template's assigns (Template.Assigns) and registers. A drop is
-// bound to the render that reads it (Drop.SetContext): give each render its
-// own drop instances.
+// reads the template's assigns (Template.Assigns) and registers. A drop gets
+// the context of the render at each key it gives (LiquidGetter) and keeps
+// none, so renders can share a drop that is safe for concurrent use.
 //
 // The error is non-nil when the render could not complete, and Result.Output
 // is then only what was written before it stopped:

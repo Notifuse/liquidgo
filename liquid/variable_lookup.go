@@ -376,19 +376,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				}
 			}
 
-			// Try drop method invocation (for drops like forloop.last).
-			// Only a drop exposes its methods and fields: a plain Go
-			// struct exposes nothing, as a Ruby object that is not a Drop
-			if isDrop(obj) && IsInvokable(obj, keyStr) {
-				dropResult := InvokeDropOn(obj, keyStr)
-				// Even if result is nil, we found the method, so use it
-				obj = dropResult
-				continue
-			}
-
-			// Check for LiquidMethodMissing
-			if missing, ok := methodMissing(obj); ok {
-				obj = missing(keyStr)
+			// A drop gives its keys (forloop.last); a plain Go struct
+			// exposes nothing, as a Ruby object that is not a Drop
+			if g, ok := asDrop(obj); ok {
+				obj = dropGet(context, g, keyStr)
 				continue
 			}
 		}

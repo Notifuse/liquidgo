@@ -467,9 +467,9 @@ func indirect(obj interface{}) (interface{}, bool) {
 	return rv.Interface(), true
 }
 
-// isPlainStruct reports whether obj is a Go struct, or a pointer to one, that
-// a template may not read: neither a drop nor a value with a String or an
-// Error method. It renders as nothing, so that fmt never writes its fields.
+// isPlainStruct reports whether obj is a Go struct, or a pointer to one,
+// without a String or an Error method, a drop or not. It renders as nothing,
+// so that fmt never writes its fields.
 func isPlainStruct(obj interface{}) bool {
 	switch obj.(type) {
 	case fmt.Stringer, error:
@@ -479,7 +479,7 @@ func isPlainStruct(obj interface{}) bool {
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-	return rv.Kind() == reflect.Struct && !isDrop(obj)
+	return rv.Kind() == reflect.Struct
 }
 
 // mapInspect writes a map of any type as hashInspect does, so that the

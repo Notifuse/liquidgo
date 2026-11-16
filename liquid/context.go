@@ -526,19 +526,9 @@ func (c *Context) lookupInScope(scope map[string]interface{}, key string) interf
 	return c.liquidValue(value)
 }
 
-// liquidValue returns the liquid form of a value read from a map, a drop
-// bound to this render.
+// liquidValue returns the liquid form of a value read from a map.
 func (c *Context) liquidValue(value interface{}) interface{} {
-	liquidValue := ToLiquid(value)
-
-	// Set context on drops
-	if drop, ok := liquidValue.(interface {
-		SetContext(*Context)
-	}); ok {
-		drop.SetContext(c)
-	}
-
-	return liquidValue
+	return ToLiquid(value)
 }
 
 // itemOf returns item i of list, a list the render does not own: a func is

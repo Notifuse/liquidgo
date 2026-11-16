@@ -42,19 +42,36 @@ type getterUser struct {
 
 func (g getterUser) Get(key string) interface{} { *g.calls++; return "get:" + key }
 
-// userDrop is a drop: its methods and fields are readable.
+// userDrop is a drop: the keys it declares are readable.
 type userDrop struct {
-	*liquid.Drop
 	Name string
 }
 
 func (d *userDrop) Greeting() string { return "hi " + d.Name }
 
-// valueDrop embeds Drop by value: only its pointer has the drop methods, and
-// a typed slice holds values.
+// LiquidGet returns the key a template reads.
+func (d *userDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "name":
+		return d.Name, true, nil
+	case "greeting":
+		return d.Greeting(), true, nil
+	}
+	return nil, false, nil
+}
+
+// valueDrop is a drop by its pointer only, and a typed slice holds values.
 type valueDrop struct {
-	liquid.Drop
 	Name string
+}
+
+// LiquidGet returns the key a template reads.
+func (d *valueDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "name":
+		return d.Name, true, nil
+	}
+	return nil, false, nil
 }
 
 func renderPlain(t *testing.T, src string, data interface{}) string {
@@ -215,8 +232,8 @@ func TestToLiquidAndDropsStayReadable(t *testing.T) {
 	data := map[string]interface{}{
 		"lu":    lu,
 		"lus":   []liquidUser{lu, {Name: "bea"}},
-		"drop":  &userDrop{Drop: liquid.NewDrop(), Name: "dan"},
-		"drops": []*userDrop{{Drop: liquid.NewDrop(), Name: "eve"}},
+		"drop":  &userDrop{Name: "dan"},
+		"drops": []*userDrop{{Name: "eve"}},
 		"vds":   []valueDrop{{Name: "val"}},
 	}
 	for _, c := range []struct{ src, want string }{
@@ -269,4 +286,37 @@ func containsAny(s string, subs ...string) bool {
 		}
 	}
 	return false
+}
+
+// secretDrop is a drop with no String method: its fields are not keys.
+type secretDrop struct {
+	Name         string
+	PasswordHash string
+}
+
+func (d *secretDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	if key == "name" {
+		return d.Name, true, nil
+	}
+	return nil, false, nil
+}
+
+// A drop is written by its String method only: one without it never writes
+// its fields, alone, in a list or in a hash, nor do the loop drops.
+func TestADropNeverWritesItsFields(t *testing.T) {
+	d := &secretDrop{Name: "bob", PasswordHash: "secret$hash"}
+	data := map[string]interface{}{
+		"d":  d,
+		"ds": []*secretDrop{d},
+		"vs": []secretDrop{*d},
+		"h":  map[string]interface{}{"d": d},
+	}
+	src := `{{ d }}|{{ ds }}|{{ vs }}|{{ h }}|{{ d.name }}|{% for i in (1..1) %}{{ forloop }}{% endfor %}|{% tablerow i in (1..1) %}{{ tablerowloop }}{% endtablerow %}`
+	got := renderPlain(t, src, data)
+	if containsAny(got, "secret$hash", "i-(1..1)", "&{") {
+		t.Errorf("%s gives %q: a drop wrote its fields", src, got)
+	}
+	if !containsAny(got, "|bob|") {
+		t.Errorf("%s gives %q: the key of the drop is not readable", src, got)
+	}
 }

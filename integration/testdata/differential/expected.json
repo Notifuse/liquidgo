@@ -3230,6 +3230,54 @@
       "error": "Liquid::SyntaxError: Liquid syntax error: Expected id but found number in \"{{ arr.0 }}\""
     },
     {
+      "id": "drop-01",
+      "mode": "lax",
+      "template": "{% for i in (1..2) %}{{ forloop }};{% endfor %}",
+      "output": "Liquid::ForloopDrop;Liquid::ForloopDrop;"
+    },
+    {
+      "id": "drop-01",
+      "mode": "strict",
+      "template": "{% for i in (1..2) %}{{ forloop }};{% endfor %}",
+      "output": "Liquid::ForloopDrop;Liquid::ForloopDrop;"
+    },
+    {
+      "id": "drop-02",
+      "mode": "lax",
+      "template": "{% for i in (1..1) %}[{{ forloop.Index }}|{{ forloop.index }}|{{ forloop.increment }}]{% endfor %}",
+      "output": "[|1|]"
+    },
+    {
+      "id": "drop-02",
+      "mode": "strict",
+      "template": "{% for i in (1..1) %}[{{ forloop.Index }}|{{ forloop.index }}|{{ forloop.increment }}]{% endfor %}",
+      "output": "[|1|]"
+    },
+    {
+      "id": "drop-03",
+      "mode": "lax",
+      "template": "{% tablerow i in (1..2) cols:2 %}{{ tablerowloop.cols }}|{{ tablerowloop.col_last }}{% endtablerow %}",
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">|false</td><td class=\"col2\">|true</td></tr>\n"
+    },
+    {
+      "id": "drop-03",
+      "mode": "strict",
+      "template": "{% tablerow i in (1..2) cols:2 %}{{ tablerowloop.cols }}|{{ tablerowloop.col_last }}{% endtablerow %}",
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">|false</td><td class=\"col2\">|true</td></tr>\n"
+    },
+    {
+      "id": "drop-04",
+      "mode": "lax",
+      "template": "{% tablerow i in (1..1) %}{{ tablerowloop }}{% endtablerow %}",
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">Liquid::TablerowloopDrop</td></tr>\n"
+    },
+    {
+      "id": "drop-04",
+      "mode": "strict",
+      "template": "{% tablerow i in (1..1) %}{{ tablerowloop }}{% endtablerow %}",
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">Liquid::TablerowloopDrop</td></tr>\n"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

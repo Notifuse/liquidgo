@@ -127,7 +127,16 @@ func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 }
 
 // boomDrop raises a Liquid error when its method is called.
-type boomDrop struct{ liquid.Drop }
+type boomDrop struct{}
+
+// LiquidGet returns the key a template reads.
+func (b *boomDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "boom":
+		return b.Boom(), true, nil
+	}
+	return nil, false, nil
+}
 
 func (b *boomDrop) Boom() string {
 	panic(liquid.NewStandardError("boom"))

@@ -110,16 +110,21 @@ func TestAssignScoreExceedingLimitFromCompositeObject(t *testing.T) {
 
 // ObjectWrapperDrop is a drop that wraps an object for testing assign scores.
 type ObjectWrapperDrop struct {
-	*liquid.Drop
 	obj interface{}
 }
 
 // NewObjectWrapperDrop creates a new ObjectWrapperDrop.
 func NewObjectWrapperDrop(obj interface{}) *ObjectWrapperDrop {
-	return &ObjectWrapperDrop{
-		Drop: liquid.NewDrop(),
-		obj:  obj,
+	return &ObjectWrapperDrop{obj: obj}
+}
+
+// LiquidGet returns the key a template reads.
+func (o *ObjectWrapperDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "value":
+		return o.Value(), true, nil
 	}
+	return nil, false, nil
 }
 
 // Value returns the wrapped object.

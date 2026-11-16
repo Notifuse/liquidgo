@@ -974,13 +974,6 @@ func (it *InputIterator) Each(fn func(interface{})) {
 		// Convert to liquid, as Ruby's InputIterator yields each item's to_liquid
 		liquidItem := ToLiquidValue(ToLiquid(item))
 
-		// Set context if supported
-		if it.context != nil {
-			if drop, ok := liquidItem.(interface{ SetContext(*Context) }); ok {
-				drop.SetContext(it.context)
-			}
-		}
-
 		fn(liquidItem)
 	}
 }
@@ -1212,7 +1205,7 @@ func (sf *StandardFilters) sortBy(input interface{}, property interface{}, compa
 	keys := make(map[int]interface{}, len(arr))
 	failed := false
 	for i, item := range arr {
-		key, kind := indexItem(item, property)
+		key, kind := indexItem(sf.context, item, property)
 		if kind == noIndex {
 			return nil, nil
 		}
@@ -1257,7 +1250,7 @@ func (sf *StandardFilters) Uniq(input interface{}, property interface{}) (interf
 	seen := make(map[string]bool)
 	result := make([]interface{}, 0)
 	for _, item := range items {
-		key, kind := indexItem(ToLiquidValue(item), property)
+		key, kind := indexItem(sf.context, ToLiquidValue(item), property)
 		switch kind {
 		case indexError:
 			return nil, raisePropertyError(property)
@@ -1293,7 +1286,7 @@ func (sf *StandardFilters) Compact(input interface{}, property interface{}) (int
 	// item without [] gives nil
 	result := make([]interface{}, 0)
 	for _, item := range iter.ToArray() {
-		val, kind := indexItem(item, property)
+		val, kind := indexItem(sf.context, item, property)
 		switch kind {
 		case indexError:
 			return nil, raisePropertyError(property)
@@ -1325,7 +1318,7 @@ func (sf *StandardFilters) Map(input interface{}, property interface{}) (interfa
 			result = append(result, item)
 			continue
 		}
-		val, kind := indexItem(item, property)
+		val, kind := indexItem(sf.context, item, property)
 		if kind == indexError {
 			return nil, raisePropertyError(property)
 		}
@@ -1407,7 +1400,7 @@ func (sf *StandardFilters) filterArray(input, property, targetValue, empty inter
 		return empty, nil
 	}
 	for i, item := range iter.ToArray() {
-		val, kind := indexItem(item, property)
+		val, kind := indexItem(sf.context, item, property)
 		switch kind {
 		case indexError:
 			return nil, raisePropertyError(property)
@@ -1466,7 +1459,7 @@ func (sf *StandardFilters) Sum(input interface{}, property interface{}) (interfa
 	for _, item := range iter.ToArray() {
 		if property != nil {
 			// As Ruby, an item without [] adds 0
-			val, kind := indexItem(item, property)
+			val, kind := indexItem(sf.context, item, property)
 			if kind == indexError {
 				return nil, raisePropertyError(property)
 			}
@@ -1498,7 +1491,7 @@ const (
 // when it contains it, as String#[], or its character at an integer
 // property. An integer gives its bit at an integer property and raises a
 // TypeError for any other property, as Integer#[].
-func indexItem(item, property interface{}) (interface{}, indexKind) {
+func indexItem(ctx *Context, item, property interface{}) (interface{}, indexKind) {
 	// Ruby's array filters read each item's to_liquid
 	item = ToLiquid(item)
 	switch v := item.(type) {
@@ -1540,7 +1533,7 @@ func indexItem(item, property interface{}) (interface{}, indexKind) {
 		return int((n >> uint(bit)) & 1), indexed
 	}
 	if supportsIndexing(item) {
-		return getProperty(item, ToS(property, nil)), indexed
+		return getProperty(ctx, item, ToS(property, nil)), indexed
 	}
 	if rv := reflect.ValueOf(item); rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
 		// Array#[] with a property that is not an integer
@@ -1571,9 +1564,8 @@ func supportsIndexing(item interface{}) bool {
 	case map[string]interface{}:
 		return true
 	default:
-		// A drop with a Get method gives its properties through it; Get on
-		// any other type is never called
-		if _, ok := item.(interface{ Get(string) interface{} }); ok && isDrop(item) {
+		// A drop gives its properties
+		if isDrop(item) {
 			return true
 		}
 		v := reflect.ValueOf(item)
@@ -1583,54 +1575,32 @@ func supportsIndexing(item interface{}) bool {
 		if v.Kind() == reflect.Map {
 			return true
 		}
-		// Only a drop gives its properties; a plain Go struct exposes nothing
-		if v.Kind() == reflect.Struct && isDrop(item) {
-			return true
-		}
 	}
 
 	return false
 }
 
-// getProperty gets a property value from an item.
-func getProperty(item interface{}, property string) interface{} {
-	if item == nil {
+// getProperty returns the property of item, a map or a drop, for the render
+// of ctx.
+func getProperty(ctx *Context, item interface{}, property string) interface{} {
+	switch v := item.(type) {
+	case nil:
 		return nil
+	case map[string]interface{}:
+		return v[property]
 	}
-
-	// Try map access
-	if m, ok := item.(map[string]interface{}); ok {
-		return m[property]
+	if g, ok := asDrop(item); ok {
+		return dropGet(ctx, g, property)
 	}
-
-	// Try Drop interface
-	if drop, ok := item.(interface{ Get(string) interface{} }); ok {
-		return drop.Get(property)
+	rv := reflect.ValueOf(item)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
 	}
-
-	// For structs, use InvokeDropOn which handles:
-	// - snake_case to CamelCase conversion (comments_count -> CommentsCount)
-	// - Method calls
-	// - Field access on both pointer and non-pointer structs
-	v := reflect.ValueOf(item)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if v.Kind() == reflect.Map && v.Type().Key().Kind() == reflect.String {
-		if val := v.MapIndex(reflect.ValueOf(property).Convert(v.Type().Key())); val.IsValid() {
+	if rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String {
+		if val := rv.MapIndex(reflect.ValueOf(property).Convert(rv.Type().Key())); val.IsValid() {
 			return val.Interface()
 		}
-		return nil
 	}
-
-	if v.Kind() == reflect.Struct {
-		result := InvokeDropOn(item, property)
-		if result != nil {
-			return result
-		}
-	}
-
 	return nil
 }
 

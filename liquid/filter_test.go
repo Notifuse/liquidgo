@@ -126,3 +126,17 @@ func TestTheStandardFilterTableFollowsStandardFilters(t *testing.T) {
 		}
 	}
 }
+
+// An unknown filter gives its input back: it never reads a key of a drop, as
+// in Ruby.
+func TestAnUnknownFilterReadsNothingOfADrop(t *testing.T) {
+	d := &keysDrop{}
+	tmpl, err := ParseTemplate("[{{ d | a }}]", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, _ := tmpl.Render(gocontext.Background(), map[string]interface{}{"d": d})
+	if res.Output != "[]" || d.calls != 0 {
+		t.Errorf("got %q, %d reads of the drop, want %q and none", res.Output, d.calls, "[]")
+	}
+}

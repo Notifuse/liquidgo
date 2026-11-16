@@ -55,15 +55,23 @@ func TestAuditAssignDoesNotLeakBetweenRenders(t *testing.T) {
 }
 
 type auditRecipientDrop struct {
-	*liquid.Drop
 	Email string
+}
+
+// LiquidGet returns the key a template reads.
+func (d *auditRecipientDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "email":
+		return d.Email, true, nil
+	}
+	return nil, false, nil
 }
 
 // A drop given to one render belongs to that render only: a later render of
 // the same template, with a map, nil or a Context, does not see it.
 func TestAuditDropDoesNotLeakBetweenRenders(t *testing.T) {
 	tpl := auditParse(t, auditEnv(), `[{{ r.email }}]`)
-	if got := renderRuby(tpl, map[string]interface{}{"r": &auditRecipientDrop{Drop: liquid.NewDrop(), Email: "alice@example.com"}}, nil); got != "[alice@example.com]" {
+	if got := renderRuby(tpl, map[string]interface{}{"r": &auditRecipientDrop{Email: "alice@example.com"}}, nil); got != "[alice@example.com]" {
 		t.Fatalf("render A = %q", got)
 	}
 	for name, data := range map[string]interface{}{
