@@ -305,3 +305,17 @@ func TestLocalFileSystemErrorsNameNoPath(t *testing.T) {
 		}
 	}
 }
+
+// A symbolic link that loops is a template the file system cannot read, and
+// the error names the template, not a path of the host.
+func TestLocalFileSystemALoopingLink(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Symlink(filepath.Join(root, "_loop.liquid"), filepath.Join(root, "_loop.liquid")); err != nil {
+		t.Skip("no symbolic links here:", err)
+	}
+	_, err := NewLocalFileSystem(root, "").ReadTemplateFile("loop")
+	var fsErr *FileSystemError
+	if !errors.As(err, &fsErr) || strings.Contains(err.Error(), root) || !strings.Contains(err.Error(), "'loop'") {
+		t.Errorf("error %v, want a FileSystemError that names loop and no path", err)
+	}
+}

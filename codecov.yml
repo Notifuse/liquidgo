@@ -1,10 +1,13 @@
 coverage:
   status:
+    # liquidgo's code is covered at more than 90%, the code a change touches too
     project:
       default:
-        target: 80%
-        threshold: 10%
-    patch: off
+        target: 90%
+        threshold: 1%
+    patch:
+      default:
+        target: 90%
   range: '60...80'
   ignore:
     - '**/performance/**'

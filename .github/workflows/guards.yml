@@ -22,5 +22,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      # A guard removed can let a test allocate without bound: each process
+      # gets at most 4 GiB of address space, so that such a test crashes,
+      # which counts as catching the mutation, instead of taking the runner.
       - name: Remove each guard and run the tests
-        run: go run ./scripts/guard_mutations
+        run: |
+          ulimit -v 4194304
+          go run ./scripts/guard_mutations
