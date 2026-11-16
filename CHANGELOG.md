@@ -78,6 +78,8 @@ changes; templates render as before.
   other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
   read the item at 1. Three listed divergences from Shopify are gone.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
+- **With strict variables, a render given no data finds the template's assigns**, as Ruby's
+  `render(nil)` makes them its one environment. Given a map, the map decides, as in Ruby.
 
 ### Changed
 - **`Result.Errors` lists each error the render recorded**, as Ruby's `template.errors`: the same error

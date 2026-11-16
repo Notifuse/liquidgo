@@ -17,6 +17,10 @@ type ContextConfig struct {
 	RethrowErrors      bool
 }
 
+// emptyEnvironment is the environment of a context built with none; nothing
+// writes a context's environments, so contexts share it.
+var emptyEnvironment = map[string]interface{}{}
+
 // Context keeps the variable stack and resolves variables, as well as keywords.
 type Context struct {
 	disabledTags   map[string]int
@@ -76,7 +80,7 @@ func BuildContext(config ContextConfig) *Context {
 	// name up in (and nothing writes)
 	environments := config.Environments
 	if environments == nil {
-		environments = []map[string]interface{}{emptyData}
+		environments = []map[string]interface{}{emptyEnvironment}
 	}
 
 	staticEnvironments := config.StaticEnvironments
