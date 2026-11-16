@@ -47,7 +47,7 @@ func TestFilterKwarg_CanParseDataKwargs(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}

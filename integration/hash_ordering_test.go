@@ -45,7 +45,7 @@ func TestHashOrdering_GlobalRegisterOrder(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := " 1000$ CAD "
 
 	if output != expected {

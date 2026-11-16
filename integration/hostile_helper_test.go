@@ -85,8 +85,8 @@ func renderWith(env *liquid.Environment, source string, data map[string]interfac
 	if err != nil {
 		return result{parseErr: err}
 	}
-	out := tmpl.Render(data, nil)
-	return result{output: out, errors: append([]error(nil), tmpl.Errors()...)}
+	out := renderRuby(tmpl, data, nil)
+	return result{output: out, errors: append([]error(nil), rubyErrors(tmpl)...)}
 }
 
 // hostileData is the data every hostile template is rendered with.

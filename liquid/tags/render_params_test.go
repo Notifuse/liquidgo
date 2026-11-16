@@ -129,7 +129,7 @@ func TestRenderTagWithParameters(t *testing.T) {
 			tmpl.Registers()["file_system"] = fs
 
 			// Render
-			output := tmpl.Render(tt.data, nil)
+			output := renderRuby(tmpl, tt.data, nil)
 			output = strings.TrimSpace(output)
 
 			if output != tt.expected {
@@ -165,7 +165,7 @@ func TestRenderTagParameterIsolation(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{}, nil)
+	output := renderRuby(tmpl, map[string]interface{}{}, nil)
 
 	// Expected: "newsletter-blog" where:
 	// - "newsletter-" is from the partial (widget parameter passed, title is nil/empty)
@@ -202,7 +202,7 @@ func TestRenderTagWithForLoop(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{
+	output := renderRuby(tmpl, map[string]interface{}{
 		"items": []interface{}{"A", "B", "C"},
 	}, nil)
 
@@ -235,7 +235,7 @@ func TestRenderTagOriginalIssue(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{}, nil)
+	output := renderRuby(tmpl, map[string]interface{}{}, nil)
 
 	expected := `<div><div class="newsletter">Subscribe!</div></div>`
 	if output != expected {

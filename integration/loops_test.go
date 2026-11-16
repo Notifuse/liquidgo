@@ -57,13 +57,13 @@ func TestRenderStopsWhenItsContextIsDone(t *testing.T) {
 		}
 		ctx, cancel := gocontext.WithTimeout(gocontext.Background(), deadline)
 		start := time.Now()
-		tmpl.Render(nil, &liquid.RenderOptions{Context: ctx})
+		renderRuby(tmpl, nil, &rubyOptions{Context: ctx})
 		took := time.Since(start)
 		cancel()
 		if took > deadline+slack {
 			t.Errorf("%q stopped after %v, more than %v after the deadline", source, took, slack)
 		}
-		errs := tmpl.Errors()
+		errs := rubyErrors(tmpl)
 		if len(errs) == 0 || !errors.Is(errs[len(errs)-1], gocontext.DeadlineExceeded) {
 			t.Errorf("%q: errors %v, want one that wraps context.DeadlineExceeded", source, errs)
 		}
@@ -81,7 +81,7 @@ func TestRenderWithACancelledContextOfItsOwn(t *testing.T) {
 	cancelled, cancel := gocontext.WithCancel(gocontext.Background())
 	cancel()
 	ctx.SetCancellation(cancelled)
-	out := tmpl.Render(ctx, nil)
+	out := renderRuby(tmpl, ctx, nil)
 	var canceledErr *liquid.CanceledError
 	if errs := ctx.Errors(); len(errs) == 0 || !errors.As(errs[0], &canceledErr) || !errors.Is(errs[0], gocontext.Canceled) {
 		t.Errorf("errors %v, want a CanceledError that wraps context.Canceled (output %q)", ctx.Errors(), out)
@@ -102,8 +102,8 @@ func TestACancellationEndsWithItsRender(t *testing.T) {
 	cancel()
 
 	ctx := newContext(env)
-	tmpl.Render(ctx, &liquid.RenderOptions{Context: cancelled})
-	if out := tmpl.Render(ctx, nil); out != "a1b" {
+	renderRuby(tmpl, ctx, &rubyOptions{Context: cancelled})
+	if out := renderRuby(tmpl, ctx, nil); out != "a1b" {
 		t.Errorf("a second render of the same Context renders %q, want %q", out, "a1b")
 	}
 
@@ -118,8 +118,8 @@ func TestACancellationEndsWithItsRender(t *testing.T) {
 	cause := errors.New("the request ended")
 	withCause, cancelWithCause := gocontext.WithCancelCause(gocontext.Background())
 	cancelWithCause(cause)
-	tmpl.Render(nil, &liquid.RenderOptions{Context: withCause})
-	if errs := tmpl.Errors(); len(errs) == 0 || !errors.Is(errs[0], cause) || !errors.Is(errs[0], gocontext.Canceled) {
+	renderRuby(tmpl, nil, &rubyOptions{Context: withCause})
+	if errs := rubyErrors(tmpl); len(errs) == 0 || !errors.Is(errs[0], cause) || !errors.Is(errs[0], gocontext.Canceled) {
 		t.Errorf("errors %v, want one that wraps the cause and context.Canceled", errs)
 	}
 }

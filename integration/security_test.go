@@ -69,7 +69,7 @@ func TestSecurity_NoInstanceEvalLaterInChain(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	// The filter should work, but instance_eval should not be accessible
 	// If instance_eval is accessible, the output would be "2" instead of "1+1 + 1"
@@ -107,7 +107,7 @@ func TestSecurity_DoesNotPermanentlyAddFiltersToSymbolTable(t *testing.T) {
 	})
 
 	// Should not panic or crash
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	// Unknown filters should result in empty output or error message
 	_ = output
@@ -160,7 +160,7 @@ func TestSecurity_MaxDepthNestedBlocksDoesNotRaiseException(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "rendered"
 
 	if output != expected {
@@ -201,14 +201,14 @@ func TestSecurity_MoreThanMaxDepthNestedBlocksRaisesException(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	// Should contain error about nesting too deep
 	if !contains(output, "Nesting too deep") {
 		t.Errorf("Expected output to contain 'Nesting too deep', got %q", output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) == 0 {
 		t.Error("Expected at least one error")
 	} else {

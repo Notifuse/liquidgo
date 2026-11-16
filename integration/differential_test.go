@@ -125,7 +125,7 @@ func renderDifferential(t *testing.T, r differentialResult, data map[string]inte
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.UseNumber()
 	_ = dec.Decode(&copied)
-	out := tmpl.Render(withIntegers(copied), nil)
+	out := renderRuby(tmpl, withIntegers(copied), nil)
 	return &out, ""
 }
 

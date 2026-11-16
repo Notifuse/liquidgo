@@ -56,7 +56,7 @@ func TestErrorHandling_TemplatesParsedWithLineNumbersRendersThemInErrors(t *test
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if output != expected {
 		t.Errorf("Expected:\n%q\nGot:\n%q", expected, output)
@@ -86,13 +86,13 @@ func TestErrorHandling_StandardError(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -125,13 +125,13 @@ func TestErrorHandling_SyntaxError(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -164,13 +164,13 @@ func TestErrorHandling_ArgumentError(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -231,14 +231,14 @@ func TestErrorHandling_LaxUnrecognizedOperator(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := " Liquid error: Unknown operator =! "
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -467,7 +467,7 @@ func TestErrorHandling_Warnings(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
 	}
@@ -557,7 +557,7 @@ func TestErrorHandling_ExceptionsPropagate(t *testing.T) {
 		}
 	}()
 
-	_ = tmpl.Render(ctx, &liquid.RenderOptions{})
+	_ = renderRuby(tmpl, ctx, &rubyOptions{})
 	// If we get here without panic, the error was caught (which may be acceptable)
 }
 
@@ -582,14 +582,14 @@ func TestErrorHandling_DefaultExceptionRendererWithInternalError(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "This is a runtime error: Liquid error (line 1): internal"
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -627,14 +627,14 @@ func TestErrorHandling_SettingDefaultExceptionRenderer(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "This is a runtime error: "
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -676,14 +676,14 @@ func TestErrorHandling_SettingExceptionRendererOnEnvironment(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "This is a runtime error: "
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -727,14 +727,14 @@ func TestErrorHandling_ExceptionRendererExposingNonLiquidError(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	// The exact output may vary based on error handling implementation
 	if !strings.Contains(output, "runtime error") {
 		t.Errorf("Expected output to contain 'runtime error', got %q", output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -781,14 +781,14 @@ func TestErrorHandling_IncludedTemplateNameWithLineNumbers(t *testing.T) {
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fileSystem}),
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "Argument error:\nLiquid error (product line 1): argument error"
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
 
-	errors := tmpl.Errors()
+	errors := rubyErrors(tmpl)
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
@@ -822,7 +822,7 @@ func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) 
 		RethrowErrors:      false,
 	})
 
-	output1 := tmpl1.Render(ctx1, &liquid.RenderOptions{})
+	output1 := renderRuby(tmpl1, ctx1, &rubyOptions{})
 	expected1 := "Liquid error: comparison of Integer with String failed0"
 
 	if output1 != expected1 {
@@ -843,7 +843,7 @@ func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) 
 		RethrowErrors:      false,
 	})
 
-	output2 := tmpl2.Render(ctx2, &liquid.RenderOptions{})
+	output2 := renderRuby(tmpl2, ctx2, &rubyOptions{})
 	expected2 := "0"
 
 	if output2 != expected2 {
@@ -882,7 +882,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateName(t *testing.T) {
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fileSystem}),
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if !strings.Contains(output, "snippet line 3") {
 		t.Errorf("Expected output to contain 'snippet line 3', got %q", output)
@@ -925,7 +925,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 		}),
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if !strings.Contains(output, "some/path/snippet line 3") {
 		t.Errorf("Expected output to contain 'some/path/snippet line 3', got %q", output)
@@ -978,7 +978,7 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 		}),
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	if !strings.Contains(output, "some/path/snippet") {
 		t.Errorf("Expected output to contain 'some/path/snippet', got %q", output)
@@ -1016,7 +1016,7 @@ func TestErrorHandling_InternalErrorIsRaisedWithTemplateName(t *testing.T) {
 		}),
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "Liquid error (template/index line 1): template not found: snippet"
 
 	if output != expected {
@@ -1040,7 +1040,7 @@ func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
 
 	// Test with strict_filters = true
 	t.Run("strict_filters_true", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: true,
 		})
 
@@ -1048,14 +1048,14 @@ func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
 		if output != "" {
 			t.Errorf("Expected an empty output, got %q", output)
 		}
-		if errs := tmpl.Errors(); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter unknown_filter") {
+		if errs := rubyErrors(tmpl); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter unknown_filter") {
 			t.Errorf("Expected the error 'undefined filter unknown_filter', got %v", errs)
 		}
 	})
 
 	// Test with strict_filters = false (default)
 	t.Run("strict_filters_false", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: false,
 		})
 
@@ -1081,7 +1081,7 @@ func TestErrorHandling_StrictFiltersWithDefinedFilter(t *testing.T) {
 
 	// Should work in both modes
 	t.Run("strict_filters_true", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: true,
 		})
 		if output != "hello" {
@@ -1090,7 +1090,7 @@ func TestErrorHandling_StrictFiltersWithDefinedFilter(t *testing.T) {
 	})
 
 	t.Run("strict_filters_false", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: false,
 		})
 		if output != "hello" {
@@ -1118,7 +1118,7 @@ Line 4`
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	output := tmpl.Render(nil, &liquid.RenderOptions{
+	output := renderRuby(tmpl, nil, &rubyOptions{
 		StrictFilters: true,
 	})
 
@@ -1126,7 +1126,7 @@ Line 4`
 	if output != "Line 1\nLine 2\n\nLine 4" {
 		t.Errorf("Expected the lines without the output, got %q", output)
 	}
-	if errs := tmpl.Errors(); len(errs) != 1 || errs[0].Error() != "Liquid error (line 3): undefined filter bad_filter" {
+	if errs := rubyErrors(tmpl); len(errs) != 1 || errs[0].Error() != "Liquid error (line 3): undefined filter bad_filter" {
 		t.Errorf("Expected the error 'Liquid error (line 3): undefined filter bad_filter', got %v", errs)
 	}
 }
@@ -1145,7 +1145,7 @@ func TestErrorHandling_StrictFiltersWithFilterChain(t *testing.T) {
 	}
 
 	t.Run("strict_mode_stops_at_undefined", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: true,
 		})
 
@@ -1153,13 +1153,13 @@ func TestErrorHandling_StrictFiltersWithFilterChain(t *testing.T) {
 		if output != "" {
 			t.Errorf("Expected an empty output, got %q", output)
 		}
-		if errs := tmpl.Errors(); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter") {
+		if errs := rubyErrors(tmpl); len(errs) != 1 || !strings.Contains(errs[0].Error(), "undefined filter") {
 			t.Errorf("Expected the error 'undefined filter', got %v", errs)
 		}
 	})
 
 	t.Run("non_strict_mode_passes_through", func(t *testing.T) {
-		output := tmpl.Render(nil, &liquid.RenderOptions{
+		output := renderRuby(tmpl, nil, &rubyOptions{
 			StrictFilters: false,
 		})
 

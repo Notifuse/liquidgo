@@ -44,14 +44,14 @@ func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibili
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "hello" {
 		t.Errorf("Expected 'hello', got %q", result)
 	}
 
 	// Test with output buffer
 	var buf string
-	output := tmpl.Render(nil, &liquid.RenderOptions{Output: &buf})
+	output := renderRuby(tmpl, nil, &rubyOptions{Output: &buf})
 	if output != "hello" {
 		t.Errorf("Expected 'hello', got %q", output)
 	}
@@ -71,13 +71,13 @@ func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibili
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result = tmpl2.Render(nil, &liquid.RenderOptions{})
+	result = renderRuby(tmpl2, nil, &rubyOptions{})
 	if result != "foohellobar" {
 		t.Errorf("Expected 'foohellobar', got %q", result)
 	}
 
 	var buf2 string
-	output = tmpl2.Render(nil, &liquid.RenderOptions{Output: &buf2})
+	output = renderRuby(tmpl2, nil, &rubyOptions{Output: &buf2})
 	if output != "foohellobar" {
 		t.Errorf("Expected 'foohellobar', got %q", output)
 	}

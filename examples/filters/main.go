@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -48,9 +49,12 @@ Combined: {{ text | reverse | shout }}
 		panic(err)
 	}
 
-	output := tmpl.Render(map[string]interface{}{
+	res, err := tmpl.Render(context.Background(), map[string]interface{}{
 		"text": "hello",
-	}, nil)
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println(output)
+	fmt.Println(res.Output)
 }

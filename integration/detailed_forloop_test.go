@@ -52,7 +52,7 @@ func TestForloopLastDetailed(t *testing.T) {
 			}
 
 			vars := map[string]interface{}{"items": []interface{}{1, 2, 3}}
-			got := tmpl.Render(vars, nil)
+			got := renderRuby(tmpl, vars, nil)
 
 			if got != tt.want {
 				t.Errorf("FAILED\nWant: %q\nGot:  %q", tt.want, got)

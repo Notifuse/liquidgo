@@ -49,6 +49,7 @@ go get github.com/Notifuse/liquidgo/v5
 package main
 
 import (
+    "context"
     "fmt"
     "github.com/Notifuse/liquidgo/v5/liquid"
 )
@@ -61,11 +62,14 @@ func main() {
     }
 
     // Render with data
-    output := tmpl.Render(map[string]interface{}{
+    res, err := tmpl.Render(context.Background(), map[string]interface{}{
         "name": "World",
-    }, nil)
+    })
+    if err != nil {
+        panic(err)
+    }
 
-    fmt.Println(output) // Output: Hello World!
+    fmt.Println(res.Output) // Output: Hello World!
 }
 ```
 
@@ -75,6 +79,7 @@ func main() {
 package main
 
 import (
+    "context"
     "fmt"
     "github.com/Notifuse/liquidgo/v5/liquid"
     "github.com/Notifuse/liquidgo/v5/liquid/tags"
@@ -107,14 +112,17 @@ func main() {
     }
 
     // Render with nested data
-    output := tmpl.Render(map[string]interface{}{
+    res, err := tmpl.Render(context.Background(), map[string]interface{}{
         "user": map[string]interface{}{
             "name": "john doe",
             "items": []string{"apple", "banana", "cherry"},
         },
-    }, nil)
+    })
+    if err != nil {
+        panic(err)
+    }
 
-    fmt.Println(output)
+    fmt.Println(res.Output)
 }
 ```
 
@@ -152,6 +160,7 @@ all, so give a template a map or a drop instead.
 package main
 
 import (
+    "context"
     "fmt"
     "strings"
     "github.com/Notifuse/liquidgo/v5/liquid"
@@ -182,8 +191,8 @@ func main() {
         &liquid.TemplateOptions{Environment: env},
     )
 
-    output := tmpl.Render(nil, nil)
-    fmt.Println(output) // Output: OLLEH!!!
+    res, _ := tmpl.Render(context.Background(), nil)
+    fmt.Println(res.Output) // Output: OLLEH!!!
 }
 ```
 
@@ -193,6 +202,7 @@ func main() {
 package main
 
 import (
+    "context"
     "fmt"
     "github.com/Notifuse/liquidgo/v5/liquid"
 )
@@ -228,11 +238,11 @@ func main() {
         &liquid.TemplateOptions{Environment: env},
     )
 
-    output := tmpl.Render(map[string]interface{}{
+    res, _ := tmpl.Render(context.Background(), map[string]interface{}{
         "user_name": "Alice",
-    }, nil)
+    })
 
-    fmt.Println(output) // Output: Greetings, Alice!
+    fmt.Println(res.Output) // Output: Greetings, Alice!
 }
 ```
 
@@ -371,18 +381,21 @@ env.SetErrorMode("warn")
 env.SetErrorMode("strict")
 ```
 
-### Rendering with errors returned (RenderContext)
+### Rendering and errors
 
-`Template.RenderContext` renders in a state of its own and changes nothing in the template or in the data:
-concurrent renders never see each other's assigns, errors or limits. It reads the template's assigns and
-registers, but not the instance assigns `Render` keeps with `PersistInstanceAssigns`. A drop is bound to
-the render that reads it: give each render its own drop instances. It returns what the render produced
-and an error when the render could not complete:
+`Template.Render(ctx, data, opts...)` renders in a state of its own and changes nothing in the template or
+in the data: a template is parsed once and rendered from any number of goroutines, and renders never see
+each other's assigns, errors or limits. It reads the template's assigns and registers. The data is a map;
+a drop goes under a key (`{"page": drop}`), and is bound to the render that reads it: give each render its
+own drop instances.
 
 ```go
-res, err := tmpl.RenderContext(ctx, data,
-    liquid.WithFileSystem(partials), // partials of this render
-    liquid.WithLimits(limits),       // limits set here replace the template's
+res, err := tmpl.Render(ctx, data,
+    liquid.WithFileSystem(partials),         // partials of this render, nested ones included
+    liquid.WithLimits(limits),               // limits set here replace the template's
+    liquid.WithRegisters(registers),         // read by tags and filters
+    liquid.WithFilters(&TenantFilters{}),    // local filters, next to the environment's
+    liquid.WithStrictVariables(),            // an undefined variable is an error
 )
 switch {
 case err != nil:
@@ -393,11 +406,12 @@ case len(res.Errors) > 0:
     // errors the render recorded and went on, as Ruby: each wrote
     // "Liquid error: ..." in res.Output
 }
+fmt.Println(res.Output, res.RenderScore, res.AssignScore)
 ```
 
 `liquid.RaiseErrors()` makes the first recorded error end the render, as Ruby's `render!`. A Go panic in a
-tag, a filter or a drop ends the render with a `*liquid.PanicError`, where `Render` writes
-`Liquid error: internal` and goes on, as Ruby does; a Liquid error they raise is recorded as in Ruby.
+tag, a filter or a drop ends the render with a `*liquid.PanicError`, where Ruby writes
+`Liquid error: internal` and goes on; a Liquid error they raise is recorded as in Ruby.
 
 ## Performance
 
@@ -422,20 +436,6 @@ BenchmarkFull             67 ops  18.49 ms/op   24.09 MB/op
 See [`performance/`](performance/) directory for detailed benchmarks.
 
 ## Advanced Features
-
-### Template Profiling
-
-```go
-tmpl, _ := liquid.ParseTemplate(source, &liquid.TemplateOptions{
-    Profile: true,
-})
-
-output := tmpl.Render(data, nil)
-
-// Access profiling data
-profiler := tmpl.Profiler()
-fmt.Println(profiler.String())
-```
 
 ### Resource Limits
 
@@ -606,9 +606,10 @@ where every number is a `float64`, and render text meant for people (emails, pag
   [What a Template Reads](#what-a-template-reads).
 - **Each render starts from its own data**: what a render assigns (`assign`, `capture`) is not
   kept in the template for the next render, so a value assigned while rendering for one recipient
-  never reaches the next. Ruby keeps it; `TemplateOptions.PersistInstanceAssigns` (or
-  `Template.SetPersistInstanceAssigns`) restores Ruby's behaviour.
-- **`RenderBang` raises the errors of its own render only**; Ruby's `render!` leaves the template
+  never reaches the next. Ruby keeps it.
+- **A render takes a map**, where Ruby also takes a drop as the root of the variables: give the drop
+  under a key.
+- **`RaiseErrors` raises the errors of its own render only**; Ruby's `render!` leaves the template
   raising them in later renders.
 - **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.

@@ -60,11 +60,16 @@ func Tables() (map[string]interface{}, error) {
 		product["collections"] = productCollections
 	}
 
-	// Key the tables by handles
+	// Key the tables by handles. ordered keeps each table in the order of
+	// the YAML file, as Ruby's hash keeps insertion order: the current
+	// collection, product and blog are the first of their table, as Ruby's
+	// values.first, so that every run renders the same data.
 	assigns := make(map[string]interface{})
+	ordered := make(map[string][]interface{})
 
 	for key, values := range db {
 		if valueSlice, ok := values.([]interface{}); ok {
+			ordered[key] = valueSlice
 			handleMap := make(map[string]interface{})
 			for _, v := range valueSlice {
 				if vMap, ok := v.(map[string]interface{}); ok {
@@ -80,29 +85,20 @@ func Tables() (map[string]interface{}, error) {
 	}
 
 	// Some standard direct accessors
-	if collectionsMap, ok := assigns["collections"].(map[string]interface{}); ok {
-		for _, v := range collectionsMap {
-			assigns["collection"] = v
-			break
-		}
+	if collections := ordered["collections"]; len(collections) > 0 {
+		assigns["collection"] = collections[0]
 	}
 
-	if productsMap, ok := assigns["products"].(map[string]interface{}); ok {
-		for _, v := range productsMap {
-			assigns["product"] = v
-			break
-		}
+	if products := ordered["products"]; len(products) > 0 {
+		assigns["product"] = products[0]
 	}
 
-	if blogsMap, ok := assigns["blogs"].(map[string]interface{}); ok {
-		for _, v := range blogsMap {
-			assigns["blog"] = v
-			if blog, ok := v.(map[string]interface{}); ok {
-				if articles, ok := blog["articles"].([]interface{}); ok && len(articles) > 0 {
-					assigns["article"] = articles[0]
-				}
+	if blogs := ordered["blogs"]; len(blogs) > 0 {
+		assigns["blog"] = blogs[0]
+		if blog, ok := blogs[0].(map[string]interface{}); ok {
+			if articles, ok := blog["articles"].([]interface{}); ok && len(articles) > 0 {
+				assigns["article"] = articles[0]
 			}
-			break
 		}
 	}
 
@@ -118,12 +114,12 @@ func Tables() (map[string]interface{}, error) {
 	}
 
 	// Build cart
-	if lineItemsMap, ok := assigns["line_items"].(map[string]interface{}); ok {
+	if lineItems, ok := ordered["line_items"]; ok {
 		var totalPrice float64
 		var itemCount int
 		var items []interface{}
 
-		for _, v := range lineItemsMap {
+		for _, v := range lineItems {
 			items = append(items, v)
 			if item, ok := v.(map[string]interface{}); ok {
 				linePrice, _ := item["line_price"].(int)

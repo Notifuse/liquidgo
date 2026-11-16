@@ -9,34 +9,6 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
-// Ruby keeps a render's assigns in the template for the next render; liquidgo
-// does so only with PersistInstanceAssigns (each render is isolated by default).
-func TestInstanceAssignsPersistOnSameTemplateObjectBetweenParses(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
-
-	// First parse and render
-	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if result != "from instance assigns" {
-		t.Errorf("Expected 'from instance assigns', got %q", result)
-	}
-
-	// Second parse and render - instance assigns should persist
-	err = tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if result != "from instance assigns" {
-		t.Errorf("Expected 'from instance assigns', got %q", result)
-	}
-}
-
 func TestWarningsIsNotExponentialTime(t *testing.T) {
 	str := "false"
 	for i := 0; i < 100; i++ {
@@ -69,31 +41,6 @@ func TestWarningsIsNotExponentialTime(t *testing.T) {
 	}
 }
 
-// Ruby keeps a render's assigns in the template for the next render; liquidgo
-// does so only with PersistInstanceAssigns (each render is isolated by default).
-func TestInstanceAssignsPersistOnSameTemplateParsingBetweenRenders(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
-
-	err := tmpl.Parse(`{{ foo }}{% assign foo = 'foo' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env, PersistInstanceAssigns: true})
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// First render
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if result != "foo" {
-		t.Errorf("Expected 'foo', got %q", result)
-	}
-
-	// Second render - should include both
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if result != "foofoo" {
-		t.Errorf("Expected 'foofoo', got %q", result)
-	}
-}
-
 func TestCustomAssignsDoNotPersistOnSameTemplate(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
@@ -105,13 +52,13 @@ func TestCustomAssignsDoNotPersistOnSameTemplate(t *testing.T) {
 	}
 
 	// Render with custom assigns
-	result := tmpl.RenderBang(map[string]interface{}{"foo": "from custom assigns"}, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, map[string]interface{}{"foo": "from custom assigns"}, &rubyOptions{})
 	if result != "from custom assigns" {
 		t.Errorf("Expected 'from custom assigns', got %q", result)
 	}
 
 	// Render without custom assigns - should be empty
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
@@ -128,7 +75,7 @@ func TestCustomAssignsSquashInstanceAssigns(t *testing.T) {
 	}
 
 	// First render with instance assigns
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "from instance assigns" {
 		t.Errorf("Expected 'from instance assigns', got %q", result)
 	}
@@ -138,7 +85,7 @@ func TestCustomAssignsSquashInstanceAssigns(t *testing.T) {
 	if err := tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env}); err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(map[string]interface{}{"foo": "from custom assigns"}, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, map[string]interface{}{"foo": "from custom assigns"}, &rubyOptions{})
 	if result != "from custom assigns" {
 		t.Errorf("Expected 'from custom assigns', got %q", result)
 	}
@@ -155,7 +102,7 @@ func TestPersistentAssignsSquashInstanceAssigns(t *testing.T) {
 	}
 
 	// First render with instance assigns
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "from instance assigns" {
 		t.Errorf("Expected 'from instance assigns', got %q", result)
 	}
@@ -168,7 +115,7 @@ func TestPersistentAssignsSquashInstanceAssigns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "from persistent assigns" {
 		t.Errorf("Expected 'from persistent assigns', got %q", result)
 	}
@@ -183,11 +130,11 @@ func TestResourceLimitsWorksWithCustomLengthMethod(t *testing.T) {
 	}
 
 	limit := 42
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
+	})
 	somethingWithLength := NewSomethingWithLength()
-	result := tmpl.RenderBang(map[string]interface{}{"bar": somethingWithLength}, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, map[string]interface{}{"bar": somethingWithLength}, &rubyOptions{})
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
@@ -202,22 +149,22 @@ func TestResourceLimitsRenderLength(t *testing.T) {
 	}
 
 	limit := 9
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 
 	limit = 10
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "0123456789" {
 		t.Errorf("Expected '0123456789', got %q", result)
 	}
@@ -234,14 +181,14 @@ func TestResourceLimitsRenderScore(t *testing.T) {
 	}
 
 	limit := 50
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderScoreLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 
@@ -252,27 +199,27 @@ func TestResourceLimitsRenderScore(t *testing.T) {
 	}
 
 	limit = 50
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderScoreLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 
 	limit = 200
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderScoreLimit: &limit,
-	}))
+	})
 	expected := strings.Repeat(" foo ", 100)
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != expected {
 		t.Errorf("Expected %q, got %q", expected, result)
 	}
-	if tmpl.ResourceLimits().RenderScore() == 0 {
+	if rubyLimits(tmpl).RenderScore() == 0 {
 		t.Error("Expected render_score to be set")
 	}
 }
@@ -286,14 +233,14 @@ func TestResourceLimitsAbortsRenderingAfterFirstError(t *testing.T) {
 	}
 
 	limit := 50
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderScoreLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 }
@@ -306,11 +253,11 @@ func TestResourceLimitsHashInTemplateGetsUpdatedEvenIfNoLimitsAreSet(t *testing.
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if tmpl.ResourceLimits().AssignScore() <= 0 {
+	renderRubyBang(tmpl, nil, &rubyOptions{})
+	if rubyLimits(tmpl).AssignScore() <= 0 {
 		t.Error("Expected assign_score to be greater than 0")
 	}
-	if tmpl.ResourceLimits().RenderScore() <= 0 {
+	if rubyLimits(tmpl).RenderScore() <= 0 {
 		t.Error("Expected render_score to be greater than 0")
 	}
 }
@@ -326,19 +273,19 @@ func TestRenderLengthPersistsBetweenBlocks(t *testing.T) {
 	}
 
 	limit := 3
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
 
 	limit = 4
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "aaaa" {
 		t.Errorf("Expected 'aaaa', got %q", result)
 	}
@@ -350,19 +297,19 @@ func TestRenderLengthPersistsBetweenBlocks(t *testing.T) {
 	}
 
 	limit = 6
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
 
 	limit = 7
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "aaaabbb" {
 		t.Errorf("Expected 'aaaabbb', got %q", result)
 	}
@@ -374,19 +321,19 @@ func TestRenderLengthPersistsBetweenBlocks(t *testing.T) {
 	}
 
 	limit = 5
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
 
 	limit = 6
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "ababab" {
 		t.Errorf("Expected 'ababab', got %q", result)
 	}
@@ -402,19 +349,19 @@ func TestRenderLengthUsesNumberOfBytesNotCharacters(t *testing.T) {
 
 	// すごい is 9 bytes in UTF-8
 	limit := 8
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if !strings.Contains(result, "Memory limits exceeded") {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
 
 	limit = 9
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderLengthLimit: &limit,
-	}))
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "すごい" {
 		t.Errorf("Expected 'すごい', got %q", result)
 	}
@@ -429,7 +376,7 @@ func TestDefaultResourceLimitsUnaffectedByRenderWithContext(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	tmpl.RenderBang(ctx, &liquid.RenderOptions{})
+	renderRubyBang(tmpl, ctx, &rubyOptions{})
 	if ctx.ResourceLimits().AssignScore() <= 0 {
 		t.Error("Expected assign_score to be greater than 0")
 	}
@@ -438,6 +385,8 @@ func TestDefaultResourceLimitsUnaffectedByRenderWithContext(t *testing.T) {
 	}
 }
 
+// Ruby renders a drop as the root of the variables; liquidgo takes a map,
+// so the drop goes under the key d and the templates read d.foo.
 func TestCanUseDropAsContext(t *testing.T) {
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
@@ -447,31 +396,33 @@ func TestCanUseDropAsContext(t *testing.T) {
 	drop := NewTemplateContextDrop()
 	drop.SetContext(liquid.BuildContext(liquid.ContextConfig{Environment: env}))
 
-	err := tmpl.Parse(`{{foo}}`, &liquid.TemplateOptions{Environment: env})
+	err := tmpl.Parse(`{{d.foo}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result := tmpl.RenderBang(drop, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, map[string]interface{}{"d": drop}, &rubyOptions{})
 	if result != "fizzbuzz" {
 		t.Errorf("Expected 'fizzbuzz', got %q", result)
 	}
 
-	err = tmpl.Parse(`{{bar}}`, &liquid.TemplateOptions{Environment: env})
+	err = tmpl.Parse(`{{d.bar}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(drop, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, map[string]interface{}{"d": drop}, &rubyOptions{})
 	if result != "bar" {
 		t.Errorf("Expected 'bar', got %q", result)
 	}
 
 	// baz reads the template's registers, as in Ruby's test, which renders
-	// the drop again: a drop given to one render is not kept for the next
-	err = tmpl.Parse(`{{baz}}`, &liquid.TemplateOptions{Environment: env})
+	// the drop again: a drop given to one render is not kept for the next.
+	// The data is a map: the drop goes under a key, where Ruby renders it as
+	// the root of the variables
+	err = tmpl.Parse(`{{d.baz}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	result = tmpl.RenderBang(drop, &liquid.RenderOptions{})
+	result = renderRubyBang(tmpl, map[string]interface{}{"d": drop}, &rubyOptions{})
 	if result != "haha" {
 		t.Errorf("Expected 'haha', got %q", result)
 	}
@@ -494,7 +445,7 @@ func TestAllowsNonStringValuesAsSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
@@ -504,7 +455,7 @@ func TestAllowsNonStringValuesAsSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "1" {
 		t.Errorf("Expected '1', got %q", result)
 	}
@@ -514,7 +465,7 @@ func TestAllowsNonStringValuesAsSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
-	result = tmpl.Render(nil, &liquid.RenderOptions{})
+	result = renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "true" {
 		t.Errorf("Expected 'true', got %q", result)
 	}
@@ -784,7 +735,7 @@ func TestNilComparisons(t *testing.T) {
 				t.Fatalf("ParseTemplate() error = %v", err)
 			}
 
-			result := tmpl.Render(tt.data, &liquid.RenderOptions{})
+			result := renderRuby(tmpl, tt.data, &rubyOptions{})
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}

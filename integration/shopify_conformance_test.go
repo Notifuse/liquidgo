@@ -143,7 +143,7 @@ func runConformance(c conformanceCase, mode, typing string) (out string, value i
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fs}),
 		RethrowErrors:      !c.RenderErrors,
 	})
-	out = tmpl.Render(ctx, &liquid.RenderOptions{})
+	out = renderRuby(tmpl, ctx, &rubyOptions{})
 	if c.Kind == "filter" {
 		value = ctx.FindVariable("__result", false)
 	}

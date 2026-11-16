@@ -29,7 +29,7 @@ func TestConcurrentRendersOfPartials(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			results[i] = tpl.Render(map[string]interface{}{"v": i}, nil)
+			results[i] = renderRuby(tpl, map[string]interface{}{"v": i}, nil)
 		}(i)
 	}
 	wg.Wait()

@@ -3,6 +3,7 @@ package liquid
 import (
 	gocontext "context"
 	"fmt"
+	"reflect"
 )
 
 // ContextConfig configures a Context.
@@ -22,7 +23,11 @@ type Context struct {
 	resourceLimits *ResourceLimits
 	cancel         gocontext.Context
 	done           <-chan struct{}
-	// fatalPanics makes a Go panic in a node end the render (RenderContext)
+	// funcValues holds the value each func of the data gave in this render,
+	// on the root context of the render (see reporter), keyed by the map the
+	// func was read from and its key: the data itself is never written.
+	funcValues map[funcValueKey]interface{}
+	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
 	// diagnostics is the context whose errors and warnings this one adds
@@ -553,13 +558,12 @@ func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, rais
 		return nil
 	}
 
-	// Handle procs/functions
-	if fn, ok := value.(func() interface{}); ok {
-		value = fn()
-		obj[key] = value
-	} else if fn, ok := value.(func(*Context) interface{}); ok {
-		value = fn(c)
-		obj[key] = value
+	// A func is called once per render, as Ruby calls a proc once and keeps
+	// its value; the value is kept with the render, not written in obj, which
+	// may be the caller's data
+	switch value.(type) {
+	case func() interface{}, func(*Context) interface{}:
+		value = c.funcValue(obj, key, value)
 	}
 
 	// Convert to liquid
@@ -573,6 +577,34 @@ func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string, rais
 	}
 
 	return liquidValue
+}
+
+// funcValueKey identifies a func of the data: the map it is in, and its key.
+type funcValueKey struct {
+	m   uintptr
+	key string
+}
+
+// funcValue returns the value of fn, read from obj[key], calling it the first
+// time the render reads it.
+func (c *Context) funcValue(obj map[string]interface{}, key string, fn interface{}) interface{} {
+	root := c.reporter()
+	k := funcValueKey{m: reflect.ValueOf(obj).Pointer(), key: key}
+	if v, ok := root.funcValues[k]; ok {
+		return v
+	}
+	var v interface{}
+	switch f := fn.(type) {
+	case func() interface{}:
+		v = f()
+	case func(*Context) interface{}:
+		v = f(c)
+	}
+	if root.funcValues == nil {
+		root.funcValues = make(map[funcValueKey]interface{})
+	}
+	root.funcValues[k] = v
+	return v
 }
 
 // WithDisabledTags executes a function with disabled tags.

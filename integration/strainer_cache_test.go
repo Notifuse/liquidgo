@@ -41,15 +41,15 @@ func strainerCacheTemplate(t *testing.T, env *liquid.Environment, src string) *l
 	return tpl
 }
 
-func withFilters(filters ...interface{}) *liquid.RenderOptions {
-	return &liquid.RenderOptions{Filters: filters}
+func withFilters(filters ...interface{}) *rubyOptions {
+	return &rubyOptions{Filters: filters}
 }
 
 // Each render uses its own filter instance, also on a cache hit.
 func TestStrainerCacheHitUsesTheRendersFilters(t *testing.T) {
 	tpl := strainerCacheTemplate(t, nil, `{{ "a" | tenant }}`)
 	for _, tag := range []string{"A", "B", "C"} {
-		if got := tpl.Render(map[string]interface{}{}, withFilters(&tenantFilters{tag})); got != "t:"+tag {
+		if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&tenantFilters{tag})); got != "t:"+tag {
 			t.Errorf("render for %s = %q, want %q", tag, got, "t:"+tag)
 		}
 	}
@@ -65,7 +65,7 @@ func TestStrainerCacheConcurrentRenders(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			results[i] = tpl.Render(map[string]interface{}{}, withFilters(&tenantFilters{fmt.Sprint(i)}))
+			results[i] = renderRuby(tpl, map[string]interface{}{}, withFilters(&tenantFilters{fmt.Sprint(i)}))
 		}(i)
 	}
 	wg.Wait()
@@ -84,11 +84,11 @@ func TestStrainerKeepsEnvironmentFiltersWithLocalOnes(t *testing.T) {
 		t.Fatal(err)
 	}
 	tpl := strainerCacheTemplate(t, env, `{{ "x" | env_only }}|{{ "x" | tenant }}`)
-	if got := tpl.Render(map[string]interface{}{}, nil); got != "env|env-tenant" {
+	if got := renderRuby(tpl, map[string]interface{}{}, nil); got != "env|env-tenant" {
 		t.Errorf("without local filters = %q, want %q", got, "env|env-tenant")
 	}
 	for i := 0; i < 2; i++ {
-		if got := tpl.Render(map[string]interface{}{}, withFilters(&tenantFilters{"L"})); got != "env|t:L" {
+		if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&tenantFilters{"L"})); got != "env|t:L" {
 			t.Errorf("with local filters, render %d = %q, want %q", i, got, "env|t:L")
 		}
 	}
@@ -97,10 +97,10 @@ func TestStrainerKeepsEnvironmentFiltersWithLocalOnes(t *testing.T) {
 // Two filter types with the same name in two packages get their own methods.
 func TestStrainerCacheTellsSameNamedTypesApart(t *testing.T) {
 	tpl := strainerCacheTemplate(t, nil, `{{ "x" | a_only }}|{{ "x" | b_only }}`)
-	if got := tpl.Render(map[string]interface{}{}, withFilters(&filters.Filters{})); got != "a|x" {
+	if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&filters.Filters{})); got != "a|x" {
 		t.Errorf("with a.Filters = %q, want %q", got, "a|x")
 	}
-	if got := tpl.Render(map[string]interface{}{}, withFilters(&bfilters.Filters{})); got != "x|b" {
+	if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&bfilters.Filters{})); got != "x|b" {
 		t.Errorf("with b.Filters = %q, want %q", got, "x|b")
 	}
 }

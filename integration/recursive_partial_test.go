@@ -38,7 +38,7 @@ func TestRecursivePartialsAreBounded(t *testing.T) {
 				t.Fatal(err)
 			}
 			tmpl.Registers()["file_system"] = partials
-			out := tmpl.Render(map[string]interface{}{}, nil)
+			out := renderRuby(tmpl, map[string]interface{}{}, nil)
 			if !strings.HasSuffix(out, "Liquid error: Nesting too deep") {
 				t.Errorf("the recursion does not end with a nesting error: %q", out)
 			}

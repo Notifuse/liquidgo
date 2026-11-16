@@ -71,10 +71,10 @@ func TestIfchangedCountsOnlyTheBodyItKeeps(t *testing.T) {
 // Ruby's subcontexts share the errors.
 func TestTheErrorsOfARenderedPartialAreReported(t *testing.T) {
 	env := panicEnvironment(limits{})
-	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "x{% crash %}y", "r": "{% render 'r' %}"}))
+	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "x{% fail %}y", "r": "{% render 'r' %}"}))
 	for _, c := range []struct{ source, want, wantError string }{
-		{"a{% render 'p' %}b", "axLiquid error: internalyb", "internal"},
-		{"{% assign two = '1,2' | split: ',' %}a{% render 'p' for two %}b", "axLiquid error: internalyxLiquid error: internalyb", "internal"},
+		{"a{% render 'p' %}b", "axLiquid error: bad argumentyb", "bad argument"},
+		{"{% assign two = '1,2' | split: ',' %}a{% render 'p' for two %}b", "axLiquid error: bad argumentyxLiquid error: bad argumentyb", "bad argument"},
 		{"a{% render 'r' %}b", "aLiquid error: Nesting too deepb", "Nesting too deep"},
 	} {
 		r := renderWith(env, c.source, nil)

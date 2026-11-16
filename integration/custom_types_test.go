@@ -47,9 +47,9 @@ func TestCustomMapTypeAlias(t *testing.T) {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	result1 := tmpl.Render(data1, nil)
-	result2 := tmpl.Render(data2, nil)
-	result3 := tmpl.Render(data3, nil)
+	result1 := renderRuby(tmpl, data1, nil)
+	result2 := renderRuby(tmpl, data2, nil)
+	result3 := renderRuby(tmpl, data3, nil)
 
 	// All three should produce the expected results
 	if result1 != "test-123" {
@@ -113,7 +113,7 @@ func TestCustomMapTypeAliasWithFilters(t *testing.T) {
 				t.Fatalf("Failed to parse template: %v", err)
 			}
 
-			result := tmpl.Render(data, nil)
+			result := renderRuby(tmpl, data, nil)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -144,7 +144,7 @@ func TestNestedCustomMapTypes(t *testing.T) {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	result := tmpl.Render(data, nil)
+	result := renderRuby(tmpl, data, nil)
 	expected := "deep-nested-id"
 
 	if result != expected {
@@ -171,7 +171,7 @@ func TestCustomMapInLoops(t *testing.T) {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	result := tmpl.Render(data, nil)
+	result := renderRuby(tmpl, data, nil)
 	expected := "Item 1: 10\nItem 2: 20\nItem 3: 30\n"
 
 	if result != expected {
@@ -215,7 +215,7 @@ func TestCustomMapInConditionals(t *testing.T) {
 				t.Fatalf("Failed to parse template: %v", err)
 			}
 
-			result := tmpl.Render(data, nil)
+			result := renderRuby(tmpl, data, nil)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -277,7 +277,7 @@ func TestMixedCustomAndNativeMaps(t *testing.T) {
 				t.Fatalf("Failed to parse template: %v", err)
 			}
 
-			result := tmpl.Render(data, nil)
+			result := renderRuby(tmpl, data, nil)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -351,7 +351,7 @@ func TestCustomMapWithDifferentTypes(t *testing.T) {
 				t.Fatalf("Failed to parse template: %v", err)
 			}
 
-			result := tmpl.Render(data, nil)
+			result := renderRuby(tmpl, data, nil)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -377,7 +377,7 @@ func TestCustomMapTypeAssignTag(t *testing.T) {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	result := tmpl.Render(data, nil)
+	result := renderRuby(tmpl, data, nil)
 	expected := "ID: ws-123, Name: My Workspace"
 
 	if result != expected {

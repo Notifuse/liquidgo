@@ -17,7 +17,7 @@ func TestResourceLimitsOfAnyIntegerType(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if out := tmpl.Render(nil, nil); !strings.Contains(out, "Memory limits exceeded") {
+		if out := renderRuby(tmpl, nil, nil); !strings.Contains(out, "Memory limits exceeded") {
 			t.Errorf("render_length_limit %T(5): got %q, want the limit error", limit, out)
 		}
 	}
@@ -50,9 +50,9 @@ func TestDropMethodsThatNeedArgumentsAreNotCalled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out := tmpl.Render(map[string]interface{}{"d": &dropWithArguments{}}, nil)
+	out := renderRuby(tmpl, map[string]interface{}{"d": &dropWithArguments{}}, nil)
 	if out != "||drop" {
-		t.Errorf("got %q, want %q (errors %v)", out, "||drop", tmpl.Errors())
+		t.Errorf("got %q, want %q (errors %v)", out, "||drop", rubyErrors(tmpl))
 	}
 }
 
@@ -64,7 +64,7 @@ func TestAHashIndexedByNilFindsNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 	data := map[string]interface{}{"h": map[string]interface{}{"k": "v"}}
-	if out := tmpl.Render(data, nil); out != "abc" || len(tmpl.Errors()) > 0 {
-		t.Errorf("got %q (errors %v), want %q", out, tmpl.Errors(), "abc")
+	if out := renderRuby(tmpl, data, nil); out != "abc" || len(rubyErrors(tmpl)) > 0 {
+		t.Errorf("got %q (errors %v), want %q", out, rubyErrors(tmpl), "abc")
 	}
 }

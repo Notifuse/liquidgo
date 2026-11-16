@@ -79,7 +79,7 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 	ctx := liquid.BuildContext(contextConfig)
 
 	// Render template with context
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
 	// Assert result
 	if output != expected {

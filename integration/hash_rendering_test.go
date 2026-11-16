@@ -202,5 +202,5 @@ func renderTemplateForTest(template string, assigns map[string]interface{}) stri
 		RethrowErrors:      false,
 	})
 
-	return tmpl.Render(ctx, &liquid.RenderOptions{})
+	return renderRuby(tmpl, ctx, &rubyOptions{})
 }

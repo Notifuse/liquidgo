@@ -18,7 +18,7 @@ func renderWithOutputEscape(t *testing.T, on bool, template string, data map[str
 	if err != nil {
 		t.Fatalf("parse %q: %v", template, err)
 	}
-	return tmpl.Render(data, nil)
+	return renderRuby(tmpl, data, nil)
 }
 
 // TestOutputEscape is the contract of Environment.SetOutputEscape: with it on,
@@ -88,8 +88,8 @@ func TestOutputEscapeIsOffByDefault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpl.Render(data, &liquid.RenderOptions{StrictFilters: true})
-	if len(tmpl.Errors()) == 0 {
+	renderRuby(tmpl, data, &rubyOptions{StrictFilters: true})
+	if len(rubyErrors(tmpl)) == 0 {
 		t.Error("raw is a filter without the output escape; Shopify Liquid has none")
 	}
 }
@@ -106,8 +106,8 @@ func TestOutputEscapeCountsInTheLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 	// 10 quotes: 10 bytes of data, 60 bytes once escaped.
-	tmpl.Render(map[string]interface{}{"q": `""""""""""`}, nil)
-	if !tmpl.ResourceLimits().Reached() {
+	renderRuby(tmpl, map[string]interface{}{"q": `""""""""""`}, nil)
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("the escaped output passes the render length limit without reaching it")
 	}
 }
@@ -134,7 +134,7 @@ func TestOutputEscapeInPartials(t *testing.T) {
 			t.Fatal(err)
 		}
 		tmpl.Registers()["file_system"] = partials
-		if got := tmpl.Render(map[string]interface{}{"name": "<b>"}, nil); got != want {
+		if got := renderRuby(tmpl, map[string]interface{}{"name": "<b>"}, nil); got != want {
 			t.Errorf("%s: got %q, want %q", template, got, want)
 		}
 	}
@@ -161,9 +161,9 @@ func TestOutputEscapeOfAListStaysWithinTheLimit(t *testing.T) {
 		var before, after runtime.MemStats
 		runtime.GC()
 		runtime.ReadMemStats(&before)
-		tmpl.Render(map[string]interface{}{"items": items}, nil)
+		renderRuby(tmpl, map[string]interface{}{"items": items}, nil)
 		runtime.ReadMemStats(&after)
-		if !tmpl.ResourceLimits().Reached() {
+		if !rubyLimits(tmpl).Reached() {
 			t.Fatalf("output escape %v: the list passes the render length limit without reaching it", on)
 		}
 		return after.TotalAlloc - before.TotalAlloc
@@ -191,9 +191,9 @@ func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
 		var before, after runtime.MemStats
 		runtime.GC()
 		runtime.ReadMemStats(&before)
-		tmpl.Render(map[string]interface{}{"long": long}, nil)
+		renderRuby(tmpl, map[string]interface{}{"long": long}, nil)
 		runtime.ReadMemStats(&after)
-		if !tmpl.ResourceLimits().Reached() {
+		if !rubyLimits(tmpl).Reached() {
 			t.Fatalf("output escape %v: the string passes the render length limit without reaching it", on)
 		}
 		return after.TotalAlloc - before.TotalAlloc
@@ -215,7 +215,7 @@ func TestOutputEscapeWithAGlobalFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := tmpl.Render(map[string]interface{}{"v": "<b>"}, &liquid.RenderOptions{GlobalFilter: func(v interface{}) interface{} { return v }})
+	got := renderRuby(tmpl, map[string]interface{}{"v": "<b>"}, &rubyOptions{GlobalFilter: func(v interface{}) interface{} { return v }})
 	if got != "&lt;b&gt;" {
 		t.Errorf("got %q", got)
 	}

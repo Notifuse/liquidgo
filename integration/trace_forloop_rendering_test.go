@@ -40,7 +40,7 @@ func TestTraceForloopRendering(t *testing.T) {
 	}
 
 	vars := map[string]interface{}{"forloop": drop}
-	got := tmpl.Render(vars, nil)
+	got := renderRuby(tmpl, vars, nil)
 	t.Logf("Template render result = %q", got)
 
 	if got == "" {

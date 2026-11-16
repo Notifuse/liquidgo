@@ -1,8 +1,8 @@
 package liquid
 
 import (
+	gocontext "context"
 	"fmt"
-	"strings"
 	"sync"
 	"testing"
 )
@@ -34,7 +34,7 @@ func TestTemplateRender(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	result := template.Render(map[string]interface{}{"name": "world"}, nil)
+	result := renderRuby(template, map[string]interface{}{"name": "world"}, nil)
 	expected := "Hello world"
 	if result != expected {
 		t.Errorf("Expected %q, got %q", expected, result)
@@ -50,7 +50,7 @@ func TestTemplateRenderEmpty(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	result := template.Render(nil, nil)
+	result := renderRuby(template, nil, nil)
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
@@ -62,7 +62,7 @@ func TestTemplateRenderNilRoot(t *testing.T) {
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	// Don't parse, so root is nil
 
-	result := template.Render(nil, nil)
+	result := renderRuby(template, nil, nil)
 	if result != "" {
 		t.Errorf("Expected empty string for nil root, got %q", result)
 	}
@@ -79,15 +79,12 @@ func TestTemplateDefaultResourceLimits(t *testing.T) {
 	})
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
-	if template.ResourceLimits() == nil {
-		t.Fatal("Expected ResourceLimits to be set")
-	}
 
 	// Resource limits should have default values from environment
-	if template.ResourceLimits().RenderLengthLimit() == nil {
+	if template.limits.RenderLengthLimit == nil || *template.limits.RenderLengthLimit != renderLimit {
 		t.Error("Expected render_length_limit to be set from environment")
 	}
-	if template.ResourceLimits().AssignScoreLimit() == nil {
+	if template.limits.AssignScoreLimit == nil || *template.limits.AssignScoreLimit != assignLimit {
 		t.Error("Expected assign_score_limit to be set from environment")
 	}
 }
@@ -147,50 +144,6 @@ func TestParseTemplate(t *testing.T) {
 	}
 }
 
-// raisingDrop raises a Liquid error when a template reads its now property.
-type raisingDrop struct{ *Drop }
-
-func (d *raisingDrop) Now() interface{} { panic(NewStandardError("boom")) }
-
-// TestTemplateRenderBang tests RenderBang with rethrow_errors enabled
-func TestTemplateRenderBang(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("Hello {{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Test normal rendering
-	result := template.RenderBang(map[string]interface{}{"name": "world"}, nil)
-	if result != "Hello world" {
-		t.Errorf("Expected 'Hello world', got %q", result)
-	}
-
-	// RenderBang applies to its own render only: a later Render of the same
-	// template records its error instead of raising it out of Render
-	failing := NewTemplate(&TemplateOptions{Environment: env})
-	if err := failing.Parse("[{{ boom.now }}]", nil); err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-	data := map[string]interface{}{"boom": &raisingDrop{Drop: NewDrop()}}
-	raised := func(render func()) (r interface{}) {
-		defer func() { r = recover() }()
-		render()
-		return nil
-	}
-	if r := raised(func() { failing.RenderBang(data, nil) }); r == nil {
-		t.Fatal("RenderBang of a drop that raises did not raise")
-	}
-	var out string
-	if r := raised(func() { out = failing.Render(data, nil) }); r != nil {
-		t.Fatalf("Render after RenderBang raised %v", r)
-	}
-	if want := "[Liquid error: boom]"; out != want {
-		t.Errorf("Render after RenderBang = %q, want %q", out, want)
-	}
-}
-
 // TestTemplateRenderToOutputBuffer tests direct buffer rendering
 func TestTemplateRenderToOutputBuffer(t *testing.T) {
 	env := NewEnvironment()
@@ -242,52 +195,6 @@ func TestTemplateRenderToOutputBuffer(t *testing.T) {
 	}
 }
 
-// TestTemplateBuildContext tests buildContext with various input types
-func TestTemplateBuildContext(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Test with Context as assigns
-	ctx := NewContext()
-	ctx.Set("name", "context_value")
-	result := template.Render(ctx, nil)
-	if result != "context_value" {
-		t.Errorf("Expected 'context_value', got %q", result)
-	}
-
-	// Test with map[string]interface{} as assigns
-	result = template.Render(map[string]interface{}{"name": "map_value"}, nil)
-	if result != "map_value" {
-		t.Errorf("Expected 'map_value', got %q", result)
-	}
-
-	// Test with nil assigns
-	result = template.Render(nil, nil)
-	if result != "" {
-		t.Errorf("Expected empty string for nil assigns, got %q", result)
-	}
-
-	// Test with Drop as assigns
-	drop := NewDrop()
-	result = template.Render(drop, nil)
-	if result != "" {
-		t.Logf("Drop rendering result: %q", result)
-	}
-
-	// Test with RenderOptions
-	output := ""
-	_ = template.Render(map[string]interface{}{"name": "options"}, &RenderOptions{
-		Output: &output,
-	})
-	if output != "options" {
-		t.Errorf("Expected 'options' in output, got %q", output)
-	}
-}
-
 // TestTemplateGettersSetters tests all getters and setters
 func TestTemplateGettersSetters(t *testing.T) {
 	env := NewEnvironment()
@@ -313,22 +220,6 @@ func TestTemplateGettersSetters(t *testing.T) {
 		t.Error("Assigns not working correctly")
 	}
 
-	// Test InstanceAssigns
-	instanceAssigns := template.InstanceAssigns()
-	if instanceAssigns == nil {
-		t.Error("Expected instanceAssigns map, got nil")
-	}
-	instanceAssigns["instance"] = "test"
-	if template.InstanceAssigns()["instance"] != "test" {
-		t.Error("InstanceAssigns not working correctly")
-	}
-
-	// Test Errors
-	errors := template.Errors()
-	if errors == nil {
-		t.Error("Expected errors slice, got nil")
-	}
-
 	// Test Warnings
 	warnings := template.Warnings()
 	if warnings == nil {
@@ -342,195 +233,10 @@ func TestTemplateGettersSetters(t *testing.T) {
 		t.Error("SetRoot not working correctly")
 	}
 
-	// Test SetResourceLimits
-	rl := NewResourceLimits(ResourceLimitsConfig{})
-	template.SetResourceLimits(rl)
-	if template.ResourceLimits() != rl {
-		t.Error("SetResourceLimits not working correctly")
-	}
-
 	// Test SetName
 	template.SetName("test_template")
 	if template.Name() != "test_template" {
 		t.Errorf("Expected 'test_template', got %q", template.Name())
-	}
-}
-
-// TestTemplateRenderWithOptions tests Render with various options
-func TestTemplateRenderWithOptions(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ name | custom }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Test with Output option
-	output := ""
-	result := template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		Output: &output,
-	})
-	if output != result {
-		t.Error("Output option not working correctly")
-	}
-
-	// Test with Registers
-	result = template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		Registers: map[string]interface{}{"reg": "value"},
-	})
-	if !strings.Contains(result, "test") && result == "" {
-		t.Errorf("Expected result containing 'test' or non-empty, got %q", result)
-	}
-
-	// Test with Filters
-	customFilter := &StandardFilters{}
-	result = template.Render(map[string]interface{}{"name": "TEST"}, &RenderOptions{
-		Filters: []interface{}{customFilter},
-	})
-	if !strings.Contains(result, "TEST") && result == "" {
-		t.Errorf("Expected result containing 'TEST' or non-empty, got %q", result)
-	}
-
-	// Test with GlobalFilter
-	result = template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		GlobalFilter: func(obj interface{}) interface{} {
-			return "filtered"
-		},
-	})
-	if result != "filtered" {
-		t.Errorf("Expected 'filtered', got %q", result)
-	}
-
-	// Test with ExceptionRenderer
-	result = template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		ExceptionRenderer: func(err error) interface{} {
-			return "error_rendered"
-		},
-	})
-	// Should contain either the variable value or error rendering
-	// Just verify render completes without panic
-	_ = result
-
-	// Test with StrictVariables
-	result = template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		StrictVariables: true,
-	})
-	if !strings.Contains(result, "test") && result == "" {
-		t.Errorf("Expected result containing 'test' or non-empty, got %q", result)
-	}
-
-	// Test with StrictFilters
-	result = template.Render(map[string]interface{}{"name": "test"}, &RenderOptions{
-		StrictFilters: true,
-	})
-	// StrictFilters with undefined filter may produce empty or error output
-	// Just verify render completes without panic
-	_ = result
-}
-
-// TestTemplateMemoryErrorHandling tests memory error recovery in Render
-func TestTemplateMemoryErrorHandling(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Set very low resource limits to trigger memory error
-	limit := 1
-	rl := NewResourceLimits(ResourceLimitsConfig{
-		RenderScoreLimit: &limit,
-	})
-	template.SetResourceLimits(rl)
-
-	// Render should handle memory error gracefully
-	result := template.Render(map[string]interface{}{"name": "test"}, nil)
-	// Memory error may produce empty result or error message
-	// Just verify no panic occurred
-	_ = result
-}
-
-// TestTemplateProfiling tests profiling integration in Render
-func TestTemplateProfiling(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{
-		Environment: env,
-		Profile:     true,
-	})
-	err := template.Parse("Hello {{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	result := template.Render(map[string]interface{}{"name": "world"}, nil)
-	if result != "Hello world" {
-		t.Errorf("Expected 'Hello world', got %q", result)
-	}
-
-	// Profiler may be created during render if profiling is enabled
-	// Just verify the render worked correctly
-	profiler := template.Profiler()
-	// Profiler might be nil if no profiling data was collected, which is acceptable
-	_ = profiler
-}
-
-// TestTemplateBuildContextWithDrop tests buildContext with a drop as assigns
-func TestTemplateBuildContextWithDrop(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ __drop__.test }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Create a drop with a method
-	drop := NewDrop()
-	drop.SetContext(NewContext())
-
-	// Test rendering with drop as assigns
-	result := template.Render(drop, nil)
-	// Drop rendering may return empty if method doesn't exist
-	_ = result
-}
-
-// TestTemplateBuildContextWithRethrowErrors tests buildContext with rethrowErrors
-func TestTemplateBuildContextWithRethrowErrors(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Test with Context as assigns, rendered with rethrow_errors
-	ctx := NewContext()
-	ctx.Set("name", "test")
-	result := template.RenderBang(ctx, nil)
-	if result != "test" {
-		t.Errorf("Expected 'test', got %q", result)
-	}
-}
-
-// TestTemplateBuildContextWithDropInInstanceAssigns tests buildContext with drop in instanceAssigns
-func TestTemplateBuildContextWithDropInInstanceAssigns(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("{{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Add drop to instanceAssigns
-	drop := NewDrop()
-	template.instanceAssigns["__drop__"] = drop
-
-	// Test with Context as assigns
-	ctx := NewContext()
-	ctx.Set("name", "test")
-	result := template.Render(ctx, nil)
-	if result != "test" {
-		t.Errorf("Expected 'test', got %q", result)
 	}
 }
 
@@ -580,54 +286,6 @@ func TestTemplateAssigns(t *testing.T) {
 	}
 }
 
-func TestTemplateInstanceAssigns(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-
-	// Test InstanceAssigns() - should return non-nil map
-	instanceAssigns := template.InstanceAssigns()
-	if instanceAssigns == nil {
-		t.Fatal("Expected non-nil instanceAssigns map")
-	}
-
-	// Test that we can set values
-	instanceAssigns["test"] = "value"
-	if instanceAssigns["test"] != "value" {
-		t.Error("Expected to be able to set instanceAssign value")
-	}
-
-	// Test that subsequent calls return same map
-	instanceAssigns2 := template.InstanceAssigns()
-	if instanceAssigns2["test"] != "value" {
-		t.Error("Expected subsequent InstanceAssigns() call to return same map")
-	}
-}
-
-func TestTemplateErrors(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-
-	// Test Errors() - should return non-nil slice
-	errors := template.Errors()
-	if errors == nil {
-		t.Fatal("Expected non-nil errors slice")
-	}
-
-	// Test that Errors() returns a slice (even if empty initially)
-	if errors == nil {
-		t.Error("Expected Errors() to return non-nil slice")
-	}
-
-	// Test that subsequent calls return same slice
-	errors2 := template.Errors()
-	if errors2 == nil {
-		t.Error("Expected subsequent Errors() call to return non-nil slice")
-	}
-
-	// Note: Errors are typically set during rendering, not directly appended
-	// The method returns the internal errors slice, which gets populated during render
-}
-
 // TestTemplateLazyInitialization tests lazy initialization of nil fields
 func TestTemplateLazyInitialization(t *testing.T) {
 	env := NewEnvironment()
@@ -636,8 +294,6 @@ func TestTemplateLazyInitialization(t *testing.T) {
 	// Manually set fields to nil to test lazy initialization
 	template.registers = nil
 	template.assigns = nil
-	template.instanceAssigns = nil
-	template.errors = nil
 
 	// Test Registers() lazy initialization
 	registers := template.Registers()
@@ -657,139 +313,6 @@ func TestTemplateLazyInitialization(t *testing.T) {
 		t.Errorf("Expected empty assigns map, got %d items", len(assigns))
 	}
 
-	// Test InstanceAssigns() lazy initialization
-	instanceAssigns := template.InstanceAssigns()
-	if instanceAssigns == nil {
-		t.Fatal("Expected InstanceAssigns() to initialize nil field")
-	}
-	if len(instanceAssigns) != 0 {
-		t.Errorf("Expected empty instanceAssigns map, got %d items", len(instanceAssigns))
-	}
-
-	// Test Errors() lazy initialization
-	errors := template.Errors()
-	if errors == nil {
-		t.Fatal("Expected Errors() to initialize nil field")
-	}
-	if len(errors) != 0 {
-		t.Errorf("Expected empty errors slice, got %d items", len(errors))
-	}
-}
-
-// TestTemplateRenderToOutputBufferWithNonContext tests RenderToOutputBuffer with non-Context TagContext
-func TestTemplateRenderToOutputBufferWithNonContext(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("Hello {{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Create a custom TagContext implementation
-	customCtx := &testTagContext{
-		assigns: map[string]interface{}{"name": "world"},
-		ctx:     NewContext(),
-	}
-
-	var output string
-	// Should use fallback rendering path (Render method)
-	// Note: The fallback path may not fully evaluate variables, so we just verify it doesn't panic
-	template.RenderToOutputBuffer(customCtx, &output)
-
-	// The fallback path may produce partial output or empty output
-	// We're testing that it doesn't panic and handles non-Context gracefully
-	if len(output) == 0 {
-		t.Logf("Note: Fallback rendering path produced empty output (may be expected)")
-	} else {
-		t.Logf("Note: Fallback rendering path produced: %q", output)
-	}
-}
-
-// testTagContext is a minimal TagContext implementation for testing
-type testTagContext struct {
-	assigns map[string]interface{}
-	ctx     *Context
-}
-
-func (t *testTagContext) Evaluate(object interface{}) interface{} {
-	// Handle VariableLookup
-	if vl, ok := object.(*VariableLookup); ok {
-		nameVal := vl.Name()
-		var name string
-		if str, ok := nameVal.(string); ok {
-			name = str
-		} else if vl2, ok := nameVal.(*VariableLookup); ok {
-			if str2, ok := vl2.Name().(string); ok {
-				name = str2
-			}
-		}
-		if name != "" {
-			if val, ok := t.assigns[name]; ok {
-				return val
-			}
-		}
-		// Try evaluating the VariableLookup
-		return t.FindVariable(name, false)
-	}
-	// Handle string literals
-	if str, ok := object.(string); ok {
-		return str
-	}
-	return nil
-}
-
-func (t *testTagContext) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
-	return obj
-}
-
-func (t *testTagContext) FindVariable(key string, raiseOnNotFound bool) interface{} {
-	return t.assigns[key]
-}
-
-func (t *testTagContext) ApplyGlobalFilter(obj interface{}) interface{} {
-	return obj
-}
-
-func (t *testTagContext) TagDisabled(tagName string) bool {
-	return false
-}
-
-func (t *testTagContext) WithDisabledTags(tags []string, fn func()) {
-	fn()
-}
-
-func (t *testTagContext) HandleError(err error, lineNumber *int) string {
-	return err.Error()
-}
-
-func (t *testTagContext) ParseContext() ParseContextInterface {
-	return nil
-}
-
-func (t *testTagContext) Interrupt() bool {
-	return false
-}
-
-func (t *testTagContext) PushInterrupt(interrupt interface{}) {
-	// No-op for testing
-}
-
-func (t *testTagContext) ResourceLimits() *ResourceLimits {
-	if t.ctx != nil {
-		return t.ctx.ResourceLimits()
-	}
-	return nil
-}
-
-func (t *testTagContext) Registers() *Registers {
-	if t.ctx != nil {
-		return t.ctx.Registers()
-	}
-	return nil
-}
-
-func (t *testTagContext) Context() interface{} {
-	return t
 }
 
 // TestTemplateRenderToOutputBufferNilRoot tests RenderToOutputBuffer with nil root
@@ -874,9 +397,6 @@ func TestTemplateConcurrentRender(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	// Pre-populate instanceAssigns to ensure cloning works
-	template.InstanceAssigns()["preset"] = "value"
-
 	var wg sync.WaitGroup
 	errors := make(chan error, 100)
 
@@ -885,10 +405,10 @@ func TestTemplateConcurrentRender(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			assigns := map[string]interface{}{"name": fmt.Sprintf("user%d", id)}
-			result := template.Render(assigns, nil)
+			res, err := template.Render(gocontext.Background(), assigns)
 			expected := fmt.Sprintf("Hello user%d", id)
-			if result != expected {
-				errors <- fmt.Errorf("expected %q, got %q", expected, result)
+			if err != nil || res.Output != expected {
+				errors <- fmt.Errorf("expected %q, got %q (%v)", expected, res.Output, err)
 			}
 		}(i)
 	}

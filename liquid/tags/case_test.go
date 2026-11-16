@@ -553,7 +553,7 @@ two
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result := tmpl.RenderBang(nil, nil)
+	result := renderRubyBang(tmpl, nil, nil)
 	expected := "one"
 	if result != expected {
 		t.Errorf("Expected %q, got %q", expected, result)
@@ -577,7 +577,7 @@ two
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result := tmpl.RenderBang(nil, nil)
+	result := renderRubyBang(tmpl, nil, nil)
 	expected := "one"
 	if result != expected {
 		t.Errorf("Expected %q, got %q", expected, result)
@@ -596,13 +596,13 @@ func TestCaseTagNodelistIntegration(t *testing.T) {
 	}
 
 	// Test with true
-	result := tmpl.RenderBang(map[string]interface{}{"var": true}, nil)
+	result := renderRubyBang(tmpl, map[string]interface{}{"var": true}, nil)
 	if result != "WHEN" {
 		t.Errorf("Expected 'WHEN', got %q", result)
 	}
 
 	// Test with false
-	result = tmpl.RenderBang(map[string]interface{}{"var": false}, nil)
+	result = renderRubyBang(tmpl, map[string]interface{}{"var": false}, nil)
 	if result != "ELSE" {
 		t.Errorf("Expected 'ELSE', got %q", result)
 	}
@@ -670,7 +670,7 @@ func TestCaseTagIntegrationMultipleConditions(t *testing.T) {
 				t.Fatalf("ParseTemplate() error = %v", err)
 			}
 
-			result := tmpl.RenderBang(tt.assigns, nil)
+			result := renderRubyBang(tmpl, tt.assigns, nil)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
