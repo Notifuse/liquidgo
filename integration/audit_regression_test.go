@@ -69,7 +69,7 @@ func TestAuditDropDoesNotLeakBetweenRenders(t *testing.T) {
 	for name, data := range map[string]interface{}{
 		"map":     map[string]interface{}{"name": "bob"},
 		"nil":     nil,
-		"context": liquid.NewContext(),
+		"context": newRubyContext(nil),
 	} {
 		if got := renderRuby(tpl, data, nil); got != "[]" {
 			t.Errorf("render B with %s = %q, want %q: the drop of A leaks into B", name, got, "[]")

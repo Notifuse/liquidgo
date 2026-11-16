@@ -50,11 +50,11 @@ func TestErrorHandling_TemplatesParsedWithLineNumbersRendersThemInErrors(t *test
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -80,11 +80,11 @@ func TestErrorHandling_StandardError(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -119,11 +119,11 @@ func TestErrorHandling_SyntaxError(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -158,11 +158,11 @@ func TestErrorHandling_ArgumentError(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -225,11 +225,11 @@ func TestErrorHandling_LaxUnrecognizedOperator(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := " Liquid error: Unknown operator =! "
@@ -461,11 +461,11 @@ func TestErrorHandling_Warnings(t *testing.T) {
 		}
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != "" {
@@ -542,11 +542,11 @@ func TestErrorHandling_ExceptionsPropagate(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
 	// In Go, panics from non-Liquid errors should propagate
 	// We expect this to panic or handle the error
@@ -576,14 +576,19 @@ func TestErrorHandling_DefaultExceptionRendererWithInternalError(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
-	})
+	}
 
+	// Ruby renders the RuntimeError as "Liquid error (line 1): internal" in
+	// place of the output. The drop panics with a Go value, which ends a
+	// render of liquidgo as a fatal PanicError with its stack (a divergence
+	// from Ruby), and the Ruby helper writes the text of an error that ends
+	// the render as the output.
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
-	expected := "This is a runtime error: Liquid error (line 1): internal"
+	expected := "Liquid error: internal"
 
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
@@ -593,161 +598,8 @@ func TestErrorHandling_DefaultExceptionRendererWithInternalError(t *testing.T) {
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	} else {
-		if _, ok := errors[0].(*liquid.InternalError); !ok {
-			t.Errorf("Expected InternalError, got %T", errors[0])
-		}
-	}
-}
-
-// TestErrorHandling_SettingDefaultExceptionRenderer tests setting a custom
-// exception renderer on the environment.
-// Ported from: test_setting_default_exception_renderer
-func TestErrorHandling_SettingDefaultExceptionRenderer(t *testing.T) {
-	exceptions := []error{}
-
-	defaultExceptionRenderer := func(err error) interface{} {
-		exceptions = append(exceptions, err)
-		return ""
-	}
-
-	env := liquid.NewEnvironment()
-	env.SetExceptionRenderer(defaultExceptionRenderer)
-	tags.RegisterStandardTags(env)
-
-	tmpl, err := liquid.ParseTemplate("This is a runtime error: {{ errors.argument_error }}", &liquid.TemplateOptions{
-		Environment: env,
-	})
-	if err != nil {
-		t.Fatalf("ParseTemplate() error = %v", err)
-	}
-
-	ctx := liquid.BuildContext(liquid.ContextConfig{
-		Environment:        env,
-		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
-		RethrowErrors:      false,
-	})
-
-	output := renderRuby(tmpl, ctx, &rubyOptions{})
-	expected := "This is a runtime error: "
-
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
-	}
-
-	errors := rubyErrors(tmpl)
-	if len(errors) != 1 {
-		t.Errorf("Expected 1 error, got %d", len(errors))
-	} else {
-		if _, ok := errors[0].(*liquid.ArgumentError); !ok {
-			t.Errorf("Expected ArgumentError, got %T", errors[0])
-		}
-	}
-
-	if len(exceptions) != 1 {
-		t.Errorf("Expected 1 exception in renderer, got %d", len(exceptions))
-	}
-}
-
-// TestErrorHandling_SettingExceptionRendererOnEnvironment tests setting exception
-// renderer on environment (same as above, different test name in Ruby).
-// Ported from: test_setting_exception_renderer_on_environment
-func TestErrorHandling_SettingExceptionRendererOnEnvironment(t *testing.T) {
-	exceptions := []error{}
-
-	exceptionRenderer := func(err error) interface{} {
-		exceptions = append(exceptions, err)
-		return ""
-	}
-
-	env := liquid.NewEnvironment()
-	env.SetExceptionRenderer(exceptionRenderer)
-	tags.RegisterStandardTags(env)
-
-	tmpl, err := liquid.ParseTemplate("This is a runtime error: {{ errors.argument_error }}", &liquid.TemplateOptions{
-		Environment: env,
-	})
-	if err != nil {
-		t.Fatalf("ParseTemplate() error = %v", err)
-	}
-
-	ctx := liquid.BuildContext(liquid.ContextConfig{
-		Environment:        env,
-		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
-		RethrowErrors:      false,
-	})
-
-	output := renderRuby(tmpl, ctx, &rubyOptions{})
-	expected := "This is a runtime error: "
-
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
-	}
-
-	errors := rubyErrors(tmpl)
-	if len(errors) != 1 {
-		t.Errorf("Expected 1 error, got %d", len(errors))
-	} else {
-		if _, ok := errors[0].(*liquid.ArgumentError); !ok {
-			t.Errorf("Expected ArgumentError, got %T", errors[0])
-		}
-	}
-}
-
-// TestErrorHandling_ExceptionRendererExposingNonLiquidError tests exception renderer
-// that exposes non-Liquid errors.
-// Ported from: test_exception_renderer_exposing_non_liquid_error
-func TestErrorHandling_ExceptionRendererExposingNonLiquidError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-
-	tmpl, err := liquid.ParseTemplate("This is a runtime error: {{ errors.runtime_error }}", &liquid.TemplateOptions{
-		Environment: env,
-		LineNumbers: true,
-	})
-	if err != nil {
-		t.Fatalf("ParseTemplate() error = %v", err)
-	}
-
-	exceptions := []error{}
-	handler := func(err error) interface{} {
-		exceptions = append(exceptions, err)
-		// In Ruby, this returns e.cause, but Go doesn't have the same error wrapping
-		// For now, return the error message
-		if internalErr, ok := err.(*liquid.InternalError); ok {
-			return internalErr.Error()
-		}
-		return err.Error()
-	}
-
-	env.SetExceptionRenderer(handler)
-
-	ctx := liquid.BuildContext(liquid.ContextConfig{
-		Environment:        env,
-		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
-		RethrowErrors:      false,
-	})
-
-	output := renderRuby(tmpl, ctx, &rubyOptions{})
-
-	// The exact output may vary based on error handling implementation
-	if !strings.Contains(output, "runtime error") {
-		t.Errorf("Expected output to contain 'runtime error', got %q", output)
-	}
-
-	errors := rubyErrors(tmpl)
-	if len(errors) != 1 {
-		t.Errorf("Expected 1 error, got %d", len(errors))
-	} else {
-		if _, ok := errors[0].(*liquid.InternalError); !ok {
-			t.Errorf("Expected InternalError, got %T", errors[0])
-		}
-	}
-
-	if len(exceptions) != 1 {
-		t.Errorf("Expected 1 exception in handler, got %d", len(exceptions))
-	} else {
-		if _, ok := exceptions[0].(*liquid.InternalError); !ok {
-			t.Errorf("Expected InternalError in handler, got %T", exceptions[0])
+		if _, ok := errors[0].(*liquid.PanicError); !ok {
+			t.Errorf("Expected PanicError, got %T", errors[0])
 		}
 	}
 }
@@ -774,12 +626,12 @@ func TestErrorHandling_IncludedTemplateNameWithLineNumbers(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{{"errors": NewErrorDrop()}},
 		RethrowErrors:      false,
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fileSystem}),
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "Argument error:\nLiquid error (product line 1): argument error"
@@ -816,11 +668,11 @@ func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) 
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx1 := liquid.BuildContext(liquid.ContextConfig{
+	ctx1 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output1 := renderRuby(tmpl1, ctx1, &rubyOptions{})
 	expected1 := "Liquid error: comparison of Integer with String failed0"
@@ -837,11 +689,11 @@ func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) 
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx2 := liquid.BuildContext(liquid.ContextConfig{
+	ctx2 := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
-	})
+	}
 
 	output2 := renderRuby(tmpl2, ctx2, &rubyOptions{})
 	expected2 := "0"
@@ -875,12 +727,12 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateName(t *testing.T) {
 
 	tmpl.SetName("template/index")
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
 		Registers:          liquid.NewRegisters(map[string]interface{}{"file_system": fileSystem}),
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -915,7 +767,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 
 	tmpl.SetName("template/index")
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
@@ -923,7 +775,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 			"file_system":      fileSystem,
 			"template_factory": templateFactory,
 		}),
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -968,7 +820,7 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
@@ -976,7 +828,7 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 			"file_system":      fileSystem,
 			"template_factory": templateFactory,
 		}),
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
@@ -1007,14 +859,14 @@ func TestErrorHandling_InternalErrorIsRaisedWithTemplateName(t *testing.T) {
 
 	tmpl.SetName("template/index")
 
-	ctx := liquid.BuildContext(liquid.ContextConfig{
+	ctx := &rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
 		Registers: liquid.NewRegisters(map[string]interface{}{
 			"file_system": NewStubFileSystem(map[string]string{}),
 		}),
-	})
+	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	expected := "Liquid error (template/index line 1): template not found: snippet"

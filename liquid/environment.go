@@ -11,7 +11,6 @@ type Environment struct {
 	fileSystem                 FileSystem
 	tags                       map[string]TagConstructor
 	strainerTemplate           *StrainerTemplateClass
-	exceptionRenderer          func(error) interface{}
 	defaultResourceLimits      map[string]interface{}
 	strainerTemplateClassCache map[string]*StrainerTemplateClass
 	// cacheMu guards strainerTemplateClassCache, which renders read and write
@@ -29,7 +28,6 @@ func NewEnvironment() *Environment {
 		errorMode:                  "lax",
 		tags:                       make(map[string]TagConstructor),
 		strainerTemplate:           NewStrainerTemplateClass(),
-		exceptionRenderer:          func(err error) interface{} { return err },
 		fileSystem:                 &BlankFileSystem{},
 		defaultResourceLimits:      EmptyHash,
 		strainerTemplateClassCache: make(map[string]*StrainerTemplateClass),
@@ -161,16 +159,6 @@ func (e *Environment) FileSystem() FileSystem {
 // SetFileSystem sets the file system.
 func (e *Environment) SetFileSystem(fs FileSystem) {
 	e.fileSystem = fs
-}
-
-// ExceptionRenderer returns the exception renderer.
-func (e *Environment) ExceptionRenderer() func(error) interface{} {
-	return e.exceptionRenderer
-}
-
-// SetExceptionRenderer sets the exception renderer.
-func (e *Environment) SetExceptionRenderer(renderer func(error) interface{}) {
-	e.exceptionRenderer = renderer
 }
 
 // SetDefaultResourceLimits sets the default resource limits.

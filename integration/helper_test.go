@@ -70,13 +70,13 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 	// When render_errors is false, rethrow_errors is true (default)
 	rethrowErrors := !options.RenderErrors
 
-	contextConfig := liquid.ContextConfig{
+	contextConfig := rubyContext{
 		Environment:        env,
 		StaticEnvironments: []map[string]interface{}{assigns},
 		Registers:          liquid.NewRegisters(registersMap),
 		RethrowErrors:      rethrowErrors,
 	}
-	ctx := liquid.BuildContext(contextConfig)
+	ctx := &contextConfig
 
 	// Render template with context
 	output := renderRuby(tmpl, ctx, &rubyOptions{})

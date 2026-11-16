@@ -117,12 +117,6 @@ func (t *escapeTracker) filter(name string, args []interface{}) {
 	}
 }
 
-func (t *escapeTracker) unsafe() {
-	if t != nil {
-		t.safe = false
-	}
-}
-
 // WriteOutput writes value to output as an output of the template: escaped
 // when the output escape is on, unless it is the text of a capture. Tags that
 // write a value, such as cycle, use it.

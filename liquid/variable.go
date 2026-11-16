@@ -396,13 +396,6 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 		safe.filter(filterName, filterArgs)
 	}
 
-	// Apply global filter (like Ruby: context.apply_global_filter(obj))
-	ctx := context.Context().(*Context)
-	if ctx.GlobalFilter() != nil {
-		safe.unsafe()
-	}
-	value = ctx.ApplyGlobalFilter(value)
-
 	return value
 }
 

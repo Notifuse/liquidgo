@@ -144,57 +144,6 @@ func TestParseTemplate(t *testing.T) {
 	}
 }
 
-// TestTemplateRenderToOutputBuffer tests direct buffer rendering
-func TestTemplateRenderToOutputBuffer(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("Hello {{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	// Test with Context
-	ctx := NewContext()
-	ctx.Set("name", "world")
-	output := ""
-	template.RenderToOutputBuffer(ctx, &output)
-	if output != "Hello world" {
-		t.Errorf("Expected 'Hello world', got %q", output)
-	}
-
-	// Test with nil root
-	template2 := NewTemplate(&TemplateOptions{Environment: env})
-	output2 := ""
-	template2.RenderToOutputBuffer(ctx, &output2)
-	if output2 != "" {
-		t.Errorf("Expected empty output for nil root, got %q", output2)
-	}
-
-	// Test with memory error recovery
-	template3 := NewTemplate(&TemplateOptions{Environment: env})
-	err = template3.Parse("{{ name }}", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-	ctx3 := NewContext()
-	ctx3.Set("name", "test")
-	var output3 string
-	template3.RenderToOutputBuffer(ctx3, &output3)
-	if output3 != "test" {
-		t.Errorf("Expected 'test', got %q", output3)
-	}
-
-	// Test with fallback path - create a context from map
-	ctx4 := BuildContext(ContextConfig{
-		Environments: []map[string]interface{}{{"name": "test"}},
-	})
-	output4 := ""
-	template.RenderToOutputBuffer(ctx4, &output4)
-	if output4 == "" {
-		t.Error("Expected non-empty output")
-	}
-}
-
 // TestTemplateGettersSetters tests all getters and setters
 func TestTemplateGettersSetters(t *testing.T) {
 	env := NewEnvironment()
@@ -315,74 +264,18 @@ func TestTemplateLazyInitialization(t *testing.T) {
 
 }
 
-// TestTemplateRenderToOutputBufferNilRoot tests RenderToOutputBuffer with nil root
+// TestTemplateRenderToOutputBufferNilRoot tests a render of a template with
+// nil root, through Render, where RenderToOutputBuffer is gone
 func TestTemplateRenderToOutputBufferNilRoot(t *testing.T) {
 	env := NewEnvironment()
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	// Don't parse, so root is nil
 
-	var output string
-	template.RenderToOutputBuffer(NewContext(), &output)
+	res, err := template.Render(gocontext.Background(), nil)
 
 	// Should not panic and output should be empty
-	if output != "" {
-		t.Errorf("Expected empty output for nil root, got %q", output)
-	}
-}
-
-// TestTemplateRenderToOutputBufferResourceLimitsReset tests resource limits reset on retry
-func TestTemplateRenderToOutputBufferResourceLimitsReset(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	err := template.Parse("Hello", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	ctx := NewContext()
-	rl := ctx.ResourceLimits()
-
-	// Set some scores
-	rl.IncrementRenderScore(10)
-	rl.IncrementAssignScore(5)
-
-	initialRenderScore := rl.RenderScore()
-	initialAssignScore := rl.AssignScore()
-
-	var output string
-	// RenderToOutputBuffer should reset resource limits
-	template.RenderToOutputBuffer(ctx, &output)
-
-	// Resource limits should be reset
-	if rl.RenderScore() >= initialRenderScore {
-		t.Logf("Note: RenderScore may not be reset: %d (expected < %d)", rl.RenderScore(), initialRenderScore)
-	}
-	if rl.AssignScore() >= initialAssignScore {
-		t.Logf("Note: AssignScore may not be reset: %d (expected < %d)", rl.AssignScore(), initialAssignScore)
-	}
-}
-
-// TestTemplateRenderToOutputBufferTemplateNameSetting tests template name setting
-func TestTemplateRenderToOutputBufferTemplateNameSetting(t *testing.T) {
-	env := NewEnvironment()
-	template := NewTemplate(&TemplateOptions{Environment: env})
-	template.SetName("test_template.liquid")
-	err := template.Parse("Hello", nil)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	ctx := NewContext()
-	if ctx.TemplateName() != "" {
-		t.Error("Expected empty template name initially")
-	}
-
-	var output string
-	template.RenderToOutputBuffer(ctx, &output)
-
-	// Template name should be set
-	if ctx.TemplateName() != "test_template.liquid" {
-		t.Errorf("Expected template name 'test_template.liquid', got %q", ctx.TemplateName())
+	if err != nil || res.Output != "" {
+		t.Errorf("Expected empty output for nil root, got %q (%v)", res.Output, err)
 	}
 }
 
