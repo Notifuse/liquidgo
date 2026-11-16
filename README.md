@@ -1,759 +1,210 @@
-# Liquid Go - Liquid Template Engine for Go
+# liquidgo - Shopify Liquid for Go
 
-> **💌 Built by [Notifuse](https://www.notifuse.com/)** - The modern open-source emailing platform to send newsletters, transactional emails & write blogs.
-> Notifuse uses Liquid templating to personalize emails and blog templates with variables like `{{ contact.first_name }}`. Self-hosted, free forever, and a modern alternative to Mailchimp, Resend etc...
-> [Try the live demo →](https://www.notifuse.com/)
+A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the output of the Ruby gem,
+every difference listed, and safe with untrusted templates.
+
+It renders the emails and blog pages of [Notifuse](https://www.notifuse.com/), the open-source
+emailing platform, where every template is written by its users.
 
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)
-[![Benchmarks](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/benchmarks.yml)
-[![codecov](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
+[![Coverage](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
 [![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo/v5.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo/v5)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Notifuse/liquidgo)](https://goreportcard.com/report/github.com/Notifuse/liquidgo)
+![Liquid](https://img.shields.io/badge/Liquid-5.11-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-A full-featured Go implementation of [Shopify's Liquid template engine](https://github.com/Shopify/liquid), maintaining feature parity with the Ruby version.
+## Go Liquid libraries compared
 
-- [Documentation](#documentation)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Performance](#performance)
-- [Contributing](IMPLEMENTATION.md)
+Measured on 938 templates against Shopify Liquid 5.11.0 on 2026-11-16 ([method](docs/library-comparison.md)):
 
-## Introduction
+| Library | Same output as Shopify | Render failures | Hostile templates contained | Newsletter template |
+|---|---|---|---|---|
+| **liquidgo** | **90.4%** | 1 | **4 / 4** | 46 µs |
+| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.5% | 0 | 0 / 4 | 185 µs |
+| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 78.7% | 69 | 3 / 4 | 128 µs |
+| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.7% | 192 | 1 / 4 | 47 µs |
+| [osteele/liquid](https://github.com/osteele/liquid) | 53.0% | 324 | 1 / 4 | 153 µs |
+| [acstech/liquid](https://github.com/acstech/liquid) | 33.6% | 480 | 1 / 4 | 28 µs |
 
-Liquid is a template engine written with specific requirements:
+The templates are the cases of Shopify Liquid's own test suite and liquidgo's differential corpus,
+which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 347 of 350 and liquidgo 328,
+the others being liquidgo's [deliberate differences](docs/differences-from-shopify.md) and markup
+Ruby's lax parser tolerates. A hostile template is written to exhaust the process (a billion
+iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested blocks).
 
-- **Beautiful and simple markup** - Clean, readable template syntax
-- **Secure and non-evaluating** - Safe for user-generated templates without code execution
-- **Stateless** - Separate parse and render phases for optimal performance
+## Why liquidgo
 
-## Why Liquid Go?
+- **Same output as Shopify Liquid.** A port of the Ruby gem 5.11.0, file by file. Shopify's test
+  suite and a differential corpus run against the gem in CI; every difference is listed with its
+  reason.
+- **Safe with untrusted templates.** A template cannot crash your program, exhaust its memory or CPU,
+  or read anything of your Go values but what you give it. See [Safety](#safety).
+- **Fast.** Parse once, render from any number of goroutines; renders share the parse of a partial.
+- **Explicit.** Filters are declared with `liquid.Filter`, and drops declare the keys a template
+  reads: nothing is found by reflection.
+- **Pure Go.** One dependency, `gopkg.in/yaml.v3`, for the translations of error messages.
 
-- ✅ **Full feature parity** with Ruby Liquid 5.11.0
-- ⚡ **High performance** - 3-10x faster than Ruby implementation
-- 🔒 **Secure** - Safe for user-generated templates
-- 📦 **Zero dependencies** - Pure Go implementation
-- 🧪 **Superior test coverage** - ~90% code coverage with comprehensive edge case testing, exceeding the official Ruby library's test suite
-- 🎯 **Production ready** - Used in real-world applications
-
-## Installation
+## Install
 
 ```bash
 go get github.com/Notifuse/liquidgo/v5
 ```
 
-## Quick Start
-
-### Basic Usage
-
 ```go
 package main
 
 import (
     "context"
     "fmt"
-    "github.com/Notifuse/liquidgo/v5/liquid"
-)
 
-func main() {
-    // Parse template
-    tmpl, err := liquid.ParseTemplate("Hello {{ name }}!", nil)
-    if err != nil {
-        panic(err)
-    }
-
-    // Render with data
-    res, err := tmpl.Render(context.Background(), map[string]interface{}{
-        "name": "World",
-    })
-    if err != nil {
-        panic(err)
-    }
-
-    fmt.Println(res.Output) // Output: Hello World!
-}
-```
-
-### Using Tags and Filters
-
-```go
-package main
-
-import (
-    "context"
-    "fmt"
     "github.com/Notifuse/liquidgo/v5/liquid"
     "github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 func main() {
-    // Create environment with standard tags
     env := liquid.NewEnvironment()
     tags.RegisterStandardTags(env)
 
-    // Parse template with conditionals and loops
-    source := `
-    {% if user %}
-        <h1>Hello {{ user.name | capitalize }}!</h1>
-        <ul>
-        {% for item in user.items %}
-            <li>{{ item }}</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>Please log in.</p>
-    {% endif %}
-    `
-
-    tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{
-        Environment: env,
-    })
+    tmpl, err := liquid.ParseTemplate(
+        "Hello {{ name | capitalize }}! {% for p in products %}{{ p.title }} {% endfor %}",
+        &liquid.TemplateOptions{Environment: env},
+    )
     if err != nil {
         panic(err)
     }
-
-    // Render with nested data
     res, err := tmpl.Render(context.Background(), map[string]interface{}{
-        "user": map[string]interface{}{
-            "name": "john doe",
-            "items": []string{"apple", "banana", "cherry"},
-        },
+        "name":     "ann",
+        "products": []interface{}{map[string]interface{}{"title": "Pen"}},
     })
     if err != nil {
         panic(err)
     }
-
-    fmt.Println(res.Output)
+    fmt.Println(res.Output) // Hello Ann! Pen
 }
 ```
 
-### What a Template Reads
-
-A template reads maps (of any key and value type), slices and arrays, strings, numbers, booleans
-and `time.Time`, which renders and takes the `date` filter. A Go struct exposes nothing to a
-template, neither fields nor methods, and renders as nothing (`nil` inside a list or a hash). As
-in Ruby, only a drop gives keys; Ruby raises an internal error for an object without `to_liquid`,
-where liquidgo renders nothing. A pointer renders as what it points to, and a nil
-pointer as nothing. A hash renders with its keys in sorted order. To give a struct to a template:
-
-- implement `ToLiquid() interface{}` (with a value receiver) and return a map of what the template
-  may read:
-
-  ```go
-  func (u User) ToLiquid() interface{} {
-      return map[string]interface{}{"name": u.Name}
-  }
-  ```
-
-- or make it a drop, as a `Liquid::Drop` in Ruby, by declaring the keys a template reads with
-  `LiquidGet`, which gets the context of the render. It returns the value and whether the key
-  exists: a missing key is nil, or an `UndefinedDropMethod` with strict variables. An error it
-  returns is recorded and the render goes on; a Go error is recorded as a `*liquid.InternalError`,
-  written `Liquid error: internal` as Ruby writes it, which unwraps to your error. A key is read when a template reads it, so a
-  drop can load what it gives lazily; nothing else of the struct is readable, and a drop without
-  a `String()` method renders as nothing (`nil` inside a list or a hash, where Ruby writes its class
-  name). The items of a `[]User` are drops when `*User` is: a template reads the items of the slice
-  themselves, so what a key loads stays for the next key. A nil `*User` is nil.
-
-  ```go
-  func (u *User) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
-      switch key {
-      case "first_name":
-          return u.FirstName, true, nil
-      case "orders":
-          orders, err := u.loadOrders()
-          return orders, true, err
-      }
-      return nil, false, nil
-  }
-  ```
-
-`ToLiquid()` is applied at each step of a lookup, to the items the array filters read and to a
-value written in the output. A type with a `String()` or `Error()` method renders that text: a
-generated type whose `String()` writes all its fields (protobuf messages, for example) shows them
-all, so give a template a map or a drop instead.
-
-### Custom Filters
-
-A filter is declared with its name and a function, which gets the context of the render, the
-value it is applied to and its arguments (keyword arguments come as a last `map[string]interface{}`).
-A filter of the environment takes the place of a standard one of the same name, and a local filter of
-a render (`WithFilters`) takes the place of both; its name is written exactly, as in Ruby. An error
-the function returns renders nothing and is recorded in `Result.Errors` (a Go error as a
-`*liquid.InternalError` that unwraps to it); with strict filters it is raised, as Ruby raises it.
+## API
 
 ```go
-package main
+tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env})
+res, err := tmpl.Render(ctx, data, opts...) // res.Output, res.Errors
+```
 
-import (
-    "context"
-    "fmt"
-    "strings"
+A template is parsed once and rendered from any number of goroutines: a render changes nothing in
+the template or in the data. The options of a render:
 
-    "github.com/Notifuse/liquidgo/v5/liquid"
-)
+| Option | Effect |
+|---|---|
+| `liquid.WithLimits(liquid.ResourceLimitsConfig{...})` | bounds the bytes written, the nodes rendered and the bytes assigned |
+| `liquid.WithFilters(liquid.Filter(name, fn), ...)` | filters of this render, before the environment's |
+| `liquid.WithFileSystem(fs)` | where `include` and `render` read partials |
+| `liquid.WithRegisters(map)` | values a custom tag reads |
+| `liquid.WithStrictVariables()`, `liquid.WithStrictFilters()` | an undefined variable or filter is an error |
+| `liquid.RaiseErrors()` | the first error ends the render, as Ruby's `render!` |
 
-func reverse(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
-    runes := []rune(fmt.Sprint(input))
-    for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-        runes[i], runes[j] = runes[j], runes[i]
+The context bounds the time: past its deadline, the render stops at its next node.
+
+### Errors
+
+In lax mode, as in Ruby, an error writes its message in place of its tag and the render goes on;
+every error is in `res.Errors`. A filter error writes nothing (see the
+[differences](docs/differences-from-shopify.md)). `Render` returns an error only when the render
+could not complete: a `*liquid.MemoryError` past a limit, a `*liquid.CanceledError` past the
+deadline, a `*liquid.PanicError` when Go code panicked (a bug, with its stack), or the first error
+with `RaiseErrors`.
+
+### Filters and drops
+
+```go
+shout := liquid.Filter("shout", func(ctx *liquid.Context, input interface{}, args ...interface{}) (interface{}, error) {
+    return strings.ToUpper(fmt.Sprint(input)) + "!", nil
+})
+env.RegisterFilter(shout)
+
+// A drop declares the keys a template reads: {{ user.first_name }}
+func (u *User) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
+    switch key {
+    case "first_name":
+        return u.FirstName, true, nil
     }
-    return string(runes), nil
-}
-
-func shout(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
-    return strings.ToUpper(fmt.Sprint(input)) + "!!!", nil
-}
-
-func main() {
-    // Create environment and register filters
-    env := liquid.NewEnvironment()
-    if err := env.RegisterFilter(liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)); err != nil {
-        panic(err)
-    }
-
-    tmpl, _ := liquid.ParseTemplate(
-        "{{ 'hello' | reverse | shout }}",
-        &liquid.TemplateOptions{Environment: env},
-    )
-
-    res, _ := tmpl.Render(context.Background(), nil)
-    fmt.Println(res.Output) // Output: OLLEH!!!
+    return nil, false, nil
 }
 ```
 
-### Custom Tags
+A template reads maps, lists, numbers, strings, booleans, times, what `ToLiquid()` returns and the
+keys of drops; a Go struct exposes nothing. The [guide](docs/guide.md) covers custom tags,
+environments, the output escape, partials and the parse tree visitor.
 
-A tag is a `liquid.Node`: it has one render method, `RenderToOutput`, which
-writes to the render's output buffer. `*liquid.Tag` has no render method, so
-a tag that embeds it declares `RenderToOutput`, or it is not a `Node`; a tag
-that embeds `*liquid.Block` renders its body unless it declares its own. A
-tag constructor returns `(liquid.Node, error)`: an error, or no tag, is a
-syntax error of the template.
+## Safety
 
-```go
-package main
+A template is untrusted input. Each threat is countered and tested:
 
-import (
-    "context"
-    "fmt"
-    "strings"
+| Threat | Countered by | Tests |
+|---|---|---|
+| A loop, a string or an output that grows without end | the render length, render score and assign score limits, checked as the render goes, filters included | `TestHostileTemplatesAreBounded` (25 templates), `TestFilterResultsStayWithinTheRenderLength` |
+| A render that runs too long | the deadline of the context, checked at each node | `TestRenderLimitsAndCancellation` |
+| Nesting deep enough to exhaust the stack | blocks, lookups and brackets nested more than 100 deep are refused while parsing | `TestSecurity_MoreThanMaxDepthNestedBlocksRaisesException`, `TestHostileTemplatesAreBounded` |
+| A partial that renders itself | the depth of partials is bounded | `TestRecursivePartialsAreBounded` |
+| Reading the fields or methods of a Go value | nothing is read by reflection: only maps, lists, `ToLiquid()` and the keys a drop declares | `TestAPlainStructExposesNothing`, `TestATemplateCannotCallAMethodOfAPlainStruct` |
+| Writing a struct's fields or an address in the output | a struct without `String()`, a channel or a func renders as nothing | `TestADropNeverWritesItsFields`, `TestADropOnASliceNeverWritesTheFieldsItHolds`, `TestAReflectValueWritesNoField`, `TestAChannelOrAFuncWritesNoAddress` |
+| Data leaking from one render to the next | a render keeps its assigns, errors and drops to itself | `TestAuditAssignDoesNotLeakBetweenRenders`, `TestAuditDropDoesNotLeakBetweenRenders`, `TestRenderIsolatesConcurrentRenders` |
+| Reading a file outside the partials' directory | the local file system resolves links and refuses paths out of its root | `TestLocalFileSystemReadsOnlyUnderItsRoot`, `TestLocalFileSystemALoopingLink` |
+| Values of the data in error messages | an error shows no value of the data, but a key or a partial name the template reads from a variable, as Ruby | `TestErrorsShowNoValueOfTheData` |
+| A cache that grows with the templates | the parse caches and the shared partial cache are bounded | `TestParseCachesAreBounded`, `TestThePartialCacheIsBounded` |
+| A panic that crashes the program | a panic during a render is returned as a `*liquid.PanicError` | `TestRenderGoPanicIsFatal` |
+| Concurrent renders corrupting each other | renders share only what they never write | `TestConcurrentRendersOfPartials`, the suite under `-race` |
 
-    "github.com/Notifuse/liquidgo/v5/liquid"
-)
+Limits are off by default, as in Ruby: set them for untrusted templates (see the
+[guide](docs/guide.md#resource-limits)).
 
-// Custom tag implementation
-type GreetingTag struct {
-    *liquid.Tag
-    name string
-}
+## Tests
 
-func NewGreetingTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*GreetingTag, error) {
-    return &GreetingTag{
-        Tag:  liquid.NewTag(tagName, markup, parseContext),
-        name: strings.TrimSpace(markup), // the markup keeps the space before %}
-    }, nil
-}
+- **Shopify's test suite**: the cases of Shopify Liquid 5.11.0's tests replayed in each error mode,
+  with Ruby numbers and JSON numbers ([its README](integration/testdata/shopify_conformance/README.md)).
+- **Differential corpus**: 274 templates, each in lax and strict mode, whose expected outputs CI
+  renders with the Ruby gem on each pull request; liquidgo matches each or lists why not.
+- **Fuzzing**: two minutes on each pull request, for panics and outputs that change from one parse
+  to the next.
+- **Guard mutations**: 36 checks of the library are removed one at a time, and a test must fail
+  each time (`scripts/guard_mutations`), before each release.
+- **Platforms**: the suite runs on amd64, arm64, 386 and Windows, and under the race detector;
+  coverage stays over 90%.
 
-func (g *GreetingTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
-    ctx := context.Context().(*liquid.Context)
-    name := ctx.FindVariable(g.name, false)
-    output.WriteString(fmt.Sprintf("Greetings, %v!", name))
-}
-
-func main() {
-    // Register custom tag
-    env := liquid.NewEnvironment()
-    env.RegisterTag("greet", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
-        tag, err := NewGreetingTag(tagName, markup, parseContext)
-        if err != nil {
-            return nil, err
-        }
-        return tag, nil
-    })
-
-    tmpl, _ := liquid.ParseTemplate(
-        "{% greet user_name %}",
-        &liquid.TemplateOptions{Environment: env},
-    )
-
-    res, _ := tmpl.Render(context.Background(), map[string]interface{}{
-        "user_name": "Alice",
-    })
-
-    fmt.Println(res.Output) // Output: Greetings, Alice!
-}
+```bash
+go test -race ./...
 ```
-
-## Template Syntax
-
-### Variables
-
-```liquid
-{{ variable }}
-{{ object.property }}
-{{ array[0] }}
-```
-
-### Filters
-
-```liquid
-{{ "hello" | capitalize }}
-{{ product.price | money }}
-{{ "now" | date: "%Y-%m-%d" }}
-```
-
-Filters can be chained:
-
-```liquid
-{{ "HELLO world" | downcase | capitalize }}
-```
-
-### Tags
-
-#### Control Flow
-
-```liquid
-{% if user.age >= 18 %}
-    Adult content
-{% elsif user.age >= 13 %}
-    Teen content
-{% else %}
-    Child content
-{% endif %}
-
-{% unless user.subscribed %}
-    Subscribe now!
-{% endunless %}
-
-{% case product.type %}
-{% when "shirt" %}
-    Clothing item
-{% when "book" %}
-    Reading material
-{% else %}
-    Other product
-{% endcase %}
-```
-
-#### Loops
-
-```liquid
-{% for item in array %}
-    {{ forloop.index }}: {{ item }}
-{% endfor %}
-
-{% for i in (1..10) %}
-    Number {{ i }}
-{% endfor %}
-
-{% tablerow product in collection.products %}
-    {{ product.title }}
-{% endtablerow %}
-```
-
-#### Variable Assignment
-
-```liquid
-{% assign name = "John" %}
-{% capture greeting %}
-    Hello {{ name }}!
-{% endcapture %}
-```
-
-#### Comments
-
-```liquid
-{% comment %}
-    This won't be rendered
-{% endcomment %}
-
-{% # This is an inline comment %}
-```
-
-## Environments
-
-Use environments to encapsulate custom tags, filters, and configurations:
-
-```go
-package main
-
-import (
-    "github.com/Notifuse/liquidgo/v5/liquid"
-    "github.com/Notifuse/liquidgo/v5/liquid/tags"
-)
-
-func main() {
-    // Create isolated environment
-    userEnv := liquid.NewEnvironment()
-    tags.RegisterStandardTags(userEnv)
-    userEnv.RegisterFilter(liquid.Filter("money", money))
-
-    // Use environment in template
-    tmpl, _ := liquid.ParseTemplate(source, &liquid.TemplateOptions{
-        Environment: userEnv,
-    })
-}
-```
-
-Benefits of environments:
-
-- **Encapsulation** - Keep different contexts separate
-- **Security** - Limit available tags/filters per context
-- **Maintainability** - Clearer scope of customizations
-- **No conflicts** - Avoid global state issues
-
-## Error Handling
-
-Liquid supports three error modes:
-
-```go
-env := liquid.NewEnvironment()
-
-// Lax mode (default) - render errors inline
-env.SetErrorMode("lax")
-
-// Warn mode - collect warnings
-env.SetErrorMode("warn")
-
-// Strict mode - return errors immediately
-env.SetErrorMode("strict")
-```
-
-### Rendering and errors
-
-`Template.Render(ctx, data, opts...)` renders in a state of its own and changes nothing in the template or
-in the data: a template is parsed once and rendered from any number of goroutines, and renders never see
-each other's assigns, errors or limits. It reads the template's assigns and registers. The data is a map;
-a drop goes under a key (`{"page": drop}`). A drop gets the context of the render at each key it gives and
-keeps none, so renders can share a drop that is safe for concurrent use.
-
-```go
-res, err := tmpl.Render(ctx, data,
-    liquid.WithFileSystem(partials),         // partials of this render, nested ones included
-    liquid.WithLimits(limits),               // limits set here replace the template's
-    liquid.WithRegisters(registers),         // read by tags and filters
-    liquid.WithFilters(tenantFilters...),    // local filters, next to the environment's
-    liquid.WithStrictVariables(),            // an undefined variable is an error
-)
-switch {
-case err != nil:
-    // *liquid.MemoryError (a limit), *liquid.CanceledError (ctx is done),
-    // *liquid.PanicError (Go code panicked, with its Stack); res.Output is
-    // what was written before the render stopped
-case len(res.Errors) > 0:
-    // errors the render recorded and went on, as Ruby: most wrote
-    // "Liquid error: ..." in res.Output; an undefined variable, filter or
-    // drop method writes nothing
-}
-fmt.Println(res.Output, res.RenderScore, res.AssignScore)
-```
-
-`liquid.RaiseErrors()` makes the first recorded error end the render, as Ruby's `render!`. A Go panic in a
-tag, a filter or a drop ends the render with a `*liquid.PanicError`, where Ruby writes
-`Liquid error: internal` and goes on; a Liquid error they raise is recorded as in Ruby.
 
 ## Performance
 
-Liquid Go is optimized for performance:
+The newsletter template of the comparison (a loop over 50 products with conditions and filters)
+renders in 46 µs. The benchmarks of [`performance/`](performance/) render a Shopify theme; a render
+of v5.11.10 allocates half as much as v5.11.9.
 
-### Benchmarks (Apple M1 Pro)
+## Differences from Shopify Liquid
 
-```
-BenchmarkTokenize       1981 ops    540 µs/op     253 KB/op
-BenchmarkParse           180 ops   6.66 ms/op    2.59 MB/op
-BenchmarkRender          100 ops  10.43 ms/op   20.90 MB/op
-BenchmarkFull             67 ops  18.49 ms/op   24.09 MB/op
-```
+A few behaviours differ on purpose, for Go data decoded from JSON and text read by people:
 
-### Performance Tips
+- an empty string is false in a condition, so `{% if contact.first_name %}` skips an empty name;
+- a whole float renders without `.0` (`{{ 2.0 }}` gives `2`);
+- a filter error writes nothing, and is recorded in `res.Errors`;
+- a render keeps its assigns to itself, and an `increment` counter starts at 0, never at a value
+  of the data of the same name.
 
-1. **Parse once, render many** - Templates are compiled once and reused
-2. **Use environments** - Pre-register filters and tags
-3. **Profile with Go** - `pprof` shows where a render spends its time
-4. **Cache templates** - Store compiled templates in memory
+Every difference, deliberate or not, is listed with its reason:
+[differences from Shopify Liquid](docs/differences-from-shopify.md).
 
-See [`performance/`](performance/) directory for detailed benchmarks.
-
-## Advanced Features
-
-### Resource Limits
-
-```go
-env := liquid.NewEnvironment()
-env.SetDefaultResourceLimits(map[string]interface{}{
-    "render_length_limit": 1000000,  // 1MB output limit
-    "render_score_limit":  100000,   // Complexity limit
-})
-```
-
-### Output Escape
-
-For HTML templates that output untrusted data (contact fields, form input, feeds), turn on the
-output escape, as LiquidJS's `outputEscape` option:
-
-```go
-env := liquid.NewEnvironment()
-env.SetOutputEscape(true)
-```
-
-Every `{{ }}` output, `echo` and `cycle` is then HTML-escaped, so a value cannot add markup to the
-page. An output is written as it is when its value is HTML on purpose:
-
-- the result of `raw` (`{{ feed.html | raw }}`), or of `escape`, `escape_once` or `h`, which have
-  escaped it already;
-- the text of a `capture` (its outputs were escaped when it was captured), also after an `assign`
-  copies it, and in the partials of the render;
-- either of these through `strip`, `lstrip`, `rstrip`, `strip_newlines`, `newline_to_br`,
-  `truncate` or `truncatewords` (`{{ bio | escape | newline_to_br }}`), as long as the ellipsis
-  of `truncate` and `truncatewords` is written in the template.
-
-A capture is recognised by its text: an output equal to the text of a capture of the render is
-written as it is, so data can only repeat markup the template itself captured.
-
-Any other filter after them makes the result ordinary text again, escaped unless `raw` follows.
-`assign`, conditions and filters see the data as it is: only what an output writes is escaped. The
-escape is for HTML: a value written into CSS (`<style>`) or a script needs `raw`, and only for data
-you trust. The option is off by default, as in Shopify Liquid, which has no `raw` filter.
-
-A value stays inside the text of an element, an attribute in double or single quotes, a comment and
-an Outlook conditional comment. The escape does not cover:
-
-- an attribute without quotes, which a space in the value ends: quote every attribute;
-- the scheme of a URL: `<a href="{{ url }}">` keeps a `javascript:` value; check URLs before they
-  reach the template;
-- CSS and scripts, as above.
-
-### Listing the Variables of a Template
-
-`liquid.ForParseTreeVisitor` walks a parsed template, its tags and their expressions, as Ruby's
-`Liquid::ParseTreeVisitor`. A callback on `*liquid.VariableLookup` lists the variables a template
-reads:
-
-```go
-package main
-
-import (
-    "fmt"
-
-    "github.com/Notifuse/liquidgo/v5/liquid"
-    "github.com/Notifuse/liquidgo/v5/liquid/tags"
-)
-
-func main() {
-    env := liquid.NewEnvironment()
-    tags.RegisterStandardTags(env)
-    tmpl, _ := liquid.ParseTemplate(
-        "{% if contact.vip %}{{ contact.first_name | default: fallback }}{% endif %}",
-        &liquid.TemplateOptions{Environment: env},
-    )
-
-    var names []interface{}
-    liquid.ForParseTreeVisitor(tmpl.Root(), nil).
-        AddCallbackFor([]interface{}{(*liquid.VariableLookup)(nil)}, func(node, ctx interface{}) (interface{}, interface{}) {
-            names = append(names, node.(*liquid.VariableLookup).Name())
-            return nil, ctx
-        }).
-        Visit(nil)
-
-    fmt.Println(names) // Output: [contact contact fallback]
-}
-```
-
-Each item of `Visit` pairs what the callback returned for a node with the visit of its children, so a
-callback can also rebuild the tree. A tag of your own gives its children with `ParseTreeChildren()
-[]interface{}` (`liquid.ParseTreeNode`); a block gives its body by default. As in Ruby, the keyword
-arguments of a filter are not visited (`{{ a | default: b, allow_false: c }}` lists `a` and `b`), nor
-is the group name of a `cycle`.
-
-### File System
-
-```go
-type MyFileSystem struct{}
-
-func (fs *MyFileSystem) ReadTemplateFile(path string) (string, error) {
-    // Load template from database, S3, etc.
-    return loadTemplate(path)
-}
-
-tmpl := liquid.NewTemplate(&liquid.TemplateOptions{
-    Environment: env,
-})
-tmpl.Registers()["file_system"] = &MyFileSystem{}
-```
-
-### Partial Templates
-
-```liquid
-{% render "header", title: page.title %}
-{% include "sidebar" %}
-```
-
-## Standard Filters
-
-Liquid Go includes all standard filters:
-
-**String**: `capitalize`, `downcase`, `upcase`, `strip`, `lstrip`, `rstrip`, `strip_html`, `strip_newlines`, `newline_to_br`, `escape`, `escape_once`, `url_encode`, `url_decode`, `slice`, `truncate`, `truncatewords`, `split`, `replace`, `replace_first`, `remove`, `remove_first`, `append`, `prepend`
-
-**Array**: `join`, `first`, `last`, `concat`, `map`, `reverse`, `sort`, `sort_natural`, `uniq`, `where`, `group_by`, `compact`, `size`
-
-**Math**: `abs`, `ceil`, `floor`, `round`, `plus`, `minus`, `times`, `divided_by`, `modulo`, `at_least`, `at_most`
-
-**Date**: `date`
-
-**Default**: `default`
-
-See [documentation](https://shopify.dev/docs/api/liquid/filters) for details.
-
-## Standard Tags
-
-All standard Liquid tags are supported:
-
-- Control flow: `if`, `elsif`, `else`, `endif`, `unless`, `case`, `when`
-- Loops: `for`, `break`, `continue`, `tablerow`
-- Variables: `assign`, `capture`, `increment`, `decrement`
-- Templates: `include`, `render`
-- Other: `comment`, `raw`, `echo`, `liquid`
-
-## Testing
-
-Liquid Go maintains **superior test coverage** compared to the official Ruby library:
-
-- **~90% code coverage** across the entire codebase
-- **Comprehensive edge case testing** - Tests cover error paths, boundary conditions, and unusual scenarios
-- **Integration tests** - Full template rendering scenarios matching Ruby test suite
-- **Performance tests** - Benchmark suite ensuring optimal performance
-
-```bash
-# Run all tests
-go test ./...
-
-# Run with coverage
-go test -cover ./...
-
-# Generate detailed coverage report
-go test -coverprofile=coverage.out ./...
-go tool cover -func=coverage.out
-
-# Run integration tests
-go test ./integration/...
-
-# Run benchmarks
-cd performance && go test -bench=.
-```
-
-### Shopify conformance suite
-
-`integration/shopify_conformance_test.go` replays the test cases of the Shopify Liquid Ruby test
-suite (extracted by `scripts/extract_shopify_conformance.py`) in each error mode, with Ruby
-numbers and with JSON-decoded numbers. Every remaining difference is listed, with its reason, in
-`integration/testdata/shopify_conformance/known_divergences.json`; see
-[its README](integration/testdata/shopify_conformance/README.md).
-
-## Project Structure
-
-```
-liquidgo/
-├── liquid/              # Core library
-│   ├── tags/           # Standard tag implementations
-│   ├── tag/            # Tag base types
-│   └── locales/        # i18n support
-├── integration/        # Integration tests
-├── performance/        # Benchmarking suite
-└── reference-liquid/   # Ruby reference implementation
-```
-
-## Version Compatibility
+## Version
 
 Current version: **5.11.0**, port revision 11 (`liquid.Version`, `liquid.PortRevision`). Port
 revision N is tagged `v5.11.(N-1)`: revision 11 is `v5.11.10`. Revision 2 has no tag of its own: it ships
 in `v5.11.2` with revision 3.
 
-Liquid Go maintains version parity with [Shopify Liquid](https://github.com/Shopify/liquid). This ensures compatibility with templates written for the Ruby version.
-
-### Deliberate differences from Shopify Liquid
-
-A few behaviours differ on purpose, because Go applications usually pass data decoded from JSON,
-where every number is a `float64`, and render text meant for people (emails, pages):
-
-- **An empty string is falsy**: `{% if "" %}` is false, so `{% if contact.first_name %}` skips an
-  empty name. In Ruby, only `nil` and `false` are falsy. `where`, `reject`, `has`, `find` and
-  `find_index` without a value also treat an empty list or hash as falsy, and with a value match a
-  string to the number it writes (`where: "id", "10"` keeps an `id` of `10`).
-- **Whole floats render without `.0`**: `{{ 2.0 }}` renders `2`, and `{{ 100 | plus: 1 }}` with a
-  JSON number renders `101`, not `101.0`. A JSON integer stays a float in arithmetic, so
-  `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`).
-- **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode`, `map`
-  over integers and a filter given too many arguments render an empty string instead of
-  `Liquid error: ...`, and the error is recorded in `Result.Errors` (with strict filters it is
-  raised, as in Ruby); a `truncate` or `truncatewords` length that is not an integer keeps the
-  input.
-- **Template-controlled sizes are bounded**: a `date` directive wider than 1024 (`%5000d`) is
-  copied as written, a `round` precision beyond ±400 digits is not computed, and a filter builds
-  at most 1,048,576 integers of a range (`join` writes at most as many), raising `Memory limits
-  exceeded` beyond, where Ruby would build them.
-- **A Go struct renders as nothing**, unless it is a drop or has `ToLiquid()`, `String()` or
-  `Error()`; Ruby raises an internal error for an object without `to_liquid`. See
-  [What a Template Reads](#what-a-template-reads).
-- **Each render starts from its own data**: what a render assigns (`assign`, `capture`) is not
-  kept in the template for the next render, so a value assigned while rendering for one recipient
-  never reaches the next. Ruby keeps it.
-- **A render takes a map**, where Ruby also takes a drop as the root of the variables: give the drop
-  under a key.
-- **Digits after a dot are an array index**: `{{ order.items.0.sku }}` reads the first item, as the
-  paths of Notifuse's display conditions are written; Ruby takes `0` as the string key `"0"` and
-  gives nil. A map still reads `h.0` as its key `"0"`. This is lax mode: the strict parser rejects a
-  number after a dot, as Ruby's.
-- **A float with no fraction is an array index**, as a JSON number is a `float64` in Go:
-  `{{ arr[1.0] }}` and an index computed with `divided_by: 2.0` read an item, where Ruby takes only an
-  Integer as an index.
-- **`RaiseErrors` raises the errors of its own render only**; Ruby's `render!` leaves the template
-  raising them in later renders.
-- **A Go panic, a resource limit and a cancellation end the render** with the returned error and the
-  output written so far; Ruby writes `Liquid error: internal` for an exception and goes on, and
-  writes the message of a limit as the output.
-- **`blank`** compares as before (`false == blank` is false).
-- **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
-- **`increment` and `decrement`** counters start at 0, never at a render data value of the same
-  name.
-- **Partials share the resource limits** of the template that renders them: `render` and `include`
-  do not reset them, as Ruby does.
-- **Nesting is bounded at 100** for lookups and `liquid` tags too, as for blocks: `a[a[a[...]]]`
-  nested deeper is a parse error.
-- **A filter result longer than `render_length_limit`** raises `Memory limits exceeded`, even when
-  it is assigned rather than written; the filters that can multiply their input check before they
-  build it.
-- Some malformed markup that Ruby's lax parser tolerates (`{{ 'a' | split$$$:' ' }}`,
-  `{{ false - }}`) renders differently.
-
-## Documentation
-
-- [Implementation Guide](IMPLEMENTATION.md) - Architecture and implementation details
-- [Performance Guide](performance/README.md) - Benchmarking and optimization
-- [Ruby Liquid Docs](https://shopify.dev/docs/api/liquid) - Template syntax reference
-- [Liquid Wiki](https://github.com/Shopify/liquid/wiki) - Additional resources
-
 ## Contributing
 
-Contributions are welcome! When implementing new features:
-
-1. Reference the Ruby implementation in `reference-liquid/`
-2. Maintain file naming conventions (see [IMPLEMENTATION.md](IMPLEMENTATION.md))
-3. Add tests matching Ruby test coverage
-4. Run benchmarks to check performance impact
-5. Update documentation
+Each change follows the Ruby implementation in `reference-liquid/`, with tests ported from its
+suite; a bug fix comes with a test that fails without it. See [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
 ## License
 
-Liquid Go is released under the MIT License. See LICENSE file for details.
+MIT. Shopify Liquid, which liquidgo ports, is © Shopify Inc., also under the MIT License.
 
-The Ruby reference implementation is © Shopify Inc., also under MIT License.
-
-## Author
-
-Liquid Go is created and maintained by **Pierre Bazoge** ([@pierre-b](https://github.com/pierre-b)).
-
-## Credits
-
-Liquid Go is a Go port of [Shopify's Liquid](https://github.com/Shopify/liquid) template engine, maintaining full compatibility with the Ruby implementation.
-
-Original Liquid created by Tobias Lütke (@tobi).
+Created and maintained by Pierre Bazoge ([@pierre-b](https://github.com/pierre-b)).
