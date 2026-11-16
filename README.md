@@ -631,6 +631,10 @@ where every number is a `float64`, and render text meant for people (emails, pag
   never reaches the next. Ruby keeps it.
 - **A render takes a map**, where Ruby also takes a drop as the root of the variables: give the drop
   under a key.
+- **Digits after a dot are an array index**: `{{ order.items.0.sku }}` reads the first item, as the
+  paths of Notifuse's display conditions are written; Ruby takes `0` as the string key `"0"` and
+  gives nil. A map still reads `h.0` as its key `"0"`. This is lax mode: the strict parser rejects a
+  number after a dot, as Ruby's.
 - **A float with no fraction is an array index**, as a JSON number is a `float64` in Go:
   `{{ arr[1.0] }}` and an index computed with `divided_by: 2.0` read an item, where Ruby takes only an
   Integer as an index.

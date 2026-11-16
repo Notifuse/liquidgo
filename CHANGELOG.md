@@ -109,7 +109,9 @@ partial body.
   raise. An integer is a Go integer of any kind, named or not, or a float with no fraction (a JSON number);
   an index beyond the range of `int` is out of range, also on 32-bit platforms. Any
   other key is no index, as in Ruby: `{{ arr['1'] }}` and `{{ arr[1.5] }}` render nothing, where they
-  read the item at 1. Three listed divergences from Shopify are gone.
+  read the item at 1. Digits written after a dot stay an index of a list (`{{ order.items.0.sku }}`),
+  as Notifuse writes the paths of its display conditions, where Ruby keeps the string `"0"` (lax mode;
+  the strict parser rejects a number after a dot, as Ruby's). Three listed divergences from Shopify are gone.
 - **A name that holds nil in the data is looked up in the template's assigns next**, as Ruby goes on
   past a nil to the next environment: data `{"x": nil}` with the assign `x = "y"` renders `y`. With
   strict variables, the data decides, nil included, as in Ruby.

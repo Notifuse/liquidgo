@@ -3218,6 +3218,18 @@
       "output": " y"
     },
     {
+      "id": "index-12",
+      "mode": "lax",
+      "template": "{{ arr.0 }}|{{ words.1 }}|{{ h.0 }}",
+      "output": "||"
+    },
+    {
+      "id": "index-12",
+      "mode": "strict",
+      "template": "{{ arr.0 }}|{{ words.1 }}|{{ h.0 }}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected id but found number in \"{{ arr.0 }}\""
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

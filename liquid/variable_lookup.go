@@ -3,6 +3,7 @@ package liquid
 import (
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -16,6 +17,10 @@ type VariableLookup struct {
 	name         interface{}
 	lookups      []interface{}
 	commandFlags uint
+	// indexFlags marks the lookups written after a dot with digits only
+	// (items.0): a list reads them as an index, as Notifuse writes the
+	// paths of its display conditions, where Ruby keeps the string "0".
+	indexFlags uint
 }
 
 // parseVariableTokens tokenizes a variable expression, properly handling nested brackets.
@@ -136,6 +141,8 @@ func VariableLookupParse(markup string, ss *StringScanner, cache map[string]inte
 			} else if isCommandMethod(lookupStr) {
 				// Mark as command method
 				vl.commandFlags |= 1 << i
+			} else if isDigits(lookupStr) {
+				vl.indexFlags |= 1 << i
 			}
 		}
 	}
@@ -250,7 +257,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		// of range gives nil, which strict variables do not raise. Any other
 		// key, such as '1' or 1.5, is no index, as in Ruby.
 		if arr, ok := obj.([]interface{}); ok {
-			if idx, ok := integerKey(key); ok {
+			if idx, ok := vl.indexKey(i, key); ok {
 				obj = indexOf(len(arr), idx, func(i int) interface{} { return context.itemOf(arr, i) })
 				continue
 			}
@@ -259,7 +266,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 			// This matches Ruby's duck-typing behavior: arrays respond to []
 			v := reflect.ValueOf(obj)
 			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-				if idx, ok := integerKey(key); ok {
+				if idx, ok := vl.indexKey(i, key); ok {
 					obj = indexOf(v.Len(), idx, func(i int) interface{} { return v.Index(i).Interface() })
 					continue
 				}
@@ -442,4 +449,33 @@ func indexOf(n, idx int, item func(int) interface{}) interface{} {
 		return nil
 	}
 	return item(idx)
+}
+
+// indexKey returns key, the lookup at i, as an index of a list: an integer
+// (integerKey), or digits written after a dot (indexFlags).
+func (vl *VariableLookup) indexKey(i int, key interface{}) (int, bool) {
+	if idx, ok := integerKey(key); ok {
+		return idx, true
+	}
+	if s, ok := key.(string); ok && i < 64 && vl.indexFlags&(1<<i) != 0 {
+		n, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return math.MaxInt, true // more digits than an int64: out of range
+		}
+		return saturateInt64(n), true
+	}
+	return 0, false
+}
+
+// isDigits reports whether s is made of ASCII digits only.
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
