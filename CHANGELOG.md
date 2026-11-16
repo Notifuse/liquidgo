@@ -5,8 +5,18 @@
 ### Breaking
 
 The API breaks without a new major version: a major would change the module path to `/v6`, which
-would read as Shopify Liquid 6, and liquidgo's versions follow Shopify's. Only the render API
-changes; templates render as before.
+would read as Shopify Liquid 6, and liquidgo's versions follow Shopify's. Templates render as before,
+except for the fixes below and for three outcomes, which now end the render with the returned `error`
+and `Result.Output` holding what was written before it stopped:
+
+| Outcome | `Render(data, nil)` in v5.11.8 | `Render(ctx, data)` now |
+|---|---|---|
+| A Go panic in a tag, filter or drop | `Liquid error: internal` in the output, the render goes on, an `InternalError` in `Errors()` | `err` is a `*PanicError` with the stack |
+| A resource limit | `Liquid error: Memory limits exceeded` as the output, the error in `Errors()` | `err` is the `*MemoryError` |
+| `ctx` done | `Liquid error: render stopped: ...` as the output, the error in `Errors()` | `err` is the `*CanceledError` |
+
+An application that read only `Errors()` must now check `err`: on a limit, `Result.Output` is a
+partial body.
 
 - **`Template.Render(ctx, data, opts...) (Result, error)`** is the one way to render. It is the former
   `RenderContext`, renamed, and it returns its `Result` by value (one allocation less per render). It
@@ -35,8 +45,9 @@ changes; templates render as before.
   `Filters`, `StrictVariables` and `StrictFilters` (strict variables and filters are render options,
   `WithStrictVariables` and `WithStrictFilters`).
 - **Added**: `Template.Environment()`.
-- **A template renders only through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
-  render with a `Context` built by hand, is gone. A tag still receives the render's `TagContext`.
+- **A template renders through `Render`**: `Template.RenderToOutputBuffer(context, *string)`, the
+  render with a `Context` built by hand, is gone. `Template.RenderToOutput(context, output)` stays, for
+  a tag that renders a template as a partial of the render it runs in (`render`, `include`).
 - **The exception renderer and the global filter are gone**: `Environment.ExceptionRenderer`,
   `Environment.SetExceptionRenderer`, `Context.ExceptionRenderer`, `Context.SetExceptionRenderer`,
   `Context.GlobalFilter`, `Context.SetGlobalFilter`, `Context.ApplyGlobalFilter`, and

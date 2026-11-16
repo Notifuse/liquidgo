@@ -12,8 +12,7 @@ liquidgo/
 ├── IMPLEMENTATION.md         # This file
 ├── liquid/                   # Main Go package (maps to lib/liquid/)
 │   ├── tags/                # Tag implementations (maps to lib/liquid/tags/)
-│   ├── tag/                 # Tag base classes (maps to lib/liquid/tag/)
-│   └── profiler/            # Profiler (maps to lib/liquid/profiler/)
+│   └── tag/                 # Tag base classes (maps to lib/liquid/tag/)
 ├── reference-liquid/         # Cloned Ruby repository for reference
 └── README.md                 # Project README
 ```
