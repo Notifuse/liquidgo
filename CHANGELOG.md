@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.11]
+
+**Breaking**: the end of phase B, without a new major version (see below). Filters are declared with
+`liquid.Filter` and drops declare their keys with `LiquidGet`: nothing of a Go value is read by
+reflection any more. Renders share the parse of a partial in a bounded cache, and the parse tree
+visitor walks expressions as Ruby's. Tagged `v5.11.10`.
+
 ### Breaking
 - **Drops declare their keys**: a drop is a value with `LiquidGet(ctx *Context, key string)
   (interface{}, bool, error)`, as a `Liquid::Drop` in Ruby, called with the context of the render.
