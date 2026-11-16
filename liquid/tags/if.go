@@ -204,10 +204,6 @@ func (i *IfTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputB
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
 
-	// Track render depth for nested blocks
-	ctx.IncrementRenderDepth()
-	defer ctx.DecrementRenderDepth()
-
 	for _, block := range i.blocks {
 		result, err := block.Evaluate(ctx)
 		if err != nil {

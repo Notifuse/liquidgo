@@ -58,6 +58,9 @@ partial body.
   `Context.ClearInstanceAssigns`, `Context.Reset` (for a pool that does not exist) and
   `Context.LookupAndEvaluate`. A template keeps no assigns between renders, so a context's outer scope
   starts empty and holds the render's assigns and captures.
+- **`Context.IncrementRenderDepth` and `DecrementRenderDepth` are gone**: the `if` tag counted its
+  nesting during the render, which Ruby does not. The depth of blocks is bounded at parse and the
+  recursion of partials by the depth of scopes, which stay.
 - **The profiler is gone**: `liquid.Profiler`, `liquid.Timing`, `NewProfiler`, `Context.Profiler`,
   `Context.SetProfiler` and `TemplateOptions.Profile`. `Render` no longer used it; Go's own profiler
   (`pprof`) measures a render. `Profile: true` also turned line numbers on: set `LineNumbers`.
