@@ -142,7 +142,7 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 		registers.Set(key, value)
 	}
 	// The render never writes data or the template's assigns: a func's value
-	// is kept with the render (Context.funcValue), so concurrent renders may
+	// is kept with the render (Context.funcValueOf), so concurrent renders may
 	// share them.
 	if data == nil {
 		data = emptyData
