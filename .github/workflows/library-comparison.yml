@@ -1,0 +1,39 @@
+name: Library comparison
+
+# Times the newsletter template of tools/libcmp with each Go library and with
+# Shopify Liquid 5.11.0 (Ruby 3.3 with YJIT) on one runner, for the table of
+# docs/library-comparison.md. Started by hand, and on changes to tools/libcmp.
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths: ['tools/libcmp/**', '.github/workflows/library-comparison.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  times:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/libcmp/go.mod
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install Shopify Liquid 5.11.0
+        run: |
+          git clone -q --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
+          gem install --no-document strscan:'>= 3.1.1' bigdecimal
+      - name: Time each library, three times in turn
+        working-directory: tools/libcmp
+        run: |
+          go build -o "$RUNNER_TEMP/libcmp" .
+          "$RUNNER_TEMP/libcmp" export "$RUNNER_TEMP"
+          for round in 1 2 3; do
+            for lib in liquidgo tobi nchapman goliquid osteele acstech; do "$RUNNER_TEMP/libcmp" bench "$lib"; done
+            RUBY_YJIT_ENABLE=1 ruby -I "$RUNNER_TEMP/shopify-liquid/lib" ruby/bench.rb "$RUNNER_TEMP/templates.json"
+          done | tee "$RUNNER_TEMP/times.txt"
+          sort "$RUNNER_TEMP/times.txt" >> "$GITHUB_STEP_SUMMARY"
