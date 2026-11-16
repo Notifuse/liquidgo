@@ -132,5 +132,6 @@
  "tags-02/lax": {"reason":"minor: case renders only the first matching when, where Ruby renders each one","actual":"output: a"},
  "tags-02/strict": {"reason":"minor: case renders only the first matching when, where Ruby renders each one","actual":"output: a"},
  "tags-10/lax": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"},
- "tags-10/strict": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"}
+ "tags-10/strict": {"reason":"not comparable: Shopify raises NoMethodError on liquid tags nested on one line","actual":"output: 1"},
+ "index-12/lax": {"reason":"deliberate: digits after a dot are an array index, as Notifuse writes the paths of its display conditions","actual":"output: 1|a|"}
 }

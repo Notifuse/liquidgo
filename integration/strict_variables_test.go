@@ -209,3 +209,28 @@ func TestAValueWhoseLiquidFormIsNilIsFound(t *testing.T) {
 		t.Errorf("output %q, want %q", res.Output, "[]")
 	}
 }
+
+// A segment of digits after a dot is an index of an array, as Notifuse
+// writes the paths of its display conditions (order.items.0.sku): a
+// deliberate difference from Ruby, where it stays the string "0". A map
+// still reads it as the key "0", and a string in brackets is no index.
+func TestADottedSegmentOfDigitsIsAnIndex(t *testing.T) {
+	data := map[string]interface{}{
+		"order": map[string]interface{}{"items": []interface{}{
+			map[string]interface{}{"sku": "A1"}, map[string]interface{}{"sku": "B2"},
+		}},
+		"tags": []interface{}{"new", "vip"},
+		"h":    map[string]interface{}{"0": "zero"},
+	}
+	for src, want := range map[string]string{
+		"{{ order.items.0.sku }}{{ order.items.1.sku }}": "A1B2",
+		"{{ tags.1 }}":      "vip",
+		"[{{ tags.5 }}]":    "[]",
+		"{{ h.0 }}":         "zero",
+		"[{{ tags['1'] }}]": "[]",
+	} {
+		if got := renderRuby(strictTemplate(t, src), data, nil); got != want {
+			t.Errorf("%s renders %q, want %q", src, got, want)
+		}
+	}
+}

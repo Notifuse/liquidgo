@@ -1076,5 +1076,9 @@
  {
   "id": "whitespace-07",
   "template": "{% comment -%}x{% endcomment %} y"
+ },
+ {
+  "id": "index-12",
+  "template": "{{ arr.0 }}|{{ words.1 }}|{{ h.0 }}"
  }
 ]
