@@ -4,6 +4,7 @@
 //	go run . report OUT.json...     compares the results with Shopify's outputs
 //	go run . bench LIB              times the render of the benchmark template
 //	go run . hostile LIB N          renders hostile template N (bound it: see hostile.sh)
+//	go run . export DIR             writes the benchmark and hostile templates for ruby/
 //
 // It runs from tools/libcmp in the liquidgo repository, whose corpora hold the
 // outputs of Shopify Liquid 5.11.0. See docs/library-comparison.md.
@@ -43,6 +44,8 @@ func main() {
 		err = bench(find(os.Args[2]))
 	case "hostile":
 		err = hostile(find(os.Args[2]), os.Args[3])
+	case "export":
+		err = export(os.Args[2])
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}

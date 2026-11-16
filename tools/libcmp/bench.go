@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -76,4 +79,23 @@ func bench(lib library) error {
 func median(ds []time.Duration) time.Duration {
 	sort.Slice(ds, func(i, j int) bool { return ds[i] < ds[j] })
 	return ds[len(ds)/2]
+}
+
+// export writes the benchmark template, its data and the hostile templates
+// to dir, for the Ruby scripts of ruby/, which render them with Shopify
+// Liquid itself.
+func export(dir string) error {
+	hostile := make([]string, len(hostileTemplates))
+	for i, h := range hostileTemplates {
+		hostile[i] = h.source
+	}
+	b, err := json.Marshal(map[string]any{
+		"bench":   map[string]any{"template": benchTemplate, "data": benchData()},
+		"hostile": hostile,
+		"limits":  map[string]int{"render_length_limit": limitLength, "render_score_limit": limitScore, "assign_score_limit": limitAssign},
+	})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, "templates.json"), b, 0o644)
 }
