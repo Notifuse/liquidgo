@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -216,7 +217,7 @@ func _withGlobalFilter(t *testing.T, filters []interface{}, fn func()) {
 
 	// Register filters
 	for _, filter := range filters {
-		if err := env.RegisterFilter(filter); err != nil {
+		if err := env.RegisterFilter(methodfilters.Of(filter)...); err != nil {
 			t.Fatalf("RegisterFilter() error = %v", err)
 		}
 	}

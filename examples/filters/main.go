@@ -9,28 +9,26 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
-// MyFilters provides custom filter methods for templates.
-type MyFilters struct{}
-
-// Reverse reverses the input string.
-func (f *MyFilters) Reverse(input string) string {
-	runes := []rune(input)
+// reverse reverses the input string.
+func reverse(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
+	runes := []rune(fmt.Sprint(input))
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
-	return string(runes)
+	return string(runes), nil
 }
 
-// Shout converts the input string to uppercase and appends exclamation marks.
-func (f *MyFilters) Shout(input string) string {
-	return strings.ToUpper(input) + "!!!"
+// shout converts the input string to uppercase and appends exclamation marks.
+func shout(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
+	return strings.ToUpper(fmt.Sprint(input)) + "!!!", nil
 }
 
 func main() {
-	// Create environment with standard tags and custom filters
+	// Create environment with standard tags and custom filters: reverse
+	// takes the place of the standard reverse
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	if err := env.RegisterFilter(&MyFilters{}); err != nil {
+	if err := env.RegisterFilter(liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)); err != nil {
 		panic(err)
 	}
 

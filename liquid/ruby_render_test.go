@@ -13,7 +13,7 @@ type rubyOptions struct {
 	Context         gocontext.Context
 	Output          *string
 	Registers       map[string]interface{}
-	Filters         []interface{}
+	Filters         []FilterDef
 	StrictVariables bool
 	StrictFilters   bool
 	Limits          *ResourceLimitsConfig

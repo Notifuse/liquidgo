@@ -47,38 +47,27 @@ func TestEnvironmentRegisterTag(t *testing.T) {
 func TestEnvironmentRegisterFilter(t *testing.T) {
 	env := NewEnvironment()
 
-	// Register a filter (StandardFilters already has methods)
-	filter := &StandardFilters{}
-	err := env.RegisterFilter(filter)
+	// Register a filter
+	err := env.RegisterFilter(Filter("shout", rawFilter))
 	if err != nil {
 		t.Fatalf("RegisterFilter() error = %v", err)
 	}
 
-	names := env.FilterMethodNames()
-	if len(names) == 0 {
-		t.Error("Expected filter method names, got empty")
+	names := env.FilterNames()
+	if !containsName(names, "shout") || !containsName(names, "upcase") {
+		t.Errorf("Expected the filter and the standard ones, got %v", names)
 	}
 
 	// Check for a known method
 	found := false
 	for _, name := range names {
-		if name == "Size" || name == "Downcase" {
+		if name == "size" || name == "downcase" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Expected Size or Downcase in filter method names")
-	}
-}
-
-func TestEnvironmentCreateStrainer(t *testing.T) {
-	env := NewEnvironment()
-	ctx := &mockContext{}
-
-	strainer := env.CreateStrainer(ctx, nil, false)
-	if strainer == nil {
-		t.Fatal("Expected StrainerTemplate, got nil")
+		t.Error("Expected size or downcase in the filter names")
 	}
 }
 
@@ -97,29 +86,6 @@ func TestEnvironmentSetErrorMode(t *testing.T) {
 	env.SetErrorMode("strict")
 	if env.ErrorMode() != "strict" {
 		t.Errorf("Expected error mode 'strict', got '%s'", env.ErrorMode())
-	}
-}
-
-// TestEnvironmentStrainerCaching tests that strainer template classes are cached
-func TestEnvironmentStrainerCaching(t *testing.T) {
-	env := NewEnvironment()
-	ctx := &mockContext{}
-
-	// Create first strainer
-	strainer1 := env.CreateStrainer(ctx, nil, false)
-	if strainer1 == nil {
-		t.Fatal("Expected StrainerTemplate, got nil")
-	}
-
-	// Create second strainer with same filters (should use cache)
-	strainer2 := env.CreateStrainer(ctx, nil, false)
-	if strainer2 == nil {
-		t.Fatal("Expected StrainerTemplate, got nil")
-	}
-
-	// Both should be valid strainers
-	if strainer1 == nil || strainer2 == nil {
-		t.Error("Both strainers should be valid")
 	}
 }
 
@@ -156,17 +122,14 @@ func TestEnvironmentRegisterFilters(t *testing.T) {
 	env := NewEnvironment()
 
 	// Register multiple filters
-	filters := []interface{}{
-		&StandardFilters{},
-	}
-	err := env.RegisterFilters(filters)
+	err := env.RegisterFilter(Filter("one", rawFilter), Filter("two", rawFilter))
 	if err != nil {
-		t.Fatalf("RegisterFilters() error = %v", err)
+		t.Fatalf("RegisterFilter() error = %v", err)
 	}
 
 	// Verify filters were registered
-	names := env.FilterMethodNames()
-	if len(names) == 0 {
-		t.Error("Expected filter method names after RegisterFilters, got empty")
+	names := env.FilterNames()
+	if !containsName(names, "one") || !containsName(names, "two") {
+		t.Errorf("Expected both filters, got %v", names)
 	}
 }

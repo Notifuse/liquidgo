@@ -12,6 +12,7 @@ import (
 
 	"github.com/Notifuse/liquidgo/v5/integration/internal/samename/a/filters"
 	bfilters "github.com/Notifuse/liquidgo/v5/integration/internal/samename/b/filters"
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -80,7 +81,7 @@ func TestStrainerCacheConcurrentRenders(t *testing.T) {
 // local filters, which take precedence for a name both define.
 func TestStrainerKeepsEnvironmentFiltersWithLocalOnes(t *testing.T) {
 	env := liquid.NewEnvironment()
-	if err := env.RegisterFilter(&envFilters{}); err != nil {
+	if err := env.RegisterFilter(methodfilters.Of(&envFilters{})...); err != nil {
 		t.Fatal(err)
 	}
 	tpl := strainerCacheTemplate(t, env, `{{ "x" | env_only }}|{{ "x" | tenant }}`)

@@ -3,6 +3,7 @@ package integration
 import (
 	"testing"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -93,7 +94,7 @@ func TestOutput_VariablePiping(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -127,7 +128,7 @@ func TestOutput_VariablePipingWithInput(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -161,7 +162,7 @@ func TestOutput_VariablePipingWithArgs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -195,7 +196,7 @@ func TestOutput_VariablePipingWithNoArgs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -229,7 +230,7 @@ func TestOutput_MultipleVariablePipingWithArgs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -263,7 +264,7 @@ func TestOutput_VariablePipingWithMultipleArgs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -297,7 +298,7 @@ func TestOutput_VariablePipingWithVariableArgs(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -332,7 +333,7 @@ func TestOutput_MultiplePipings(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -361,7 +362,7 @@ func TestOutput_LinkTo(t *testing.T) {
 
 	env := liquid.NewEnvironment()
 	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(&FunnyFilter{})
+	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,

@@ -38,7 +38,7 @@ func (e *Environment) SetOutputEscape(on bool) {
 	e.outputEscape = on
 	if on && !e.rawFilterRegistered {
 		e.rawFilterRegistered = true
-		if err := e.RegisterFilter(&rawFilter{}); err != nil {
+		if err := e.RegisterFilter(Filter("raw", rawFilter)); err != nil {
 			panic(err)
 		}
 	}
@@ -49,13 +49,13 @@ func (e *Environment) OutputEscape() bool {
 	return e != nil && e.outputEscape
 }
 
-// rawFilter holds the raw filter: it returns its input, and the output escape
-// writes its result as it is.
-type rawFilter struct{}
-
-// Raw returns input as it is.
-func (*rawFilter) Raw(input interface{}) interface{} {
-	return input
+// rawFilter returns its input as it is, and the output escape writes its
+// result as it is.
+func rawFilter(_ *Context, input interface{}, args ...interface{}) (interface{}, error) {
+	if len(args) > 0 {
+		return nil, tooManyFilterArgs(len(args)+1, 1)
+	}
+	return input, nil
 }
 
 // OutputEscape reports whether the outputs of the render are HTML-escaped.

@@ -3,6 +3,15 @@
 ## [Unreleased]
 
 ### Breaking
+- **Filters are declared**: `liquid.Filter(name, func(ctx *Context, input interface{}, args
+  ...interface{}) (interface{}, error))`, given to `Environment.RegisterFilter(filters ...FilterDef)`
+  and `WithFilters(filters ...FilterDef)`. A struct of filter methods is no longer a filter set: the
+  methods were found by reflection, and a name resolved by tries (`find_index`, `FindIndex`, any case).
+  A filter is now named exactly, as in Ruby: `{{ x | Downcase }}` is an unknown filter. The standard
+  filters are a table generated from `StandardFilters` (`scripts/generate_filter_table.py`).
+  `StrainerTemplate`, `StrainerTemplateClass`, `Environment.CreateStrainer`, `RegisterFilters`,
+  `FilterMethodNames` (now `FilterNames`) and `Context.Strainer` are gone. An error a filter returns
+  renders nothing, and is raised with strict filters, as an argument too many.
 - **The parse tree visitor walks expressions, as Ruby's**: a node gives its children with
   `ParseTreeChildren() []interface{}` (`liquid.ParseTreeNode`), where the visitor looked up a
   `ParseTreeVisitor` method by reflection and walked only nodelists; `NewParseTreeVisitor` is gone

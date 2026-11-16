@@ -156,6 +156,11 @@ all, so give a template a map or a drop instead.
 
 ### Custom Filters
 
+A filter is declared with its name and a function, which gets the context of the render, the
+value it is applied to and its arguments. A filter of the environment takes the place of a standard
+one of the same name, and a local filter of a render (`WithFilters`) takes the place of both. An
+error the function returns renders nothing, and is raised with strict filters.
+
 ```go
 package main
 
@@ -163,28 +168,28 @@ import (
     "context"
     "fmt"
     "strings"
+
     "github.com/Notifuse/liquidgo/v5/liquid"
 )
 
-// Define custom filter
-type MyFilters struct{}
-
-func (f *MyFilters) Reverse(input string) string {
-    runes := []rune(input)
+func reverse(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
+    runes := []rune(fmt.Sprint(input))
     for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
         runes[i], runes[j] = runes[j], runes[i]
     }
-    return string(runes)
+    return string(runes), nil
 }
 
-func (f *MyFilters) Shout(input string) string {
-    return strings.ToUpper(input) + "!!!"
+func shout(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
+    return strings.ToUpper(fmt.Sprint(input)) + "!!!", nil
 }
 
 func main() {
     // Create environment and register filters
     env := liquid.NewEnvironment()
-    env.RegisterFilter(&MyFilters{})
+    if err := env.RegisterFilter(liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)); err != nil {
+        panic(err)
+    }
 
     tmpl, _ := liquid.ParseTemplate(
         "{{ 'hello' | reverse | shout }}",
@@ -361,7 +366,7 @@ func main() {
     // Create isolated environment
     userEnv := liquid.NewEnvironment()
     tags.RegisterStandardTags(userEnv)
-    userEnv.RegisterFilter(&MyCustomFilters{})
+    userEnv.RegisterFilter(liquid.Filter("money", money))
 
     // Use environment in template
     tmpl, _ := liquid.ParseTemplate(source, &liquid.TemplateOptions{
@@ -407,7 +412,7 @@ res, err := tmpl.Render(ctx, data,
     liquid.WithFileSystem(partials),         // partials of this render, nested ones included
     liquid.WithLimits(limits),               // limits set here replace the template's
     liquid.WithRegisters(registers),         // read by tags and filters
-    liquid.WithFilters(&TenantFilters{}),    // local filters, next to the environment's
+    liquid.WithFilters(tenantFilters...),    // local filters, next to the environment's
     liquid.WithStrictVariables(),            // an undefined variable is an error
 )
 switch {

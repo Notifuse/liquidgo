@@ -39,15 +39,16 @@ type Context struct {
 	// diagnostics is the context whose errors and warnings this one adds
 	// to: an isolated subcontext reports to the context that made it, as
 	// Ruby's subcontexts share the errors array.
-	diagnostics        *Context
-	registers          *Registers
-	stringScanner      *StringScanner
-	strainer           *StrainerTemplate
-	environment        *Environment
-	templateName       string
-	warnings           []error
-	environments       []map[string]interface{}
-	filters            []interface{}
+	diagnostics   *Context
+	registers     *Registers
+	stringScanner *StringScanner
+	environment   *Environment
+	templateName  string
+	warnings      []error
+	environments  []map[string]interface{}
+	filters       []FilterDef
+	// sf holds the standard filters of the render, which read its limits.
+	sf                 StandardFilters
 	interrupts         []interface{}
 	errors             []error
 	scopes             []map[string]interface{}
@@ -118,9 +119,7 @@ func BuildContext(config ContextConfig) *Context {
 		resourceLimits:     resourceLimits,
 		baseScopeDepth:     0,
 		interrupts:         make([]interface{}, 0, 4), // Pre-allocate for interrupts
-		filters:            make([]interface{}, 0, 4), // Pre-allocate for filters
 		disabledTags:       make(map[string]int, 4),   // Pre-allocate map
-		strainer:           nil,
 		stringScanner:      NewStringScanner(""),
 		templateName:       "",
 	}
@@ -229,21 +228,33 @@ func (c *Context) SetStrictFilters(strict bool) {
 	c.strictFilters = strict
 }
 
-// Strainer returns the strainer (creates if needed).
-func (c *Context) Strainer() *StrainerTemplate {
-	if c.strainer == nil {
-		c.strainer = c.environment.CreateStrainer(c, c.filters, c.strictFilters)
-	}
-	return c.strainer
+// AddFilters adds local filters to this context, which take precedence over
+// the environment's and the standard ones, the last added first.
+func (c *Context) AddFilters(filters []FilterDef) {
+	c.filters = append(c.filters, filters...)
 }
 
-// AddFilters adds filters to this context.
-func (c *Context) AddFilters(filters []interface{}) {
-	if filters == nil {
-		return
+// standard returns the standard filters of the render.
+func (c *Context) standard() *StandardFilters {
+	c.sf.context = c
+	return &c.sf
+}
+
+// filter returns the function of the filter name: a local filter of the
+// render, the last added first, then the environment's, then the standard
+// one; nil for an unknown filter.
+func (c *Context) filter(name string) FilterFunc {
+	for i := len(c.filters) - 1; i >= 0; i-- {
+		if c.filters[i].name == name {
+			return c.filters[i].fn
+		}
 	}
-	c.filters = append(c.filters, filters...)
-	c.strainer = nil // Reset strainer so it's recreated with new filters
+	if c.environment != nil {
+		if fn, ok := c.environment.filters[name]; ok {
+			return fn
+		}
+	}
+	return standardFilters[name]
 }
 
 // Interrupt returns true if there are any unhandled interrupts.
@@ -338,7 +349,17 @@ func sameError(a, b error) (same bool) {
 // gives nil, as a filter that fails does, rather than passing its input through: a
 // filter such as escape must not be skipped silently.
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
-	result, err := c.Strainer().Invoke(method, append([]interface{}{obj}, args...)...)
+	var result interface{}
+	var err error
+	if fn := c.filter(method); fn != nil {
+		result, err = fn(c, obj, args...)
+	} else if c.strictFilters {
+		// An unknown filter stays an unknown filter: it never reads a
+		// property or calls a method of its input, as in Ruby.
+		err = NewUndefinedFilter("undefined filter " + method)
+	} else {
+		result = obj
+	}
 	if err != nil {
 		if c.strictFilters {
 			panic(err)
@@ -639,7 +660,6 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	subCtx.baseScopeDepth = c.baseScopeDepth + 1
 	subCtx.rethrowErrors = c.rethrowErrors
 	subCtx.filters = c.filters
-	subCtx.strainer = nil
 	subCtx.diagnostics = c.reporter()
 	subCtx.disabledTags = c.disabledTags
 	subCtx.cancel, subCtx.done = c.cancel, c.done

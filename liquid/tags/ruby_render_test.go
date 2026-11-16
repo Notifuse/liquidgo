@@ -6,6 +6,7 @@ import (
 	"sync"
 	"weak"
 
+	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
@@ -122,7 +123,7 @@ func renderRubyResult(tmpl *liquid.Template, assigns interface{}, o *rubyOptions
 		opts = append(opts, liquid.WithRegisters(o.Registers))
 	}
 	if len(o.Filters) > 0 {
-		opts = append(opts, liquid.WithFilters(o.Filters...))
+		opts = append(opts, liquid.WithFilters(methodfilters.Of(o.Filters...)...))
 	}
 	if o.StrictVariables {
 		opts = append(opts, liquid.WithStrictVariables())
