@@ -331,15 +331,27 @@ func (c *Context) HandleError(err error, lineNumber *int) string {
 
 // recorded reports whether err is already in errs, the same value.
 func recorded(errs []error, err error) bool {
-	if !reflect.TypeOf(err).Comparable() {
-		return false
-	}
 	for _, e := range errs {
-		if reflect.TypeOf(e).Comparable() && e == err {
+		if sameError(e, err) {
 			return true
 		}
 	}
 	return false
+}
+
+// sameError reports whether a and b are the same error value. Two values of
+// a type that holds an uncomparable value (a slice in an interface field)
+// are not the same: comparing them would panic.
+func sameError(a, b error) (same bool) {
+	if reflect.TypeOf(a) != reflect.TypeOf(b) {
+		return false
+	}
+	defer func() {
+		if recover() != nil {
+			same = false
+		}
+	}()
+	return a == b
 }
 
 // Invoke invokes a filter method. A call the filter cannot take (too many arguments)
