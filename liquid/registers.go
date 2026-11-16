@@ -61,7 +61,8 @@ func (r *Registers) HasKey(key string) bool {
 	return hasChange || hasStatic
 }
 
-// Static returns the static registers map.
+// Static returns the static registers map. It may be the template's
+// (Template.Registers), which renders share: read it, never write it.
 func (r *Registers) Static() map[string]interface{} {
 	return r.static
 }

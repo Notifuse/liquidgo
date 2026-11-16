@@ -14,8 +14,9 @@ type Result struct {
 	// Errors are the errors the render recorded, as Ruby's Template#errors.
 	// As in Ruby, most wrote their message in Output ("Liquid error: ..."),
 	// but an undefined variable, filter or drop method, and an error in a
-	// blank tag (assign, capture...), write nothing. With RaiseErrors, the
-	// error that ended the render is the last one.
+	// blank tag (assign, capture...), write nothing. With RaiseErrors, a
+	// recorded error that ends the render is the last one; a limit, a
+	// cancellation or a Go panic ends it without being recorded.
 	Errors []error
 	// RenderScore and AssignScore are the work and the assigned size the
 	// render counted against its limits (see ResourceLimitsConfig).
@@ -133,8 +134,9 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	limits := NewResourceLimits(limitsConfig)
 	// The registers of the render and the file system go in the static
 	// registers, as Ruby's, which the isolated context of a render tag
-	// inherits, so that partials find them too. The template's own are
-	// copied, never written.
+	// inherits, so that partials find them too, in a copy of the template's.
+	// Without them the template's map is the static layer itself, which a
+	// tag reads (Registers.Static) and must not write.
 	static := t.registers
 	if cfg.fileSystem != nil || len(cfg.registers) > 0 {
 		static = make(map[string]interface{}, len(t.registers)+len(cfg.registers)+1)
