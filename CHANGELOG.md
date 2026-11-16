@@ -36,7 +36,11 @@
 - **Renders share the parse of a partial**: an environment keeps the partials it parsed, by their
   text, so that renders that read the same text share one parse, whatever file system each render
   reads it from. The file system is read at each render, so a changed partial is never stale. The
-  cache keeps at most 1,024 partials and 32 MiB of their text, the least recently used going first.
+  cache keeps at most 1,024 partials and 4 MiB of their text, the least recently used going first;
+  a parsed partial holds 10 to 30 times its text, so 4 MiB of text is about 100 MiB of memory. A
+  partial larger than an eighth of the bytes is parsed for its render and not kept.
+  `Environment.SetPartialCacheLimits(partials, bytes)` sets the bounds, 0 turning the cache off. A
+  template `LoadPartial` returns is shared between renders: a caller must not change it.
 
 ## [5.11.0-port.10]
 

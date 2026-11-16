@@ -43,6 +43,15 @@ func (e *Environment) ErrorMode() string {
 	return e.errorMode
 }
 
+// SetPartialCacheLimits sets the most partials, and the most bytes of their
+// text, the environment keeps parsed for its renders (1,024 and 4 MiB by
+// default); a parsed partial holds 10 to 30 times its text. A partial larger
+// than an eighth of the bytes is parsed for each render and not kept. 0 turns
+// the cache off; the partials past the new bounds are removed.
+func (e *Environment) SetPartialCacheLimits(partials, bytes int) {
+	e.partials.setLimits(partials, bytes)
+}
+
 // SetErrorMode sets the error mode.
 func (e *Environment) SetErrorMode(mode string) {
 	e.errorMode = mode
