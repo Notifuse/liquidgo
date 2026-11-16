@@ -38,13 +38,15 @@ changes; templates render as before.
   `RenderToOutput(context TagContext, output *OutputBuffer)`. liquidgo no longer looks up, by
   reflection, a `Render(context) string` or a `RenderToOutputBuffer(context, *string)` that a tag
   declares; the base `Tag`, `Block`, `BlockBody`, `Document` and the standard tags lose theirs.
-  - A tag of another package renames its `Render` or `RenderToOutputBuffer` to `RenderToOutput` and
-    writes to the buffer. One that keeps the old name still compiles, since it embeds `Tag` or
-    `Block`, but writes nothing (a `Tag`) or only its body (a `Block`).
+  - `Tag` has no render method: a tag that embeds it declares `RenderToOutput`, or it does not compile
+    as a `Node`. A tag of another package renames its `Render` or `RenderToOutputBuffer` to
+    `RenderToOutput` and writes to the buffer. A `Block` still renders its body by default, so a
+    block that keeps the old name compiles and renders only its body.
   - `Environment.RegisterTag` takes a `liquid.TagConstructor`,
     `func(tagName, markup string, pc ParseContextInterface) (Node, error)`, where it took any value
     and called it by reflection; `TagForName` and `Tags` return them. `tags.TagConstructor` is now
-    an alias of it.
+    an alias of it. A constructor that returns neither a tag nor an error is a syntax error that
+    names the tag, where it gave a generic `Tag`.
   - `tag.Disableable` and `tag.Disabler` lose `RenderToOutputBuffer`, and their `RenderToOutput`
     becomes `Render`, so that a tag that embeds them keeps its own `RenderToOutput`;
     `Disabler.Render` no longer takes the output.

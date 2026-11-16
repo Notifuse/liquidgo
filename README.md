@@ -199,10 +199,11 @@ func main() {
 ### Custom Tags
 
 A tag is a `liquid.Node`: it has one render method, `RenderToOutput`, which
-writes to the render's output buffer. A tag that embeds `*liquid.Tag` and
-declares no `RenderToOutput` writes nothing; one that embeds `*liquid.Block`
-renders its body. A tag constructor returns `(liquid.Node, error)`, and an
-error is a syntax error of the template.
+writes to the render's output buffer. `*liquid.Tag` has no render method, so
+a tag that embeds it declares `RenderToOutput`, or it is not a `Node`; a tag
+that embeds `*liquid.Block` renders its body unless it declares its own. A
+tag constructor returns `(liquid.Node, error)`: an error, or no tag, is a
+syntax error of the template.
 
 ```go
 package main

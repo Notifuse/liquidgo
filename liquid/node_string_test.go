@@ -28,3 +28,9 @@ func renderString(node Node, context TagContext) string {
 	node.RenderToOutput(context, buf)
 	return buf.String()
 }
+
+// silentTag is a tag that writes nothing, as a Ruby tag that does not
+// override render: Tag has no render method of its own.
+type silentTag struct{ *Tag }
+
+func (s *silentTag) RenderToOutput(TagContext, *OutputBuffer) {}

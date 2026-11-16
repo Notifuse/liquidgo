@@ -93,12 +93,6 @@ func (t *Tag) Parse(tokenizer *Tokenizer) error {
 	return nil
 }
 
-// RenderToOutput writes nothing, as Ruby's Tag#render returns an empty
-// string: a tag that embeds Tag declares its own RenderToOutput to write (see
-// Node), and one that does not, or the generic Tag a constructor that gives
-// no tag leaves, writes nothing.
-func (t *Tag) RenderToOutput(context TagContext, output *OutputBuffer) {}
-
 // Blank returns true if the tag is blank (produces no output).
 func (t *Tag) Blank() bool {
 	return false

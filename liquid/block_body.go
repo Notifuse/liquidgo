@@ -355,8 +355,8 @@ func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 
 // newTag builds the tag a template names with its constructor. An error of
 // the constructor is a parse error, raised as the parser raises them, or in
-// warn mode a warning, and newTag returns nil. A constructor that gives no
-// tag gives a generic Tag, or nil in warn mode.
+// warn mode a warning, and newTag returns nil. A constructor that returns
+// neither a tag nor an error gives a syntax error of its own.
 func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseContextInterface) Node {
 	var tag Node
 	var err error
@@ -372,18 +372,15 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 		}()
 		tag, err = ctor(tagName, markup, parseContext)
 	}()
+	if err == nil && tag == nil {
+		err = NewSyntaxError("the constructor of the " + tagName + " tag returned no tag")
+	}
 	if err != nil {
 		if parseContext.ErrorMode() != "warn" {
 			panic(err)
 		}
 		parseContext.AddWarning(err)
 		return nil
-	}
-	if tag == nil {
-		if parseContext.ErrorMode() == "warn" {
-			return nil
-		}
-		return NewTag(tagName, markup, parseContext)
 	}
 	return tag
 }

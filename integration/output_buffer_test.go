@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -87,11 +88,15 @@ func (b valueBlockTag) RenderToOutput(context liquid.TagContext, output *liquid.
 	output.WriteString(">")
 }
 
-// disableableTag embeds Tag and tag.Disableable, whose Render does not hide
-// the RenderToOutput of Tag.
+// disableableTag embeds Tag and tag.Disableable, and renders nothing through
+// Disableable.Render.
 type disableableTag struct {
 	*liquid.Tag
 	tag.Disableable
+}
+
+func (d *disableableTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	d.Render(d.TagName(), context, d.LineNumber(), d.ParseContext(), output, func() {})
 }
 
 func tagOf(make func(*liquid.Tag) liquid.Node) liquid.TagConstructor {
@@ -167,5 +172,35 @@ func TestCustomTagsRenderThroughNode(t *testing.T) {
 		if got := renderRuby(tmpl, nil, nil); got != c.want {
 			t.Errorf("%q renders %q, want %q", c.source, got, c.want)
 		}
+	}
+}
+
+// A constructor that returns neither a tag nor an error gives a syntax error
+// that names the tag, and in warn mode a warning, the tag staying as text, as
+// a tag whose constructor fails in warn mode.
+func TestAConstructorThatGivesNoTagIsASyntaxError(t *testing.T) {
+	noTag := func(string, string, liquid.ParseContextInterface) (liquid.Node, error) { return nil, nil }
+
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+	env.RegisterTag("notag", noTag)
+	if _, err := liquid.ParseTemplate("a{% notag %}b", &liquid.TemplateOptions{Environment: env}); err == nil ||
+		!strings.Contains(err.Error(), "notag") {
+		t.Errorf("parse error %v, want a syntax error that names notag", err)
+	}
+
+	warn := liquid.NewEnvironment()
+	tags.RegisterStandardTags(warn)
+	warn.SetErrorMode("warn")
+	warn.RegisterTag("notag", noTag)
+	tmpl, err := liquid.ParseTemplate("a{% notag %}b", &liquid.TemplateOptions{Environment: warn})
+	if err != nil {
+		t.Fatalf("warn mode: %v", err)
+	}
+	if ws := tmpl.Warnings(); len(ws) != 1 || !strings.Contains(ws[0].Error(), "notag") {
+		t.Errorf("warnings %v, want one that names notag", ws)
+	}
+	if got, want := renderRuby(tmpl, nil, nil), "a{% notag %}b"; got != want {
+		t.Errorf("renders %q, want %q", got, want)
 	}
 }
