@@ -512,13 +512,13 @@ func (c *Context) Key(key string) bool {
 
 // Evaluate evaluates an object (calls evaluate if it has that method).
 func (c *Context) Evaluate(object interface{}) interface{} {
-	if object == nil {
+	switch o := object.(type) {
+	case nil:
 		return nil
-	}
-
-	// Check if it's a VariableLookup
-	if vl, ok := object.(*VariableLookup); ok {
-		return vl.Evaluate(c)
+	case string, int, float64, bool:
+		return object // a literal: no method lookup
+	case *VariableLookup:
+		return o.Evaluate(c)
 	}
 
 	// Check if it's a RangeLookup
@@ -567,7 +567,11 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 // form: a func is called once per render, as Ruby calls a proc once and
 // keeps its value; the value is kept with the render, not written in obj.
 func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
-	value := obj[key]
+	return c.mapValue(obj, key, obj[key])
+}
+
+// mapValue is valueIn for value, read from obj under key.
+func (c *Context) mapValue(obj map[string]interface{}, key string, value interface{}) interface{} {
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
 		value = c.funcValueOf(obj, key, value)

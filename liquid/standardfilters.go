@@ -280,6 +280,10 @@ func runeOffset(s string, n int) (int, bool) {
 		if i >= len(s) {
 			return i, false
 		}
+		if s[i] < utf8.RuneSelf { // an ASCII byte is a character
+			i++
+			continue
+		}
 		_, size := utf8.DecodeRuneInString(s[i:])
 		i += size
 	}
@@ -331,21 +335,24 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	// The string is walked only as far as the length: a long input is not
-	// copied to count its characters.
-	if lengthInt >= 0 {
-		if end, ok := runeOffset(inputStr, lengthInt); !ok || end == len(inputStr) {
-			return inputStr
-		}
-	}
-
 	// compared before subtracting, so that a length near the int minimum cannot wrap
 	l := 0
 	if ellipsis := utf8.RuneCountInString(truncateStr); lengthInt > ellipsis {
 		l = lengthInt - ellipsis
 	}
 
-	end, _ := runeOffset(inputStr, l)
+	// The string is walked once, and only as far as the length: to the cut,
+	// then to the length, which a shorter input keeps whole. A long input is
+	// not copied to count its characters.
+	end, ok := runeOffset(inputStr, l)
+	if lengthInt >= 0 {
+		if !ok {
+			return inputStr
+		}
+		if rest, ok := runeOffset(inputStr[end:], lengthInt-l); !ok || end+rest == len(inputStr) {
+			return inputStr
+		}
+	}
 	return asRunes(inputStr[:end]) + truncateStr
 }
 

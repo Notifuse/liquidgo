@@ -351,10 +351,23 @@ func ToDate(obj interface{}) *time.Time {
 
 // ToLiquidValue converts an object to its liquid representation.
 func ToLiquidValue(obj interface{}) interface{} {
-	if toLiquid, ok := obj.(interface {
+	if _, ok := obj.(string); ok {
+		return obj // the most common value, inlined
+	}
+	return toLiquidValueMethod(obj)
+}
+
+// toLiquidValueMethod is ToLiquidValue for the values that may have the
+// method, apart so that ToLiquidValue is inlined.
+func toLiquidValueMethod(obj interface{}) interface{} {
+	switch obj.(type) {
+	case nil, int, float64, bool, map[string]interface{}, []interface{}:
+		return obj // the common values have no method: no method lookup
+	}
+	if v, ok := obj.(interface {
 		ToLiquidValue() interface{}
 	}); ok {
-		return toLiquid.ToLiquidValue()
+		return v.ToLiquidValue()
 	}
 	return obj
 }

@@ -9,10 +9,23 @@ package liquid
 // This is a helper function that checks if the value implements ToLiquidValue
 // or returns the value as-is.
 func ToLiquid(obj interface{}) interface{} {
-	if toLiquid, ok := obj.(interface {
+	if _, ok := obj.(string); ok {
+		return obj // the most common value, inlined
+	}
+	return toLiquidMethod(obj)
+}
+
+// toLiquidMethod is ToLiquid for the values that may have the method, apart
+// so that ToLiquid is inlined.
+func toLiquidMethod(obj interface{}) interface{} {
+	switch obj.(type) {
+	case nil, int, float64, bool, map[string]interface{}, []interface{}:
+		return obj // the common values have no method: no method lookup
+	}
+	if v, ok := obj.(interface {
 		ToLiquid() interface{}
 	}); ok {
-		return toLiquid.ToLiquid()
+		return v.ToLiquid()
 	}
 	return obj
 }
