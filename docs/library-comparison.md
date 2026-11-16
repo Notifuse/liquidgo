@@ -77,13 +77,13 @@ The times of the table come from the workflow "Library comparison", started by h
 
 | Library | Matches Shopify | Shopify's tests | Differential corpus | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|---|---|
-| Notifuse/liquidgo | **848 (90.4%)** | 328 / 350 | **520 / 588** | **0** | **4 / 4** | 68 µs |
-| tobi/liquid-go | 821 (87.5%) | **347 / 350** | 474 / 588 | 0 | 0 / 4 | 307 µs |
-| nchapman/go-liquid | 738 (78.7%) | 307 / 350 | 431 / 588 | 69 | 3 / 4 | 87 µs |
-| go-liquid/liquid | 607 (64.7%) | 262 / 350 | 345 / 588 | 192 | 1 / 4 | 76 µs |
-| osteele/liquid | 497 (53.0%) | 247 / 350 | 250 / 588 | 324 | 1 / 4 | 285 µs |
-| acstech/liquid | 315 (33.6%) | 186 / 350 | 129 / 588 | 480 | 1 / 4 | 53 µs |
-| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | 3 / 4 | 379 µs |
+| Notifuse/liquidgo | **848 (90.4%)** | 328 / 350 | **520 / 588** | **0** | **4 / 4** | **53 µs** |
+| tobi/liquid-go | 821 (87.5%) | **347 / 350** | 474 / 588 | 0 | 0 / 4 | 316 µs |
+| nchapman/go-liquid | 738 (78.7%) | 307 / 350 | 431 / 588 | 69 | 3 / 4 | 89 µs |
+| go-liquid/liquid | 607 (64.7%) | 262 / 350 | 345 / 588 | 192 | 1 / 4 | 77 µs |
+| osteele/liquid | 497 (53.0%) | 247 / 350 | 250 / 588 | 324 | 1 / 4 | 298 µs |
+| acstech/liquid | 315 (33.6%) | 186 / 350 | 129 / 588 | 480 | 1 / 4 | 55 µs |
+| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | 3 / 4 | 366 µs |
 
 - **liquidgo**: each of its 90 differences is listed in its divergence files with its reason. 40
   are deliberate (counters start at 0, an empty string is false, a filter error writes nothing,
@@ -100,11 +100,13 @@ The times of the table come from the workflow "Library comparison", started by h
 - **osteele/liquid** has no `increment` or `decrement` tag, a `cycle` that takes no group, and stops
   the render on an error, where Shopify writes it and goes on.
 - **acstech/liquid** has no `cycle`, `increment`, `decrement` or `tablerow` tag, no `round` filter,
-  and fails on whitespace control (`{{-`).
+  and fails on whitespace control (`{{-`). It renders the newsletter template in 55 µs, the closest
+  to liquidgo's 53 µs: the three runs of each do not overlap (53.2 to 53.3 µs against 54.2 to
+  54.9 µs).
 - Hostile templates: 100,000 nested blocks render with osteele/liquid, acstech/liquid and
   go-liquid/liquid; the other three templates exhaust them. liquidgo refuses the nesting while
   parsing and stops the other three with its limits.
 - **Shopify Liquid** refuses the nesting and stops the doubled string and the billion bytes with
   its limits, but runs out of memory on the billion iterations: its `for` builds the whole range
-  before the limits count an iteration. It renders the newsletter template in 379 µs, 5.6 times the
+  before the limits count an iteration. It renders the newsletter template in 366 µs, 6.9 times the
   time of liquidgo.
