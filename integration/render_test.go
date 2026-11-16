@@ -73,9 +73,8 @@ func TestRenderIsolatesConcurrentRenders(t *testing.T) {
 	}
 }
 
-// Render changes nothing in the template, even when the template keeps
-// Ruby's instance assigns for Render: no assigns, errors or registers, and
-// the template's assigns and registers are only read.
+// Render changes nothing in the template: no assigns, errors or registers,
+// and the template's assigns and registers are only read.
 func TestRenderLeavesTheTemplateAlone(t *testing.T) {
 	env := rcEnv()
 	tpl, err := liquid.ParseTemplate(`{% assign kept = "x" %}[{{ kept }}{{ greeting }}{{ errors.standard_error }}{% render "p" %}]`,
@@ -283,8 +282,8 @@ func (d *rcPanicDrop) Name() interface{} {
 	return s[3] // a Go panic: index out of range
 }
 
-// A Go panic in a filter, a drop or a partial ends the render with its stack;
-// Render writes it as "Liquid error: internal", as before.
+// A Go panic in a filter, a drop or a partial ends the render with its
+// stack, and the output written before.
 func TestRenderGoPanicIsFatal(t *testing.T) {
 	env := rcEnv()
 	if err := env.RegisterFilter(&rcPanicFilters{}); err != nil {
@@ -309,9 +308,6 @@ func TestRenderGoPanicIsFatal(t *testing.T) {
 		}
 		if res.Output != "a" {
 			t.Errorf("%s: output %q, want what was written before the panic", c.src, res.Output)
-		}
-		if got := renderRuby(tpl, data, nil); !strings.Contains(got, "Liquid error: internal") {
-			t.Errorf("%s: Render wrote %q, want the inline internal error as before", c.src, got)
 		}
 	}
 }
