@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -463,6 +464,9 @@ func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
 		return
 	case string:
 		output.WriteString(v)
+		return
+	case int:
+		output.WriteString(strconv.Itoa(v)) // as ToS, without its method lookups
 		return
 	case []interface{}:
 		if len(v) == 0 {

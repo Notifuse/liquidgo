@@ -381,6 +381,12 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 	}
 	// A value writes its liquid form, also as an item of a list or a hash
 	obj = ToLiquid(obj)
+	switch v := obj.(type) {
+	case string:
+		return v // before indirect, which reads the kind of obj by reflection
+	case int:
+		return strconv.Itoa(v)
+	}
 	if target, ok := indirect(obj); ok {
 		return ToS(target, seen)
 	}
