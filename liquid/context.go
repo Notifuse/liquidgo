@@ -265,7 +265,7 @@ func (c *Context) resolveFilter(name string) (FilterFunc, bool) {
 			return c.filters[i].fn, false
 		}
 	}
-	if c.environment != nil {
+	if c.environment != nil && len(c.environment.filters) > 0 {
 		if fn, ok := c.environment.filters[name]; ok {
 			return fn, false
 		}
