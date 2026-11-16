@@ -27,11 +27,18 @@ func report(files []string) error {
 		if err := json.Unmarshal(raw, &results); err != nil {
 			return err
 		}
+		lib := strings.TrimSuffix(filepath.Base(f), ".json")
+		deliberate := map[string]bool{}
+		if lib == "liquidgo" {
+			if deliberate, err = liquidgoDeliberate(); err != nil {
+				return err
+			}
+		}
 		match, shop, diff := 0, 0, 0
 		failures := map[string]int{}
 		for _, c := range cases {
 			r := results[c.ID]
-			if r.Failure != "" {
+			if r.Failure != "" && !deliberate[c.ID] {
 				failures[r.Failure]++
 			}
 			if r.Failure == "" && r.Output == c.Expected {
@@ -45,7 +52,7 @@ func report(files []string) error {
 		}
 		total := failures["parse"] + failures["render"] + failures["panic"] + failures["timeout"]
 		fmt.Printf("| %s | %d (%.1f%%) | %d / %d | %d / %d | %d (%d, %d, %d, %d) |\n",
-			strings.TrimSuffix(filepath.Base(f), ".json"), match, 100*float64(match)/float64(len(cases)),
+			lib, match, 100*float64(match)/float64(len(cases)),
 			shop, count(cases, "shopify:"), diff, count(cases, "differential:"),
 			total, failures["parse"], failures["render"], failures["panic"], failures["timeout"])
 	}
@@ -60,4 +67,25 @@ func count(cases []Case, prefix string) int {
 		}
 	}
 	return n
+}
+
+// liquidgoDeliberate returns the cases liquidgo lists as deliberate
+// differences from Shopify in lax mode: a template it refuses on purpose is a
+// difference, not a template it cannot render.
+func liquidgoDeliberate() (map[string]bool, error) {
+	cases := map[string]bool{}
+	raw, err := os.ReadFile(filepath.Join(root, "integration/testdata/differential/differential_divergences.json"))
+	if err != nil {
+		return nil, err
+	}
+	var differential map[string]struct{ Reason string }
+	if err := json.Unmarshal(raw, &differential); err != nil {
+		return nil, err
+	}
+	for key, d := range differential {
+		if id, ok := strings.CutSuffix(key, "/lax"); ok && strings.HasPrefix(d.Reason, "deliberate:") {
+			cases["differential:"+id] = true
+		}
+	}
+	return cases, nil
 }

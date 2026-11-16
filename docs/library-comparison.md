@@ -1,6 +1,7 @@
 # Go Liquid libraries compared
 
-Measured on 2026-11-16, with Shopify Liquid 5.11.0 as the reference.
+Measured on 2026-11-16, with Shopify Liquid 5.11.0 as the reference; times of liquidgo at the
+commit of `perf/render` that follows v5.11.10.
 
 ## Libraries
 
@@ -76,13 +77,13 @@ The times of the table come from the workflow "Library comparison", started by h
 
 | Library | Matches Shopify | Shopify's tests | Differential corpus | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|---|---|
-| Notifuse/liquidgo | **848 (90.4%)** | 328 / 350 | **520 / 588** | **0** | **4 / 4** | 95 µs |
-| tobi/liquid-go | 821 (87.5%) | **347 / 350** | 474 / 588 | 0 | 0 / 4 | 322 µs |
-| nchapman/go-liquid | 738 (78.7%) | 307 / 350 | 431 / 588 | 69 | 3 / 4 | 89 µs |
-| go-liquid/liquid | 607 (64.7%) | 262 / 350 | 345 / 588 | 192 | 1 / 4 | 77 µs |
-| osteele/liquid | 497 (53.0%) | 247 / 350 | 250 / 588 | 324 | 1 / 4 | 298 µs |
-| acstech/liquid | 315 (33.6%) | 186 / 350 | 129 / 588 | 480 | 1 / 4 | 55 µs |
-| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | 3 / 4 | 367 µs |
+| Notifuse/liquidgo | **848 (90.4%)** | 328 / 350 | **520 / 588** | **0** | **4 / 4** | 68 µs |
+| tobi/liquid-go | 821 (87.5%) | **347 / 350** | 474 / 588 | 0 | 0 / 4 | 307 µs |
+| nchapman/go-liquid | 738 (78.7%) | 307 / 350 | 431 / 588 | 69 | 3 / 4 | 87 µs |
+| go-liquid/liquid | 607 (64.7%) | 262 / 350 | 345 / 588 | 192 | 1 / 4 | 76 µs |
+| osteele/liquid | 497 (53.0%) | 247 / 350 | 250 / 588 | 324 | 1 / 4 | 285 µs |
+| acstech/liquid | 315 (33.6%) | 186 / 350 | 129 / 588 | 480 | 1 / 4 | 53 µs |
+| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | 3 / 4 | 379 µs |
 
 - **liquidgo**: each of its 90 differences is listed in its divergence files with its reason. 40
   are deliberate (counters start at 0, an empty string is false, a filter error writes nothing,
@@ -105,5 +106,5 @@ The times of the table come from the workflow "Library comparison", started by h
   parsing and stops the other three with its limits.
 - **Shopify Liquid** refuses the nesting and stops the doubled string and the billion bytes with
   its limits, but runs out of memory on the billion iterations: its `for` builds the whole range
-  before the limits count an iteration. It renders the newsletter template in 367 µs, 3.9 times the
+  before the limits count an iteration. It renders the newsletter template in 379 µs, 5.6 times the
   time of liquidgo.
