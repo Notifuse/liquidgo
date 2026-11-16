@@ -2,7 +2,6 @@ package liquid
 
 // ForloopDrop provides information about a parent for loop.
 type ForloopDrop struct {
-	*Drop
 	parentloop *ForloopDrop
 	name       string
 	length     int
@@ -12,7 +11,6 @@ type ForloopDrop struct {
 // NewForloopDrop creates a new ForloopDrop.
 func NewForloopDrop(name string, length int, parentloop *ForloopDrop) *ForloopDrop {
 	return &ForloopDrop{
-		Drop:       NewDrop(),
 		name:       name,
 		length:     length,
 		parentloop: parentloop,
@@ -71,7 +69,34 @@ func (f *ForloopDrop) Increment() {
 	f.index++
 }
 
-// InvokeDrop invokes a method on the forloop drop.
-func (f *ForloopDrop) InvokeDrop(methodOrKey string) interface{} {
-	return InvokeDropOn(f, methodOrKey)
+// String writes the drop as Ruby writes it, by its class.
+func (f *ForloopDrop) String() string { return "Liquid::ForloopDrop" }
+
+// LiquidGet returns the key of forloop a template reads, as Ruby's
+// ForloopDrop.
+func (f *ForloopDrop) LiquidGet(_ *Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "name":
+		return f.Name(), true, nil
+	case "length":
+		return f.Length(), true, nil
+	case "parentloop":
+		if f.parentloop == nil {
+			return nil, true, nil
+		}
+		return f.parentloop, true, nil
+	case "index":
+		return f.Index(), true, nil
+	case "index0":
+		return f.Index0(), true, nil
+	case "rindex":
+		return f.Rindex(), true, nil
+	case "rindex0":
+		return f.Rindex0(), true, nil
+	case "first":
+		return f.First(), true, nil
+	case "last":
+		return f.Last(), true, nil
+	}
+	return nil, false, nil
 }

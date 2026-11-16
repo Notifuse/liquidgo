@@ -36,11 +36,18 @@ func TestResourceLimitsOfAnyIntegerType(t *testing.T) {
 	}
 }
 
-type dropWithArguments struct{ Drop }
+type dropWithArguments struct{}
 
 func (d *dropWithArguments) AddDate(years, months, days int) string { return "called" }
 
 func (d *dropWithArguments) Name() string { return "drop" }
+
+func (d *dropWithArguments) LiquidGet(_ *Context, key string) (interface{}, bool, error) {
+	if key == "name" {
+		return d.Name(), true, nil
+	}
+	return nil, false, nil
+}
 
 // TestDropMethodsThatNeedArgumentsAreNotCalled checks that a lookup does not
 // call a method that needs arguments, which would panic, and still calls one

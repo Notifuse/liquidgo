@@ -118,20 +118,28 @@ func TestDrop_EnumerableDropSize(t *testing.T) {
 }
 
 // EnumerableDrop is a drop that implements enumerable behavior.
-type EnumerableDrop struct {
-	*liquid.Drop
-}
+type EnumerableDrop struct{}
 
 // NewEnumerableDrop creates a new EnumerableDrop.
 func NewEnumerableDrop() *EnumerableDrop {
-	return &EnumerableDrop{
-		Drop: liquid.NewDrop(),
-	}
+	return &EnumerableDrop{}
 }
 
-// LiquidMethodMissing handles missing method calls.
-func (e *EnumerableDrop) LiquidMethodMissing(method string) interface{} {
-	return method
+// LiquidGet returns the key a template reads.
+func (e *EnumerableDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool, error) {
+	switch key {
+	case "size":
+		return e.Size(), true, nil
+	case "first":
+		return e.First(), true, nil
+	case "count":
+		return e.Count(), true, nil
+	case "min":
+		return e.Min(), true, nil
+	case "max":
+		return e.Max(), true, nil
+	}
+	return key, true, nil
 }
 
 // Each iterates over the collection.
@@ -185,4 +193,17 @@ func renderTemplateForDropTest(template string, assigns map[string]interface{}) 
 	}
 
 	return renderRuby(tmpl, ctx, &rubyOptions{})
+}
+
+// The loop drops give the keys of Ruby's, by their exact name.
+func TestTheLoopDropsGiveRubysKeys(t *testing.T) {
+	out := renderTemplateForDropTest(`{% for i in (1..2) %}{% for j in (1..1) %}{{ forloop.parentloop.index }}{{ forloop.name }}{{ forloop.length }}{{ forloop.index0 }}{{ forloop.rindex }}{{ forloop.rindex0 }}{{ forloop.first }}{{ forloop.last }}{{ forloop.Index }}{% endfor %};{% endfor %}`, nil)
+	if out != "1j-(1..1)1010truetrue;2j-(1..1)1010truetrue;" {
+		t.Errorf("forloop: %q", out)
+	}
+	out = renderTemplateForDropTest(`{% tablerow i in (1..3) cols:2 %}{{ tablerowloop.length }}{{ tablerowloop.col }}{{ tablerowloop.row }}{{ tablerowloop.index }}{{ tablerowloop.index0 }}{{ tablerowloop.col0 }}{{ tablerowloop.rindex }}{{ tablerowloop.rindex0 }}{{ tablerowloop.first }}{{ tablerowloop.last }}{{ tablerowloop.col_first }}{{ tablerowloop.col_last }}{{ tablerowloop.cols }}{% endtablerow %}`, nil)
+	want := "<tr class=\"row1\">\n<td class=\"col1\">31110032truefalsetruefalse</td><td class=\"col2\">32121121falsefalsefalsetrue</td></tr>\n<tr class=\"row2\"><td class=\"col1\">31232010falsetruetruefalse</td></tr>\n"
+	if out != want {
+		t.Errorf("tablerowloop: %q", out)
+	}
 }

@@ -3,6 +3,16 @@
 ## [Unreleased]
 
 ### Breaking
+- **Drops declare their keys**: a drop is a value with `LiquidGet(ctx *Context, key string)
+  (interface{}, bool, error)`, as a `Liquid::Drop` in Ruby, called with the context of the render.
+  `liquid.Drop`, `NewDrop`, `InvokeDropOn`, `IsInvokable`, `GetInvokableMethods` and the method
+  blacklist are gone: a drop's methods and fields were found by reflection, under any of three
+  spellings (`first_name`, `First_name`, `FirstName`). A key is now read by its exact name, as in
+  Ruby: `{{ forloop.Index }}` is nil, and `tablerowloop.cols`, which Ruby does not have, is gone.
+  A missing key is nil, or an `UndefinedDropMethod` with strict variables (Ruby's
+  `liquid_method_missing`); an error `LiquidGet` returns is recorded. A drop keeps no context, so
+  renders can share one. A drop without a `String()` method renders as nothing, never its fields;
+  `forloop` and `tablerowloop` render as in Ruby (`Liquid::ForloopDrop`).
 - **Filters are declared**: `liquid.Filter(name, func(ctx *Context, input interface{}, args
   ...interface{}) (interface{}, error))`, given to `Environment.RegisterFilter(filters ...FilterDef)`
   and `WithFilters(filters ...FilterDef)`. A struct of filter methods is no longer a filter set: the

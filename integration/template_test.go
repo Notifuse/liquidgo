@@ -394,7 +394,6 @@ func TestCanUseDropAsContext(t *testing.T) {
 	tmpl.Registers()["lulz"] = "haha"
 
 	drop := NewTemplateContextDrop()
-	drop.SetContext(liquid.BuildContext(liquid.ContextConfig{Environment: env}))
 
 	err := tmpl.Parse(`{{d.foo}}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {

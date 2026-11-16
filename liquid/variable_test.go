@@ -171,11 +171,11 @@ type testPanicker struct {
 
 func (p *testPanicker) ToLiquid() interface{} { return p }
 
-func (p *testPanicker) LiquidMethodMissing(method string) interface{} {
-	if method == "trigger" {
-		panic(p.err)
+func (p *testPanicker) LiquidGet(_ *Context, key string) (interface{}, bool, error) {
+	if key == "trigger" {
+		return nil, false, p.err
 	}
-	return nil
+	return nil, false, nil
 }
 
 // TestRenderToOutputBufferPreservesLiquidErrorTypes tests that all LiquidError types

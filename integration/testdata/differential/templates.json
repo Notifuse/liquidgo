@@ -1080,5 +1080,21 @@
  {
   "id": "index-12",
   "template": "{{ arr.0 }}|{{ words.1 }}|{{ h.0 }}"
+ },
+ {
+  "id": "drop-01",
+  "template": "{% for i in (1..2) %}{{ forloop }};{% endfor %}"
+ },
+ {
+  "id": "drop-02",
+  "template": "{% for i in (1..1) %}[{{ forloop.Index }}|{{ forloop.index }}|{{ forloop.increment }}]{% endfor %}"
+ },
+ {
+  "id": "drop-03",
+  "template": "{% tablerow i in (1..2) cols:2 %}{{ tablerowloop.cols }}|{{ tablerowloop.col_last }}{% endtablerow %}"
+ },
+ {
+  "id": "drop-04",
+  "template": "{% tablerow i in (1..1) %}{{ tablerowloop }}{% endtablerow %}"
  }
 ]
