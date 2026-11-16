@@ -137,3 +137,19 @@ func TestAnArrayIndexFollowsRuby(t *testing.T) {
 		}
 	}
 }
+
+// With strict variables, a render given no data finds the template's
+// assigns, as Ruby's render(nil) makes them its one environment; given a
+// map, Ruby looks a name up in the map first, which then decides.
+func TestStrictVariablesAndTheTemplateAssigns(t *testing.T) {
+	tmpl := strictTemplate(t, "[{{ x }}]")
+	tmpl.Assigns()["x"] = "from-assigns"
+	res, err := tmpl.Render(gocontext.Background(), nil, liquid.WithStrictVariables())
+	if err != nil || res.Output != "[from-assigns]" || len(res.Errors) != 0 {
+		t.Errorf("no data: output %q, errors %v (%v), want %q and no error", res.Output, res.Errors, err, "[from-assigns]")
+	}
+	res, err = tmpl.Render(gocontext.Background(), map[string]interface{}{}, liquid.WithStrictVariables())
+	if err != nil || res.Output != "[]" || len(res.Errors) != 1 {
+		t.Errorf("a map: output %q, errors %v (%v), want %q and the undefined variable", res.Output, res.Errors, err, "[]")
+	}
+}

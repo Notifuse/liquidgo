@@ -150,11 +150,14 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	// The render never writes data or the template's assigns: a func's value
 	// is kept with the render (Context.funcValueOf), so concurrent renders may
 	// share them.
+	// As Ruby's render: the data, then the template's assigns, or with no
+	// data the assigns alone, which strict variables then look a name up in
+	environments := []map[string]interface{}{data, t.assigns}
 	if data == nil {
-		data = emptyData
+		environments = []map[string]interface{}{t.assigns}
 	}
 	c := BuildContext(ContextConfig{
-		Environments:   []map[string]interface{}{data, t.assigns},
+		Environments:   environments,
 		OuterScope:     map[string]interface{}{},
 		Registers:      registers,
 		ResourceLimits: limits,
@@ -204,9 +207,6 @@ func mergeLimits(base, set ResourceLimitsConfig) ResourceLimitsConfig {
 	}
 	return merged
 }
-
-// emptyData is the data of a render given none; a render never writes it.
-var emptyData = map[string]interface{}{}
 
 // renderContextError returns the error a panic out of a render
 // ends it with.
