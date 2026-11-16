@@ -4,7 +4,6 @@ import (
 	gocontext "context"
 	"errors"
 	"sync"
-	"testing"
 	"weak"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -230,7 +229,7 @@ func renderRubyContext(tmpl *liquid.Template, c *liquid.Context, o *rubyOptions,
 	if o.Context != nil {
 		// the cancellation applies to this render only, as Ruby's
 		c.SetCancellation(o.Context)
-		defer c.SetCancellation(nil)
+		defer c.SetCancellation(gocontext.Background())
 	}
 	if raise {
 		c.SetExceptionRenderer(func(err error) interface{} { panic(err) })
@@ -248,14 +247,4 @@ func rubyErrorText(err error) string {
 		return liquidErr.Error()
 	}
 	return "Liquid error: internal"
-}
-
-// mustRenderRuby fails the test when the render records an error.
-func mustRenderRuby(t *testing.T, tmpl *liquid.Template, assigns interface{}) string {
-	t.Helper()
-	res := renderRubyResult(tmpl, assigns, nil, false)
-	if len(res.Errors) > 0 {
-		t.Fatalf("render recorded %v", res.Errors)
-	}
-	return res.Output
 }

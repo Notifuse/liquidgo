@@ -69,31 +69,6 @@ func stateOf(tmpl *Template) *rubyState {
 	return st
 }
 
-// setRubyLimits sets the resource limits of the next renders of tmpl, as
-// Ruby's template.resource_limits.
-func setRubyLimits(tmpl *Template, limits ResourceLimitsConfig) {
-	st := stateOf(tmpl)
-	st.mu.Lock()
-	st.limits = &limits
-	st.mu.Unlock()
-}
-
-// rubyLimitsResult is what Ruby's template.resource_limits tells of the
-// last render.
-type rubyLimitsResult struct{ last rubyResult }
-
-func (r rubyLimitsResult) Reached() bool    { return r.last.Reached }
-func (r rubyLimitsResult) RenderScore() int { return r.last.RenderScore }
-func (r rubyLimitsResult) AssignScore() int { return r.last.AssignScore }
-
-// rubyLimits returns the limits of the last render of tmpl.
-func rubyLimits(tmpl *Template) rubyLimitsResult {
-	st := stateOf(tmpl)
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	return rubyLimitsResult{st.last}
-}
-
 // rubyErrors returns the errors of the last render of tmpl, as Ruby's
 // template.errors.
 func rubyErrors(tmpl *Template) []error {
@@ -113,12 +88,6 @@ func rubyErrors(tmpl *Template) []error {
 // uses and keeps.
 func renderRuby(tmpl *Template, assigns interface{}, o *rubyOptions) string {
 	return renderRubyResult(tmpl, assigns, o, false).Output
-}
-
-// renderRubyBang renders tmpl as Ruby's Template#render! does: the first
-// error the render records raises (panics) out of it.
-func renderRubyBang(tmpl *Template, assigns interface{}, o *rubyOptions) string {
-	return renderRubyResult(tmpl, assigns, o, true).Output
 }
 
 // renderRubyResult is renderRuby, or renderRubyBang with raise, with the
@@ -228,7 +197,7 @@ func renderRubyContext(tmpl *Template, c *Context, o *rubyOptions, raise bool, p
 	if o.Context != nil {
 		// the cancellation applies to this render only, as Ruby's
 		c.SetCancellation(o.Context)
-		defer c.SetCancellation(nil)
+		defer c.SetCancellation(gocontext.Background())
 	}
 	if raise {
 		c.SetExceptionRenderer(func(err error) interface{} { panic(err) })

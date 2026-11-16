@@ -29,15 +29,6 @@ func rcParse(t *testing.T, env *liquid.Environment, src string) *liquid.Template
 	return tpl
 }
 
-func copyData(data map[string]interface{}) map[string]interface{} {
-	var copied map[string]interface{}
-	raw, _ := json.Marshal(data)
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	dec.UseNumber()
-	_ = dec.Decode(&copied)
-	return withIntegers(copied).(map[string]interface{})
-}
-
 // Concurrent renders of one template each get their own output, errors and
 // limits, and the template keeps none of them.
 func TestRenderIsolatesConcurrentRenders(t *testing.T) {

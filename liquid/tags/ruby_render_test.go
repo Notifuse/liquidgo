@@ -71,43 +71,6 @@ func stateOf(tmpl *liquid.Template) *rubyState {
 	return st
 }
 
-// setRubyLimits sets the resource limits of the next renders of tmpl, as
-// Ruby's template.resource_limits.
-func setRubyLimits(tmpl *liquid.Template, limits liquid.ResourceLimitsConfig) {
-	st := stateOf(tmpl)
-	st.mu.Lock()
-	st.limits = &limits
-	st.mu.Unlock()
-}
-
-// rubyLimitsResult is what Ruby's template.resource_limits tells of the
-// last render.
-type rubyLimitsResult struct{ last rubyResult }
-
-func (r rubyLimitsResult) Reached() bool    { return r.last.Reached }
-func (r rubyLimitsResult) RenderScore() int { return r.last.RenderScore }
-func (r rubyLimitsResult) AssignScore() int { return r.last.AssignScore }
-
-// rubyLimits returns the limits of the last render of tmpl.
-func rubyLimits(tmpl *liquid.Template) rubyLimitsResult {
-	st := stateOf(tmpl)
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	return rubyLimitsResult{st.last}
-}
-
-// rubyErrors returns the errors of the last render of tmpl, as Ruby's
-// template.errors.
-func rubyErrors(tmpl *liquid.Template) []error {
-	st := stateOf(tmpl)
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	if st.last.Errors == nil {
-		return []error{}
-	}
-	return st.last.Errors
-}
-
 // renderRuby renders tmpl as Ruby's Template#render does, which the tests
 // were ported from: an error that ends the render (a resource limit, a
 // cancellation) gives its "Liquid error: ..." message as the output. assigns
@@ -230,7 +193,7 @@ func renderRubyContext(tmpl *liquid.Template, c *liquid.Context, o *rubyOptions,
 	if o.Context != nil {
 		// the cancellation applies to this render only, as Ruby's
 		c.SetCancellation(o.Context)
-		defer c.SetCancellation(nil)
+		defer c.SetCancellation(gocontext.Background())
 	}
 	if raise {
 		c.SetExceptionRenderer(func(err error) interface{} { panic(err) })
