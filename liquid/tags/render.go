@@ -114,15 +114,9 @@ func (r *RenderTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 	}
 
 	// String template name - load from cache
-	partialInterface, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
+	partial, err := liquid.LoadPartial(templateNameStr, context, r.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, r.LineNumber())
-		output.WriteString(errorMsg)
-		return
-	}
-	partial, ok = partialInterface.(*liquid.Template)
-	if !ok {
-		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), r.LineNumber())
 		output.WriteString(errorMsg)
 		return
 	}

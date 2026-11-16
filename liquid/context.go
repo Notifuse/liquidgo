@@ -126,14 +126,8 @@ func BuildContext(config ContextConfig) *Context {
 	}
 
 	// Initialize registers
-	if registers.Get("cached_partials") == nil {
-		registers.Set("cached_partials", make(map[string]interface{}))
-	}
 	if registers.Get("file_system") == nil {
 		registers.Set("file_system", env.FileSystem())
-	}
-	if registers.Get("template_factory") == nil {
-		registers.Set("template_factory", NewTemplateFactory())
 	}
 
 	ctx.rethrowErrors = config.RethrowErrors

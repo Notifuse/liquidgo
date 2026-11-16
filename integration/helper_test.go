@@ -11,11 +11,10 @@ import (
 
 // TemplateResultOptions contains options for assertTemplateResult.
 type TemplateResultOptions struct {
-	Message         string
-	Partials        map[string]string
-	ErrorMode       string
-	RenderErrors    bool
-	TemplateFactory interface{}
+	Message      string
+	Partials     map[string]string
+	ErrorMode    string
+	RenderErrors bool
 }
 
 // assertTemplateResult is the main helper for testing template rendering.
@@ -62,9 +61,6 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 	// Create registers
 	registersMap := make(map[string]interface{})
 	registersMap["file_system"] = fileSystem
-	if options.TemplateFactory != nil {
-		registersMap["template_factory"] = options.TemplateFactory
-	}
 
 	// Build context with proper rethrowErrors setting
 	// When render_errors is false, rethrow_errors is true (default)
@@ -258,29 +254,4 @@ func (s *StubFileSystem) ReadTemplateFile(templatePath string) (string, error) {
 // FileReadCount returns the number of times ReadTemplateFile was called.
 func (s *StubFileSystem) FileReadCount() int {
 	return s.fileReadCount
-}
-
-// StubTemplateFactory is a mock template factory for testing.
-type StubTemplateFactory struct {
-	count int
-}
-
-// NewStubTemplateFactory creates a new StubTemplateFactory.
-func NewStubTemplateFactory() *StubTemplateFactory {
-	return &StubTemplateFactory{
-		count: 0,
-	}
-}
-
-// For returns a template instance for the given template name.
-func (s *StubTemplateFactory) For(templateName string) interface{} {
-	s.count++
-	template := liquid.NewTemplate(&liquid.TemplateOptions{})
-	template.SetName("some/path/" + templateName)
-	return template
-}
-
-// Count returns the number of times For was called.
-func (s *StubTemplateFactory) Count() int {
-	return s.count
 }

@@ -749,8 +749,6 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 		"snippet": "1\n2\n{{ 1",
 	})
 
-	templateFactory := NewStubTemplateFactory()
-
 	env := liquid.NewEnvironment()
 	env.SetFileSystem(fileSystem)
 	tags.RegisterStandardTags(env)
@@ -772,15 +770,16 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
 		Registers: liquid.NewRegisters(map[string]interface{}{
-			"file_system":      fileSystem,
-			"template_factory": templateFactory,
+			"file_system": fileSystem,
 		}),
 	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
-	if !strings.Contains(output, "some/path/snippet line 3") {
-		t.Errorf("Expected output to contain 'some/path/snippet line 3', got %q", output)
+	// the partial's error names it: the template factory that renamed it
+	// (some/path/snippet in Ruby's test) is gone
+	if !strings.Contains(output, "(snippet line 3)") {
+		t.Errorf("Expected output to contain '(snippet line 3)', got %q", output)
 	}
 }
 
@@ -804,8 +803,6 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 		"snippet": code,
 	})
 
-	templateFactory := NewStubTemplateFactory()
-
 	env := liquid.NewEnvironment()
 	env.SetFileSystem(fileSystem)
 	tags.RegisterStandardTags(env)
@@ -825,15 +822,16 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{},
 		RethrowErrors:      false,
 		Registers: liquid.NewRegisters(map[string]interface{}{
-			"file_system":      fileSystem,
-			"template_factory": templateFactory,
+			"file_system": fileSystem,
 		}),
 	}
 
 	output := renderRuby(tmpl, ctx, &rubyOptions{})
 
-	if !strings.Contains(output, "some/path/snippet") {
-		t.Errorf("Expected output to contain 'some/path/snippet', got %q", output)
+	// the partial's error names it (Ruby's test renames it some/path/snippet
+	// with a template factory, which is gone)
+	if !strings.Contains(output, "(snippet line 1)") {
+		t.Errorf("Expected output to contain '(snippet line 1)', got %q", output)
 	}
 	if !strings.Contains(output, "Nesting too deep") {
 		t.Errorf("Expected output to contain 'Nesting too deep', got %q", output)
