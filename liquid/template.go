@@ -30,20 +30,17 @@ type Template struct {
 	name        string
 	warnings    []error
 	lineNumbers bool
-	profiling   bool
 }
 
 // TemplateOptions contains options for parsing a template.
 type TemplateOptions struct {
 	Environment     *Environment
-	Profile         bool
 	LineNumbers     bool
 	StrictVariables bool
 	StrictFilters   bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
-// To enable profiling, pass in Profile: true as an option.
 func ParseTemplate(source string, options *TemplateOptions) (*Template, error) {
 	template := NewTemplate(options)
 	err := template.Parse(source, options)
@@ -215,8 +212,7 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 		t.environment = NewEnvironment()
 	}
 
-	t.profiling = options.Profile
-	t.lineNumbers = options.LineNumbers || t.profiling
+	t.lineNumbers = options.LineNumbers
 
 	// Create parse context
 	templateOpts := make(map[string]interface{})

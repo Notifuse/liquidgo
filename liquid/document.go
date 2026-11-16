@@ -114,12 +114,6 @@ func (d *Document) UnknownTag(tag, markup string, tokenizer *Tokenizer) error {
 
 // RenderToOutput renders the document to output.
 func (d *Document) RenderToOutput(context TagContext, output *OutputBuffer) {
-	if ctx, ok := context.(*Context); ok && ctx.Profiler() != nil {
-		ctx.Profiler().Profile(ctx.TemplateName(), func() {
-			d.body.RenderToOutput(context, output)
-		})
-		return
-	}
 	d.body.RenderToOutput(context, output)
 }
 

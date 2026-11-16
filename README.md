@@ -443,7 +443,7 @@ BenchmarkFull             67 ops  18.49 ms/op   24.09 MB/op
 
 1. **Parse once, render many** - Templates are compiled once and reused
 2. **Use environments** - Pre-register filters and tags
-3. **Enable profiling** - Use built-in profiler for optimization
+3. **Profile with Go** - `pprof` shows where a render spends its time
 4. **Cache templates** - Store compiled templates in memory
 
 See [`performance/`](performance/) directory for detailed benchmarks.

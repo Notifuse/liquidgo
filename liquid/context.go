@@ -37,7 +37,6 @@ type Context struct {
 	// to: an isolated subcontext reports to the context that made it, as
 	// Ruby's subcontexts share the errors array.
 	diagnostics        *Context
-	profiler           *Profiler
 	registers          *Registers
 	stringScanner      *StringScanner
 	strainer           *StrainerTemplate
@@ -629,7 +628,6 @@ func (c *Context) NewIsolatedSubcontext() *Context {
 	subCtx.strainer = nil
 	subCtx.diagnostics = c.reporter()
 	subCtx.disabledTags = c.disabledTags
-	subCtx.profiler = c.profiler
 	subCtx.cancel, subCtx.done = c.cancel, c.done
 	subCtx.fatalPanics = c.fatalPanics
 
@@ -704,16 +702,6 @@ func (c *Context) ParseContext() ParseContextInterface {
 	return nil
 }
 
-// Profiler returns the profiler.
-func (c *Context) Profiler() *Profiler {
-	return c.profiler
-}
-
-// SetProfiler sets the profiler.
-func (c *Context) SetProfiler(profiler *Profiler) {
-	c.profiler = profiler
-}
-
 // Reset clears the Context for reuse from the pool.
 // This method must reset all fields to their zero values.
 func (c *Context) Reset() {
@@ -738,7 +726,6 @@ func (c *Context) Reset() {
 
 	// Nil out pointer fields
 	c.resourceLimits = nil
-	c.profiler = nil
 	c.registers = nil
 	c.stringScanner = nil
 	c.strainer = nil
