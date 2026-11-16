@@ -113,7 +113,7 @@ func TestOutput_VariablePiping(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -147,7 +147,7 @@ func TestOutput_VariablePipingWithInput(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -181,7 +181,7 @@ func TestOutput_VariablePipingWithArgs(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -215,7 +215,7 @@ func TestOutput_VariablePipingWithNoArgs(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -249,7 +249,7 @@ func TestOutput_MultipleVariablePipingWithArgs(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -283,7 +283,7 @@ func TestOutput_VariablePipingWithMultipleArgs(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -317,7 +317,7 @@ func TestOutput_VariablePipingWithVariableArgs(t *testing.T) {
 		RethrowErrors: false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -347,7 +347,7 @@ func TestOutput_MultiplePipings(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}
@@ -376,7 +376,7 @@ func TestOutput_LinkTo(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
 	}

@@ -69,7 +69,8 @@ func panicEnvironment(l limits) *liquid.Environment {
 // rescue_render_node: the message of an error takes the place of its node,
 // unless the node is a blank tag or the error is an undefined variable,
 // drop method or filter, which write nothing; a resource limit ends the
-// render, from any block or partial.
+// render, from any block or partial. A Go panic (crash), which Ruby writes
+// as an internal error and goes on from, ends the render in liquidgo.
 func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 	env := panicEnvironment(limits{})
 	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "{% toomuch %}"}))
@@ -77,11 +78,11 @@ func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 	for _, c := range []struct {
 		source, want, wantError string
 	}{
-		{"a{% crash %}b", "aLiquid error: internalb", "Liquid error: internal"},
+		{"a{% crash %}b", "Liquid error: internal", "panic during render"},
 		{"a{% fail %}b", "aLiquid error: bad argumentb", "Liquid error: bad argument"},
 		{"a{% blankfail %}b", "ab", "Liquid error: bad argument"},
 		{"a{% undefined %}b", "ab", "Liquid error: undefined variable y"},
-		{"a{% for i in (1..2) %}{% crash %}{% endfor %}b", "aLiquid error: internalLiquid error: internalb", "Liquid error: internal"},
+		{"a{% for i in (1..2) %}{% crash %}{% endfor %}b", "Liquid error: internal", "panic during render"},
 		{"A{% cycle a: %}B", "AB", ""},
 		{"a{% toomuch %}b", memory, memory},
 		{"a{% for i in (1..2) %}{% toomuch %}{% endfor %}b", memory, memory},
@@ -103,12 +104,11 @@ func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
 	}
 }
 
-// boomDrop panics when its method is called.
+// boomDrop raises a Liquid error when its method is called.
 type boomDrop struct{ liquid.Drop }
 
 func (b *boomDrop) Boom() string {
-	var items []int
-	return string(rune(items[len(items)]))
+	panic(liquid.NewStandardError("boom"))
 }
 
 // TestAnIncludeRestoresTheTemplateNameOnAnError checks that the template
@@ -122,8 +122,8 @@ func TestAnIncludeRestoresTheTemplateNameOnAnError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpl.Render(map[string]interface{}{"d": &boomDrop{}}, &liquid.RenderOptions{StrictFilters: true})
-	errs := tmpl.Errors()
+	renderRuby(tmpl, map[string]interface{}{"d": &boomDrop{}}, &rubyOptions{StrictFilters: true})
+	errs := rubyErrors(tmpl)
 	if len(errs) == 0 {
 		t.Fatal("no error recorded")
 	}

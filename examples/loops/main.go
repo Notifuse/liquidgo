@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -35,13 +36,16 @@ func main() {
 		panic(err)
 	}
 
-	output := tmpl.Render(map[string]interface{}{
+	res, err := tmpl.Render(context.Background(), map[string]interface{}{
 		"products": []map[string]interface{}{
 			{"name": "Widget", "price": 19.99, "on_sale": false},
 			{"name": "Gadget", "price": 29.99, "on_sale": true},
 			{"name": "Doohickey", "price": 9.99, "on_sale": false},
 		},
-	}, nil)
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println(output)
+	fmt.Println(res.Output)
 }

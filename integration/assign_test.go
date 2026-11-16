@@ -54,26 +54,26 @@ func TestAssignScoreExceedingResourceLimit(t *testing.T) {
 	}
 
 	limit := 1
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		AssignScoreLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "Liquid error: Memory limits exceeded" {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 
 	limit = 2
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		AssignScoreLimit: &limit,
-	}))
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
-	if tmpl.ResourceLimits().AssignScore() == 0 {
+	if rubyLimits(tmpl).AssignScore() == 0 {
 		t.Error("Expected assign_score to be set")
 	}
 }
@@ -87,22 +87,22 @@ func TestAssignScoreExceedingLimitFromCompositeObject(t *testing.T) {
 	}
 
 	limit := 3
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		AssignScoreLimit: &limit,
-	}))
-	result := tmpl.Render(nil, &liquid.RenderOptions{})
+	})
+	result := renderRuby(tmpl, nil, &rubyOptions{})
 	if result != "Liquid error: Memory limits exceeded" {
 		t.Errorf("Expected memory limit error, got %q", result)
 	}
-	if !tmpl.ResourceLimits().Reached() {
+	if !rubyLimits(tmpl).Reached() {
 		t.Error("Expected resource limits to be reached")
 	}
 
 	limit = 5
-	tmpl.SetResourceLimits(liquid.NewResourceLimits(liquid.ResourceLimitsConfig{
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		AssignScoreLimit: &limit,
-	}))
-	result = tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	})
+	result = renderRubyBang(tmpl, nil, &rubyOptions{})
 	if result != "" {
 		t.Errorf("Expected empty string, got %q", result)
 	}
@@ -143,7 +143,7 @@ func assignScoreOf(obj interface{}) int {
 	if err != nil {
 		return 0
 	}
-	tmpl.RenderBang(ctx, &liquid.RenderOptions{})
+	renderRubyBang(tmpl, ctx, &rubyOptions{})
 	return ctx.ResourceLimits().AssignScore()
 }
 

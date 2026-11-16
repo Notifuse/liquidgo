@@ -2,6 +2,51 @@
 
 ## [Unreleased]
 
+### Breaking
+
+The API breaks without a new major version: a major would change the module path to `/v6`, which
+would read as Shopify Liquid 6, and liquidgo's versions follow Shopify's. Only the render API
+changes; templates render as before.
+
+- **`Template.Render(ctx, data, opts...) (Result, error)`** is the one way to render. It is the former
+  `RenderContext`, renamed, and it returns its `Result` by value (one allocation less per render). It
+  replaces `Render(assigns, *RenderOptions) string`, `RenderBang` and `RenderContext`. The data is a map: a drop goes under a key, where `Render` also took a drop or a
+  `*Context` as the data.
+- **`RenderOptions` becomes render options**:
+
+  | `RenderOptions` | Now |
+  |---|---|
+  | `Context` | the `ctx` argument |
+  | `Registers` | `WithRegisters` |
+  | `Filters` | `WithFilters` |
+  | `StrictVariables` | `WithStrictVariables` |
+  | `StrictFilters` | `WithStrictFilters` |
+  | `RenderBang` | `RaiseErrors` |
+
+  `Output`, `GlobalFilter` and `ExceptionRenderer` are gone: the output is `Result.Output`, output
+  escaping replaces a global filter, and `Result.Errors` replaces an exception renderer.
+- **The template keeps no render state.**
+  - Gone: `PersistInstanceAssigns`, `SetPersistInstanceAssigns`, `InstanceAssigns`, `Errors`,
+    `ResourceLimits`, `SetResourceLimits` and `Profiler`.
+  - A render's errors and scores are in its `Result`, with the new `Result.RenderScore` and
+    `Result.AssignScore`.
+  - Limits come from the environment's defaults, and `WithLimits` sets them for one render.
+- **`TemplateOptions`** loses the fields nothing read: `GlobalFilter`, `ExceptionRenderer`, `Registers`
+  and `Filters`.
+- **Added**: `Template.Environment()`.
+
+### Changed
+- **A func in the data is called once per render**, its value kept with the render: the data and the
+  template's assigns are never written. Ruby writes a proc's value back into the hash; so did
+  liquidgo, so that two renders sharing one data map saw the first one's value, and concurrent renders
+  wrote one map.
+
+### Tests
+- **The render benchmark renders the same data on every run.** It picked the current collection,
+  product and blog, and the cart's items, in the order of a Go map, so its output and its allocations
+  changed from one run to the next (30,900 to 38,400 allocations per run of `BenchmarkRender`). It
+  takes them in the order of the YAML file, as Ruby's `values.first`.
+
 ## [5.11.0-port.9]
 
 `Template.RenderContext`, a render with errors returned that changes nothing in the template. Tagged

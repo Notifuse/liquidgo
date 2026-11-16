@@ -775,7 +775,7 @@ func TestRenderTagPassesNamedArgumentsIntoInnerScope(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{
+	output := renderRuby(tmpl, map[string]interface{}{
 		"outer_product": map[string]interface{}{
 			"title": "My Product",
 		},
@@ -811,7 +811,7 @@ func TestRenderTagDoesNotInheritParentScopeVariables(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{}, nil)
+	output := renderRuby(tmpl, map[string]interface{}{}, nil)
 
 	expected := ""
 	if output != expected {
@@ -843,7 +843,7 @@ func TestRenderTagDoesNotMutateParentScope(t *testing.T) {
 
 	tmpl.Registers()["file_system"] = fs
 
-	output := tmpl.Render(map[string]interface{}{}, nil)
+	output := renderRuby(tmpl, map[string]interface{}{}, nil)
 
 	expected := ""
 	if output != expected {
@@ -894,7 +894,7 @@ func TestRenderTagOptionalCommas(t *testing.T) {
 
 			tmpl.Registers()["file_system"] = fs
 
-			output := tmpl.Render(map[string]interface{}{}, nil)
+			output := renderRuby(tmpl, map[string]interface{}{}, nil)
 
 			expected := "hello value1 value2"
 			if output != expected {

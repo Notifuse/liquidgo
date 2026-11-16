@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -45,9 +46,12 @@ func main() {
 	tags.RegisterStandardTags(env)
 	tmpl, _ := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 
-	result1 := tmpl.Render(data1, nil)
-	result2 := tmpl.Render(data2, nil)
-	result3 := tmpl.Render(data3, nil)
+	res1, _ := tmpl.Render(context.Background(), data1)
+	result1 := res1.Output
+	res2, _ := tmpl.Render(context.Background(), data2)
+	result2 := res2.Output
+	res3, _ := tmpl.Render(context.Background(), data3)
+	result3 := res3.Output
 
 	fmt.Println("Test 1 - map[string]interface{}:")
 	fmt.Printf("  Template: %s\n", template)
@@ -78,7 +82,8 @@ func main() {
 
 	nestedTemplate := "{{ company.name }}: {{ company.workspace.name }} ({{ company.workspace.id }})"
 	nestedTmpl, _ := liquid.ParseTemplate(nestedTemplate, &liquid.TemplateOptions{Environment: env})
-	nestedResult := nestedTmpl.Render(nestedData, nil)
+	nestedRes, _ := nestedTmpl.Render(context.Background(), nestedData)
+	nestedResult := nestedRes.Output
 
 	fmt.Printf("  Template: %s\n", nestedTemplate)
 	fmt.Printf("  Result:   %q\n", nestedResult)

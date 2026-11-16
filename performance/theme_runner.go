@@ -1,6 +1,7 @@
 package performance
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -188,7 +189,8 @@ func (tr *ThemeRunner) Render() error {
 	for _, test := range tr.compiledTests {
 		if test.layout != nil {
 			// Render template first
-			output := test.tmpl.Render(test.assigns, nil)
+			res, _ := test.tmpl.Render(context.Background(), test.assigns)
+			output := res.Output
 
 			// Set content_for_layout
 			layoutAssigns := make(map[string]interface{})
@@ -198,9 +200,9 @@ func (tr *ThemeRunner) Render() error {
 			layoutAssigns["content_for_layout"] = output
 
 			// Render layout
-			test.layout.Render(layoutAssigns, nil)
+			_, _ = test.layout.Render(context.Background(), layoutAssigns)
 		} else {
-			test.tmpl.Render(test.assigns, nil)
+			_, _ = test.tmpl.Render(context.Background(), test.assigns)
 		}
 	}
 	return nil
@@ -279,7 +281,8 @@ func (tr *ThemeRunner) compileAndRender(templateSource, layoutSource string, ass
 
 	if compiled.layout != nil {
 		// Render template
-		output := compiled.tmpl.Render(compiled.assigns, nil)
+		res, _ := compiled.tmpl.Render(context.Background(), compiled.assigns)
+		output := res.Output
 
 		// Set content_for_layout
 		layoutAssigns := make(map[string]interface{})
@@ -289,9 +292,9 @@ func (tr *ThemeRunner) compileAndRender(templateSource, layoutSource string, ass
 		layoutAssigns["content_for_layout"] = output
 
 		// Render layout
-		compiled.layout.Render(layoutAssigns, nil)
+		_, _ = compiled.layout.Render(context.Background(), layoutAssigns)
 	} else {
-		compiled.tmpl.Render(compiled.assigns, nil)
+		_, _ = compiled.tmpl.Render(context.Background(), compiled.assigns)
 	}
 
 	return nil

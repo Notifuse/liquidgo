@@ -1,87 +1,45 @@
 package liquid
 
 import (
-	gocontext "context"
 	"math"
 	"reflect"
-	"sync"
 	"unicode/utf8"
 )
-
-// cloneStringMap creates a shallow copy of a map for thread-safe concurrent rendering.
-func cloneStringMap(m map[string]interface{}) map[string]interface{} {
-	if m == nil {
-		return make(map[string]interface{})
-	}
-	cloned := make(map[string]interface{}, len(m))
-	for k, v := range m {
-		cloned[k] = v
-	}
-	return cloned
-}
-
-// cloneResourceLimits creates a new ResourceLimits with the same limits for thread-safe concurrent rendering.
-func cloneResourceLimits(rl *ResourceLimits) *ResourceLimits {
-	if rl == nil {
-		return NewResourceLimits(ResourceLimitsConfig{})
-	}
-	return NewResourceLimits(ResourceLimitsConfig{
-		RenderLengthLimit: rl.renderLengthLimit,
-		RenderScoreLimit:  rl.renderScoreLimit,
-		AssignScoreLimit:  rl.assignScoreLimit,
-	})
-}
 
 // Template represents a compiled Liquid template.
 // Templates are central to liquid. Interpreting templates is a two step process.
 // First you compile the source code you got. During compile time some extensive
 // error checking is performed. Your code should expect to get some SyntaxErrors.
 //
-// After you have a compiled template you can then render it.
-// You can use a compiled template over and over again and keep it cached.
-//
-// Template is safe for concurrent use. When rendered concurrently, each render
-// gets its own isolated scope. State updates (errors, assigns) are synchronized
-// with a mutex.
+// After you have a compiled template you can then render it, over and over
+// again, from any number of goroutines: a render changes nothing in the
+// template (see Render).
 //
 // Example:
 //
-//	template := liquid.ParseTemplate(source)
-//	result := template.Render(map[string]interface{}{"user_name": "bob"})
+//	tmpl, err := liquid.ParseTemplate(source, nil)
+//	res, err := tmpl.Render(ctx, map[string]interface{}{"user_name": "bob"})
 type Template struct {
-	mu              sync.Mutex // Protects concurrent access to mutable state
-	environment     *Environment
-	resourceLimits  *ResourceLimits
-	root            *Document
-	profiler        *Profiler
-	registers       map[string]interface{}
-	assigns         map[string]interface{}
-	instanceAssigns map[string]interface{}
-	name            string
-	warnings        []error
-	errors          []error
-	lineNumbers     bool
-	profiling       bool
-	// persistInstanceAssigns: see TemplateOptions.PersistInstanceAssigns.
-	persistInstanceAssigns bool
+	environment *Environment
+	// limits are the resource limits of a render, from the environment's
+	// defaults; WithLimits changes them for one render.
+	limits      ResourceLimitsConfig
+	root        *Document
+	registers   map[string]interface{}
+	assigns     map[string]interface{}
+	name        string
+	warnings    []error
+	lineNumbers bool
+	profiling   bool
 }
 
 // TemplateOptions contains options for parsing a template.
 type TemplateOptions struct {
-	Environment       *Environment
-	GlobalFilter      func(interface{}) interface{}
-	ExceptionRenderer func(error) interface{}
-	Registers         map[string]interface{}
-	Filters           []interface{}
-	Profile           bool
-	LineNumbers       bool
-	StrictVariables   bool
-	StrictFilters     bool
-	// PersistInstanceAssigns keeps what a render assigns (assign, capture) in
-	// the template and gives it to the next render, as Ruby's Template does.
-	// Off by default: each render starts from its own data only, so a value
-	// assigned while rendering for one recipient never reaches the next.
-	PersistInstanceAssigns bool
+	Environment     *Environment
+	Profile         bool
+	LineNumbers     bool
+	StrictVariables bool
+	StrictFilters   bool
 }
 
 // ParseTemplate creates a new Template and parses the source code.
@@ -104,7 +62,6 @@ func NewTemplate(options *TemplateOptions) *Template {
 		env = NewEnvironment()
 	}
 
-	var resourceLimits *ResourceLimits
 	config := ResourceLimitsConfig{}
 	if env.defaultResourceLimits != nil {
 		// Convert map[string]interface{} to ResourceLimitsConfig
@@ -112,17 +69,12 @@ func NewTemplate(options *TemplateOptions) *Template {
 		config.RenderScoreLimit = limitValue(env.defaultResourceLimits["render_score_limit"])
 		config.AssignScoreLimit = limitValue(env.defaultResourceLimits["assign_score_limit"])
 	}
-	resourceLimits = NewResourceLimits(config)
 
 	return &Template{
-		persistInstanceAssigns: options != nil && options.PersistInstanceAssigns,
-		environment:            env,
-		resourceLimits:         resourceLimits,
-		registers:              make(map[string]interface{}, 4), // Pre-allocate map
-		assigns:                make(map[string]interface{}, 8), // Pre-allocate for typical assigns
-		instanceAssigns:        make(map[string]interface{}, 8), // Pre-allocate for instance assigns
-		errors:                 make([]error, 0, 2),             // Pre-allocate errors
-		warnings:               make([]error, 0, 2),             // Pre-allocate warnings
+		environment: env,
+		limits:      config,
+		registers:   make(map[string]interface{}, 4),
+		assigns:     make(map[string]interface{}, 8),
 	}
 }
 
@@ -188,6 +140,11 @@ func isValidUTF8(s string) bool {
 	return utf8.ValidString(s)
 }
 
+// Environment returns the environment the template was parsed with.
+func (t *Template) Environment() *Environment {
+	return t.environment
+}
+
 // Root returns the root document.
 func (t *Template) Root() *Document {
 	return t.root
@@ -208,36 +165,12 @@ func (t *Template) SetName(name string) {
 	t.name = name
 }
 
-// ResourceLimits returns the resource limits.
-//
-// After a render, it holds the limits and the scores of the render that
-// ended last, in a value no later render changes. With concurrent renders,
-// that may be another render: to know whether a render reached a limit, give
-// it a Context and read the Context's limits.
-func (t *Template) ResourceLimits() *ResourceLimits {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.resourceLimits
-}
-
-// SetResourceLimits sets the resource limits.
-func (t *Template) SetResourceLimits(rl *ResourceLimits) {
-	t.mu.Lock()
-	t.resourceLimits = rl
-	t.mu.Unlock()
-}
-
 // Warnings returns the warnings.
 func (t *Template) Warnings() []error {
+	if t.warnings == nil {
+		return []error{}
+	}
 	return t.warnings
-}
-
-// Profiler returns the profiler (if profiling was enabled).
-// With concurrent renders, it is the profiler of the render that started last.
-func (t *Template) Profiler() *Profiler {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.profiler
 }
 
 // Registers returns the registers map.
@@ -254,220 +187,6 @@ func (t *Template) Assigns() map[string]interface{} {
 		t.assigns = make(map[string]interface{})
 	}
 	return t.assigns
-}
-
-// SetPersistInstanceAssigns turns on or off Ruby's persistence of a render's
-// assigns into the next render (see TemplateOptions.PersistInstanceAssigns).
-// Turning it off forgets what earlier renders kept.
-func (t *Template) SetPersistInstanceAssigns(on bool) {
-	t.mu.Lock()
-	t.persistInstanceAssigns = on
-	if !on {
-		t.instanceAssigns = make(map[string]interface{}, 8)
-	}
-	t.mu.Unlock()
-}
-
-// outerScope returns the outer scope a render starts from: a copy of what
-// earlier renders kept with PersistInstanceAssigns, empty otherwise.
-func (t *Template) outerScope() map[string]interface{} {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if !t.persistInstanceAssigns {
-		return make(map[string]interface{})
-	}
-	return cloneStringMap(t.instanceAssigns)
-}
-
-// InstanceAssigns returns the instance assigns map.
-func (t *Template) InstanceAssigns() map[string]interface{} {
-	if t.instanceAssigns == nil {
-		t.instanceAssigns = make(map[string]interface{})
-	}
-	return t.instanceAssigns
-}
-
-// Errors returns the errors.
-// With concurrent renders, they are those of the render that ended last.
-func (t *Template) Errors() []error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.errors == nil {
-		t.errors = []error{}
-	}
-	return t.errors
-}
-
-// Render renders the template with the given assigns.
-// Render takes a hash with local variables.
-//
-// Following options can be passed via RenderOptions:
-//
-//   - Filters: array with local filters
-//   - Registers: hash with register variables. Those can be accessed from
-//     filters and tags and might be useful to integrate liquid more with its host application
-func (t *Template) Render(assigns interface{}, options *RenderOptions) string {
-	return t.render(assigns, options, false)
-}
-
-// render renders the template; rethrow makes an error raise out of the
-// render, as Ruby's render!, for this render only.
-func (t *Template) render(assigns interface{}, options *RenderOptions, rethrow bool) (output string) {
-	if t.root == nil {
-		return ""
-	}
-
-	// A Context of the caller keeps its own cancellation after this render.
-	if ctx, ok := assigns.(*Context); ok && ctx != nil && options != nil && options.Context != nil {
-		cancel, done := ctx.cancel, ctx.done
-		defer func() { ctx.cancel, ctx.done = cancel, done }()
-	}
-
-	context := t.buildContext(assigns, options, rethrow)
-
-	// Track whether we should merge back state (only when we create the context, not when user passes one)
-	_, userProvidedContext := assigns.(*Context)
-
-	// Create a cloned ResourceLimits for this render to avoid race conditions
-	// when the same template is rendered concurrently
-	if !userProvidedContext {
-		if ctx, ok := context.(*Context); ok {
-			ctx.SetResourceLimits(cloneResourceLimits(t.ResourceLimits()))
-		}
-	}
-
-	// Reset resource usage for this render
-	context.ResourceLimits().Reset()
-
-	// Handle profiling
-	if t.profiling {
-		if ctx, ok := context.(*Context); ok && ctx.Profiler() == nil {
-			profiler := NewProfiler()
-			t.mu.Lock()
-			t.profiler = profiler
-			t.mu.Unlock()
-			ctx.SetProfiler(profiler)
-		}
-	}
-
-	// Cast to *Context to access TemplateName
-	if ctx, ok := context.(*Context); ok {
-		if ctx.TemplateName() == "" {
-			ctx.SetTemplateName(t.name)
-		}
-	}
-
-	// Use output from options if provided
-	buffer := NewOutputBufferFor(context)
-	if options != nil && options.Output != nil {
-		buffer.buf = append(buffer.buf, *options.Output...)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			// Handle Liquid errors by converting them to error messages
-			var err error
-			var handled bool
-
-			switch e := r.(type) {
-			case *MemoryError:
-				errorMsg := context.HandleError(e, nil)
-				output = errorMsg
-				if output == "" {
-					output = "Liquid error: Memory limits exceeded"
-				}
-				handled = true
-			case LiquidError:
-				err = e
-			case *Error:
-				err = e
-			case error:
-				// Non-Liquid errors should be wrapped as InternalError
-				err = NewInternalError("internal")
-			default:
-				// Non-error panics should be wrapped as InternalError
-				err = NewInternalError("internal")
-			}
-
-			if !handled && err != nil {
-				// Get context to handle the error
-				if ctx, ok := context.(*Context); ok {
-					errorMsg := ctx.HandleError(err, nil)
-					output = errorMsg
-					if output == "" {
-						output = "Liquid error: internal"
-					}
-				} else {
-					// Fallback if we can't get context
-					output = "Liquid error: internal error"
-				}
-			} else if !handled {
-				// Re-panic non-Liquid panics
-				panic(r)
-			}
-		}
-		// Update template state with mutex protection for thread-safe concurrent rendering
-		if ctx, ok := context.(*Context); ok {
-			t.mu.Lock()
-			// Always capture errors from the render
-			t.errors = ctx.Errors()
-			// Only merge back instance assigns and resource limits when we created the context,
-			// not when user passed their own Context
-			if !userProvidedContext {
-				// Merge back instance assigns from the render scope to persist across
-				// renders, only when the template asks for Ruby's behaviour
-				if t.persistInstanceAssigns && len(ctx.Scopes()) > 0 {
-					lastScope := ctx.Scopes()[len(ctx.Scopes())-1]
-					for k, v := range lastScope {
-						if k != "__drop__" { // Don't persist internal drop reference
-							t.instanceAssigns[k] = v
-						}
-					}
-				}
-				// Update template's resource limits from context's resource limits
-				// Publish a new value rather than write into the one callers
-				// may be reading
-				if ctx.ResourceLimits() != nil && t.resourceLimits != nil {
-					ctxRL := ctx.ResourceLimits()
-					published := *t.resourceLimits
-					published.assignScore = ctxRL.AssignScore()
-					published.renderScore = ctxRL.RenderScore()
-					published.reachedLimit = ctxRL.Reached()
-					t.resourceLimits = &published
-				}
-			}
-			t.mu.Unlock()
-		}
-		// Update output in options if provided
-		if options != nil && options.Output != nil {
-			*options.Output = output
-		}
-	}()
-
-	t.root.RenderToOutput(context, buffer)
-	output = buffer.String()
-	return output
-}
-
-// RenderOptions contains options for rendering a template.
-type RenderOptions struct {
-	// Context, when set, stops the render once it is done: the render ends
-	// with a CanceledError, which wraps the error of Context.
-	Context           gocontext.Context
-	Output            *string
-	Registers         map[string]interface{}
-	GlobalFilter      func(interface{}) interface{}
-	ExceptionRenderer func(error) interface{}
-	Filters           []interface{}
-	StrictVariables   bool
-	StrictFilters     bool
-}
-
-// RenderBang renders the template with rethrow_errors enabled: an error
-// raises out of the render, as Ruby's render!. Unlike Ruby, this applies to
-// this render only, and a later Render of the template records its errors.
-func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) string {
-	return t.render(assigns, options, true)
 }
 
 // RenderToOutputBuffer renders the template with context and appends the
@@ -498,15 +217,11 @@ func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 					panic(r)
 				}
 			}
-			t.errors = ctx.Errors()
 		}()
 
 		buffer := NewOutputBufferFor(context)
 		defer func() { *output += buffer.String() }()
 		t.root.RenderToOutput(context, buffer)
-	} else {
-		// Fallback: use Render method
-		_ = t.Render(context, &RenderOptions{Output: output})
 	}
 }
 
@@ -524,100 +239,6 @@ func (t *Template) RenderToOutput(context TagContext, output *OutputBuffer) {
 	t.root.RenderToOutput(context, output)
 }
 
-// buildContext builds a Context from assigns and options.
-func (t *Template) buildContext(assigns interface{}, options *RenderOptions, rethrow bool) TagContext {
-	var ctx *Context
-
-	switch v := assigns.(type) {
-	case *Context:
-		ctx = v
-		if rethrow {
-			ctx.SetExceptionRenderer(func(err error) interface{} {
-				panic(err)
-			})
-		}
-	case map[string]interface{}:
-		ctx = BuildContext(ContextConfig{
-			Environments:   []map[string]interface{}{v, t.assigns},
-			OuterScope:     t.outerScope(),
-			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.ResourceLimits(),
-			Environment:    t.environment,
-			RethrowErrors:  rethrow,
-		})
-	case nil:
-		ctx = BuildContext(ContextConfig{
-			Environments:   []map[string]interface{}{t.assigns},
-			OuterScope:     t.outerScope(),
-			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.ResourceLimits(),
-			Environment:    t.environment,
-			RethrowErrors:  rethrow,
-		})
-	default:
-		// Check if it's a drop - if so, we need to make it accessible for variable lookups
-		// In Ruby Liquid, drops can be passed as context and their methods become available as variables
-		// assigns is not nil here (nil case handled above)
-		dropToStore := assigns
-		// Wrap the drop in the outer scope so it's accessible
-		// The drop itself will be the context for variable lookups
-		outerScope := map[string]interface{}{"__drop__": assigns}
-
-		ctx = BuildContext(ContextConfig{
-			Environments:   []map[string]interface{}{t.assigns},
-			OuterScope:     outerScope,
-			Registers:      NewRegisters(t.registers),
-			ResourceLimits: t.ResourceLimits(),
-			Environment:    t.environment,
-			RethrowErrors:  rethrow,
-		})
-
-		// If assigns is a drop, we need special handling for variable lookups
-		// Store it in a special way so FindVariable can access it
-		if drop, ok := dropToStore.(interface{ SetContext(*Context) }); ok {
-			// Set the context on the drop
-			drop.SetContext(ctx)
-			// Make the drop available as the primary lookup source
-			// by putting it in the outer scope with a special key
-			// The drop belongs to this render only: it is not kept for the next
-			// one, as in Ruby, where it is one of the render's environments
-			ctx.Scopes()[len(ctx.Scopes())-1]["__drop__"] = dropToStore
-		}
-	}
-
-	// Apply options
-	if options != nil {
-		// Set registers
-		if options.Registers != nil {
-			for key, value := range options.Registers {
-				ctx.Registers().Set(key, value)
-			}
-		}
-
-		// Apply other options
-		if options.Filters != nil {
-			ctx.AddFilters(options.Filters)
-		}
-		if options.GlobalFilter != nil {
-			ctx.SetGlobalFilter(options.GlobalFilter)
-		}
-		if options.ExceptionRenderer != nil {
-			ctx.SetExceptionRenderer(options.ExceptionRenderer)
-		}
-		if options.StrictVariables {
-			ctx.SetStrictVariables(true)
-		}
-		if options.StrictFilters {
-			ctx.SetStrictFilters(true)
-		}
-		if options.Context != nil {
-			ctx.SetCancellation(options.Context)
-		}
-	}
-
-	return ctx
-}
-
 // configureOptions configures parse options and returns a ParseContext.
 func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterface {
 	if options == nil {
@@ -632,9 +253,6 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 
 	t.profiling = options.Profile
 	t.lineNumbers = options.LineNumbers || t.profiling
-	if options.PersistInstanceAssigns {
-		t.persistInstanceAssigns = true
-	}
 
 	// Create parse context
 	templateOpts := make(map[string]interface{})

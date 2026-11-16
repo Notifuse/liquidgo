@@ -47,8 +47,8 @@ func TestIncrementAssignScoreByBytesNotCharacters(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
-	tmpl.RenderBang(nil, &liquid.RenderOptions{})
-	if tmpl.ResourceLimits().AssignScore() != 9 {
-		t.Errorf("Expected assign_score 9, got %d", tmpl.ResourceLimits().AssignScore())
+	renderRubyBang(tmpl, nil, &rubyOptions{})
+	if rubyLimits(tmpl).AssignScore() != 9 {
+		t.Errorf("Expected assign_score 9, got %d", rubyLimits(tmpl).AssignScore())
 	}
 }

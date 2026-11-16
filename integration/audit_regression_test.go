@@ -45,22 +45,12 @@ func TestAuditAssignDoesNotLeakBetweenRenders(t *testing.T) {
 		`{% if admin %}{% capture secret %}{{ token }}{% endcapture %}{% endif %}[{{ secret }}]`,
 	} {
 		tpl := auditParse(t, auditEnv(), src)
-		if got := tpl.Render(map[string]interface{}{"admin": true, "token": "TOKEN-OF-ALICE"}, nil); got != "[TOKEN-OF-ALICE]" {
+		if got := renderRuby(tpl, map[string]interface{}{"admin": true, "token": "TOKEN-OF-ALICE"}, nil); got != "[TOKEN-OF-ALICE]" {
 			t.Fatalf("%s: render A = %q", src, got)
 		}
-		if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[]" {
+		if got := renderRuby(tpl, map[string]interface{}{"admin": false}, nil); got != "[]" {
 			t.Errorf("%s: render B = %q, want %q: the value assigned for A leaks into B", src, got, "[]")
 		}
-	}
-}
-
-// With PersistInstanceAssigns, the template keeps Ruby's behaviour.
-func TestAuditPersistInstanceAssignsKeepsRubyBehaviour(t *testing.T) {
-	src := `{% if admin %}{% assign secret = token %}{% endif %}[{{ secret }}]`
-	tpl := auditParse(t, auditEnv(), src, liquid.TemplateOptions{PersistInstanceAssigns: true})
-	tpl.Render(map[string]interface{}{"admin": true, "token": "T"}, nil)
-	if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[T]" {
-		t.Errorf("render B = %q, want %q with PersistInstanceAssigns", got, "[T]")
 	}
 }
 
@@ -69,65 +59,22 @@ type auditRecipientDrop struct {
 	Email string
 }
 
-// Data given as a drop belongs to its render only: a later render of the
-// same template, with a map, nil or a Context, does not see it.
+// A drop given to one render belongs to that render only: a later render of
+// the same template, with a map, nil or a Context, does not see it.
 func TestAuditDropDoesNotLeakBetweenRenders(t *testing.T) {
-	for _, persist := range []bool{false, true} {
-		tpl := auditParse(t, auditEnv(), `[{{ email }}{{ __drop__.email }}]`, liquid.TemplateOptions{PersistInstanceAssigns: persist})
-		if got := tpl.Render(&auditRecipientDrop{Drop: liquid.NewDrop(), Email: "alice@example.com"}, nil); got != "[alice@example.comalice@example.com]" {
-			t.Fatalf("persist %v: render A = %q", persist, got)
-		}
-		for name, data := range map[string]interface{}{
-			"map":     map[string]interface{}{"name": "bob"},
-			"nil":     nil,
-			"context": liquid.NewContext(),
-		} {
-			if got := tpl.Render(data, nil); got != "[]" {
-				t.Errorf("persist %v: render B with %s = %q, want %q: the drop of A leaks into B", persist, name, got, "[]")
-			}
+	tpl := auditParse(t, auditEnv(), `[{{ r.email }}]`)
+	if got := renderRuby(tpl, map[string]interface{}{"r": &auditRecipientDrop{Drop: liquid.NewDrop(), Email: "alice@example.com"}}, nil); got != "[alice@example.com]" {
+		t.Fatalf("render A = %q", got)
+	}
+	for name, data := range map[string]interface{}{
+		"map":     map[string]interface{}{"name": "bob"},
+		"nil":     nil,
+		"context": liquid.NewContext(),
+	} {
+		if got := renderRuby(tpl, data, nil); got != "[]" {
+			t.Errorf("render B with %s = %q, want %q: the drop of A leaks into B", name, got, "[]")
 		}
 	}
-}
-
-// Turning PersistInstanceAssigns off forgets what earlier renders kept.
-func TestAuditTurningPersistenceOffForgetsAssigns(t *testing.T) {
-	src := `{% if admin %}{% assign secret = token %}{% endif %}[{{ secret }}]`
-	tpl := auditParse(t, auditEnv(), src, liquid.TemplateOptions{PersistInstanceAssigns: true})
-	tpl.Render(map[string]interface{}{"admin": true, "token": "T"}, nil)
-	tpl.SetPersistInstanceAssigns(false)
-	if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[]" {
-		t.Errorf("render after SetPersistInstanceAssigns(false) = %q, want %q", got, "[]")
-	}
-	tpl.SetPersistInstanceAssigns(true)
-	if got := tpl.Render(map[string]interface{}{"admin": false}, nil); got != "[]" {
-		t.Errorf("render after turning it on again = %q, want %q", got, "[]")
-	}
-}
-
-// Without PersistInstanceAssigns, a render does not start from instance
-// assigns, even ones the caller set through InstanceAssigns.
-func TestAuditInstanceAssignsUnusedWithoutPersistence(t *testing.T) {
-	tpl := auditParse(t, auditEnv(), `[{{ secret }}]`)
-	tpl.InstanceAssigns()["secret"] = "T"
-	if got := tpl.Render(map[string]interface{}{}, nil); got != "[]" {
-		t.Errorf("render = %q, want %q", got, "[]")
-	}
-}
-
-// Errors can be read while other renders run.
-func TestAuditErrorsDuringConcurrentRenders(t *testing.T) {
-	tpl := auditParse(t, auditEnv(), `{{ 1 | divided_by: x }}{{ a.b.c }}`)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for i := 0; i < 200; i++ {
-			tpl.Render(map[string]interface{}{"x": 0}, nil)
-		}
-	}()
-	for i := 0; i < 200; i++ {
-		_ = tpl.Errors()
-	}
-	<-done
 }
 
 // RenderBang raises the errors of its own render only: a later Render of the
@@ -140,47 +87,14 @@ func TestAuditRenderBangDoesNotStick(t *testing.T) {
 		render()
 		return nil
 	}
-	if r := raised(func() { tpl.RenderBang(data, nil) }); r == nil {
+	if r := raised(func() { renderRubyBang(tpl, data, nil) }); r == nil {
 		t.Fatal("RenderBang of a drop that raises did not raise")
 	}
 	var got string
-	if r := raised(func() { got = tpl.Render(data, nil) }); r != nil {
+	if r := raised(func() { got = renderRuby(tpl, data, nil) }); r != nil {
 		t.Fatalf("Render after RenderBang raised %v", r)
 	}
 	if want := "[Liquid error: standard error]"; got != want {
 		t.Errorf("Render after RenderBang = %q, want %q", got, want)
-	}
-}
-
-// The resource limits and the profiler of a template can be read while other
-// renders of it run (detected under -race). Each is read alone, so that the
-// lock of one does not order the reads of the other.
-func TestAuditTemplateStateDuringConcurrentRenders(t *testing.T) {
-	reads := map[string]func(tpl *liquid.Template){
-		"limits": func(tpl *liquid.Template) {
-			if rl := tpl.ResourceLimits(); rl != nil {
-				_ = rl.Reached()
-				_ = rl.RenderScore()
-			}
-		},
-		"profiler": func(tpl *liquid.Template) { _ = tpl.Profiler() },
-	}
-	for name, read := range reads {
-		t.Run(name, func(t *testing.T) {
-			env := auditEnv()
-			env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 50})
-			tpl := auditParse(t, env, `{% for i in (1..n) %}x{% endfor %}`, liquid.TemplateOptions{Profile: true})
-			done := make(chan struct{})
-			go func() {
-				defer close(done)
-				for i := 0; i < 200; i++ {
-					tpl.Render(map[string]interface{}{"n": i % 100}, nil)
-				}
-			}()
-			for i := 0; i < 200; i++ {
-				read(tpl)
-			}
-			<-done
-		})
 	}
 }

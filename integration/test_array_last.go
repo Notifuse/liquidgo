@@ -52,7 +52,7 @@ func TestArrayCommandMethods(t *testing.T) {
 				t.Fatalf("Parse failed: %v", err)
 			}
 
-			got := tmpl.Render(tt.vars, nil)
+			got := renderRuby(tmpl, tt.vars, nil)
 			if got != tt.want {
 				t.Errorf("FAILED\nTemplate: %s\nWant: %q\nGot:  %q", tt.template, tt.want, got)
 			} else {

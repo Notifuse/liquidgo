@@ -176,7 +176,7 @@ func TestCustomTagsRenderAsBeforeOutputBuffer(t *testing.T) {
 			t.Errorf("%q: %v", c.source, err)
 			continue
 		}
-		if got := tmpl.Render(nil, nil); got != c.want {
+		if got := renderRuby(tmpl, nil, nil); got != c.want {
 			t.Errorf("%q renders %q, want %q", c.source, got, c.want)
 		}
 	}

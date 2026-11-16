@@ -184,5 +184,5 @@ func renderTemplateForDropTest(template string, assigns map[string]interface{}) 
 		RethrowErrors:      false,
 	})
 
-	return tmpl.Render(ctx, &liquid.RenderOptions{})
+	return renderRuby(tmpl, ctx, &rubyOptions{})
 }

@@ -153,7 +153,7 @@ func TestVariable_PresetAssigns(t *testing.T) {
 		RethrowErrors:      false,
 	})
 
-	output := tmpl.Render(ctx, &liquid.RenderOptions{})
+	output := renderRuby(tmpl, ctx, &rubyOptions{})
 	if output != "worked" {
 		t.Errorf("Expected 'worked', got %q", output)
 	}
@@ -178,7 +178,7 @@ func TestVariable_ReuseParsedTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "name": "Tobi"}},
 		RethrowErrors:      false,
 	})
-	output1 := tmpl.Render(ctx1, &liquid.RenderOptions{})
+	output1 := renderRuby(tmpl, ctx1, &rubyOptions{})
 	if output1 != "Hello Tobi" {
 		t.Errorf("Expected 'Hello Tobi', got %q", output1)
 	}
@@ -189,7 +189,7 @@ func TestVariable_ReuseParsedTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "unknown": "Tobi"}},
 		RethrowErrors:      false,
 	})
-	output2 := tmpl.Render(ctx2, &liquid.RenderOptions{})
+	output2 := renderRuby(tmpl, ctx2, &rubyOptions{})
 	if output2 != "Hello " {
 		t.Errorf("Expected 'Hello ', got %q", output2)
 	}
@@ -200,7 +200,7 @@ func TestVariable_ReuseParsedTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"greeting": "Hello", "name": "Brian"}},
 		RethrowErrors:      false,
 	})
-	output3 := tmpl.Render(ctx3, &liquid.RenderOptions{})
+	output3 := renderRuby(tmpl, ctx3, &rubyOptions{})
 	if output3 != "Hello Brian" {
 		t.Errorf("Expected 'Hello Brian', got %q", output3)
 	}
@@ -226,7 +226,7 @@ func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
 	})
-	output1 := tmpl.Render(ctx1, &liquid.RenderOptions{})
+	output1 := renderRuby(tmpl, ctx1, &rubyOptions{})
 	if output1 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output1)
 	}
@@ -237,7 +237,7 @@ func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
 	})
-	output2 := tmpl.Render(ctx2, &liquid.RenderOptions{})
+	output2 := renderRuby(tmpl, ctx2, &rubyOptions{})
 	if output2 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output2)
 	}
@@ -248,7 +248,7 @@ func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"test": "foo"}},
 		RethrowErrors:      false,
 	})
-	output3 := tmpl.Render(ctx3, &liquid.RenderOptions{})
+	output3 := renderRuby(tmpl, ctx3, &rubyOptions{})
 	if output3 != "foobar" {
 		t.Errorf("Expected 'foobar', got %q", output3)
 	}
@@ -259,7 +259,7 @@ func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 		StaticEnvironments: []map[string]interface{}{{"test": "baz"}},
 		RethrowErrors:      false,
 	})
-	output4 := tmpl.Render(ctx4, &liquid.RenderOptions{})
+	output4 := renderRuby(tmpl, ctx4, &rubyOptions{})
 	if output4 != "bazbar" {
 		t.Errorf("Expected 'bazbar', got %q", output4)
 	}

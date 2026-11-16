@@ -414,7 +414,7 @@ After doc
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, nil, &rubyOptions{})
 
 	// DEBUG: Write outputs to files for comparison
 	_ = os.WriteFile("/tmp/liquidgo_actual.txt", []byte(result), 0644)
@@ -495,7 +495,7 @@ Captured: JOHN DOE
 		t.Fatalf("ParseTemplate() error = %v", err)
 	}
 
-	result := tmpl.RenderBang(nil, &liquid.RenderOptions{})
+	result := renderRubyBang(tmpl, nil, &rubyOptions{})
 
 	if result != expected {
 		t.Errorf("Output mismatch\n\nExpected:\n%s\n\nGot:\n%s", expected, result)
