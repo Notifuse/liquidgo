@@ -129,21 +129,21 @@ func newContext(env *liquid.Environment) *liquid.Context {
 	return liquid.BuildContext(liquid.ContextConfig{Environment: env})
 }
 
-// nilMapTag writes to a nil map when it renders: a bug of a node.
-type nilMapTag struct{ *liquid.Tag }
+// outOfRangeTag reads past the end of a list when it renders: a bug of a node.
+type outOfRangeTag struct{ *liquid.Tag }
 
-func (n *nilMapTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
-	var m map[string]int
-	m["x"] = 1
+func (n *outOfRangeTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
+	var items []int
+	_ = items[len(items)]
 }
 
 // The fuzz and scaling checks see a render that a Go panic ended.
 func TestInternalErrorSeesAGoPanic(t *testing.T) {
 	env := newEnv("", limits{})
-	env.RegisterTag("nilmap", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
-		return &nilMapTag{liquid.NewTag(name, markup, pc)}, nil
+	env.RegisterTag("outofrange", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &outOfRangeTag{liquid.NewTag(name, markup, pc)}, nil
 	})
-	if r := renderWith(env, "a{% nilmap %}b", nil); r.internalError() == nil {
+	if r := renderWith(env, "a{% outofrange %}b", nil); r.internalError() == nil {
 		t.Errorf("a render a Go panic ended gives no internal error (output %q, errors %v)", r.output, r.errors)
 	}
 	if r := renderWith(env, "a{{ x }}b", hostileData()); r.internalError() != nil {
