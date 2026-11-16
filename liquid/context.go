@@ -497,12 +497,6 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
-// lookupAndEvaluate returns the liquid form of the value of key in obj, a
-// map the render does not own (see valueIn).
-func (c *Context) lookupAndEvaluate(obj map[string]interface{}, key string) interface{} {
-	return c.liquidValue(c.valueIn(obj, key))
-}
-
 // valueIn returns the value of key in obj, a map the render does not own
 // (the data, the template's assigns, a map of them), before its liquid
 // form: a func is called once per render, as Ruby calls a proc once and
