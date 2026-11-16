@@ -67,11 +67,14 @@ func (r result) hasError(text string) bool {
 	return false
 }
 
-// internalError returns the first InternalError of the render, which is how
-// Template.Render reports a panic it recovered, or nil.
+// internalError returns the first error of the render that a bug of the
+// library gives, or nil: the PanicError that ends a render a Go panic
+// stopped, or an InternalError, a non-Liquid error of a node written as
+// "Liquid error: internal".
 func (r result) internalError() error {
 	for _, err := range r.errors {
-		if _, ok := err.(*liquid.InternalError); ok {
+		switch err.(type) {
+		case *liquid.PanicError, *liquid.InternalError:
 			return err
 		}
 	}
@@ -124,4 +127,26 @@ func requireNoPanicEscapes(t *testing.T, fn func()) {
 // newContext returns a rendering context of env with no data.
 func newContext(env *liquid.Environment) *liquid.Context {
 	return liquid.BuildContext(liquid.ContextConfig{Environment: env})
+}
+
+// nilMapTag writes to a nil map when it renders: a bug of a node.
+type nilMapTag struct{ *liquid.Tag }
+
+func (n *nilMapTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
+	var m map[string]int
+	m["x"] = 1
+}
+
+// The fuzz and scaling checks see a render that a Go panic ended.
+func TestInternalErrorSeesAGoPanic(t *testing.T) {
+	env := newEnv("", limits{})
+	env.RegisterTag("nilmap", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &nilMapTag{liquid.NewTag(name, markup, pc)}, nil
+	})
+	if r := renderWith(env, "a{% nilmap %}b", nil); r.internalError() == nil {
+		t.Errorf("a render a Go panic ended gives no internal error (output %q, errors %v)", r.output, r.errors)
+	}
+	if r := renderWith(env, "a{{ x }}b", hostileData()); r.internalError() != nil {
+		t.Errorf("a render without a panic gives the internal error %v", r.internalError())
+	}
 }
