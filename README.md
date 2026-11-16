@@ -1,8 +1,8 @@
-# liquidgo - The best Liquid engine for Go
+# liquidgo - The best Liquid engine in the world
 
-A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the Go engine closest to the
-Ruby gem, the only one that stops every hostile template, and among the fastest. Every difference
-from Shopify is listed.
+A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the closest to Shopify of the
+Go engines, the only engine, Shopify's own included, that stops every hostile template, and 4 times
+faster than Shopify's. Every difference from Shopify is listed.
 
 It renders the emails and blog pages of [Notifuse](https://www.notifuse.com/), the open-source
 emailing platform, where every template is written by its users.
@@ -17,20 +17,23 @@ emailing platform, where every template is written by its users.
 
 Measured on 938 templates against Shopify Liquid 5.11.0 on 2026-11-16 ([method](docs/library-comparison.md)):
 
-| Library | Same output as Shopify | Render failures | Hostile templates contained | Newsletter template |
+| Library | Same output as Shopify | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|
-| **liquidgo** | **90.4%** | 1 | **4 / 4** | 46 µs |
-| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.5% | 0 | 0 / 4 | 185 µs |
-| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 78.7% | 69 | 3 / 4 | 128 µs |
-| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.7% | 192 | 1 / 4 | 47 µs |
-| [osteele/liquid](https://github.com/osteele/liquid) | 53.0% | 324 | 1 / 4 | 153 µs |
-| [acstech/liquid](https://github.com/acstech/liquid) | 33.6% | 480 | 1 / 4 | 28 µs |
+| **liquidgo** | **90.4%** | **0** | **4 / 4** | 95 µs |
+| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.5% | 0 | 0 / 4 | 322 µs |
+| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 78.7% | 69 | 3 / 4 | 89 µs |
+| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.7% | 192 | 1 / 4 | 77 µs |
+| [osteele/liquid](https://github.com/osteele/liquid) | 53.0% | 324 | 1 / 4 | 298 µs |
+| [acstech/liquid](https://github.com/acstech/liquid) | 33.6% | 480 | 1 / 4 | 55 µs |
+| [Shopify Liquid](https://github.com/Shopify/liquid) (Ruby 3.3, YJIT) | the reference | | 3 / 4 | 367 µs |
 
 The templates are the cases of Shopify Liquid's own test suite and liquidgo's differential corpus,
 which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 347 of 350 and liquidgo 328,
 the others being liquidgo's [deliberate differences](docs/differences-from-shopify.md) and markup
 Ruby's lax parser tolerates. A hostile template is written to exhaust the process (a billion
-iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested blocks).
+iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested blocks); Shopify
+Liquid, with its resource limits, runs out of memory on the billion iterations, whose range it
+builds whole.
 
 ## Why liquidgo
 
@@ -39,7 +42,8 @@ iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested
   reason.
 - **Safe with untrusted templates.** A template cannot crash your program, exhaust its memory or CPU,
   or read anything of your Go values but what you give it. See [Safety](#safety).
-- **Fast.** Parse once, render from any number of goroutines; renders share the parse of a partial.
+- **Fast.** 4 times faster than Shopify Liquid with YJIT. Parse once, render from any number of
+  goroutines; renders share the parse of a partial.
 - **Explicit.** Filters are declared with `liquid.Filter`, and drops declare the keys a template
   reads: nothing is found by reflection.
 - **Pure Go.** One dependency, `gopkg.in/yaml.v3`, for the translations of error messages.
@@ -177,7 +181,7 @@ go test -race ./...
 ## Performance
 
 The newsletter template of the comparison (a loop over 50 products with conditions and filters)
-renders in 46 µs. The benchmarks of [`performance/`](performance/) render a Shopify theme; a render
+renders in 95 µs on GitHub's arm64 runner, against 367 µs for Shopify Liquid with YJIT. The benchmarks of [`performance/`](performance/) render a Shopify theme; a render
 of v5.11.10 allocates half as much as v5.11.9.
 
 ## Differences from Shopify Liquid
