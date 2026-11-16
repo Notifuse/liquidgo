@@ -58,6 +58,9 @@ partial body.
   `Context.ClearInstanceAssigns`, `Context.Reset` (for a pool that does not exist) and
   `Context.LookupAndEvaluate`. A template keeps no assigns between renders, so a context's outer scope
   starts empty and holds the render's assigns and captures.
+- **`Context.IncrementRenderDepth` and `DecrementRenderDepth` are gone**: the `if` tag counted its
+  nesting during the render, which Ruby does not. The depth of blocks is bounded at parse and the
+  recursion of partials by the depth of scopes, which stay.
 - **The profiler is gone**: `liquid.Profiler`, `liquid.Timing`, `NewProfiler`, `Context.Profiler`,
   `Context.SetProfiler` and `TemplateOptions.Profile`. `Render` no longer used it; Go's own profiler
   (`pprof`) measures a render. `Profile: true` also turned line numbers on: set `LineNumbers`.
@@ -82,6 +85,13 @@ partial body.
     through it.
 
 ### Fixed
+- **The end of a comment decides whether the text after it is trimmed**, as Ruby: in
+  `{%comment-%}{%endcomment%} `, the `-%}` of the opening tag trimmed the space after `endcomment` too.
+- **`LocalFileSystem` reads only under its root**: a symbolic link under the root read a file out of
+  it, and the root check took a sibling whose name starts with the root's for the root. The file
+  and the root are resolved, and the file must be under the root.
+- **`LocalFileSystem` errors name the template, never a path of the host**: an unreadable file gave
+  `Failed to read template 'x': read /abs/path/_x.liquid: ...`, written in the render.
 - **Strict variables record an undefined name of the first level**, as Ruby's `find_variable`:
   `{{ nope }}` recorded nothing, only `{{ a.nope }}` did. Like Ruby, the error is recorded and not
   written, and it ends its node: `{% if nope %}` renders neither branch.
@@ -118,6 +128,19 @@ partial body.
   pushes (`Context.Push`, `Context.Stack`) is a scope, and belongs to the render.
 
 ### Tests
+- **Security checks of the categories of the security plan**:
+  - each guard is removed in turn by `scripts/guard_mutations` (31 guards), which fails when no test
+    fails without it; the Guards workflow runs it on main and before a release;
+  - the library imports no network, process or plugin, and `os` only where a host gives files
+    (`TestTheLibraryImportsNoSystemAccess`);
+  - no error shows a value of the data, but where Ruby names a key or a partial
+    (`TestErrorsShowNoValueOfTheData`);
+  - with the output escape, a value stays in its HTML destination
+    (`TestOutputEscapeKeepsAValueInItsDestination`), and the README lists what the escape does not
+    cover.
+- **A template keeps the text around its tags**: the text before its first tag starts the
+  output and the text after its last one ends it, checked over the differential corpus and in
+  `FuzzRender`, which found the comment trim above.
 - **The differential corpus renders with strict variables** the templates that ask for it
   (`"strict_variables": true`): 18 templates, checked against Shopify Liquid 5.11.0.
 - **The render benchmark renders the same data on every run.** It picked the current collection,

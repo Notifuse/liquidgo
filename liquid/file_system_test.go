@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -249,5 +250,72 @@ func TestLocalFileSystemFullPathAbsolutePath(t *testing.T) {
 
 	if !strings.HasPrefix(fullPath, absRoot) {
 		t.Errorf("Path %s is not within root %s", fullPath, absRoot)
+	}
+}
+
+// A LocalFileSystem reads only files under its root: no name reaches a file
+// out of it, not even through a symbolic link under the root, and a
+// prefix of the root is no root (a sibling directory named root-other).
+func TestLocalFileSystemReadsOnlyUnderItsRoot(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "root")
+	outside := filepath.Join(base, "root-other")
+	for _, dir := range []string{root, outside} {
+		if err := os.Mkdir(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(outside, "_secret.liquid"), []byte("SECRET"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "evil")); err != nil {
+		t.Skip("no symbolic links here:", err)
+	}
+	fs := NewLocalFileSystem(root, "")
+	for _, name := range []string{
+		"evil/secret", "/etc/passwd", "../root-other/secret", "a/../../root-other/secret",
+		"..", "a\\..\\b", "a%2e%2e/b", "a\x00b", "", "évil",
+	} {
+		content, err := fs.ReadTemplateFile(name)
+		var fsErr *FileSystemError
+		if err == nil || !errors.As(err, &fsErr) || strings.Contains(content, "SECRET") {
+			t.Errorf("%q read %q (%v), want a FileSystemError", name, content, err)
+		}
+	}
+}
+
+// The errors of a LocalFileSystem name the template, never a path of the
+// host: a render writes them in place of the include.
+func TestLocalFileSystemErrorsNameNoPath(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "_dir.liquid"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	fs := NewLocalFileSystem(root, "")
+	for _, name := range []string{"missing", "dir"} {
+		_, err := fs.ReadTemplateFile(name)
+		if err == nil {
+			t.Fatalf("%q: no error", name)
+		}
+		if strings.Contains(err.Error(), root) || strings.Contains(err.Error(), string(filepath.Separator)+"_") {
+			t.Errorf("%q: the error %q shows a path of the host", name, err.Error())
+		}
+		if !strings.Contains(err.Error(), "'"+name+"'") {
+			t.Errorf("%q: the error %q does not name the template", name, err.Error())
+		}
+	}
+}
+
+// A symbolic link that loops is a template the file system cannot read, and
+// the error names the template, not a path of the host.
+func TestLocalFileSystemALoopingLink(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Symlink(filepath.Join(root, "_loop.liquid"), filepath.Join(root, "_loop.liquid")); err != nil {
+		t.Skip("no symbolic links here:", err)
+	}
+	_, err := NewLocalFileSystem(root, "").ReadTemplateFile("loop")
+	var fsErr *FileSystemError
+	if !errors.As(err, &fsErr) || strings.Contains(err.Error(), root) || !strings.Contains(err.Error(), "'loop'") {
+		t.Errorf("error %v, want a FileSystemError that names loop and no path", err)
 	}
 }

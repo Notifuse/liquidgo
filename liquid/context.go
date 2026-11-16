@@ -53,7 +53,6 @@ type Context struct {
 	scopes             []map[string]interface{}
 	staticEnvironments []map[string]interface{}
 	baseScopeDepth     int
-	renderDepth        int // Track nesting depth during rendering
 	// counters holds the increment and decrement counters of the render.
 	// Ruby keeps them in the first environment; they are read after the
 	// scopes and before the environments, as there.
@@ -184,19 +183,6 @@ func (c *Context) reporter() *Context {
 		return c.diagnostics
 	}
 	return c
-}
-
-// IncrementRenderDepth increments the render depth and checks for stack overflow.
-func (c *Context) IncrementRenderDepth() {
-	c.renderDepth++
-	if c.renderDepth > blockMaxDepth {
-		panic(NewStackLevelError("Nesting too deep"))
-	}
-}
-
-// DecrementRenderDepth decrements the render depth.
-func (c *Context) DecrementRenderDepth() {
-	c.renderDepth--
 }
 
 // ResourceLimits returns the resource limits.

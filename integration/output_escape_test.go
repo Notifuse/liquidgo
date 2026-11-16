@@ -1,6 +1,7 @@
 package integration
 
 import (
+	gocontext "context"
 	"runtime"
 	"strings"
 	"testing"
@@ -202,5 +203,40 @@ func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
 	// a chunk at a time, about the 1 MB limit's worth of chunks.
 	if on := allocated(true); on > 8<<20 {
 		t.Errorf("the escaped string allocated %d bytes before the limit stopped it", on)
+	}
+}
+
+// With the output escape on, a value of the data cannot leave the HTML
+// destination it is written in (category 5 of the security check): the text
+// of an element, an attribute in double or single quotes, a comment and an
+// Outlook conditional comment. Each case closes its destination in the
+// value, and the value stays inside.
+func TestOutputEscapeKeepsAValueInItsDestination(t *testing.T) {
+	env := liquid.NewEnvironment()
+	tags.RegisterStandardTags(env)
+	env.SetOutputEscape(true)
+	data := map[string]interface{}{"v": `x"'></a><img src=x onerror=alert(1)>--><![endif]-->&`}
+	escaped := `x&quot;&#39;&gt;&lt;/a&gt;&lt;img src=x onerror=alert(1)&gt;--&gt;&lt;![endif]--&gt;&amp;`
+	for _, c := range []struct{ destination, template string }{
+		{"element text", `<p>{{ v }}</p>`},
+		{"attribute in double quotes", `<a title="{{ v }}">t</a>`},
+		{"attribute in single quotes", `<a title='{{ v }}'>t</a>`},
+		{"comment", `<!-- {{ v }} -->`},
+		{"Outlook conditional comment", `<!--[if mso]>{{ v }}<![endif]-->`},
+	} {
+		tmpl, err := liquid.ParseTemplate(c.template, &liquid.TemplateOptions{Environment: env})
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := tmpl.Render(gocontext.Background(), data)
+		want := strings.Replace(c.template, "{{ v }}", escaped, 1)
+		if err != nil || res.Output != want {
+			t.Errorf("%s: %q (%v), want %q", c.destination, res.Output, err, want)
+		}
+		for _, closer := range []string{`"`, `'`, `>`, `<`, `-->`} {
+			if strings.Count(res.Output, closer) != strings.Count(c.template, closer)-strings.Count("{{ v }}", closer) {
+				t.Errorf("%s: the value adds a %s to %q", c.destination, closer, res.Output)
+			}
+		}
 	}
 }

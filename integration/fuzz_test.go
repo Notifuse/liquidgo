@@ -89,6 +89,11 @@ func FuzzRender(f *testing.F) {
 			if err := first.internalError(); err != nil {
 				t.Fatalf("%s: a panic in the render of %q became %v", mode, source, err)
 			}
+			if first.parseErr == nil && !first.stopped() {
+				if err := keptEnds(source, first.output); err != nil {
+					t.Fatalf("%s: %q loses text: %v", mode, source, err)
+				}
+			}
 			if timeDependent.MatchString(source) {
 				continue
 			}

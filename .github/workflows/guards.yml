@@ -1,0 +1,31 @@
+name: Guards
+
+# Each guard of the library (resource limits, depth, the end of a render, what
+# a template reads of Go values, output escaping, template files) is removed in
+# turn, and a test must fail without it. The run takes several minutes, so it
+# runs on main, after each merge, and on demand before a release: a release is
+# tagged only once this workflow is green on the commit to tag.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # A guard removed can let a test allocate without bound: each process
+      # gets at most 4 GiB of address space, so that such a test crashes,
+      # which counts as catching the mutation, instead of taking the runner.
+      - name: Remove each guard and run the tests
+        run: |
+          ulimit -v 4194304
+          go run ./scripts/guard_mutations

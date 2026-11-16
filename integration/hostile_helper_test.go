@@ -81,6 +81,19 @@ func (r result) internalError() error {
 	return nil
 }
 
+// stopped reports whether an error ended the render (a limit, a
+// cancellation, a Go panic): the Ruby helper then writes its message as
+// the output.
+func (r result) stopped() bool {
+	for _, err := range r.errors {
+		switch err.(type) {
+		case *liquid.MemoryError, *liquid.CanceledError, *liquid.PanicError:
+			return true
+		}
+	}
+	return false
+}
+
 // renderWith parses source in env and renders it with data, as an
 // application does: a parse error is returned, not rendered.
 func renderWith(env *liquid.Environment, source string, data map[string]interface{}) result {
