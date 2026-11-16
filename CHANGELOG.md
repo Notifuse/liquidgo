@@ -56,6 +56,15 @@
   `Environment.SetPartialCacheLimits(partials, bytes)` sets the bounds, 0 turning the cache off. A
   template `LoadPartial` returns is shared between renders: a caller must not change it.
 
+### Fixed
+- A `reflect.Value` given to a template wrote the fields of what it holds; a value with a `String()`
+  method now writes the text of `String()`, never through fmt.
+- A channel, a func that a template cannot call, or a pointer fmt would write as an address renders as
+  nothing (`nil` inside a list or a hash).
+- A key a Go map cannot hash (`{{ y[y] }}` with a map, `{{ y[list] }}`) finds nothing, where the
+  render ended with a `*PanicError`.
+- A nil pointer is nil in a condition (`{% if np %}` is false, `np == nil` is true) as in the output.
+
 ## [5.11.0-port.10]
 
 **Breaking**: the render API, without a new major version (see below). `Template.Render(ctx, data,
