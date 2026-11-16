@@ -3,7 +3,6 @@ package liquid
 import (
 	gocontext "context"
 	"fmt"
-	"reflect"
 	"runtime/debug"
 )
 
@@ -180,7 +179,7 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	buffer := NewOutputBufferFor(c)
 	defer func() {
 		res.Output = buffer.String()
-		res.Errors = distinctErrors(c.Errors())
+		res.Errors = c.Errors()
 		res.RenderScore = c.ResourceLimits().RenderScore()
 		res.AssignScore = c.ResourceLimits().AssignScore()
 		if r := recover(); r != nil {
@@ -208,32 +207,6 @@ func mergeLimits(base, set ResourceLimitsConfig) ResourceLimitsConfig {
 
 // emptyData is the data of a render given none; a render never writes it.
 var emptyData = map[string]interface{}{}
-
-// distinctErrors returns errs with each error once: an error raised through
-// enclosing blocks (RaiseErrors) is recorded by each of them.
-func distinctErrors(errs []error) []error {
-	if len(errs) < 2 {
-		return errs
-	}
-	var out []error
-	seen := make(map[error]bool, len(errs))
-	for _, err := range errs {
-		if comparable(err) {
-			if seen[err] {
-				continue
-			}
-			seen[err] = true
-		}
-		out = append(out, err)
-	}
-	return out
-}
-
-// comparable reports whether err can be a map key: an error type with an
-// uncomparable value (a slice, a map) would make the lookup panic.
-func comparable(err error) bool {
-	return reflect.TypeOf(err).Comparable()
-}
 
 // renderContextError returns the error a panic out of a render
 // ends it with.

@@ -460,3 +460,28 @@ func TestRenderRegistersReachPartials(t *testing.T) {
 		t.Errorf("the template's registers changed: %v", tpl.Registers())
 	}
 }
+
+// sameErrorDrop raises the same error value each time it is read.
+type sameErrorDrop struct{ liquid.Drop }
+
+var sameError = liquid.NewStandardError("same")
+
+func (d *sameErrorDrop) Boom() interface{} { panic(sameError) }
+
+// Each error a render records is in Result.Errors, as Ruby records each:
+// the same error value raised twice is listed twice; and with RaiseErrors,
+// an error raised through enclosing blocks and partials is listed once.
+func TestRenderListsEachRecordedError(t *testing.T) {
+	data := map[string]interface{}{"d": &sameErrorDrop{Drop: *liquid.NewDrop()}}
+	tpl := rcParse(t, rcEnv(), `{{ d.boom }}|{{ d.boom }}`)
+	res, err := tpl.Render(gocontext.Background(), data)
+	if err != nil || len(res.Errors) != 2 {
+		t.Errorf("errors %v (%v), want the error twice", res.Errors, err)
+	}
+	nested := rcParse(t, rcEnv(), `{% if true %}{% for i in (1..2) %}{% render 'p', errors: errors %}{% endfor %}{% endif %}`)
+	fs := &mapFileSystem{templates: map[string]string{"p": "{% if true %}{{ errors.standard_error }}{% endif %}"}}
+	res, err = nested.Render(gocontext.Background(), map[string]interface{}{"errors": NewErrorDrop()}, liquid.WithFileSystem(fs), liquid.RaiseErrors())
+	if err == nil || len(res.Errors) != 1 {
+		t.Errorf("with RaiseErrors: errors %v (%v), want the raised error once", res.Errors, err)
+	}
+}

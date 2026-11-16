@@ -80,6 +80,9 @@ changes; templates render as before.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
 
 ### Changed
+- **`Result.Errors` lists each error the render recorded**, as Ruby's `template.errors`: the same error
+  value raised twice is listed twice, where `RenderContext` listed it once. With `RaiseErrors`, an
+  error raised through enclosing blocks and partials is still listed once.
 - **The registers of a render reach its partials**: `WithRegisters` writes them in the static
   registers, as Ruby's `registers:` option, which a `{% render %}` partial inherits. They were in the
   change layer, which a `render` partial does not see (as `RenderOptions.Registers` in v5.11.8). A
