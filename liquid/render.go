@@ -11,9 +11,11 @@ type Result struct {
 	// Output is the rendered text. When the render ends with an error, it is
 	// the text written before the render stopped.
 	Output string
-	// Errors are the errors the render recorded, as Ruby's Template#errors,
-	// each once: each one wrote its message in Output ("Liquid error: ..."),
-	// unless it was raised by RaiseErrors.
+	// Errors are the errors the render recorded, as Ruby's Template#errors.
+	// As in Ruby, most wrote their message in Output ("Liquid error: ..."),
+	// but an undefined variable, filter or drop method, and an error in a
+	// blank tag (assign, capture...), write nothing. With RaiseErrors, the
+	// error that ended the render is the last one.
 	Errors []error
 	// RenderScore and AssignScore are the work and the assigned size the
 	// render counted against its limits (see ResourceLimitsConfig).
@@ -185,7 +187,7 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 		res.RenderScore = c.ResourceLimits().RenderScore()
 		res.AssignScore = c.ResourceLimits().AssignScore()
 		if r := recover(); r != nil {
-			err = renderContextError(r)
+			err = renderError(r)
 		}
 	}()
 	t.root.RenderToOutput(c, buffer)
@@ -207,9 +209,9 @@ func mergeLimits(base, set ResourceLimitsConfig) ResourceLimitsConfig {
 	return merged
 }
 
-// renderContextError returns the error a panic out of a render
+// renderError returns the error a panic out of a render
 // ends it with.
-func renderContextError(r interface{}) error {
+func renderError(r interface{}) error {
 	switch e := r.(type) {
 	case *PanicError:
 		return e
