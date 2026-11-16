@@ -118,15 +118,13 @@ func TestTagName(t *testing.T) {
 	}
 }
 
-func TestTagRender(t *testing.T) {
+// TestTagIsNotANode tests that Tag has no render method: a tag that embeds
+// it declares RenderToOutput, or it does not compile as a Node.
+func TestTagIsNotANode(t *testing.T) {
 	lineNum := 1
 	pc := &mockParseContextForTag{lineNum: &lineNum}
-
-	tag := NewTag("test", "", pc)
-
-	result := renderString(tag, nil)
-	if result != "" {
-		t.Errorf("Expected empty string, got '%s'", result)
+	if _, ok := interface{}(NewTag("test", "", pc)).(Node); ok {
+		t.Error("Expected *Tag not to implement Node")
 	}
 }
 
@@ -137,28 +135,6 @@ func TestTagBlank(t *testing.T) {
 	tag := NewTag("test", "", pc)
 	if tag.Blank() {
 		t.Error("Expected tag NOT to be blank by default (returns false)")
-	}
-}
-
-func TestTagRenderToOutputBuffer(t *testing.T) {
-	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum}
-
-	tag := NewTag("test", "", pc)
-	ctx := NewContext()
-	output := ""
-
-	// Test with empty render result
-	renderToString(tag, ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
-	}
-
-	// Test with non-empty render result (Tag.Render returns empty, so this tests the path)
-	// Since Tag.Render always returns empty, output should remain empty
-	renderToString(tag, ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
 	}
 }
 

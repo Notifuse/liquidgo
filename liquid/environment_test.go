@@ -14,11 +14,11 @@ func TestNewEnvironment(t *testing.T) {
 	}
 }
 
-// namedTag returns a constructor of a generic Tag named name, whatever name
+// namedTag returns a constructor of a silent tag named name, whatever name
 // the template gives: the tests tell constructors apart by what they build.
 func namedTag(name string) TagConstructor {
 	return func(_, markup string, pc ParseContextInterface) (Node, error) {
-		return NewTag(name, markup, pc), nil
+		return &silentTag{NewTag(name, markup, pc)}, nil
 	}
 }
 
@@ -32,7 +32,7 @@ func builtName(t *testing.T, constructor TagConstructor) string {
 	if err != nil {
 		t.Fatalf("constructor: %v", err)
 	}
-	return node.(*Tag).TagName()
+	return node.(*silentTag).TagName()
 }
 
 func TestEnvironmentRegisterTag(t *testing.T) {
