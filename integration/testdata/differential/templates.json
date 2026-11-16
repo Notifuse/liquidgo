@@ -1108,5 +1108,9 @@
  {
   "id": "nil-args-03",
   "template": "{{ \"ab\" | replace: \"a\" }}|{{ \"ab\" | replace: \"a\", nothing }}|{{ f | round }}|{{ nothing | default: nothing }}"
+ },
+ {
+  "id": "empty-string-01",
+  "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}"
  }
 ]

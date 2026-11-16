@@ -3314,6 +3314,18 @@
       "output": "b|b|2|"
     },
     {
+      "id": "empty-string-01",
+      "mode": "lax",
+      "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}",
+      "output": "yes|yes||"
+    },
+    {
+      "id": "empty-string-01",
+      "mode": "strict",
+      "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}",
+      "output": "yes|yes||"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

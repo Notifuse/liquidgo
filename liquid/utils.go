@@ -400,8 +400,9 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		}
 		return arrayInspect(v, seen)
 	default:
-		if _, ok := obj.(fmt.Stringer); ok {
-			return fmt.Sprintf("%v", obj)
+		// String, not fmt: fmt writes what a reflect.Value holds
+		if s, ok := obj.(fmt.Stringer); ok {
+			return s.String()
 		}
 		if items, ok := SliceItems(obj); ok {
 			if seen == nil {
@@ -418,8 +419,25 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 			}
 			return mapInspect(rv, seen)
 		}
+		if hasNoText(obj) {
+			return ""
+		}
 		return fmt.Sprintf("%v", obj)
 	}
+}
+
+// hasNoText reports whether obj is a value fmt would write as an address: a
+// channel, a func, a pointer or an unsafe pointer, which render as nothing.
+// An error writes its text.
+func hasNoText(obj interface{}) bool {
+	if _, ok := obj.(error); ok {
+		return false
+	}
+	switch reflect.ValueOf(obj).Kind() {
+	case reflect.Chan, reflect.Func, reflect.Ptr, reflect.UnsafePointer:
+		return true
+	}
+	return false
 }
 
 // rubyTime writes a time as Ruby's Time#to_s, or Time#inspect, which adds
@@ -578,6 +596,9 @@ func Inspect(obj interface{}, seen map[uintptr]bool) string {
 		}
 		if rv := reflect.ValueOf(obj); rv.Kind() == reflect.Map {
 			return mapInspect(rv, seen)
+		}
+		if hasNoText(obj) {
+			return "nil"
 		}
 		return fmt.Sprintf("%v", obj)
 	}

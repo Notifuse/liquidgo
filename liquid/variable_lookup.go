@@ -289,7 +289,8 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 				// Try key as-is for other map key types; a nil key finds
 				// nothing, as in Ruby
 				keyValue := reflect.ValueOf(key)
-				if keyValue.IsValid() && keyValue.Type().ConvertibleTo(v.Type().Key()) {
+				// a key Go cannot hash (a map, a list) finds nothing
+				if keyValue.IsValid() && keyValue.Comparable() && keyValue.Type().ConvertibleTo(v.Type().Key()) {
 					mapValue := v.MapIndex(keyValue.Convert(v.Type().Key()))
 					if mapValue.IsValid() {
 						obj = mapValue.Interface()
@@ -396,6 +397,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		return nil
 	}
 
+	// A nil pointer is nil, in a condition as in the output, as Ruby's nil
+	if isNilPointer(obj) {
+		return nil
+	}
 	return ToLiquid(obj)
 }
 
