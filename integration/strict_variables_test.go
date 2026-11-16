@@ -111,6 +111,7 @@ func TestAnArrayIndexFollowsRuby(t *testing.T) {
 		"arr":   []interface{}{1, 2, 3},
 		"typed": []int{1, 2, 3},
 		"fm1":   float64(-1), "f9": float64(9), "u1": uint(1), "half": 1.5,
+		"i64m1": int64(-1), "i8": int8(0), "huge": uint64(1) << 40,
 	}
 	for _, c := range []struct {
 		source, want, strictErr string
@@ -118,6 +119,8 @@ func TestAnArrayIndexFollowsRuby(t *testing.T) {
 		{"{{ arr[fm1] }}", "3", ""},
 		{"{{ typed[fm1] }}", "3", ""},
 		{"{{ arr[u1] }}", "2", ""},
+		{"{{ arr[i64m1] }}{{ typed[i8] }}", "31", ""},
+		{"[{{ arr[huge] }}]", "[]", ""},
 		{"[{{ arr[f9] }}]", "[]", ""},
 		{"[{{ arr['1'] }}]", "[]", "Liquid error: undefined variable 1"},
 		{"[{{ typed['1'] }}]", "[]", "Liquid error: undefined variable 1"},
