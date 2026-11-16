@@ -1,4 +1,6 @@
 {
+ "empty-string-01/lax": {"reason":"deliberate: an empty string is false in a condition, as nil and false (decided for Notifuse: {% if contact.first_name %} skips an empty name)","actual":"output: no|no|u|blank"},
+ "empty-string-01/strict": {"reason":"deliberate: an empty string is false in a condition, as nil and false (decided for Notifuse: {% if contact.first_name %} skips an empty name)","actual":"output: no|no|u|blank"},
  "escape-15/lax": {"reason":"deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)","actual":"output: "},
  "escape-15/strict": {"reason":"deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)","actual":"output: "},
  "filters-errors-02/lax": {"reason":"minor: a filter called with the wrong number of arguments does not raise Ruby's error","actual":"output: ab"},
