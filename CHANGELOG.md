@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [5.11.0-port.12]
+
+A render is faster: the newsletter template of the [library comparison](docs/library-comparison.md)
+renders in 53 µs on GitHub's arm64 runner instead of 95 µs, the fastest of the Go engines and 6.9
+times faster than Shopify Liquid with YJIT. Tagged `v5.11.11`.
+
+### Changed
+- A render allocates half as much: a filter without arguments gets none, a standard filter borrows
+  the argument slice of its render (a filter that takes the place of a standard one still gets
+  arguments of its own), `join` and the output make their result at once, and the output of a
+  render is its buffer, not a copy. A template keeps the length of its last output to size the
+  next one.
+- A render looks things up once: the operator of a condition when it is made, a filter per call, a
+  key of a map or a scope per lookup; the common values (strings, numbers, maps, lists) skip the
+  method lookups and the reflection that other values need; `truncate` walks its input once.
+
 ## [5.11.0-port.11]
 
 **Breaking**: the end of phase B, without a new major version (see below). Filters are declared with
