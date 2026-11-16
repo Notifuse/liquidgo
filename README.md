@@ -623,6 +623,9 @@ where every number is a `float64`, and render text meant for people (emails, pag
   never reaches the next. Ruby keeps it.
 - **A render takes a map**, where Ruby also takes a drop as the root of the variables: give the drop
   under a key.
+- **A float with no fraction is an array index**, as a JSON number is a `float64` in Go:
+  `{{ arr[1.0] }}` and an index computed with `divided_by: 2.0` read an item, where Ruby takes only an
+  Integer as an index.
 - **`RaiseErrors` raises the errors of its own render only**; Ruby's `render!` leaves the template
   raising them in later renders.
 - **A Go panic, a resource limit and a cancellation end the render** with the returned error and the
