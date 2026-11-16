@@ -138,6 +138,9 @@ var guards = []guard{
 		"writeValue(escapingWriter{output}, value, nil)",
 		"WriteValue(output, value)"},
 
+	// The imports of the library are checked by TestTheLibraryImportsNoSystemAccess,
+	// which reads the sources on disk: an overlay does not reach it.
+
 	// Files
 	{"template name check", "liquid/file_system.go",
 		"if !TemplateNameRegex.MatchString(templatePath) {",
