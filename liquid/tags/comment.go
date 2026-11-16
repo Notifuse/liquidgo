@@ -96,11 +96,11 @@ func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 		case "endcomment":
 			commentTagDepth--
 			if commentTagDepth == 0 {
-				// Handle whitespace trimming
-				if !tokenizer.ForLiquidTag() && len(token) >= 3 {
-					if token[len(token)-3] == '-' {
-						parseContext.SetTrimWhitespace(true)
-					}
+				// The end tag decides whether the text after it is
+				// trimmed, as Ruby's: a -%} on the opening tag trimmed
+				// the inside of the comment only
+				if !tokenizer.ForLiquidTag() {
+					parseContext.SetTrimWhitespace(liquid.TrimsAfter(token))
 				}
 				return nil
 			}

@@ -3194,6 +3194,30 @@
       "output": ""
     },
     {
+      "id": "whitespace-06",
+      "mode": "lax",
+      "template": "{%comment-%}{%endcomment%} ",
+      "output": " "
+    },
+    {
+      "id": "whitespace-06",
+      "mode": "strict",
+      "template": "{%comment-%}{%endcomment%} ",
+      "output": " "
+    },
+    {
+      "id": "whitespace-07",
+      "mode": "lax",
+      "template": "{% comment -%}x{% endcomment %} y",
+      "output": " y"
+    },
+    {
+      "id": "whitespace-07",
+      "mode": "strict",
+      "template": "{% comment -%}x{% endcomment %} y",
+      "output": " y"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

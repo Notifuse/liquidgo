@@ -85,6 +85,8 @@ partial body.
     through it.
 
 ### Fixed
+- **The end of a comment decides whether the text after it is trimmed**, as Ruby: in
+  `{%comment-%}{%endcomment%} `, the `-%}` of the opening tag trimmed the space after `endcomment` too.
 - **`LocalFileSystem` reads only under its root**: a symbolic link under the root read a file out of
   it, and the root check took a sibling whose name starts with the root's for the root. The file
   and the root are resolved, and the file must be under the root.
@@ -126,6 +128,9 @@ partial body.
   pushes (`Context.Push`, `Context.Stack`) is a scope, and belongs to the render.
 
 ### Tests
+- **A template keeps the text around its tags**: the text before its first tag starts the
+  output and the text after its last one ends it, checked over the differential corpus and in
+  `FuzzRender`, which found the comment trim above.
 - **The differential corpus renders with strict variables** the templates that ask for it
   (`"strict_variables": true`): 18 templates, checked against Shopify Liquid 5.11.0.
 - **The render benchmark renders the same data on every run.** It picked the current collection,

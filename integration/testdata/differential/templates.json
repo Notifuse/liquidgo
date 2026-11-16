@@ -1068,5 +1068,13 @@
   "id": "strict-variables-18",
   "template": "{% liquid\nif nope\necho 'y'\nelse\necho 'n'\nendif\n%}",
   "strict_variables": true
+ },
+ {
+  "id": "whitespace-06",
+  "template": "{%comment-%}{%endcomment%} "
+ },
+ {
+  "id": "whitespace-07",
+  "template": "{% comment -%}x{% endcomment %} y"
  }
 ]
