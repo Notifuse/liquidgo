@@ -153,3 +153,18 @@ func TestStrictVariablesAndTheTemplateAssigns(t *testing.T) {
 		t.Errorf("a map: output %q, errors %v (%v), want %q and the undefined variable", res.Output, res.Errors, err, "[]")
 	}
 }
+
+// A name that holds nil in the data is looked up in the template's assigns
+// next, as Ruby's try_variable_find_in_environments goes on past a nil;
+// with strict variables the data decides, nil included.
+func TestANilInTheDataFallsThroughToTheAssigns(t *testing.T) {
+	tmpl := strictTemplate(t, "[{{ x }}]")
+	tmpl.Assigns()["x"] = "y"
+	data := map[string]interface{}{"x": nil}
+	if res, _ := tmpl.Render(gocontext.Background(), data); res.Output != "[y]" {
+		t.Errorf("output %q, want %q", res.Output, "[y]")
+	}
+	if res, _ := tmpl.Render(gocontext.Background(), data, liquid.WithStrictVariables()); res.Output != "[]" || len(res.Errors) != 0 {
+		t.Errorf("strict variables: output %q, errors %v, want %q and no error", res.Output, res.Errors, "[]")
+	}
+}

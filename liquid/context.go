@@ -485,9 +485,8 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 		return n
 	}
 
-	// As Ruby: a name that an environment holds, nil included, is found;
-	// with strict variables, a name the first environment lacks is an
-	// UndefinedVariable (tryVariableFindInEnvironments)
+	// As Ruby: the first environment that gives a value; with strict
+	// variables, the first environment decides (tryVariableFindInEnvironments)
 	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
 }
 
@@ -656,26 +655,23 @@ func (c *Context) ClearInstanceAssigns() {
 }
 
 func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool) interface{} {
-	// Check dynamic environments
-	for _, env := range c.environments {
-		if _, ok := env[key]; ok {
-			return c.lookupAndEvaluate(env, key, raiseOnNotFound)
-		}
-		if c.strictVariables && raiseOnNotFound {
-			panic(NewUndefinedVariable("undefined variable " + key))
-		}
-	}
-
-	// Check static environments
-	for _, env := range c.staticEnvironments {
-		if _, ok := env[key]; ok {
-			return c.lookupAndEvaluate(env, key, raiseOnNotFound)
-		}
-		if c.strictVariables && raiseOnNotFound {
-			panic(NewUndefinedVariable("undefined variable " + key))
+	// As Ruby's try_variable_find_in_environments: the first environment
+	// that gives a value other than nil; with strict variables, the first
+	// environment decides, nil included, and one that lacks the name raises
+	strict := c.strictVariables && raiseOnNotFound
+	for _, envs := range [2][]map[string]interface{}{c.environments, c.staticEnvironments} {
+		for _, env := range envs {
+			if _, ok := env[key]; !ok {
+				if strict {
+					panic(NewUndefinedVariable("undefined variable " + key))
+				}
+				continue
+			}
+			if v := c.lookupAndEvaluate(env, key, raiseOnNotFound); v != nil || strict {
+				return v
+			}
 		}
 	}
-
 	return nil
 }
 
