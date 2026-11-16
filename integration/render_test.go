@@ -73,12 +73,12 @@ func TestRenderIsolatesConcurrentRenders(t *testing.T) {
 }
 
 // Render changes nothing in the template, even when the template keeps
-// Ruby's instance assigns for Render: no assigns, errors, registers or
-// profiler, and the template's assigns and registers are only read.
+// Ruby's instance assigns for Render: no assigns, errors or registers, and
+// the template's assigns and registers are only read.
 func TestRenderLeavesTheTemplateAlone(t *testing.T) {
 	env := rcEnv()
 	tpl, err := liquid.ParseTemplate(`{% assign kept = "x" %}[{{ kept }}{{ greeting }}{{ errors.standard_error }}{% render "p" %}]`,
-		&liquid.TemplateOptions{Environment: env, Profile: true})
+		&liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if err != nil {
 		t.Fatal(err)
 	}

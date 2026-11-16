@@ -330,7 +330,6 @@ func (bb *BlockBody) Blank() bool {
 // RenderToOutput renders the block body to output.
 func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 	ctx, _ := context.(*Context)
-	profiler := ctx != nil && ctx.Profiler() != nil
 
 	// Like Ruby: context.resource_limits.increment_render_score(@nodelist.length),
 	// but an empty body counts 1, so that a loop with an empty body is
@@ -346,7 +345,7 @@ func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 			continue
 		}
 		ctx.checkCanceled()
-		bb.renderNode(context, ctx, output, node, profiler)
+		bb.renderNode(context, output, node)
 		if context != nil && context.Interrupt() {
 			return
 		}
@@ -387,26 +386,13 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 
 // renderNode renders one node that is not raw text. An error in the node is
 // handled as Ruby's rescue_render_node does.
-func (bb *BlockBody) renderNode(context TagContext, ctx *Context, output *OutputBuffer, node interface{}, profiler bool) {
+func (bb *BlockBody) renderNode(context TagContext, output *OutputBuffer, node interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			rescueRenderNode(context, output, node, r)
 		}
 	}()
-	render := func() { node.(Node).RenderToOutput(context, output) }
-	if !profiler {
-		render()
-		return
-	}
-	var code string
-	var lineNumber *int
-	if r, ok := node.(interface{ Raw() string }); ok {
-		code = r.Raw()
-	}
-	if r, ok := node.(interface{ LineNumber() *int }); ok {
-		lineNumber = r.LineNumber()
-	}
-	ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, render)
+	node.(Node).RenderToOutput(context, output)
 }
 
 // RemoveBlankStrings removes blank strings from the block body.

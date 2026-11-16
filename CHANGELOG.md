@@ -42,6 +42,9 @@ changes; templates render as before.
   `TagContext.ApplyGlobalFilter`. An error is written as its message, or raised with `RaiseErrors`
   (`ContextConfig.RethrowErrors` for a `Context`); `Result.Errors` lists them; output escaping
   replaces a global filter.
+- **The profiler is gone**: `liquid.Profiler`, `liquid.Timing`, `NewProfiler`, `Context.Profiler`,
+  `Context.SetProfiler` and `TemplateOptions.Profile`. `Render` no longer used it; Go's own profiler
+  (`pprof`) measures a render. `Profile: true` also turned line numbers on: set `LineNumbers`.
 - **A tag is a `liquid.Node`**, with one render method:
   `RenderToOutput(context TagContext, output *OutputBuffer)`. liquidgo no longer looks up, by
   reflection, a `Render(context) string` or a `RenderToOutputBuffer(context, *string)` that a tag
