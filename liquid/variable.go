@@ -406,20 +406,6 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 	return value
 }
 
-// RenderToOutputBuffer renders the variable and appends it to output. An
-// error is handled as in a block body: its message takes the place of the
-// variable, and a resource limit goes on up.
-func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
-	RenderToString(context, output, func(o *OutputBuffer) {
-		defer func() {
-			if r := recover(); r != nil {
-				rescueRenderNode(context, o, v, r)
-			}
-		}()
-		v.RenderToOutput(context, o)
-	})
-}
-
 // RenderToOutput writes the value of the variable to output. With the
 // environment's output escape on (see Environment.SetOutputEscape), the
 // written text is HTML-escaped unless it is HTML on purpose (see

@@ -71,8 +71,3 @@ func (c *CaptureTag) RenderToOutput(context liquid.TagContext, output *liquid.Ou
 func (c *CaptureTag) Blank() bool {
 	return true
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (c *CaptureTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
-}

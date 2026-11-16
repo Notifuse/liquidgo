@@ -53,7 +53,7 @@ func TestCaptureTagRender(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that variable was captured
 	val := ctx.Get("var")
@@ -132,7 +132,7 @@ func TestCaptureTagRenderToOutputBufferWithoutResourceLimits(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.SetResourceLimits(nil) // Explicitly set to nil
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Check that variable was captured even without resource limits
 	val := ctx.Get("var")

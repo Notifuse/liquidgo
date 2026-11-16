@@ -93,25 +93,11 @@ func (t *Tag) Parse(tokenizer *Tokenizer) error {
 	return nil
 }
 
-// Render renders the tag (returns empty string by default).
-func (t *Tag) Render(context TagContext) string {
-	return ""
-}
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-// Due to Go's method dispatch with embedded pointers, this method cannot call
-// a Render that a type embedding Tag declares: BlockBody finds it.
-func (t *Tag) RenderToOutputBuffer(context TagContext, output *string) {
-	renderResult := t.Render(context)
-	if renderResult != "" {
-		*output += renderResult
-	}
-}
-
-// RenderToOutput writes the output of the tag to output.
-func (t *Tag) RenderToOutput(context TagContext, output *OutputBuffer) {
-	output.WriteString(t.Render(context))
-}
+// RenderToOutput writes nothing, as Ruby's Tag#render returns an empty
+// string: a tag that embeds Tag declares its own RenderToOutput to write (see
+// Node), and one that does not, or the generic Tag a constructor that gives
+// no tag leaves, writes nothing.
+func (t *Tag) RenderToOutput(context TagContext, output *OutputBuffer) {}
 
 // Blank returns true if the tag is blank (produces no output).
 func (t *Tag) Blank() bool {

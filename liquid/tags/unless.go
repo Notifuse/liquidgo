@@ -74,8 +74,3 @@ func (u *UnlessTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 		}
 	}
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { u.RenderToOutput(context, o) })
-}

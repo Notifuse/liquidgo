@@ -36,7 +36,7 @@ type panicTag struct {
 	blank bool
 }
 
-func (p *panicTag) RenderToOutputBuffer(liquid.TagContext, *string) {
+func (p *panicTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
 	if p.err != nil {
 		panic(p.err)
 	}
@@ -49,7 +49,7 @@ func (p *panicTag) Blank() bool { return p.blank }
 func panicEnvironment(l limits) *liquid.Environment {
 	env := newEnv("", l)
 	register := func(name string, err func() error, blank bool) {
-		env.RegisterTag(name, tags.TagConstructor(func(tagName, markup string, pc liquid.ParseContextInterface) (interface{}, error) {
+		env.RegisterTag(name, tags.TagConstructor(func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 			var e error
 			if err != nil {
 				e = err()

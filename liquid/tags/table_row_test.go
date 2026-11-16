@@ -39,7 +39,7 @@ func TestTableRowTagBasic(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should generate table rows with 3 columns
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">1 </td><td class=\"col2\">2 </td><td class=\"col3\">3 </td></tr>\n<tr class=\"row2\"><td class=\"col1\">4 </td><td class=\"col2\">5 </td><td class=\"col3\">6 </td></tr>\n"
@@ -65,7 +65,7 @@ func TestTableRowTagEmptyCollection(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should generate empty row
 	expected := "<tr class=\"row1\">\n</tr>\n"
@@ -91,7 +91,7 @@ func TestTableRowTagWithLimit(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should generate table rows with 2 columns, limited to 3 items
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">1 </td><td class=\"col2\">2 </td></tr>\n<tr class=\"row2\"><td class=\"col1\">3 </td></tr>\n"
@@ -117,7 +117,7 @@ func TestTableRowTagWithOffset(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should generate table rows starting from offset 2, with 2 columns, limited to 2 items
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">3 </td><td class=\"col2\">4 </td></tr>\n"
@@ -171,7 +171,7 @@ func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should render with range
 	_ = output
 
@@ -184,7 +184,7 @@ func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	ctx2 := liquid.NewContext()
 	ctx2.Set("numbers", nil)
 	var output2 string
-	tag2.RenderToOutputBuffer(ctx2, &output2)
+	renderToString(tag2, ctx2, &output2)
 	// Should handle nil gracefully
 	_ = output2
 
@@ -213,7 +213,7 @@ func TestTableRowTagRenderToOutputBufferSingleRow(t *testing.T) {
 	// Single item collection
 	ctx.Set("numbers", []interface{}{1})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should generate single row with one column (check for expected HTML structure)
 	if !strings.Contains(output, "<tr") || !strings.Contains(output, "1") {
@@ -253,7 +253,7 @@ func TestTableRowTagRenderToOutputBufferErrorHandling(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should handle invalid offset gracefully (may produce error message)
 	t.Logf("Note: Invalid offset handling output: %q", output)

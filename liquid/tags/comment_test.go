@@ -22,7 +22,7 @@ func TestCommentTag(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
@@ -101,7 +101,7 @@ func TestCommentTagRenderToOutputBuffer(t *testing.T) {
 	ctx := liquid.NewContext()
 	var output string
 	// Explicitly test RenderToOutputBuffer
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Comment should render nothing
 	if output != "" {
@@ -221,7 +221,7 @@ func TestCommentTagRenderToOutputBufferExplicit(t *testing.T) {
 	ctx := liquid.NewContext()
 	var output string
 	// Explicitly test RenderToOutputBuffer (should do nothing)
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Comment should render nothing
 	if output != "" {

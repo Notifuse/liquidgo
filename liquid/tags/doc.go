@@ -78,8 +78,3 @@ func (d *DocTag) Parse(tokenizer *liquid.Tokenizer) error {
 func (d *DocTag) RaiseTagNeverClosed() error {
 	return liquid.NewSyntaxError("'" + d.BlockName() + "' tag was never closed")
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (d *DocTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { d.RenderToOutput(context, o) })
-}

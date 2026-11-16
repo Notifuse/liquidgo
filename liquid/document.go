@@ -112,11 +112,6 @@ func (d *Document) UnknownTag(tag, markup string, tokenizer *Tokenizer) error {
 	}
 }
 
-// RenderToOutputBuffer renders the document and appends it to output.
-func (d *Document) RenderToOutputBuffer(context TagContext, output *string) {
-	RenderToString(context, output, func(o *OutputBuffer) { d.RenderToOutput(context, o) })
-}
-
 // RenderToOutput renders the document to output.
 func (d *Document) RenderToOutput(context TagContext, output *OutputBuffer) {
 	if ctx, ok := context.(*Context); ok && ctx.Profiler() != nil {
@@ -126,13 +121,6 @@ func (d *Document) RenderToOutput(context TagContext, output *OutputBuffer) {
 		return
 	}
 	d.body.RenderToOutput(context, output)
-}
-
-// Render renders the document and returns the result as a string.
-func (d *Document) Render(context TagContext) string {
-	output := NewOutputBufferFor(context)
-	d.RenderToOutput(context, output)
-	return output.String()
 }
 
 func (d *Document) parseBody(tokenizer *Tokenizer, parseContext ParseContextInterface) bool {

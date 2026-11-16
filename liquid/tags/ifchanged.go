@@ -38,8 +38,3 @@ func (i *IfchangedTag) RenderToOutput(context liquid.TagContext, output *liquid.
 	registers.Set("ifchanged", blockOutput)
 	output.WriteString(blockOutput)
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
-}

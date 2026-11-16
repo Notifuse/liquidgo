@@ -81,7 +81,7 @@ func TestIncludeTagRenderToOutputBuffer(t *testing.T) {
 	ctx := liquid.NewContext()
 	var output string
 	// RenderToOutputBuffer should handle missing template gracefully
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should handle missing template (error message or empty)
 	// Just verify no panic occurred
 	_ = output
@@ -95,7 +95,7 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	tag2, _ := NewIncludeTag("include", "123", pc)
 	ctx2 := liquid.NewContext()
 	var output2 string
-	tag2.RenderToOutputBuffer(ctx2, &output2)
+	renderToString(tag2, ctx2, &output2)
 	// Should handle error gracefully
 	_ = output2
 
@@ -107,7 +107,7 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx3 := liquid.NewContext()
 	ctx3.Set("person", map[string]interface{}{"name": "Alice"})
 	var output3 string
-	tag3.RenderToOutputBuffer(ctx3, &output3)
+	renderToString(tag3, ctx3, &output3)
 	_ = output3
 
 	// Test with for clause
@@ -118,7 +118,7 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx4 := liquid.NewContext()
 	ctx4.Set("person", map[string]interface{}{"name": "Bob"})
 	var output4 string
-	tag4.RenderToOutputBuffer(ctx4, &output4)
+	renderToString(tag4, ctx4, &output4)
 	_ = output4
 
 	// Test with as clause
@@ -129,7 +129,7 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx5 := liquid.NewContext()
 	ctx5.Set("name", "Charlie")
 	var output5 string
-	tag5.RenderToOutputBuffer(ctx5, &output5)
+	renderToString(tag5, ctx5, &output5)
 	_ = output5
 
 	// Test with array variable
@@ -140,7 +140,7 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx6 := liquid.NewContext()
 	ctx6.Set("items", []interface{}{map[string]interface{}{"name": "Item1"}, map[string]interface{}{"name": "Item2"}})
 	var output6 string
-	tag6.RenderToOutputBuffer(ctx6, &output6)
+	renderToString(tag6, ctx6, &output6)
 	_ = output6
 }
 
@@ -193,7 +193,7 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 
 	ctx.Set("partial", "World")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template (note: variable 'partial' set in parent, but template also defines 'partial' from path)
 	expected := "Hello from "
@@ -235,7 +235,7 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 	// Set variable with same name as template
 	ctx.Set("greeting", "World")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template
 	expected := "Hello World"
@@ -277,7 +277,7 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 	// Set array variable
 	ctx.Set("items", []interface{}{"one", "two", "three"})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render template multiple times
 	expected := "Item: oneItem: twoItem: three"
@@ -317,7 +317,7 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template with attributes
 	expected := "Hello Alice"
@@ -358,7 +358,7 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 
 	ctx.Set("user", "Bob")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template with alias
 	expected := "Hello Bob"
@@ -380,7 +380,7 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should output error message (Liquid error format)
 	if !strings.Contains(output, "Liquid") && output == "" {
@@ -433,7 +433,7 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should use template name
 	expected := "Hello"

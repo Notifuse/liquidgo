@@ -52,21 +52,6 @@ func (b *Block) Parse(tokenizer *Tokenizer) error {
 	return nil
 }
 
-// Render renders the block body.
-func (b *Block) Render(context TagContext) string {
-	if b.body == nil {
-		return ""
-	}
-	return b.body.Render(context)
-}
-
-// RenderToOutputBuffer renders the block body and appends it to output. A
-// Render that a type embedding Block declares is found by BlockBody, which
-// calls it instead.
-func (b *Block) RenderToOutputBuffer(context TagContext, output *string) {
-	RenderToString(context, output, func(o *OutputBuffer) { b.RenderToOutput(context, o) })
-}
-
 // RenderToOutput renders the block body, once, to output.
 func (b *Block) RenderToOutput(context TagContext, output *OutputBuffer) {
 	if b.body != nil {

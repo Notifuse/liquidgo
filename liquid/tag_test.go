@@ -124,7 +124,7 @@ func TestTagRender(t *testing.T) {
 
 	tag := NewTag("test", "", pc)
 
-	result := tag.Render(nil)
+	result := renderString(tag, nil)
 	if result != "" {
 		t.Errorf("Expected empty string, got '%s'", result)
 	}
@@ -149,14 +149,14 @@ func TestTagRenderToOutputBuffer(t *testing.T) {
 	output := ""
 
 	// Test with empty render result
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
 	}
 
 	// Test with non-empty render result (Tag.Render returns empty, so this tests the path)
 	// Since Tag.Render always returns empty, output should remain empty
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
 	}

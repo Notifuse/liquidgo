@@ -67,8 +67,3 @@ func (r *RawTag) Nodelist() []interface{} {
 func (r *RawTag) Blank() bool {
 	return r.body == ""
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (r *RawTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { r.RenderToOutput(context, o) })
-}

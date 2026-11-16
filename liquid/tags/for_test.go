@@ -39,7 +39,7 @@ func TestForTagSimpleLoop(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "1 2 3 " {
 		t.Errorf("Expected output '1 2 3 ', got %q", output)
@@ -63,7 +63,7 @@ func TestForTagEmptyCollection(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "empty" {
 		t.Errorf("Expected output 'empty', got %q", output)
@@ -87,7 +87,7 @@ func TestForTagReversed(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "3 2 1 " {
 		t.Errorf("Expected output '3 2 1 ', got %q", output)
@@ -111,7 +111,7 @@ func TestForTagWithLimit(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "1 2 " {
 		t.Errorf("Expected output '1 2 ', got %q", output)
@@ -135,7 +135,7 @@ func TestForTagWithOffset(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "3 4 " {
 		t.Errorf("Expected output '3 4 ', got %q", output)

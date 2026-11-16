@@ -107,7 +107,7 @@ func TestRenderLeavesTheTemplateAlone(t *testing.T) {
 // reads the registers.
 func TestRenderKeepsTemplateRegisters(t *testing.T) {
 	env := rcEnv()
-	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
 	}))
 	tpl := rcParse(t, env, `[{% marker %}{% render "p" %}]`)
@@ -121,9 +121,9 @@ func TestRenderKeepsTemplateRegisters(t *testing.T) {
 
 type markerTag struct{ *liquid.Tag }
 
-func (m *markerTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (m *markerTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	if v, ok := context.Registers().Get("marker").(string); ok {
-		*output += v
+		output.WriteString(v)
 	}
 }
 
@@ -346,7 +346,7 @@ func (f *rcShoutFilters) Shout(input interface{}) string { return fmt.Sprint(inp
 // filters, and strict variables and filters, which record their error.
 func TestRenderOptions(t *testing.T) {
 	env := rcEnv()
-	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (interface{}, error) {
+	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
 	}))
 	tpl := rcParse(t, env, `[{% marker %}]`)

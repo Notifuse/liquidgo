@@ -14,15 +14,15 @@ type CustomTag struct {
 	Disableable
 }
 
-func NewCustomTag(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewCustomTag(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	return &CustomTag{
 		Tag:         liquid.NewTag(tagName, markup, parseContext),
 		Disableable: Disableable{},
 	}, nil
 }
 
-func (c *CustomTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	c.Disableable.RenderToOutputBuffer(
+func (c *CustomTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	c.Render(
 		c.TagName(),
 		context,
 		c.LineNumber(),
@@ -30,7 +30,7 @@ func (c *CustomTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		output,
 		func() {
 			// Render tag name
-			*output += c.TagName()
+			output.WriteString(c.TagName())
 		},
 	)
 }
@@ -42,15 +42,15 @@ type Custom2Tag struct {
 	Disableable
 }
 
-func NewCustom2Tag(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewCustom2Tag(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	return &Custom2Tag{
 		Tag:         liquid.NewTag(tagName, markup, parseContext),
 		Disableable: Disableable{},
 	}, nil
 }
 
-func (c *Custom2Tag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	c.Disableable.RenderToOutputBuffer(
+func (c *Custom2Tag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
+	c.Render(
 		c.TagName(),
 		context,
 		c.LineNumber(),
@@ -58,7 +58,7 @@ func (c *Custom2Tag) RenderToOutputBuffer(context liquid.TagContext, output *str
 		output,
 		func() {
 			// Render tag name
-			*output += c.TagName()
+			output.WriteString(c.TagName())
 		},
 	)
 }
@@ -70,23 +70,22 @@ type DisableCustomBlock struct {
 	Disabler
 }
 
-func NewDisableCustomBlock(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewDisableCustomBlock(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	return &DisableCustomBlock{
 		Block:    liquid.NewBlock(tagName, markup, parseContext),
 		Disabler: Disabler{},
 	}, nil
 }
 
-func (d *DisableCustomBlock) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (d *DisableCustomBlock) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	disabledTags := []string{"custom"}
-	d.Disabler.RenderToOutputBuffer(
+	d.Render(
 		disabledTags,
 		context,
-		output,
 		func() {
 			// Render block body
 			if d.Block != nil {
-				d.Block.RenderToOutputBuffer(context, output)
+				d.Block.RenderToOutput(context, output)
 			}
 		},
 	)
@@ -99,23 +98,22 @@ type DisableBothBlock struct {
 	Disabler
 }
 
-func NewDisableBothBlock(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewDisableBothBlock(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	return &DisableBothBlock{
 		Block:    liquid.NewBlock(tagName, markup, parseContext),
 		Disabler: Disabler{},
 	}, nil
 }
 
-func (d *DisableBothBlock) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (d *DisableBothBlock) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	disabledTags := []string{"custom", "custom2"}
-	d.Disabler.RenderToOutputBuffer(
+	d.Render(
 		disabledTags,
 		context,
-		output,
 		func() {
 			// Render block body
 			if d.Block != nil {
-				d.Block.RenderToOutputBuffer(context, output)
+				d.Block.RenderToOutput(context, output)
 			}
 		},
 	)

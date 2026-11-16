@@ -85,8 +85,3 @@ func assignScoreOf(val interface{}) int {
 func (a *AssignTag) Blank() bool {
 	return true
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (a *AssignTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { a.RenderToOutput(context, o) })
-}

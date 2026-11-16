@@ -150,8 +150,3 @@ func (c *CycleTag) variablesFromString(markup string, parseContext liquid.ParseC
 
 	return variables
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
-}

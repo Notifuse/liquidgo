@@ -57,8 +57,8 @@ func NewPaginate(tagName, markup string, parseContext liquid.ParseContextInterfa
 	return p, nil
 }
 
-// RenderToOutputBuffer renders the paginate tag
-func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the paginate tag
+func (p *Paginate) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
 	ctx.Push(make(map[string]interface{}))
 	defer ctx.Pop()
@@ -82,8 +82,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	collection := ctx.FindVariable(p.collectionName, false)
 	if collection == nil {
 		// In non-error mode, just render the block
-		bodyOutput := p.Render(context)
-		*output += bodyOutput
+		p.Block.RenderToOutput(context, output)
 		return
 	}
 
@@ -95,8 +94,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 		collectionSize = len(c)
 	default:
 		// In non-error mode, just render the block
-		bodyOutput := p.Render(context)
-		*output += bodyOutput
+		p.Block.RenderToOutput(context, output)
 		return
 	}
 
@@ -151,8 +149,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	pagination["parts"] = parts
 
 	// Render block content
-	bodyOutput := p.Render(context)
-	*output += bodyOutput
+	p.Block.RenderToOutput(context, output)
 }
 
 func (p *Paginate) noLink(title string) map[string]interface{} {

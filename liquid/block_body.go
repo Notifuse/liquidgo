@@ -1,7 +1,6 @@
 package liquid
 
 import (
-	"reflect"
 	"regexp"
 	"strings"
 )
@@ -117,66 +116,11 @@ func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseC
 			continue
 		}
 
-		// Create tag using constructor if available
-		// TagConstructor is defined in tags package, so we use reflection to call it
-		var tag interface{}
-
-		// Try to call tagClass as a function using reflection
-		tagClassValue := reflect.ValueOf(tagClass)
-		if tagClassValue.Kind() == reflect.Func {
-			// Check if it matches the TagConstructor signature: func(string, string, ParseContextInterface) (interface{}, error)
-			tagClassType := tagClassValue.Type()
-			if tagClassType.NumIn() == 3 && tagClassType.NumOut() == 2 {
-				// Call the constructor function
-				args := []reflect.Value{
-					reflect.ValueOf(tagName),
-					reflect.ValueOf(markup),
-					reflect.ValueOf(parseContext),
-				}
-
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							if e, ok := r.(error); ok {
-								if parseContext.ErrorMode() == "warn" {
-									parseContext.AddWarning(e)
-									tag = nil
-								} else {
-									panic(r)
-								}
-							} else {
-								panic(r)
-							}
-						}
-					}()
-					results := tagClassValue.Call(args)
-					if len(results) == 2 {
-						// Check for error
-						if !results[1].IsNil() {
-							if err, ok := results[1].Interface().(error); ok {
-								if parseContext.ErrorMode() == "warn" {
-									parseContext.AddWarning(err)
-									tag = nil
-								} else {
-									panic(err)
-								}
-							}
-						} else {
-							tag = results[0].Interface()
-						}
-					}
-				}()
-			}
-		}
-
-		// If tag creation failed in warn mode, skip it (liquid tags are just lines of code)
-		if tag == nil && parseContext.ErrorMode() == "warn" {
-			continue
-		}
-
-		// If tag is still nil, fallback to generic tag
+		// Create the tag with its constructor; nil means it failed in
+		// warn mode, and the failure is a warning: skip it (liquid tags are just lines of code)
+		tag := newTag(tagClass, tagName, markup, parseContext)
 		if tag == nil {
-			tag = NewTag(tagName, markup, parseContext)
+			continue
 		}
 
 		// Parse the tag if it has a Parse method
@@ -264,67 +208,12 @@ func (bb *BlockBody) parseForDocument(tokenizer *Tokenizer, parseContext ParseCo
 				continue
 			}
 
-			// Create tag using constructor if available
-			// TagConstructor is defined in tags package, so we use reflection to call it
-			var tag interface{}
-
-			// Try to call tagClass as a function using reflection
-			tagClassValue := reflect.ValueOf(tagClass)
-			if tagClassValue.Kind() == reflect.Func {
-				// Check if it matches the TagConstructor signature: func(string, string, ParseContextInterface) (interface{}, error)
-				tagClassType := tagClassValue.Type()
-				if tagClassType.NumIn() == 3 && tagClassType.NumOut() == 2 {
-					// Call the constructor function
-					args := []reflect.Value{
-						reflect.ValueOf(tagName),
-						reflect.ValueOf(markup),
-						reflect.ValueOf(parseContext),
-					}
-
-					func() {
-						defer func() {
-							if r := recover(); r != nil {
-								if e, ok := r.(error); ok {
-									if parseContext.ErrorMode() == "warn" {
-										parseContext.AddWarning(e)
-										tag = nil
-									} else {
-										panic(r)
-									}
-								} else {
-									panic(r)
-								}
-							}
-						}()
-						results := tagClassValue.Call(args)
-						if len(results) == 2 {
-							// Check for error
-							if !results[1].IsNil() {
-								if err, ok := results[1].Interface().(error); ok {
-									if parseContext.ErrorMode() == "warn" {
-										parseContext.AddWarning(err)
-										tag = nil
-									} else {
-										panic(err)
-									}
-								}
-							} else {
-								tag = results[0].Interface()
-							}
-						}
-					}()
-				}
-			}
-
-			// If tag creation failed in warn mode, treat as text
-			if tag == nil && parseContext.ErrorMode() == "warn" {
+			// Create the tag with its constructor; nil means it failed in
+			// warn mode, and the failure is a warning: treat as text
+			tag := newTag(tagClass, tagName, markup, parseContext)
+			if tag == nil {
 				bb.nodelist = append(bb.nodelist, token)
 				continue
-			}
-
-			// If tag is still nil, fallback to generic tag
-			if tag == nil {
-				tag = NewTag(tagName, markup, parseContext)
 			}
 
 			// Parse the tag if it has a Parse method
@@ -438,18 +327,6 @@ func (bb *BlockBody) Blank() bool {
 	return bb.blank
 }
 
-// Render renders the block body.
-func (bb *BlockBody) Render(context TagContext) string {
-	output := NewOutputBufferFor(context)
-	bb.RenderToOutput(context, output)
-	return output.String()
-}
-
-// RenderToOutputBuffer renders the block body and appends it to output.
-func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
-	RenderToString(context, output, func(o *OutputBuffer) { bb.RenderToOutput(context, o) })
-}
-
 // RenderToOutput renders the block body to output.
 func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 	ctx, _ := context.(*Context)
@@ -476,6 +353,41 @@ func (bb *BlockBody) RenderToOutput(context TagContext, output *OutputBuffer) {
 	}
 }
 
+// newTag builds the tag a template names with its constructor. An error of
+// the constructor is a parse error, raised as the parser raises them, or in
+// warn mode a warning, and newTag returns nil. A constructor that gives no
+// tag gives a generic Tag, or nil in warn mode.
+func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseContextInterface) Node {
+	var tag Node
+	var err error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				e, isErr := r.(error)
+				if !isErr || parseContext.ErrorMode() != "warn" {
+					panic(r)
+				}
+				err = e
+			}
+		}()
+		tag, err = ctor(tagName, markup, parseContext)
+	}()
+	if err != nil {
+		if parseContext.ErrorMode() != "warn" {
+			panic(err)
+		}
+		parseContext.AddWarning(err)
+		return nil
+	}
+	if tag == nil {
+		if parseContext.ErrorMode() == "warn" {
+			return nil
+		}
+		return NewTag(tagName, markup, parseContext)
+	}
+	return tag
+}
+
 // renderNode renders one node that is not raw text. An error in the node is
 // handled as Ruby's rescue_render_node does.
 func (bb *BlockBody) renderNode(context TagContext, ctx *Context, output *OutputBuffer, node interface{}, profiler bool) {
@@ -484,13 +396,7 @@ func (bb *BlockBody) renderNode(context TagContext, ctx *Context, output *Output
 			rescueRenderNode(context, output, node, r)
 		}
 	}()
-	render := func() {
-		if v, ok := node.(*Variable); ok {
-			v.RenderToOutput(context, output)
-			return
-		}
-		renderWithPlan(planFor(node), node, context, output)
-	}
+	render := func() { node.(Node).RenderToOutput(context, output) }
 	if !profiler {
 		render()
 		return
