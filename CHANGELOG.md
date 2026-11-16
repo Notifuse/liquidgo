@@ -77,6 +77,10 @@ changes; templates render as before.
 - A `Context` built with no environments has one empty environment, as Ruby's `Context.new`.
 
 ### Changed
+- **The registers of a render reach its partials**: `WithRegisters` writes them in the static
+  registers, as Ruby's `registers:` option, which a `{% render %}` partial inherits. They were in the
+  change layer, which a `render` partial does not see (as `RenderOptions.Registers` in v5.11.8). A
+  `file_system` register now serves nested partials; `WithFileSystem` takes precedence over it.
 - **A func in the data is called once per render**, its value kept with the render: the data and the
   template's assigns are never written. Ruby writes a proc's value back into the hash; so did
   liquidgo, so that two renders sharing one data map saw the first one's value, and concurrent renders
