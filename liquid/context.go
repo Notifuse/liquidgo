@@ -376,7 +376,10 @@ func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) in
 	return ToLiquid(result)
 }
 
-// Push pushes a new local scope on the stack.
+// Push pushes a new local scope on the stack. newScope belongs to the
+// render from then on, as in Ruby: the render writes its assigns and the
+// value of a func it holds in it. Push a map of the render, never one that
+// renders share.
 func (c *Context) Push(newScope map[string]interface{}) {
 	if newScope == nil {
 		newScope = make(map[string]interface{})
@@ -403,7 +406,8 @@ func (c *Context) Pop() {
 	c.scopes = c.scopes[1:]
 }
 
-// Stack pushes a new scope, executes the function, then pops.
+// Stack pushes a new scope, executes the function, then pops. newScope
+// belongs to the render, as with Push.
 func (c *Context) Stack(newScope map[string]interface{}, fn func()) {
 	c.Push(newScope)
 	defer c.Pop()
@@ -519,12 +523,9 @@ func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
 // is read anew.
 func (c *Context) lookupInScope(scope map[string]interface{}, key string) interface{} {
 	value := scope[key]
-	switch f := value.(type) {
-	case func() interface{}:
-		value = f()
-		scope[key] = value
-	case func(*Context) interface{}:
-		value = f(c)
+	switch value.(type) {
+	case func() interface{}, func(*Context) interface{}:
+		value = c.callFunc(value)
 		scope[key] = value
 	}
 	return c.liquidValue(value)
@@ -545,42 +546,73 @@ func (c *Context) liquidValue(value interface{}) interface{} {
 	return liquidValue
 }
 
-// funcValueKey identifies a func of the data: the map it is in, and its key.
-type funcValueKey struct {
-	m   uintptr
-	key string
+// itemOf returns item i of list, a list the render does not own: a func is
+// called once per render, as Ruby's lookup_and_evaluate calls a proc read by
+// an index, and the list is never written.
+func (c *Context) itemOf(list []interface{}, i int) interface{} {
+	value := list[i]
+	switch value.(type) {
+	case func() interface{}, func(*Context) interface{}:
+		root := c.reporter()
+		k := funcValueKey{m: reflect.ValueOf(list).Pointer(), index: i + 1}
+		if kept, ok := root.funcValues[k]; ok {
+			return kept.v
+		}
+		v := c.callFunc(value)
+		root.keepFuncValue(k, list, v)
+		return v
+	}
+	return value
 }
 
-// funcValue is the value a func of the data gave, with the map it was read
-// from: the memo keeps the map alive, so that no other map takes its address
-// during the render.
+// funcValueKey identifies a func of the data: the map it is in and its key,
+// or the list it is in and its index plus one.
+type funcValueKey struct {
+	m     uintptr
+	key   string
+	index int
+}
+
+// funcValue is the value a func of the data gave, with the map or list it
+// was read from: the memo keeps it alive, so that no other map or list, one a
+// filter or a host tag makes during the render, takes its address.
 type funcValue struct {
-	m map[string]interface{}
-	v interface{}
+	in interface{}
+	v  interface{}
 }
 
 // funcValueOf returns the value of fn, read from obj[key], calling it the
 // first time the render reads it. obj is a map the render does not own (the
-// data, the template's assigns): the caller does not change it during the
-// render, so its func at key stays the same.
+// data, the template's assigns, a map of them): the caller does not change
+// it during the render, so its func at key stays the same.
 func (c *Context) funcValueOf(obj map[string]interface{}, key string, fn interface{}) interface{} {
 	root := c.reporter()
 	k := funcValueKey{m: reflect.ValueOf(obj).Pointer(), key: key}
 	if kept, ok := root.funcValues[k]; ok {
 		return kept.v
 	}
-	var v interface{}
+	v := c.callFunc(fn)
+	root.keepFuncValue(k, obj, v)
+	return v
+}
+
+// callFunc returns the value of a func of the data.
+func (c *Context) callFunc(fn interface{}) interface{} {
 	switch f := fn.(type) {
 	case func() interface{}:
-		v = f()
+		return f()
 	case func(*Context) interface{}:
-		v = f(c)
+		return f(c)
 	}
-	if root.funcValues == nil {
-		root.funcValues = make(map[funcValueKey]funcValue)
+	return fn
+}
+
+// keepFuncValue keeps v, the value of the func at k in in, for the render.
+func (c *Context) keepFuncValue(k funcValueKey, in interface{}, v interface{}) {
+	if c.funcValues == nil {
+		c.funcValues = make(map[funcValueKey]funcValue)
 	}
-	root.funcValues[k] = funcValue{m: obj, v: v}
-	return v
+	c.funcValues[k] = funcValue{in: in, v: v}
 }
 
 // WithDisabledTags executes a function with disabled tags.
