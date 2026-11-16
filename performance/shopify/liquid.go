@@ -4,18 +4,23 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
-// TagConstructor is a function type that creates a tag instance.
-type TagConstructor func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error)
-
 // RegisterAll registers all Shopify custom tags and filters with the environment
 func RegisterAll(env *liquid.Environment) {
 	// Register tags
-	env.RegisterTag("paginate", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
-		return NewPaginate(tagName, markup, parseContext)
-	}))
-	env.RegisterTag("form", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
-		return NewCommentForm(tagName, markup, parseContext)
-	}))
+	env.RegisterTag("paginate", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+		tag, err := NewPaginate(tagName, markup, parseContext)
+		if err != nil {
+			return nil, err
+		}
+		return tag, nil
+	})
+	env.RegisterTag("form", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+		tag, err := NewCommentForm(tagName, markup, parseContext)
+		if err != nil {
+			return nil, err
+		}
+		return tag, nil
+	})
 
 	// Register filters (each filter object exposes multiple methods)
 	_ = env.RegisterFilter(&JSONFilter{})

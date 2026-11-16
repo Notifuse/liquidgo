@@ -88,7 +88,7 @@ func TestRenderTagRenderToOutputBuffer(t *testing.T) {
 	ctx := liquid.NewContext()
 	var output string
 	// RenderToOutputBuffer should handle missing template gracefully
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should handle missing template (error message or empty)
 	// Just verify no panic occurred
 	_ = output
@@ -112,7 +112,7 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx3 := liquid.NewContext()
 	ctx3.Set("person", map[string]interface{}{"name": "Alice"})
 	var output3 string
-	tag3.RenderToOutputBuffer(ctx3, &output3)
+	renderToString(tag3, ctx3, &output3)
 	_ = output3
 
 	// Test with for clause
@@ -123,7 +123,7 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	ctx4 := liquid.NewContext()
 	ctx4.Set("items", []interface{}{map[string]interface{}{"name": "Item1"}, map[string]interface{}{"name": "Item2"}})
 	var output4 string
-	tag4.RenderToOutputBuffer(ctx4, &output4)
+	renderToString(tag4, ctx4, &output4)
 	_ = output4
 
 	// Test with as clause
@@ -133,7 +133,7 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx5 := liquid.NewContext()
 	var output5 string
-	tag5.RenderToOutputBuffer(ctx5, &output5)
+	renderToString(tag5, ctx5, &output5)
 	_ = output5
 
 	// Test with attributes
@@ -143,7 +143,7 @@ func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx6 := liquid.NewContext()
 	var output6 string
-	tag6.RenderToOutputBuffer(ctx6, &output6)
+	renderToString(tag6, ctx6, &output6)
 	_ = output6
 
 	// Test with variable template name - should fail at parse time (Shopify Liquid v5.11.0)
@@ -238,7 +238,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
 
 	ctx.Set("iterable", iterable)
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 	// Should handle non-iterable gracefully (fallback to single render)
 	// The iterableObject doesn't actually implement the interface, so it will fallback
 	// Output may be empty or contain rendered content
@@ -281,7 +281,7 @@ func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 
 	ctx.Set("partial", "World")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template (note: parent context vars not accessible in isolated render scope)
 	expected := "Hello from "
@@ -323,7 +323,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterable(t *testing.T) {
 	// Set array variable
 	ctx.Set("items", []interface{}{"one", "two", "three"})
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render template multiple times
 	expected := "Item: oneItem: twoItem: three"
@@ -365,7 +365,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopNonIterable(t *testing.T) {
 	// Set non-iterable variable
 	ctx.Set("single_item", "not_an_array")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render once with the variable
 	expected := "Item: not_an_array"
@@ -405,7 +405,7 @@ func TestRenderTagRenderToOutputBufferWithAttributes(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template with attributes
 	expected := "Hello Alice"
@@ -446,7 +446,7 @@ func TestRenderTagRenderToOutputBufferWithAlias(t *testing.T) {
 
 	ctx.Set("user", "Bob")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render the template with alias
 	expected := "Hello Bob"
@@ -492,7 +492,7 @@ func TestRenderTagRenderToOutputBufferWithEmptyTemplateName(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should use template name string (greeting) when template name is empty
 	expected := "Hello"
@@ -515,7 +515,7 @@ func TestRenderTagRenderToOutputBufferErrorScenarios(t *testing.T) {
 	var output string
 
 	// Should handle missing template gracefully
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Output may be empty or contain error message
 	if len(output) > 0 {
@@ -541,7 +541,7 @@ func TestRenderTagRenderToOutputBufferPartialLoadingFailure(t *testing.T) {
 	var output string
 
 	// Should handle partial loading failure gracefully
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// May produce error output or empty string
 	t.Logf("Note: Partial loading failure output: %q", output)
@@ -637,7 +637,7 @@ func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
 
 	ctx.Set("iterable", iterable)
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render template multiple times using the iterable interface
 	expected := "Item: one\nItem: two\nItem: three\n"
@@ -664,7 +664,7 @@ func TestRenderTagPartialNotTemplate(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should handle the error gracefully (no panic)
 	// Output may be empty or contain error message
@@ -704,7 +704,7 @@ func TestRenderTagWithForLoopAndNilVariable(t *testing.T) {
 
 	// Don't set missing_var - it will be nil
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should handle nil variable gracefully (render single time with nil)
 	t.Logf("Output with nil for loop variable: %q", output)
@@ -742,7 +742,7 @@ func TestRenderTagWithoutVariableExpression(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should render template once without any variable
 	expected := "Hello World"

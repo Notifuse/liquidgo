@@ -14,13 +14,33 @@ func TestNewEnvironment(t *testing.T) {
 	}
 }
 
+// namedTag returns a constructor of a generic Tag named name, whatever name
+// the template gives: the tests tell constructors apart by what they build.
+func namedTag(name string) TagConstructor {
+	return func(_, markup string, pc ParseContextInterface) (Node, error) {
+		return NewTag(name, markup, pc), nil
+	}
+}
+
+// builtName returns the name of the tag that constructor builds.
+func builtName(t *testing.T, constructor TagConstructor) string {
+	t.Helper()
+	if constructor == nil {
+		t.Fatal("Expected a constructor, got nil")
+	}
+	node, err := constructor("", "", NewParseContext(ParseContextOptions{}))
+	if err != nil {
+		t.Fatalf("constructor: %v", err)
+	}
+	return node.(*Tag).TagName()
+}
+
 func TestEnvironmentRegisterTag(t *testing.T) {
 	env := NewEnvironment()
-	env.RegisterTag("test", "TestTag")
+	env.RegisterTag("test", namedTag("TestTag"))
 
-	tag := env.TagForName("test")
-	if tag != "TestTag" {
-		t.Errorf("Expected 'TestTag', got %v", tag)
+	if got := builtName(t, env.TagForName("test")); got != "TestTag" {
+		t.Errorf("Expected 'TestTag', got %v", got)
 	}
 }
 
@@ -126,8 +146,8 @@ func TestNewEnvironmentWithStandardTags(t *testing.T) {
 
 func TestEnvironmentTags(t *testing.T) {
 	env := NewEnvironment()
-	env.RegisterTag("test1", "Tag1")
-	env.RegisterTag("test2", "Tag2")
+	env.RegisterTag("test1", namedTag("Tag1"))
+	env.RegisterTag("test2", namedTag("Tag2"))
 
 	tags := env.Tags()
 	if tags == nil {
@@ -136,11 +156,11 @@ func TestEnvironmentTags(t *testing.T) {
 	if len(tags) < 2 {
 		t.Errorf("Expected at least 2 tags, got %d", len(tags))
 	}
-	if tags["test1"] != "Tag1" {
-		t.Errorf("Expected 'Tag1' for test1, got %v", tags["test1"])
+	if got := builtName(t, tags["test1"]); got != "Tag1" {
+		t.Errorf("Expected 'Tag1' for test1, got %v", got)
 	}
-	if tags["test2"] != "Tag2" {
-		t.Errorf("Expected 'Tag2' for test2, got %v", tags["test2"])
+	if got := builtName(t, tags["test2"]); got != "Tag2" {
+		t.Errorf("Expected 'Tag2' for test2, got %v", got)
 	}
 }
 

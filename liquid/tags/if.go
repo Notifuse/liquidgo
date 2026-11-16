@@ -488,8 +488,3 @@ func validateExpression(expr string, parseContext liquid.ParseContextInterface) 
 	}
 	return nil
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
-}

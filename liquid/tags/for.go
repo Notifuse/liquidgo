@@ -373,8 +373,3 @@ func (f *ForTag) Limit() interface{} {
 func (f *ForTag) From() interface{} {
 	return f.from
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (f *ForTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { f.RenderToOutput(context, o) })
-}

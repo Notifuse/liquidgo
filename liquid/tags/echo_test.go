@@ -16,7 +16,7 @@ func TestEchoTag(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("test", "value")
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "value" {
 		t.Errorf("Expected 'value', got %q", output)

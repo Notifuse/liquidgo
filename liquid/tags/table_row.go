@@ -215,8 +215,3 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 	// Close last row
 	output.WriteString("</tr>\n")
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (t *TableRowTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { t.RenderToOutput(context, o) })
-}

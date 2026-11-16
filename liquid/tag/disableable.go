@@ -8,25 +8,6 @@ import (
 // Tags that embed this struct will check if they're disabled before rendering.
 type Disableable struct{}
 
-// RenderToOutputBuffer wraps tag rendering to check if the tag is disabled.
-// If disabled, it outputs an error message. Otherwise, it calls the render function.
-func (d *Disableable) RenderToOutputBuffer(
-	tagName string,
-	context liquid.TagContext,
-	lineNumber *int,
-	parseContext liquid.ParseContextInterface,
-	output *string,
-	renderFn func(),
-) {
-	disabled := context.TagDisabled(tagName)
-	if disabled {
-		errorMsg := d.disabledError(tagName, context, lineNumber, parseContext)
-		*output += errorMsg
-		return
-	}
-	renderFn()
-}
-
 // disabledError creates a DisabledError and returns the error message string.
 func (d *Disableable) disabledError(
 	tagName string,
@@ -72,9 +53,11 @@ func (d *Disableable) disabledError(
 	return context.HandleError(err, lineNumber)
 }
 
-// RenderToOutput is RenderToOutputBuffer for a tag that renders to an
-// OutputBuffer.
-func (d *Disableable) RenderToOutput(
+// Render calls renderFn to render the tag, unless the tag is disabled in
+// context (see Disabler), when it writes the disabled error instead. A tag
+// that embeds Disableable calls it from its own RenderToOutput: the name is
+// not RenderToOutput, so that it never hides the tag's Node method.
+func (d *Disableable) Render(
 	tagName string,
 	context liquid.TagContext,
 	lineNumber *int,

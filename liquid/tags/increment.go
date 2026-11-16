@@ -32,8 +32,3 @@ func (i *IncrementTag) RenderToOutput(context liquid.TagContext, output *liquid.
 	output.WriteString(liquid.ToS(value, nil))
 	ctx.SetCounter(i.variableName, value+1)
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (i *IncrementTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { i.RenderToOutput(context, o) })
-}

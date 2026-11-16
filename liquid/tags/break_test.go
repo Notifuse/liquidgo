@@ -15,7 +15,7 @@ func TestBreakTag(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if !ctx.Interrupt() {
 		t.Error("Expected interrupt to be set")

@@ -37,7 +37,7 @@ func TestUnlessTagFalseCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "content " {
 		t.Errorf("Expected output 'content ', got %q", output)
@@ -60,7 +60,7 @@ func TestUnlessTagTrueCondition(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	if output != "" {
 		t.Errorf("Expected empty output, got %q", output)
@@ -87,7 +87,7 @@ func TestUnlessTagWithElse(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Since unless condition is true, it won't render, so else should render
 	if output != " else content " {
@@ -111,7 +111,7 @@ func TestUnlessTagWithNilValue(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// nil value should render (unless renders when false/nil)
 	if output != "content " {
@@ -134,7 +134,7 @@ func TestUnlessTagWithEmptyString(t *testing.T) {
 	}
 
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Empty string should render (unless renders when false/empty)
 	if output != "content " {
@@ -159,7 +159,7 @@ func TestUnlessTagWithErrorInEvaluation(t *testing.T) {
 	// Create a context that will cause an error during evaluation
 	// Use a variable that causes an error when evaluated
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Should handle error gracefully (output may contain error message or be empty)
 	// The exact behavior depends on error handling implementation
@@ -183,7 +183,7 @@ func TestUnlessTagRenderToOutputBufferEdgeCases(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	var output string
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Since unless condition is false, it should render unless content
 	// elsif/else should not render
@@ -241,7 +241,7 @@ func TestUnlessTagRenderWithError(t *testing.T) {
 
 	var output string
 	// This should handle the error gracefully
-	tag.RenderToOutputBuffer(ctx, &output)
+	renderToString(tag, ctx, &output)
 
 	// Output may contain error message or be empty
 	_ = output
@@ -279,7 +279,7 @@ func TestUnlessTagWithVariousValues(t *testing.T) {
 			ctx.Set(tt.varName, tt.varValue)
 
 			var output string
-			tag.RenderToOutputBuffer(ctx, &output)
+			renderToString(tag, ctx, &output)
 
 			if tt.shouldRender {
 				expected := "content "

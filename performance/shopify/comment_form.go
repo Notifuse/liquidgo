@@ -32,8 +32,8 @@ func NewCommentForm(tagName, markup string, parseContext liquid.ParseContextInte
 	}, nil
 }
 
-// RenderToOutputBuffer renders the comment_form tag
-func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+// RenderToOutput renders the comment_form tag
+func (c *CommentForm) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
 	ctx := context.Context().(*liquid.Context)
 	article := ctx.FindVariable(c.variableName, false)
 
@@ -54,8 +54,11 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 	}
 	ctx.Set("form", form)
 
-	// Render block content
-	bodyOutput := c.Render(context)
+	// Render block content, which the form wraps: the scratch buffer does not
+	// count it, output counts it once with the form
+	body := output.Scratch()
+	c.Block.RenderToOutput(context, body)
+	bodyOutput := body.String()
 
 	// Wrap in form tag
 	articleID := "unknown"
@@ -69,5 +72,5 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 %s
 </form>`, articleID, bodyOutput)
 
-	*output += formHTML
+	output.WriteString(formHTML)
 }

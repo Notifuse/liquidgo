@@ -198,12 +198,20 @@ func main() {
 
 ### Custom Tags
 
+A tag is a `liquid.Node`: it has one render method, `RenderToOutput`, which
+writes to the render's output buffer. A tag that embeds `*liquid.Tag` and
+declares no `RenderToOutput` writes nothing; one that embeds `*liquid.Block`
+renders its body. A tag constructor returns `(liquid.Node, error)`, and an
+error is a syntax error of the template.
+
 ```go
 package main
 
 import (
     "context"
     "fmt"
+    "strings"
+
     "github.com/Notifuse/liquidgo/v5/liquid"
 )
 
@@ -216,21 +224,25 @@ type GreetingTag struct {
 func NewGreetingTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*GreetingTag, error) {
     return &GreetingTag{
         Tag:  liquid.NewTag(tagName, markup, parseContext),
-        name: markup,
+        name: strings.TrimSpace(markup), // the markup keeps the space before %}
     }, nil
 }
 
-func (g *GreetingTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (g *GreetingTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputBuffer) {
     ctx := context.Context().(*liquid.Context)
     name := ctx.FindVariable(g.name, false)
-    *output += fmt.Sprintf("Greetings, %v!", name)
+    output.WriteString(fmt.Sprintf("Greetings, %v!", name))
 }
 
 func main() {
     // Register custom tag
     env := liquid.NewEnvironment()
-    env.RegisterTag("greet", func(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
-        return NewGreetingTag(tagName, markup, parseContext)
+    env.RegisterTag("greet", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+        tag, err := NewGreetingTag(tagName, markup, parseContext)
+        if err != nil {
+            return nil, err
+        }
+        return tag, nil
     })
 
     tmpl, _ := liquid.ParseTemplate(

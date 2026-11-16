@@ -8,25 +8,12 @@ import (
 // Tags that embed this struct will disable specified tags during rendering.
 type Disabler struct{}
 
-// RenderToOutputBuffer wraps tag rendering to disable specified tags during rendering.
-// It calls context.WithDisabledTags with the provided disabled tags list.
-func (d *Disabler) RenderToOutputBuffer(
+// Render calls renderFn with disabledTags disabled in context. A tag that
+// embeds Disabler calls it from its own RenderToOutput: the name is not
+// RenderToOutput, so that it never hides the tag's Node method.
+func (d *Disabler) Render(
 	disabledTags []string,
 	context liquid.TagContext,
-	output *string,
-	renderFn func(),
-) {
-	context.WithDisabledTags(disabledTags, func() {
-		renderFn()
-	})
-}
-
-// RenderToOutput is RenderToOutputBuffer for a tag that renders to an
-// OutputBuffer.
-func (d *Disabler) RenderToOutput(
-	disabledTags []string,
-	context liquid.TagContext,
-	output *liquid.OutputBuffer,
 	renderFn func(),
 ) {
 	context.WithDisabledTags(disabledTags, renderFn)

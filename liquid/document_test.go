@@ -64,7 +64,7 @@ func TestDocumentRenderSimple(t *testing.T) {
 	}
 
 	ctx := NewContext()
-	result := doc.Render(ctx)
+	result := renderString(doc, ctx)
 	if result != "Hello World" {
 		t.Errorf("Expected 'Hello World', got %q", result)
 	}
@@ -81,7 +81,7 @@ func TestDocumentRenderToOutputBuffer(t *testing.T) {
 
 	ctx := NewContext()
 	var output string
-	doc.RenderToOutputBuffer(ctx, &output)
+	renderToString(doc, ctx, &output)
 	if output != "Test" {
 		t.Errorf("Expected 'Test', got %q", output)
 	}

@@ -303,8 +303,3 @@ func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.Outpu
 func (c *CaseTag) Blank() bool {
 	return c.blank
 }
-
-// RenderToOutputBuffer renders the tag and appends its output to output.
-func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	liquid.RenderToString(context, output, func(o *liquid.OutputBuffer) { c.RenderToOutput(context, o) })
-}

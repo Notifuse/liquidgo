@@ -12,12 +12,14 @@ type TestTag1 struct {
 	*liquid.Tag
 }
 
-func NewTestTag1(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewTestTag1(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	return &TestTag1{Tag: liquid.NewTag(tagName, markup, parseContext)}, nil
 }
 
-func (t *TestTag1) Render(ctx liquid.TagContext) string {
-	return "hello"
+// RenderToOutput is Ruby's render of the test, which returns 'hello': a tag
+// has one render method, liquid.Node's.
+func (t *TestTag1) RenderToOutput(_ liquid.TagContext, output *liquid.OutputBuffer) {
+	output.WriteString("hello")
 }
 
 // TestTag2 extends TestTag1 and adds prefix/suffix
@@ -25,13 +27,15 @@ type TestTag2 struct {
 	*TestTag1
 }
 
-func NewTestTag2(tagName, markup string, parseContext liquid.ParseContextInterface) (interface{}, error) {
+func NewTestTag2(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 	tag1, _ := NewTestTag1(tagName, markup, parseContext)
 	return &TestTag2{TestTag1: tag1.(*TestTag1)}, nil
 }
 
-func (t *TestTag2) Render(ctx liquid.TagContext) string {
-	return "foo" + t.TestTag1.Render(ctx) + "bar"
+func (t *TestTag2) RenderToOutput(ctx liquid.TagContext, output *liquid.OutputBuffer) {
+	output.WriteString("foo")
+	t.TestTag1.RenderToOutput(ctx, output)
+	output.WriteString("bar")
 }
 
 func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibility(t *testing.T) {

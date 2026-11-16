@@ -40,13 +40,10 @@ func TestRegisterStandardTags(t *testing.T) {
 		"cycle":     "one, two, three",
 	}
 	for tagName, markup := range testSimpleTags {
-		tagConstructor := env.TagForName(tagName)
-		if tagConstructor != nil {
-			if constructor, ok := tagConstructor.(TagConstructor); ok {
-				_, err := constructor(tagName, markup, pc)
-				if err != nil {
-					t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
-				}
+		if constructor := env.TagForName(tagName); constructor != nil {
+			_, err := constructor(tagName, markup, pc)
+			if err != nil {
+				t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
 			}
 		}
 	}
@@ -63,13 +60,10 @@ func TestRegisterStandardTags(t *testing.T) {
 		"tablerow": "item in array",
 	}
 	for tagName, markup := range testBlockTags {
-		tagConstructor := env.TagForName(tagName)
-		if tagConstructor != nil {
-			if constructor, ok := tagConstructor.(TagConstructor); ok {
-				_, err := constructor(tagName, markup, pc)
-				if err != nil {
-					t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
-				}
+		if constructor := env.TagForName(tagName); constructor != nil {
+			_, err := constructor(tagName, markup, pc)
+			if err != nil {
+				t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
 			}
 		}
 	}
@@ -80,13 +74,10 @@ func TestRegisterStandardTags(t *testing.T) {
 		"render":  "'template'",
 	}
 	for tagName, markup := range testIncludeTags {
-		tagConstructor := env.TagForName(tagName)
-		if tagConstructor != nil {
-			if constructor, ok := tagConstructor.(TagConstructor); ok {
-				_, err := constructor(tagName, markup, pc)
-				if err != nil {
-					t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
-				}
+		if constructor := env.TagForName(tagName); constructor != nil {
+			_, err := constructor(tagName, markup, pc)
+			if err != nil {
+				t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
 			}
 		}
 	}
