@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -365,7 +366,10 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 		if len(filter) == 0 {
 			continue
 		}
-		filterName := ToS(filter[0], nil)
+		filterName, ok := filter[0].(string)
+		if !ok {
+			filterName = ToS(filter[0], nil)
+		}
 		var filterArgs []interface{}
 		if len(filter) > 1 {
 			if args, ok := filter[1].([]interface{}); ok {
@@ -373,10 +377,27 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 			}
 		}
 
-		// Evaluate filter arguments
-		evaluatedArgs := make([]interface{}, len(filterArgs), len(filterArgs)+1)
-		for i, arg := range filterArgs {
-			evaluatedArgs[i] = context.Evaluate(arg)
+		// Evaluate filter arguments; a filter without any gets none, and a
+		// standard filter without keyword arguments the context's slice,
+		// so that its call allocates nothing for them
+		ctx, isContext := context.(*Context)
+		var fn FilterFunc
+		var standard bool
+		if isContext {
+			fn, standard = ctx.resolveFilter(filterName)
+		}
+		var evaluatedArgs, lent []interface{}
+		if len(filterArgs) > 0 {
+			if standard && len(filter) <= 2 {
+				lent = ctx.lendFilterArgs(len(filterArgs))
+				evaluatedArgs = lent
+			}
+			if evaluatedArgs == nil {
+				evaluatedArgs = make([]interface{}, len(filterArgs), len(filterArgs)+1)
+			}
+			for i, arg := range filterArgs {
+				evaluatedArgs[i] = context.Evaluate(arg)
+			}
 		}
 
 		// Keyword arguments are passed as one trailing map, as in Ruby
@@ -391,8 +412,15 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 			}
 		}
 
-		// Invoke filter
-		value = context.Invoke(filterName, value, evaluatedArgs...)
+		// Invoke filter, resolved once above
+		if isContext {
+			value = ctx.invokeFilter(filterName, fn, value, evaluatedArgs)
+		} else {
+			value = context.Invoke(filterName, value, evaluatedArgs...)
+		}
+		if lent != nil {
+			ctx.returnFilterArgs(lent)
+		}
 		safe.filter(filterName, filterArgs)
 	}
 
@@ -439,6 +467,9 @@ func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
 		return
 	case string:
 		output.WriteString(v)
+		return
+	case int:
+		output.WriteString(strconv.Itoa(v)) // as ToS, without its method lookups
 		return
 	case []interface{}:
 		if len(v) == 0 {

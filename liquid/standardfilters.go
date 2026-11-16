@@ -280,10 +280,36 @@ func runeOffset(s string, n int) (int, bool) {
 		if i >= len(s) {
 			return i, false
 		}
+		if s[i] < utf8.RuneSelf { // an ASCII byte is a character
+			i++
+			continue
+		}
 		_, size := utf8.DecodeRuneInString(s[i:])
 		i += size
 	}
 	return i, true
+}
+
+// runePrefix returns the byte index after the first n characters of s, as
+// []rune(s) counts them, whether s has n characters, and whether those
+// characters are valid UTF-8, which asRunes then need not check again.
+func runePrefix(s string, n int) (end int, ok, valid bool) {
+	valid = true
+	for k := 0; k < n; k++ {
+		if end >= len(s) {
+			return end, false, valid
+		}
+		if s[end] < utf8.RuneSelf { // an ASCII byte is a character
+			end++
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[end:])
+		if r == utf8.RuneError && size == 1 {
+			valid = false
+		}
+		end += size
+	}
+	return end, true, valid
 }
 
 // asRunes returns s as string([]rune(s)) does: each invalid byte becomes
@@ -331,22 +357,28 @@ func (sf *StandardFilters) Truncate(input interface{}, length interface{}, trunc
 		truncateStr = ToS(truncateString, nil)
 	}
 
-	// The string is walked only as far as the length: a long input is not
-	// copied to count its characters.
-	if lengthInt >= 0 {
-		if end, ok := runeOffset(inputStr, lengthInt); !ok || end == len(inputStr) {
-			return inputStr
-		}
-	}
-
 	// compared before subtracting, so that a length near the int minimum cannot wrap
 	l := 0
 	if ellipsis := utf8.RuneCountInString(truncateStr); lengthInt > ellipsis {
 		l = lengthInt - ellipsis
 	}
 
-	end, _ := runeOffset(inputStr, l)
-	return asRunes(inputStr[:end]) + truncateStr
+	// The string is walked once, and only as far as the length: to the cut,
+	// then to the length, which a shorter input keeps whole. A long input is
+	// not copied to count its characters.
+	end, ok, valid := runePrefix(inputStr, l)
+	if lengthInt >= 0 {
+		if !ok {
+			return inputStr
+		}
+		if rest, ok := runeOffset(inputStr[end:], lengthInt-l); !ok || end+rest == len(inputStr) {
+			return inputStr
+		}
+	}
+	if valid {
+		return inputStr[:end] + truncateStr
+	}
+	return string([]rune(inputStr[:end])) + truncateStr
 }
 
 // TruncateWords shortens a string to a number of words (15 by default, at least 1).
@@ -547,6 +579,9 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 	if r, ok := input.(*Range); ok {
 		return sf.joinRange(r, sep)
 	}
+	if arr, ok := input.([]interface{}); ok && !hasNestedList(arr) {
+		return sf.joinItems(arr, sep)
+	}
 	iter := NewInputIterator(input, sf.context)
 	parts := make([]string, 0, len(iter.input))
 	iter.Each(func(item interface{}) {
@@ -558,6 +593,63 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 
 // joinRange joins the integers of a range without building them first, and
 // stops at the render length limit, or past maxRangeItems integers.
+// joinItems joins the items of a list without a nested list, as Join does,
+// writing each item once, within the render length limit.
+func (sf *StandardFilters) joinItems(arr []interface{}, sep string) string {
+	var b strings.Builder
+	if n, ok := joinedStrings(arr, sep); ok {
+		sf.checkLength(n)
+		b.Grow(n)
+	}
+	for i, item := range arr {
+		s := ToS(ToLiquidValue(ToLiquid(item)), nil)
+		n := len(s)
+		if i > 0 {
+			n += len(sep)
+		}
+		sf.checkLength(b.Len() + n)
+		if i > 0 {
+			b.WriteString(sep)
+		}
+		b.WriteString(s)
+	}
+	return b.String()
+}
+
+// joinedStrings returns the length of arr joined by sep when every item is a
+// string, so that the result is made at once, saturated.
+func joinedStrings(arr []interface{}, sep string) (int, bool) {
+	total := 0
+	for _, item := range arr {
+		s, ok := item.(string)
+		if !ok {
+			return 0, false
+		}
+		if total > math.MaxInt-len(s) {
+			return math.MaxInt, true
+		}
+		total += len(s)
+	}
+	if len(arr) > 1 && len(sep) > 0 {
+		gaps := len(arr) - 1
+		if gaps > (math.MaxInt-total)/len(sep) {
+			return math.MaxInt, true
+		}
+		total += gaps * len(sep)
+	}
+	return total, true
+}
+
+// hasNestedList reports whether arr holds a list, which Join flattens.
+func hasNestedList(arr []interface{}) bool {
+	for _, item := range arr {
+		if _, ok := item.([]interface{}); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (sf *StandardFilters) joinRange(r *Range, sep string) string {
 	n := r.Len()
 	if n > maxRangeItems {
@@ -937,7 +1029,11 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 // itself is left out where it recurs, instead of recursing without end.
 func flattenArray(arr []interface{}) []interface{} {
 	result := make([]interface{}, 0, len(arr))
-	return appendFlattened(result, arr, map[flattenKey]bool{})
+	if hasNestedList(arr) {
+		return appendFlattened(result, arr, map[flattenKey]bool{})
+	}
+	// no nested list: a copy, without the map that stops a list holding itself
+	return append(result, arr...)
 }
 
 // flattenKey names an array being flattened by its first item and length.

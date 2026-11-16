@@ -3,6 +3,7 @@ package liquid
 import (
 	"math"
 	"reflect"
+	"sync/atomic"
 	"unicode/utf8"
 )
 
@@ -30,6 +31,9 @@ type Template struct {
 	name        string
 	warnings    []error
 	lineNumbers bool
+	// outputSize is the length of the output of the last render, so that
+	// the next render makes its buffer at once.
+	outputSize atomic.Int64
 }
 
 // TemplateOptions contains options for parsing a template.

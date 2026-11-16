@@ -30,6 +30,10 @@ type Context struct {
 	// on the root context of the render (see reporter), keyed by the map the
 	// func was read from and its key: the data itself is never written.
 	funcValues map[funcValueKey]funcValue
+	// argScratch is the slice lent to the calls of standard filters, and
+	// argLent whether a call holds it (see lendFilterArgs).
+	argScratch []interface{}
+	argLent    bool
 	// fatalPanics makes a Go panic in a node end the render (Template.Render)
 	// instead of being written as "Liquid error: internal".
 	fatalPanics bool
@@ -251,18 +255,45 @@ func (c *Context) standard() *StandardFilters {
 // filter returns the function of the filter name: a local filter of the
 // render, the last added first, then the environment's, then the standard
 // one; nil for an unknown filter.
-func (c *Context) filter(name string) FilterFunc {
+// resolveFilter returns the filter name, and whether it is a standard
+// filter that no local or environment filter takes the place of: such a
+// filter never keeps its arguments (see lendFilterArgs). The local filters
+// come first, the last added first, then the environment's.
+func (c *Context) resolveFilter(name string) (FilterFunc, bool) {
 	for i := len(c.filters) - 1; i >= 0; i-- {
 		if c.filters[i].name == name {
-			return c.filters[i].fn
+			return c.filters[i].fn, false
 		}
 	}
-	if c.environment != nil {
+	if c.environment != nil && len(c.environment.filters) > 0 {
 		if fn, ok := c.environment.filters[name]; ok {
-			return fn
+			return fn, false
 		}
 	}
-	return standardFilters[name]
+	fn, ok := standardFilters[name]
+	return fn, ok
+}
+
+// lendFilterArgs returns a slice of n arguments for a call of a standard
+// filter, which never keeps them: the context lends the same slice at each
+// call; give it back with returnFilterArgs. It returns nil while the slice is
+// lent, and the caller makes a slice of its own.
+func (c *Context) lendFilterArgs(n int) []interface{} {
+	if c.argLent {
+		return nil
+	}
+	if cap(c.argScratch) < n {
+		c.argScratch = make([]interface{}, 0, max(n, 4))
+	}
+	c.argLent = true
+	return c.argScratch[:n]
+}
+
+// returnFilterArgs takes back the slice lendFilterArgs lent, emptied so that
+// it keeps no value alive.
+func (c *Context) returnFilterArgs(args []interface{}) {
+	clear(args)
+	c.argLent = false
 }
 
 // Interrupt returns true if there are any unhandled interrupts.
@@ -368,9 +399,16 @@ func sameError(a, b error) (same bool) {
 // gives nil and is recorded, as a filter that fails is, rather than passing its input
 // through: a filter such as escape must not be skipped silently.
 func (c *Context) Invoke(method string, obj interface{}, args ...interface{}) interface{} {
+	fn, _ := c.resolveFilter(method)
+	return c.invokeFilter(method, fn, obj, args)
+}
+
+// invokeFilter is Invoke for fn, the filter method resolves to (nil for an
+// unknown one).
+func (c *Context) invokeFilter(method string, fn FilterFunc, obj interface{}, args []interface{}) interface{} {
 	var result interface{}
 	var err error
-	if fn := c.filter(method); fn != nil {
+	if fn != nil {
 		result, err = fn(c, obj, args...)
 	} else if c.strictFilters {
 		// An unknown filter stays an unknown filter: it never reads a
@@ -472,13 +510,13 @@ func (c *Context) Key(key string) bool {
 
 // Evaluate evaluates an object (calls evaluate if it has that method).
 func (c *Context) Evaluate(object interface{}) interface{} {
-	if object == nil {
+	switch o := object.(type) {
+	case nil:
 		return nil
-	}
-
-	// Check if it's a VariableLookup
-	if vl, ok := object.(*VariableLookup); ok {
-		return vl.Evaluate(c)
+	case string, int, float64, bool:
+		return object // a literal: no method lookup
+	case *VariableLookup:
+		return o.Evaluate(c)
 	}
 
 	// Check if it's a RangeLookup
@@ -509,12 +547,17 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// the environments. The outer scope holds the template's assign and
 	// capture.
 	for _, scope := range c.scopes {
-		if _, ok := scope[keyStr]; ok {
-			return c.lookupInScope(scope, keyStr)
+		if len(scope) == 0 {
+			continue // no hash of the key for an empty scope
+		}
+		if value, ok := scope[keyStr]; ok {
+			return c.lookupInScope(scope, keyStr, value)
 		}
 	}
-	if n, ok := c.counters[keyStr]; ok {
-		return n
+	if len(c.counters) > 0 {
+		if n, ok := c.counters[keyStr]; ok {
+			return n
+		}
 	}
 
 	// As Ruby: the first environment that gives a value; with strict
@@ -527,7 +570,11 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 // form: a func is called once per render, as Ruby calls a proc once and
 // keeps its value; the value is kept with the render, not written in obj.
 func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
-	value := obj[key]
+	return c.mapValue(obj, key, obj[key])
+}
+
+// mapValue is valueIn for value, read from obj under key.
+func (c *Context) mapValue(obj map[string]interface{}, key string, value interface{}) interface{} {
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
 		value = c.funcValueOf(obj, key, value)
@@ -535,13 +582,12 @@ func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
 	return value
 }
 
-// lookupInScope returns the value of key in scope, a scope of the render
+// lookupInScope returns value, the value of key in scope, a scope of the render
 // that holds it. A func there is called and its value written back in the
 // scope, as Ruby's lookup_and_evaluate: a scope belongs to the render, and
 // the next value the render sets under the key (a loop variable, an assign)
 // is read anew.
-func (c *Context) lookupInScope(scope map[string]interface{}, key string) interface{} {
-	value := scope[key]
+func (c *Context) lookupInScope(scope map[string]interface{}, key string, value interface{}) interface{} {
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
 		value = c.callFunc(value)
@@ -684,14 +730,15 @@ func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool
 	strict := c.strictVariables && raiseOnNotFound
 	for _, envs := range [2][]map[string]interface{}{c.environments, c.staticEnvironments} {
 		for _, env := range envs {
-			if _, ok := env[key]; !ok {
+			value, ok := env[key]
+			if !ok {
 				if strict {
 					panic(NewUndefinedVariable("undefined variable " + key))
 				}
 				continue
 			}
 			// as Ruby, the value decides before its liquid form
-			if v := c.valueIn(env, key); v != nil || strict {
+			if v := c.mapValue(env, key, value); v != nil || strict {
 				return ToLiquid(v)
 			}
 		}

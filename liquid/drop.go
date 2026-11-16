@@ -59,6 +59,10 @@ func isDrop(obj interface{}) bool {
 // isNilPointer reports whether obj is a nil pointer: a nil drop is nil, as
 // Ruby's nil.
 func isNilPointer(obj interface{}) bool {
+	switch obj.(type) {
+	case nil, string, int, float64, bool, map[string]interface{}, []interface{}:
+		return false // the common values: no reflection
+	}
 	v := reflect.ValueOf(obj)
 	return v.Kind() == reflect.Ptr && v.IsNil()
 }

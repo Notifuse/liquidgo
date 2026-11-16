@@ -1,5 +1,7 @@
 package liquid
 
+import "unsafe"
+
 // OutputBuffer collects the output of a render. A buffer made for a render
 // checks each write against its resource limits before it grows: the writes
 // of a capture count in the assign score, the others against the render
@@ -99,6 +101,26 @@ func (o *OutputBuffer) WriteString(s string) {
 		}
 	}
 	o.buf = append(o.buf, s...)
+}
+
+// reserve makes room for n bytes, the output a template wrote at its last
+// render, within the render length limit.
+func (o *OutputBuffer) reserve(n int) {
+	if rl := o.limits; rl != nil && rl.renderLengthLimit != nil && n > *rl.renderLengthLimit {
+		n = *rl.renderLengthLimit
+	}
+	if n > cap(o.buf) {
+		o.buf = make([]byte, 0, n)
+	}
+}
+
+// result returns what was written, without a copy: the buffer must not be
+// written again.
+func (o *OutputBuffer) result() string {
+	if len(o.buf) == 0 {
+		return ""
+	}
+	return unsafe.String(&o.buf[0], len(o.buf))
 }
 
 // String returns what was written.

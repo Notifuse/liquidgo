@@ -29,7 +29,10 @@ type Condition struct {
 	attachment     interface{}
 	childCondition *Condition
 	operator       string
-	childRelation  string
+	// operate is the operator, found once when the condition is made (nil
+	// for an unknown one).
+	operate       ConditionOperator
+	childRelation string
 }
 
 // NewCondition creates a new Condition.
@@ -37,6 +40,7 @@ func NewCondition(left interface{}, operator string, right interface{}) *Conditi
 	return &Condition{
 		left:     left,
 		operator: operator,
+		operate:  getConditionOperator(operator),
 		right:    right,
 	}
 }
@@ -100,22 +104,17 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	var err error
 
 	for {
-		result, err = c.interpretCondition(condition.left, condition.right, condition.operator, context)
+		result, err = c.interpretCondition(condition.left, condition.right, condition.operator, condition.operate, context)
 		if err != nil {
 			return false, err
 		}
 
-		resultVal := ToLiquidValue(result)
 		shouldContinue := false
 		switch condition.childRelation {
 		case "or":
-			if resultVal == nil || resultVal == false || resultVal == "" {
-				shouldContinue = true
-			}
+			shouldContinue = !result
 		case "and":
-			if resultVal != nil && resultVal != false && resultVal != "" {
-				shouldContinue = true
-			}
+			shouldContinue = result
 		}
 
 		if !shouldContinue || condition.childCondition == nil {
@@ -127,22 +126,29 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	return result, nil
 }
 
-func (c *Condition) interpretCondition(left, right interface{}, op string, context ConditionContext) (bool, error) {
+// truthy reports whether a condition holds for value: nil, false and an
+// empty string do not (an empty string is a deliberate divergence).
+func truthy(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return v
+	case string:
+		return v != ""
+	}
+	return true
+}
+
+func (c *Condition) interpretCondition(left, right interface{}, op string, operator ConditionOperator, context ConditionContext) (bool, error) {
 	// If operator is empty, just evaluate the left side
 	if op == "" {
-		result := context.Evaluate(left)
-		resultVal := ToLiquidValue(result)
-		// Convert to bool
-		if resultVal == nil || resultVal == false || resultVal == "" {
-			return false, nil
-		}
-		return true, nil
+		return truthy(ToLiquidValue(context.Evaluate(left))), nil
 	}
 
 	leftVal := ToLiquidValue(context.Evaluate(left))
 	rightVal := ToLiquidValue(context.Evaluate(right))
 
-	operator := getConditionOperator(op)
 	if operator == nil {
 		return false, NewArgumentError("Unknown operator " + op)
 	}
@@ -150,31 +156,28 @@ func (c *Condition) interpretCondition(left, right interface{}, op string, conte
 	return operator(c, leftVal, rightVal)
 }
 
+// conditionOperators are the operators of a condition, made once.
+var conditionOperators = map[string]ConditionOperator{
+	"==": func(cond *Condition, left, right interface{}) (bool, error) {
+		return cond.equalVariables(left, right), nil
+	},
+	"!=": notEqualOperator,
+	"<>": notEqualOperator,
+	"<":  orderOperator(func(cmp int) bool { return cmp < 0 }),
+	">":  orderOperator(func(cmp int) bool { return cmp > 0 }),
+	">=": orderOperator(func(cmp int) bool { return cmp >= 0 }),
+	"<=": orderOperator(func(cmp int) bool { return cmp <= 0 }),
+	"contains": func(_ *Condition, left, right interface{}) (bool, error) {
+		return containsOperator(left, right), nil
+	},
+}
+
+func notEqualOperator(cond *Condition, left, right interface{}) (bool, error) {
+	return !cond.equalVariables(left, right), nil
+}
+
 func getConditionOperator(op string) ConditionOperator {
-	switch op {
-	case "==":
-		return func(cond *Condition, left, right interface{}) (bool, error) {
-			return cond.equalVariables(left, right), nil
-		}
-	case "!=", "<>":
-		return func(cond *Condition, left, right interface{}) (bool, error) {
-			return !cond.equalVariables(left, right), nil
-		}
-	case "<":
-		return orderOperator(func(cmp int) bool { return cmp < 0 })
-	case ">":
-		return orderOperator(func(cmp int) bool { return cmp > 0 })
-	case ">=":
-		return orderOperator(func(cmp int) bool { return cmp >= 0 })
-	case "<=":
-		return orderOperator(func(cmp int) bool { return cmp <= 0 })
-	case "contains":
-		return func(_ *Condition, left, right interface{}) (bool, error) {
-			return containsOperator(left, right), nil
-		}
-	default:
-		return nil
-	}
+	return conditionOperators[op]
 }
 
 func (c *Condition) equalVariables(left, right interface{}) bool {

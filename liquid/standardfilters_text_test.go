@@ -165,3 +165,22 @@ func TestSplitRubySemantics(t *testing.T) {
 		}
 	}
 }
+
+// truncate keeps the characters before the cut as string([]rune(s)) writes
+// them, an invalid byte as U+FFFD, as Ruby's String#[] on characters.
+func TestTruncateInvalidUTF8(t *testing.T) {
+	sf := &StandardFilters{}
+	for _, tt := range []struct {
+		in   string
+		n    int
+		want string
+	}{
+		{"\xffabcdef", 4, "\uFFFD..."},
+		{"a\xffbcdefgh", 5, "a\uFFFD..."},
+		{"abcdefgh\xff", 5, "ab..."},
+	} {
+		if got := sf.Truncate(tt.in, tt.n, "..."); got != tt.want {
+			t.Errorf("Truncate(%q, %d) = %q, want %q", tt.in, tt.n, got, tt.want)
+		}
+	}
+}

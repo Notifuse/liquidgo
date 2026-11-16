@@ -199,3 +199,28 @@ func TestAnArgumentGivenAsNilIsNotAMissingOne(t *testing.T) {
 		t.Errorf("got %q %v, want %q", res.Output, res.Errors, want)
 	}
 }
+
+// A filter that takes the place of a standard one gets arguments of its
+// own, which it may keep: only a standard filter shares the context's.
+func TestAFilterKeepsItsArguments(t *testing.T) {
+	var kept [][]interface{}
+	keep := func(_ *Context, input interface{}, args ...interface{}) (interface{}, error) {
+		kept = append(kept, args)
+		return input, nil
+	}
+	for _, opts := range [][]RenderOption{{WithFilters(Filter("append", keep))}, nil} {
+		env := NewEnvironment()
+		if opts == nil {
+			if err := env.RegisterFilter(Filter("append", keep)); err != nil {
+				t.Fatal(err)
+			}
+		}
+		kept = nil
+		if res, _ := renderFilters(t, env, `{{ x | append: "1" }}{{ x | upcase | append: "2" }}`, opts...); res.Output != "aA" {
+			t.Fatalf("output %q", res.Output)
+		}
+		if len(kept) != 2 || kept[0][0] != "1" || kept[1][0] != "2" {
+			t.Errorf("the arguments a filter kept changed: %v", kept)
+		}
+	}
+}

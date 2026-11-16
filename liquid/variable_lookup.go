@@ -236,8 +236,8 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		// Fast path: Check for map[string]interface{} first (most common case)
 		if m, ok := obj.(map[string]interface{}); ok {
 			if k, ok := key.(string); ok {
-				if _, exists := m[k]; exists {
-					obj = context.valueIn(m, k) // a func is called, as Ruby's lookup_and_evaluate
+				if value, exists := m[k]; exists {
+					obj = context.mapValue(m, k, value) // a func is called, as Ruby's lookup_and_evaluate
 					continue
 				}
 			}

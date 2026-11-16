@@ -188,8 +188,10 @@ func (t *Template) Render(ctx gocontext.Context, data map[string]interface{}, op
 	}
 
 	buffer := NewOutputBufferFor(c)
+	buffer.reserve(int(t.outputSize.Load()))
 	defer func() {
-		res.Output = buffer.String()
+		res.Output = buffer.result()
+		t.outputSize.Store(int64(len(res.Output)))
 		res.Errors = c.Errors()
 		res.RenderScore = c.ResourceLimits().RenderScore()
 		res.AssignScore = c.ResourceLimits().AssignScore()
