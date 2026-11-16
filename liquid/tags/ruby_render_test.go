@@ -4,7 +4,6 @@ import (
 	gocontext "context"
 	"errors"
 	"sync"
-	"testing"
 	"weak"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
