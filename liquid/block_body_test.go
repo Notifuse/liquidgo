@@ -420,35 +420,29 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 		t.Errorf("Expected 'value', got %q", output)
 	}
 
-	// Test with a generic Tag
+	// Test with a tag that writes nothing
 	pc3 := NewParseContext(ParseContextOptions{})
-	tag := NewTag("test", "", pc3)
 	output3 := ""
-	ctx3 := NewContext()
-	renderNodeForTest(bb, tag, ctx3, &output3)
-	// Tag.RenderToOutput writes nothing, so output should remain empty
+	renderNodeForTest(bb, &silentTag{NewTag("test", "", pc3)}, NewContext(), &output3)
 	if output3 != "" {
-		t.Logf("Tag render output: %q", output3)
+		t.Errorf("Expected no output from a silent tag, got %q", output3)
 	}
 
-	// Test with a tag that embeds Tag
-	type customTag struct {
-		*Tag
-	}
-	custom := &customTag{Tag: NewTag("custom", "", pc3)}
-	// It renders with the RenderToOutput of Tag
+	// Test with a tag that embeds Tag and declares its RenderToOutput
 	output4 := ""
-	ctx4 := NewContext()
-	renderNodeForTest(bb, custom, ctx4, &output4)
-	_ = output4
-
-	// Test with blank tag
-	blankTag := NewTag("blank", "", pc3)
-	output5 := ""
-	ctx5 := NewContext()
-	renderNodeForTest(bb, blankTag, ctx5, &output5)
-	_ = output5
+	renderNodeForTest(bb, &writingTag{Tag: NewTag("custom", "", pc3), text: "c"}, NewContext(), &output4)
+	if output4 != "c" {
+		t.Errorf("Expected 'c', got %q", output4)
+	}
 }
+
+// writingTag is a tag that writes text.
+type writingTag struct {
+	*Tag
+	text string
+}
+
+func (w *writingTag) RenderToOutput(_ TagContext, output *OutputBuffer) { output.WriteString(w.text) }
 
 // TestBlockBodyParseLiquidTag tests liquid tag parsing
 func TestBlockBodyParseLiquidTag(t *testing.T) {
