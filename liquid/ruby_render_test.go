@@ -4,7 +4,6 @@ import (
 	gocontext "context"
 	"errors"
 	"sync"
-	"testing"
 	"weak"
 )
 
@@ -215,14 +214,4 @@ func rubyErrorText(err error) string {
 		return liquidErr.Error()
 	}
 	return "Liquid error: internal"
-}
-
-// mustRenderRuby fails the test when the render records an error.
-func mustRenderRuby(t *testing.T, tmpl *Template, assigns interface{}) string {
-	t.Helper()
-	res := renderRubyResult(tmpl, assigns, nil, false)
-	if len(res.Errors) > 0 {
-		t.Fatalf("render recorded %v", res.Errors)
-	}
-	return res.Output
 }
