@@ -549,8 +549,8 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// the environments. The outer scope holds the template's assign and
 	// capture.
 	for _, scope := range c.scopes {
-		if _, ok := scope[keyStr]; ok {
-			return c.lookupInScope(scope, keyStr)
+		if value, ok := scope[keyStr]; ok {
+			return c.lookupInScope(scope, keyStr, value)
 		}
 	}
 	if n, ok := c.counters[keyStr]; ok {
@@ -575,13 +575,12 @@ func (c *Context) valueIn(obj map[string]interface{}, key string) interface{} {
 	return value
 }
 
-// lookupInScope returns the value of key in scope, a scope of the render
+// lookupInScope returns value, the value of key in scope, a scope of the render
 // that holds it. A func there is called and its value written back in the
 // scope, as Ruby's lookup_and_evaluate: a scope belongs to the render, and
 // the next value the render sets under the key (a loop variable, an assign)
 // is read anew.
-func (c *Context) lookupInScope(scope map[string]interface{}, key string) interface{} {
-	value := scope[key]
+func (c *Context) lookupInScope(scope map[string]interface{}, key string, value interface{}) interface{} {
 	switch value.(type) {
 	case func() interface{}, func(*Context) interface{}:
 		value = c.callFunc(value)
