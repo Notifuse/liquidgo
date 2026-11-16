@@ -41,9 +41,9 @@ This document provides a comprehensive mapping between Ruby files and their Go e
 | `lib/liquid/snippet_drop.rb`       | `liquid/snippet_drop.go`       | Snippet drop                    |
 | `lib/liquid/forloop_drop.rb`       | `liquid/forloop_drop.go`       | For loop drop                   |
 | `lib/liquid/tablerowloop_drop.rb`  | `liquid/tablerowloop_drop.go`  | Table row loop drop             |
-| `lib/liquid/strainer_template.rb`  | `liquid/strainer_template.go`  | Filter strainer                 |
+| `lib/liquid/strainer_template.rb`  | `liquid/filter.go`             | Declared filters                |
 | `lib/liquid/tags.rb`               | `liquid/tags.go`               | Tag registry                    |
-| `lib/liquid/template_factory.rb`   | `liquid/template_factory.go`   | Template factory                |
+| `lib/liquid/template_factory.rb`   | (none, `liquid/partial_cache.go`) | Template factory             |
 | `lib/liquid/usage.rb`              | `liquid/usage.go`              | Usage tracking                  |
 | `lib/liquid/utils.rb`              | `liquid/utils.go`              | Utility functions               |
 | `lib/liquid/const.rb`              | `liquid/const.go`              | Constants                       |

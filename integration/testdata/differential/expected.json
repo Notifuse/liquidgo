@@ -3278,6 +3278,42 @@
       "output": "<tr class=\"row1\">\n<td class=\"col1\">Liquid::TablerowloopDrop</td></tr>\n"
     },
     {
+      "id": "nil-args-01",
+      "mode": "lax",
+      "template": "{{ words | join }}|{{ words | join: nothing }}|{{ arr | join: nothing }}",
+      "output": "b a C|baC|123"
+    },
+    {
+      "id": "nil-args-01",
+      "mode": "strict",
+      "template": "{{ words | join }}|{{ words | join: nothing }}|{{ arr | join: nothing }}",
+      "output": "b a C|baC|123"
+    },
+    {
+      "id": "nil-args-02",
+      "mode": "lax",
+      "template": "{{ s | truncate: 5 }}|{{ s | truncate: 5, nothing }}|{{ s | truncatewords: 1 }}|{{ s | truncatewords: 1, nothing }}",
+      "output": "hé...|héllo|héllo...|héllo"
+    },
+    {
+      "id": "nil-args-02",
+      "mode": "strict",
+      "template": "{{ s | truncate: 5 }}|{{ s | truncate: 5, nothing }}|{{ s | truncatewords: 1 }}|{{ s | truncatewords: 1, nothing }}",
+      "output": "hé...|héllo|héllo...|héllo"
+    },
+    {
+      "id": "nil-args-03",
+      "mode": "lax",
+      "template": "{{ \"ab\" | replace: \"a\" }}|{{ \"ab\" | replace: \"a\", nothing }}|{{ f | round }}|{{ nothing | default: nothing }}",
+      "output": "b|b|2|"
+    },
+    {
+      "id": "nil-args-03",
+      "mode": "strict",
+      "template": "{{ \"ab\" | replace: \"a\" }}|{{ \"ab\" | replace: \"a\", nothing }}|{{ f | round }}|{{ nothing | default: nothing }}",
+      "output": "b|b|2|"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

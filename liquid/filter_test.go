@@ -102,7 +102,8 @@ func TestRegisterFilterChecksTheFilter(t *testing.T) {
 }
 
 // The standard filter table has a filter for each exported method of
-// StandardFilters, named in snake_case, and nothing else.
+// StandardFilters, named in snake_case, and nothing else. The names only are
+// compared: a table whose calls no longer match the methods does not compile.
 func TestTheStandardFilterTableFollowsStandardFilters(t *testing.T) {
 	lowerUpper := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 	acronym := regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)

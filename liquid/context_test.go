@@ -283,13 +283,13 @@ func TestContextLookupAndEvaluate(t *testing.T) {
 		"key": "value",
 	}
 
-	result := ctx.liquidValue(ctx.valueIn(obj, "key"))
+	result := ToLiquid(ctx.valueIn(obj, "key"))
 	if result != "value" {
 		t.Errorf("Expected 'value', got %v", result)
 	}
 
 	// Test with nonexistent key
-	result2 := ctx.liquidValue(ctx.valueIn(obj, "nonexistent"))
+	result2 := ToLiquid(ctx.valueIn(obj, "nonexistent"))
 	if result2 != nil {
 		t.Errorf("Expected nil, got %v", result2)
 	}
@@ -300,7 +300,7 @@ func TestContextLookupAndEvaluate(t *testing.T) {
 			return "function result"
 		},
 	}
-	result3 := ctx.liquidValue(ctx.valueIn(obj2, "func"))
+	result3 := ToLiquid(ctx.valueIn(obj2, "func"))
 	if result3 != "function result" {
 		t.Errorf("Expected 'function result', got %v", result3)
 	}
@@ -398,7 +398,9 @@ func TestContextGettersSetters(t *testing.T) {
 	}
 
 	// Test AddFilters
-	ctx.AddFilters([]FilterDef{Filter("local", rawFilter)})
+	if err := ctx.AddFilters([]FilterDef{Filter("local", rawFilter)}); err != nil {
+		t.Fatal(err)
+	}
 	if len(ctx.filters) == 0 {
 		t.Error("Expected filters to be added")
 	}
@@ -427,7 +429,7 @@ func TestContextLookupAndEvaluateMethod(t *testing.T) {
 		"key": "value",
 	}
 
-	result := ctx.liquidValue(ctx.valueIn(obj, "key"))
+	result := ToLiquid(ctx.valueIn(obj, "key"))
 	if result != "value" {
 		t.Errorf("Expected 'value', got %v", result)
 	}

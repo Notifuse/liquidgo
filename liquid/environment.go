@@ -1,7 +1,5 @@
 package liquid
 
-import ()
-
 // Environment is the container for all configuration options of Liquid, such as
 // the registered tags, filters, and the default error mode.
 type Environment struct {

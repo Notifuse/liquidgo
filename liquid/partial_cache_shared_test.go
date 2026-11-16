@@ -87,7 +87,8 @@ func TestAPartialTooLargeIsNotCached(t *testing.T) {
 	if again := partialFor(t, env, fs, "big"); again == first || env.partials.len() != 0 {
 		t.Errorf("a partial of %d bytes was cached", len(fs["big"]))
 	}
-	if partialFor(t, env, fs, "small") != partialFor(t, env, fs, "small") {
+	small := partialFor(t, env, fs, "small")
+	if again := partialFor(t, env, fs, "small"); again != small {
 		t.Error("a small partial was not cached")
 	}
 }
@@ -105,7 +106,8 @@ func TestThePartialCacheLimitsCanBeSet(t *testing.T) {
 		t.Errorf("the least recently used partial was not the one to go: %d cached", env.partials.len())
 	}
 	env.SetPartialCacheLimits(0, 0)
-	if env.partials.len() != 0 || partialFor(t, env, fs, "a") == partialFor(t, env, fs, "a") {
+	off := partialFor(t, env, fs, "a")
+	if again := partialFor(t, env, fs, "a"); env.partials.len() != 0 || again == off {
 		t.Error("a cache turned off kept a partial")
 	}
 }

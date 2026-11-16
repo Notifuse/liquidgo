@@ -1,9 +1,9 @@
 package integration
 
-// Regression tests for the strainer class cache of an Environment (audit of
-// 2026-11-15, finding 6): renders with local filters read and write the cache
-// concurrently, a cache hit must still give the render its own filter
-// instances, and the environment's filters apply alongside local ones.
+// Local filters of a render (audit of 2026-11-15, finding 6, first found in
+// the strainer cache that is gone): each render gets its own filters, also
+// when renders run concurrently, and the environment's filters apply
+// alongside local ones.
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ func (f *envFilters) EnvOnly(input interface{}) string { return "env" }
 // Tenant is overridden by a local filter of the same name.
 func (f *envFilters) Tenant(input interface{}) string { return "env-tenant" }
 
-func strainerCacheTemplate(t *testing.T, env *liquid.Environment, src string) *liquid.Template {
+func localFiltersTemplate(t *testing.T, env *liquid.Environment, src string) *liquid.Template {
 	t.Helper()
 	if env == nil {
 		env = liquid.NewEnvironment()
@@ -47,8 +47,8 @@ func withFilters(filters ...interface{}) *rubyOptions {
 }
 
 // Each render uses its own filter instance, also on a cache hit.
-func TestStrainerCacheHitUsesTheRendersFilters(t *testing.T) {
-	tpl := strainerCacheTemplate(t, nil, `{{ "a" | tenant }}`)
+func TestEachRenderUsesItsLocalFilters(t *testing.T) {
+	tpl := localFiltersTemplate(t, nil, `{{ "a" | tenant }}`)
 	for _, tag := range []string{"A", "B", "C"} {
 		if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&tenantFilters{tag})); got != "t:"+tag {
 			t.Errorf("render for %s = %q, want %q", tag, got, "t:"+tag)
@@ -58,8 +58,8 @@ func TestStrainerCacheHitUsesTheRendersFilters(t *testing.T) {
 
 // Concurrent renders with local filters share the cache without a data race
 // (detected under -race), and each gets its own filter instance.
-func TestStrainerCacheConcurrentRenders(t *testing.T) {
-	tpl := strainerCacheTemplate(t, nil, `{{ "a" | tenant }}`)
+func TestConcurrentRendersWithLocalFilters(t *testing.T) {
+	tpl := localFiltersTemplate(t, nil, `{{ "a" | tenant }}`)
 	var wg sync.WaitGroup
 	results := make([]string, 100)
 	for i := range results {
@@ -79,12 +79,12 @@ func TestStrainerCacheConcurrentRenders(t *testing.T) {
 
 // The filters registered on the environment apply when a render also passes
 // local filters, which take precedence for a name both define.
-func TestStrainerKeepsEnvironmentFiltersWithLocalOnes(t *testing.T) {
+func TestEnvironmentFiltersApplyWithLocalOnes(t *testing.T) {
 	env := liquid.NewEnvironment()
 	if err := env.RegisterFilter(methodfilters.Of(&envFilters{})...); err != nil {
 		t.Fatal(err)
 	}
-	tpl := strainerCacheTemplate(t, env, `{{ "x" | env_only }}|{{ "x" | tenant }}`)
+	tpl := localFiltersTemplate(t, env, `{{ "x" | env_only }}|{{ "x" | tenant }}`)
 	if got := renderRuby(tpl, map[string]interface{}{}, nil); got != "env|env-tenant" {
 		t.Errorf("without local filters = %q, want %q", got, "env|env-tenant")
 	}
@@ -96,8 +96,8 @@ func TestStrainerKeepsEnvironmentFiltersWithLocalOnes(t *testing.T) {
 }
 
 // Two filter types with the same name in two packages get their own methods.
-func TestStrainerCacheTellsSameNamedTypesApart(t *testing.T) {
-	tpl := strainerCacheTemplate(t, nil, `{{ "x" | a_only }}|{{ "x" | b_only }}`)
+func TestFilterStructsOfTheSameNameStayApart(t *testing.T) {
+	tpl := localFiltersTemplate(t, nil, `{{ "x" | a_only }}|{{ "x" | b_only }}`)
 	if got := renderRuby(tpl, map[string]interface{}{}, withFilters(&filters.Filters{})); got != "a|x" {
 		t.Errorf("with a.Filters = %q, want %q", got, "a|x")
 	}

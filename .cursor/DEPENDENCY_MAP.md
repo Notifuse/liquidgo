@@ -85,8 +85,8 @@ Conditional logic:
 Environment configuration and filter system:
 
 - `liquid/standardfilters.go` - Standard filter implementations
-- `liquid/strainer_template.go` - Filter strainer (uses Set)
-- `liquid/environment.go` - Environment configuration (depends on tags, strainer_template, standardfilters)
+- `liquid/filter.go`, `liquid/standard_filter_table.go` - Declared filters and the generated table of the standard ones
+- `liquid/environment.go` - Environment configuration (depends on tags, filter, standardfilters)
 
 **Dependencies**: Level 0-1
 
@@ -117,7 +117,6 @@ Supporting classes needed by context and template:
 - `liquid/registers.go` - Template registers
 - `liquid/resource_limits.go` - Resource limiting
 - `liquid/partial_cache.go` - Partial template caching
-- `liquid/template_factory.go` - Template factory
 - `liquid/usage.go` - Usage tracking
 - `liquid/parse_tree_visitor.go` - AST visitor pattern
 
@@ -139,7 +138,7 @@ Parse-time context:
 
 Rendering context:
 
-- `liquid/context.go` - Rendering context (depends on environment, variable, expression, registers, resource_limits, variable_lookup, strainer_template)
+- `liquid/context.go` - Rendering context (depends on environment, variable, expression, registers, resource_limits, variable_lookup)
 
 **Dependencies**: Level 0-5, Level 6, Level 8
 
@@ -253,11 +252,11 @@ Level 4: variable
     ↓
 Level 5: condition
     ↓
-Level 6: standardfilters, strainer_template → environment
+Level 6: standardfilters, filter → environment
     ↓
 Level 7: tag/disableable → tag/disabler → tag → block_body → block
     ↓
-Level 8: registers, resource_limits, partial_cache, template_factory, usage, parse_tree_visitor
+Level 8: registers, resource_limits, partial_cache, usage, parse_tree_visitor
     ↓
 Level 9: parse_context
     ↓

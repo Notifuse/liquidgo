@@ -13,6 +13,20 @@
   `liquid_method_missing`); an error `LiquidGet` returns is recorded. A drop keeps no context, so
   renders can share one. A drop without a `String()` method renders as nothing, never its fields;
   `forloop` and `tablerowloop` render as in Ruby (`Liquid::ForloopDrop`).
+- **Duck-typed hooks are gone**: a lookup no longer calls `LiquidMethodMissing(string)` on a value,
+  nor does a read from a map or an array filter call `SetContext(*Context)`, nor the array filters
+  `Get(string)`: a type that relied on one compiles and renders nothing. Declare its keys with
+  `LiquidGet`. `Context.AddFilters` returns an error, the `cached_partials` register holds a
+  `map[string]*Template`, and `SliceItems` gives the items of a typed slice.
+- **A filter error is recorded**: an error a filter returns, standard or not, gives nil and is
+  recorded in `Result.Errors` without being written; with strict filters it is raised (so
+  `{{ 1 | divided_by: 0 }}` now raises with strict filters). A Go error a filter or a drop returns
+  is recorded as a `*InternalError` (`Liquid error: internal`, as Ruby) that unwraps to it, where
+  the render ended with a `*PanicError`. A filter needs a function and a name a template can write
+  (`RegisterFilter`, `WithFilters`).
+- **An argument given as nil is not a missing one**: a standard filter takes Ruby's default only for
+  an argument it is not given, so `{{ arr | join: nothing }}` joins with an empty string and
+  `{{ s | truncate: 5, nothing }}` adds no ellipsis, as in Ruby.
 - **Filters are declared**: `liquid.Filter(name, func(ctx *Context, input interface{}, args
   ...interface{}) (interface{}, error))`, given to `Environment.RegisterFilter(filters ...FilterDef)`
   and `WithFilters(filters ...FilterDef)`. A struct of filter methods is no longer a filter set: the

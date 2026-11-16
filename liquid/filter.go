@@ -2,12 +2,16 @@ package liquid
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 )
 
 // FilterFunc is a filter: it gets the context of the render, the value it is
-// applied to and its arguments, and returns the result. An error is raised
-// with strict filters, and gives nil otherwise.
+// applied to and its arguments (keyword arguments as a last
+// map[string]interface{}), and returns the result. An error gives nil and is
+// recorded in Result.Errors, without being written; with strict filters it is
+// raised. A Go error that is not a Liquid error is recorded as an
+// InternalError that unwraps to it.
 type FilterFunc func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error)
 
 // FilterDef declares a filter: its name in templates and its function.
@@ -26,11 +30,15 @@ func (f FilterDef) Name() string { return f.name }
 
 // check returns an error for a filter with no name or no function.
 func (f FilterDef) check() error {
-	if f.name == "" || f.fn == nil {
-		return fmt.Errorf("liquid: a filter needs a name and a function (got %q)", f.name)
+	if f.fn == nil || !filterName.MatchString(f.name) {
+		return fmt.Errorf("liquid: a filter needs a name a template can write and a function (got %q)", f.name)
 	}
 	return nil
 }
+
+// filterName is a name a template can write after a pipe, the identifier of
+// the lexer.
+var filterName = regexp.MustCompile(`^[a-zA-Z_][\w-]*\??$`)
 
 // filterArgs returns the first n arguments of args, nil for the missing ones.
 func filterArgs(args []interface{}, n int) []interface{} {

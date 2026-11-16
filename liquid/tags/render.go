@@ -1,7 +1,6 @@
 package tags
 
 import (
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -189,11 +188,10 @@ func (r *RenderTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 		} else if variable != nil {
 			// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
 			// This matches Ruby's duck-typing behavior: arrays respond to iteration
-			v := reflect.ValueOf(variable)
-			if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-				forloop := liquid.NewForloopDrop(templateName, v.Len(), nil)
-				for i := 0; i < v.Len(); i++ {
-					renderPartialFunc(v.Index(i).Interface(), forloop)
+			if items, ok := liquid.SliceItems(variable); ok {
+				forloop := liquid.NewForloopDrop(templateName, len(items), nil)
+				for _, item := range items {
+					renderPartialFunc(item, forloop)
 				}
 			} else {
 				// Not iterable, render once with variable

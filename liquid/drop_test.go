@@ -359,3 +359,13 @@ func TestAGoErrorOfADropIsAnInternalError(t *testing.T) {
 		t.Errorf("output %q", res.Output)
 	}
 }
+
+// A drop value that has no address (in a map, in an array) is read through a
+// copy of it, when its pointer is the drop.
+func TestADropValueWithoutAnAddressIsRead(t *testing.T) {
+	data := map[string]interface{}{"v": keysDrop{}, "a": [1]keysDrop{}}
+	res := renderDrop(t, `{{ v.a }}|{{ a[0].a }}|{{ a | map: "a" | join }}`, data)
+	if res.Output != "A|A|A" || len(res.Errors) != 0 {
+		t.Errorf("got %q %v", res.Output, res.Errors)
+	}
+}

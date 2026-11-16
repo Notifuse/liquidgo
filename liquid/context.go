@@ -229,9 +229,17 @@ func (c *Context) SetStrictFilters(strict bool) {
 }
 
 // AddFilters adds local filters to this context, which take precedence over
-// the environment's and the standard ones, the last added first.
-func (c *Context) AddFilters(filters []FilterDef) {
+// the environment's and the standard ones, the last added first. A filter
+// without a function or a name a template can write is an error, and none is
+// added.
+func (c *Context) AddFilters(filters []FilterDef) error {
+	for _, f := range filters {
+		if err := f.check(); err != nil {
+			return err
+		}
+	}
 	c.filters = append(c.filters, filters...)
+	return nil
 }
 
 // standard returns the standard filters of the render.
@@ -539,11 +547,6 @@ func (c *Context) lookupInScope(scope map[string]interface{}, key string) interf
 		value = c.callFunc(value)
 		scope[key] = value
 	}
-	return c.liquidValue(value)
-}
-
-// liquidValue returns the liquid form of a value read from a map.
-func (c *Context) liquidValue(value interface{}) interface{} {
 	return ToLiquid(value)
 }
 
@@ -689,7 +692,7 @@ func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool
 			}
 			// as Ruby, the value decides before its liquid form
 			if v := c.valueIn(env, key); v != nil || strict {
-				return c.liquidValue(v)
+				return ToLiquid(v)
 			}
 		}
 	}
