@@ -1,7 +1,8 @@
-# liquidgo - Shopify Liquid for Go
+# liquidgo - The best Liquid engine for Go
 
-A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the output of the Ruby gem,
-every difference listed, and safe with untrusted templates.
+A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the Go engine closest to the
+Ruby gem, the only one that stops every hostile template, and among the fastest. Every difference
+from Shopify is listed.
 
 It renders the emails and blog pages of [Notifuse](https://www.notifuse.com/), the open-source
 emailing platform, where every template is written by its users.
