@@ -229,8 +229,8 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		// Fast path: Check for map[string]interface{} first (most common case)
 		if m, ok := obj.(map[string]interface{}); ok {
 			if k, ok := key.(string); ok {
-				if val, exists := m[k]; exists {
-					obj = val
+				if _, exists := m[k]; exists {
+					obj = context.valueIn(m, k) // a func is called, as Ruby's lookup_and_evaluate
 					continue
 				}
 			}
@@ -251,7 +251,7 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 		// key, such as '1' or 1.5, is no index, as in Ruby.
 		if arr, ok := obj.([]interface{}); ok {
 			if idx, ok := integerKey(key); ok {
-				obj = indexOf(len(arr), idx, func(i int) interface{} { return arr[i] })
+				obj = indexOf(len(arr), idx, func(i int) interface{} { return context.itemOf(arr, i) })
 				continue
 			}
 		} else if obj != nil {

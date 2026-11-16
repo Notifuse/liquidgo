@@ -495,3 +495,78 @@ func TestRenderCallsAFuncOfTheContext(t *testing.T) {
 		t.Errorf("output %q, want %q", res.Output, "page|item")
 	}
 }
+
+// A func read from a scope is called once there: its value is written back
+// in the scope, as Ruby does, and read again from it.
+func TestAFuncOfAScopeIsCalledOnceThere(t *testing.T) {
+	calls := 0
+	data := map[string]interface{}{"funcs": []interface{}{func() interface{} { calls++; return calls }}}
+	tpl := rcParse(t, rcEnv(), `{% for f in funcs %}{{ f }}{{ f }}{% endfor %}`)
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "11" || calls != 1 {
+		t.Errorf("output %q after %d calls, want %q after 1", res.Output, calls, "11")
+	}
+}
+
+// WithFileSystem takes precedence over a file_system register, whatever the
+// order of the options.
+func TestWithFileSystemTakesPrecedenceOverTheRegister(t *testing.T) {
+	tpl := rcParse(t, rcEnv(), `{% render 'p' %}`)
+	mine := &mapFileSystem{templates: map[string]string{"p": "mine"}}
+	theirs := &mapFileSystem{templates: map[string]string{"p": "register"}}
+	reg := liquid.WithRegisters(map[string]interface{}{"file_system": theirs})
+	for _, opts := range [][]liquid.RenderOption{{reg, liquid.WithFileSystem(mine)}, {liquid.WithFileSystem(mine), reg}} {
+		if res, err := tpl.Render(gocontext.Background(), nil, opts...); err != nil || res.Output != "mine" {
+			t.Errorf("output %q (%v), want %q", res.Output, err, "mine")
+		}
+	}
+}
+
+// A func read by a key of a nested map or an index of a list is called, as
+// Ruby's lookup_and_evaluate calls a proc at every key or index of a lookup,
+// once per render: it does not render as a Go value.
+func TestAFuncInAListOrANestedMapIsCalled(t *testing.T) {
+	calls := 0
+	count := func() interface{} { calls++; return calls }
+	data := map[string]interface{}{
+		"funcs": []interface{}{func() interface{} { return "one" }},
+		"h":     map[string]interface{}{"f": func() interface{} { return "v" }, "n": count},
+	}
+	tpl := rcParse(t, rcEnv(), `{{ funcs[0] }}|{{ h.f }}|{{ h.n }}{{ h.n }}`)
+	if res, _ := tpl.Render(gocontext.Background(), data); res.Output != "one|v|11" || calls != 1 {
+		t.Errorf("output %q after %d calls, want %q after 1", res.Output, calls, "one|v|11")
+	}
+	if _, isFunc := data["funcs"].([]interface{})[0].(func() interface{}); !isFunc {
+		t.Error("the list was written")
+	}
+	if _, isFunc := data["h"].(map[string]interface{})["f"].(func() interface{}); !isFunc {
+		t.Error("the data was written")
+	}
+}
+
+// uncomparableError is a Liquid error whose value holds a slice, so that
+// two of its values cannot be compared with ==.
+type uncomparableError struct {
+	*liquid.StandardError
+	detail interface{}
+}
+
+type uncomparableTag struct{ *liquid.Tag }
+
+func (u *uncomparableTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
+	panic(uncomparableError{StandardError: liquid.NewStandardError("uncomparable"), detail: []int{1}})
+}
+
+// With RaiseErrors, an error whose value cannot be compared is raised as
+// itself through enclosing blocks.
+func TestRaiseErrorsWithAnUncomparableError(t *testing.T) {
+	env := rcEnv()
+	env.RegisterTag("uncomparable", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		return &uncomparableTag{liquid.NewTag(name, markup, pc)}, nil
+	})
+	tpl := rcParse(t, env, `{% if true %}{% uncomparable %}{% endif %}`)
+	_, err := tpl.Render(gocontext.Background(), nil, liquid.RaiseErrors())
+	var raised uncomparableError
+	if !errors.As(err, &raised) {
+		t.Errorf("err %v (%T), want the uncomparable error", err, err)
+	}
+}

@@ -108,10 +108,14 @@ partial body.
   registers, as Ruby's `registers:` option, which a `{% render %}` partial inherits. They were in the
   change layer, which a `render` partial does not see (as `RenderOptions.Registers` in v5.11.8). A
   `file_system` register now serves nested partials; `WithFileSystem` takes precedence over it.
-- **A func in the data is called once per render**, its value kept with the render: the data and the
+- **A func of the data is called once per render**, its value kept with the render: the data and the
   template's assigns are never written. Ruby writes a proc's value back into the hash; so did
   liquidgo, so that two renders sharing one data map saw the first one's value, and concurrent renders
-  wrote one map.
+  wrote one map. This holds for a func read by a key of the data, of a nested map, or by an index of a
+  list, which were rendered as a Go value (`{{ funcs[0] }}` gave an address), as Ruby's
+  `lookup_and_evaluate` calls a proc there. A func that lands in a scope of the render (a loop
+  variable, an assign) is called there and its value written in the scope, as Ruby: a map a host tag
+  pushes (`Context.Push`, `Context.Stack`) is a scope, and belongs to the render.
 
 ### Tests
 - **The differential corpus renders with strict variables** the templates that ask for it
