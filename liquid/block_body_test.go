@@ -415,20 +415,9 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	v := NewVariable("test", pc)
 	ctx.Set("test", "value")
-	renderNodeForTest(bb, v, ctx, &output, false, ctx)
+	renderNodeForTest(bb, v, ctx, &output)
 	if output != "value" {
 		t.Errorf("Expected 'value', got %q", output)
-	}
-
-	// Test with profiling enabled
-	output2 := ""
-	ctx2 := NewContext()
-	ctx2.SetProfiler(NewProfiler())
-	v2 := NewVariable("test2", pc)
-	ctx2.Set("test2", "value2")
-	renderNodeForTest(bb, v2, ctx2, &output2, true, ctx2)
-	if output2 != "value2" {
-		t.Errorf("Expected 'value2', got %q", output2)
 	}
 
 	// Test with a generic Tag
@@ -436,7 +425,7 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	tag := NewTag("test", "", pc3)
 	output3 := ""
 	ctx3 := NewContext()
-	renderNodeForTest(bb, tag, ctx3, &output3, false, ctx3)
+	renderNodeForTest(bb, tag, ctx3, &output3)
 	// Tag.RenderToOutput writes nothing, so output should remain empty
 	if output3 != "" {
 		t.Logf("Tag render output: %q", output3)
@@ -450,14 +439,14 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	// It renders with the RenderToOutput of Tag
 	output4 := ""
 	ctx4 := NewContext()
-	renderNodeForTest(bb, custom, ctx4, &output4, false, ctx4)
+	renderNodeForTest(bb, custom, ctx4, &output4)
 	_ = output4
 
 	// Test with blank tag
 	blankTag := NewTag("blank", "", pc3)
 	output5 := ""
 	ctx5 := NewContext()
-	renderNodeForTest(bb, blankTag, ctx5, &output5, false, ctx5)
+	renderNodeForTest(bb, blankTag, ctx5, &output5)
 	_ = output5
 }
 
@@ -645,26 +634,6 @@ func TestBlockBodyCreateVariableEdgeCases(t *testing.T) {
 	}()
 }
 
-func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
-	pc := NewParseContext(ParseContextOptions{})
-	bb := NewBlockBody()
-	ctx := NewContext()
-	var output string
-
-	// Test rendering a tag node with profiler
-	tag := NewTag("echo", "test", pc)
-	bb.nodelist = append(bb.nodelist, tag)
-
-	// Test with profiler
-	profiler := NewProfiler()
-	ctx.SetProfiler(profiler)
-	ctx.SetTemplateName("test_template")
-
-	renderToString(bb, ctx, &output)
-	// Should render the tag
-	_ = output
-}
-
 func TestBlockBodyParseForDocumentWithLiquidTag(t *testing.T) {
 	// Create environment with assign tag registered
 	env := NewEnvironment()
@@ -726,8 +695,8 @@ func TestBlockBodyParseForDocumentWithTrimWhitespace(t *testing.T) {
 }
 
 // renderNodeForTest renders node as BlockBody does, and appends its output.
-func renderNodeForTest(bb *BlockBody, node interface{}, context TagContext, output *string, profiler bool, ctx *Context) {
+func renderNodeForTest(bb *BlockBody, node interface{}, context TagContext, output *string) {
 	buf := NewOutputBuffer()
-	bb.renderNode(context, ctx, buf, node, profiler)
+	bb.renderNode(context, buf, node)
 	*output += buf.String()
 }
