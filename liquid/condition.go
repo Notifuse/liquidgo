@@ -113,11 +113,11 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 		shouldContinue := false
 		switch condition.childRelation {
 		case "or":
-			if resultVal == nil || resultVal == false || resultVal == "" {
+			if !truthy(resultVal) {
 				shouldContinue = true
 			}
 		case "and":
-			if resultVal != nil && resultVal != false && resultVal != "" {
+			if truthy(resultVal) {
 				shouldContinue = true
 			}
 		}
@@ -131,16 +131,24 @@ func (c *Condition) Evaluate(context ConditionContext) (bool, error) {
 	return result, nil
 }
 
+// truthy reports whether a condition holds for value: nil, false and an
+// empty string do not (an empty string is a deliberate divergence).
+func truthy(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return v
+	case string:
+		return v != ""
+	}
+	return true
+}
+
 func (c *Condition) interpretCondition(left, right interface{}, op string, operator ConditionOperator, context ConditionContext) (bool, error) {
 	// If operator is empty, just evaluate the left side
 	if op == "" {
-		result := context.Evaluate(left)
-		resultVal := ToLiquidValue(result)
-		// Convert to bool
-		if resultVal == nil || resultVal == false || resultVal == "" {
-			return false, nil
-		}
-		return true, nil
+		return truthy(ToLiquidValue(context.Evaluate(left))), nil
 	}
 
 	leftVal := ToLiquidValue(context.Evaluate(left))

@@ -547,12 +547,17 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// the environments. The outer scope holds the template's assign and
 	// capture.
 	for _, scope := range c.scopes {
+		if len(scope) == 0 {
+			continue // no hash of the key for an empty scope
+		}
 		if value, ok := scope[keyStr]; ok {
 			return c.lookupInScope(scope, keyStr, value)
 		}
 	}
-	if n, ok := c.counters[keyStr]; ok {
-		return n
+	if len(c.counters) > 0 {
+		if n, ok := c.counters[keyStr]; ok {
+			return n
+		}
 	}
 
 	// As Ruby: the first environment that gives a value; with strict
@@ -725,14 +730,15 @@ func (c *Context) tryVariableFindInEnvironments(key string, raiseOnNotFound bool
 	strict := c.strictVariables && raiseOnNotFound
 	for _, envs := range [2][]map[string]interface{}{c.environments, c.staticEnvironments} {
 		for _, env := range envs {
-			if _, ok := env[key]; !ok {
+			value, ok := env[key]
+			if !ok {
 				if strict {
 					panic(NewUndefinedVariable("undefined variable " + key))
 				}
 				continue
 			}
 			// as Ruby, the value decides before its liquid form
-			if v := c.valueIn(env, key); v != nil || strict {
+			if v := c.mapValue(env, key, value); v != nil || strict {
 				return ToLiquid(v)
 			}
 		}
