@@ -85,6 +85,11 @@ partial body.
     through it.
 
 ### Fixed
+- **`LocalFileSystem` reads only under its root**: a symbolic link under the root read a file out of
+  it, and the root check took a sibling whose name starts with the root's for the root. The file
+  and the root are resolved, and the file must be under the root.
+- **`LocalFileSystem` errors name the template, never a path of the host**: an unreadable file gave
+  `Failed to read template 'x': read /abs/path/_x.liquid: ...`, written in the render.
 - **Strict variables record an undefined name of the first level**, as Ruby's `find_variable`:
   `{{ nope }}` recorded nothing, only `{{ a.nope }}` did. Like Ruby, the error is recorded and not
   written, and it ends its node: `{% if nope %}` renders neither branch.

@@ -46,25 +46,40 @@ func NewLocalFileSystem(root, pattern string) *LocalFileSystem {
 	}
 }
 
-// ReadTemplateFile reads a template file from the file system.
+// ReadTemplateFile reads a template file from the file system. The file,
+// once its symbolic links are resolved, must be under the root, which is
+// resolved too: a link under the root reads no file out of it. An error
+// names the template, never a path of the host, since a render writes it.
 func (l *LocalFileSystem) ReadTemplateFile(templatePath string) (string, error) {
 	fullPath, err := l.FullPath(templatePath)
 	if err != nil {
 		return "", err
 	}
-
-	data, err := os.ReadFile(fullPath)
+	resolved, err := filepath.EvalSymlinks(fullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", NewFileSystemError(fmt.Sprintf("No such template '%s'", templatePath))
 		}
-		return "", NewFileSystemError(fmt.Sprintf("Failed to read template '%s': %v", templatePath, err))
+		return "", NewFileSystemError(fmt.Sprintf("Failed to read template '%s'", templatePath))
 	}
-
+	root, err := filepath.EvalSymlinks(l.root)
+	if err != nil {
+		return "", NewFileSystemError(fmt.Sprintf("Failed to read template '%s'", templatePath))
+	}
+	if !under(resolved, root) {
+		return "", NewFileSystemError(fmt.Sprintf("Illegal template path '%s'", templatePath))
+	}
+	data, err := os.ReadFile(resolved)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", NewFileSystemError(fmt.Sprintf("No such template '%s'", templatePath))
+		}
+		return "", NewFileSystemError(fmt.Sprintf("Failed to read template '%s'", templatePath))
+	}
 	return string(data), nil
 }
 
-// FullPath returns the full path to a template file.
+// FullPath returns the full path to a template file, under the root.
 func (l *LocalFileSystem) FullPath(templatePath string) (string, error) {
 	if !TemplateNameRegex.MatchString(templatePath) {
 		return "", NewFileSystemError(fmt.Sprintf("Illegal template name '%s'", templatePath))
@@ -82,17 +97,21 @@ func (l *LocalFileSystem) FullPath(templatePath string) (string, error) {
 	// Security check: ensure the resolved path is within the root directory
 	absFullPath, err := filepath.Abs(fullPath)
 	if err != nil {
-		return "", NewFileSystemError(fmt.Sprintf("Failed to resolve path: %v", err))
+		return "", NewFileSystemError(fmt.Sprintf("Illegal template path '%s'", templatePath))
 	}
-
 	absRoot, err := filepath.Abs(l.root)
 	if err != nil {
-		return "", NewFileSystemError(fmt.Sprintf("Failed to resolve root: %v", err))
+		return "", NewFileSystemError(fmt.Sprintf("Illegal template path '%s'", templatePath))
 	}
-
-	if !strings.HasPrefix(absFullPath, absRoot) {
-		return "", NewFileSystemError(fmt.Sprintf("Illegal template path '%s'", absFullPath))
+	if !under(absFullPath, absRoot) {
+		return "", NewFileSystemError(fmt.Sprintf("Illegal template path '%s'", templatePath))
 	}
+	return absFullPath, nil
+}
 
-	return fullPath, nil
+// under reports whether path is root or a path under it; a sibling whose
+// name starts with the root's (root-other) is not.
+func under(path, root string) bool {
+	rel, err := filepath.Rel(root, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)
 }

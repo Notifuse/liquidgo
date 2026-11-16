@@ -142,6 +142,12 @@ var guards = []guard{
 	{"template name check", "liquid/file_system.go",
 		"if !TemplateNameRegex.MatchString(templatePath) {",
 		"if false {"},
+	{"a resolved file stays under the root", "liquid/file_system.go",
+		"if !under(resolved, root) {",
+		"if !under(resolved, root) && false {"},
+	{"a sibling of the root is not under it", "liquid/file_system.go",
+		"return err == nil && rel != \"..\" && !strings.HasPrefix(rel, \"..\"+string(filepath.Separator)) && !filepath.IsAbs(rel)",
+		"return strings.HasPrefix(path, root) || (err == nil && rel == \"\")"},
 }
 
 func main() {
