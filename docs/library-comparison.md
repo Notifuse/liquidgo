@@ -1,18 +1,18 @@
 # Go Liquid libraries compared
 
-Measured on 2026-11-16, with Shopify Liquid 5.11.0 as the reference; liquidgo v5.11.11.
+Measured on 2026-11-17, with Shopify Liquid 5.14.0 as the reference; liquidgo v5.14.1.
 
 ## Libraries
 
 | Library | Version | Error mode used | Resource limits |
 |---|---|---|---|
-| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.11.11 | lax | yes, and a deadline (`context`) |
+| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.14.1 | lax | yes, and a deadline (`context`) |
 | [tobi/liquid-go](https://github.com/tobi/liquid-go) | commit of 2026-07-10 (no tag) | lax | no |
 | [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | commit of 2026-05-11 (no tag) | lax | yes |
 | [go-liquid/liquid](https://github.com/go-liquid/liquid) | v0.2.0 | lax | no |
 | [osteele/liquid](https://github.com/osteele/liquid) | v1.9.2 | none (no modes) | no |
 | [acstech/liquid](https://github.com/acstech/liquid) | v1.1.0 | none (no modes) | no |
-| [Shopify Liquid](https://github.com/Shopify/liquid), the reference | 5.11.0 on Ruby 3.3 with YJIT | lax | yes |
+| [Shopify Liquid](https://github.com/Shopify/liquid), the reference | 5.14.0 on Ruby 3.3 with YJIT | lax | yes |
 
 **Left out:** [karlseguin/liquid](https://github.com/karlseguin/liquid), unchanged since 2015 and
 without a `go.mod`, which acstech/liquid continues; [joaqu1m/liquid](https://github.com/joaqu1m/liquid),
@@ -20,12 +20,12 @@ a fork of osteele/liquid that keeps its module path.
 
 ## Cases
 
-938 templates, each with the output Shopify Liquid 5.11.0 renders for it in lax mode:
+958 templates, each with the output Shopify Liquid 5.14.0 renders for it in lax mode:
 
-- the 350 template cases of Shopify Liquid's own test suite that render without partials and
+- the 360 template cases of Shopify Liquid's own test suite that render without partials and
   without raising (`integration/testdata/shopify_conformance/cases.json`, extracted from the Ruby
   tests);
-- the 588 templates of liquidgo's differential corpus (`integration/testdata/differential`),
+- the 598 templates of liquidgo's differential corpus (`integration/testdata/differential`),
   rendered by Ruby with the data of `data.json`, the strict variables runs left out.
 
 Shopify's tests are independent of liquidgo. The differential corpus is liquidgo's own test data:
@@ -67,7 +67,7 @@ for lib in liquidgo tobi nchapman goliquid osteele acstech; do go run . render $
 go run . report /tmp/libcmp/*.json
 for lib in liquidgo tobi nchapman goliquid osteele acstech; do go run . bench $lib; done
 ./hostile.sh
-./ruby.sh path/to/a/checkout/of/shopify/liquid/v5.11.0
+./ruby.sh path/to/a/checkout/of/shopify/liquid/v5.14.0
 ```
 
 The times of the table come from the workflow "Library comparison", started by hand.
@@ -76,19 +76,19 @@ The times of the table come from the workflow "Library comparison", started by h
 
 | Library | Matches Shopify | Shopify's tests | Differential corpus | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|---|---|
-| Notifuse/liquidgo | **848 (90.4%)** | 328 / 350 | **520 / 588** | **0** | **4 / 4** | **53 µs** |
-| tobi/liquid-go | 821 (87.5%) | **347 / 350** | 474 / 588 | 0 | 0 / 4 | 316 µs |
-| nchapman/go-liquid | 738 (78.7%) | 307 / 350 | 431 / 588 | 69 | 3 / 4 | 89 µs |
-| go-liquid/liquid | 607 (64.7%) | 262 / 350 | 345 / 588 | 192 | 1 / 4 | 77 µs |
-| osteele/liquid | 497 (53.0%) | 247 / 350 | 250 / 588 | 324 | 1 / 4 | 298 µs |
-| acstech/liquid | 315 (33.6%) | 186 / 350 | 129 / 588 | 480 | 1 / 4 | 55 µs |
-| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | 3 / 4 | 366 µs |
+| Notifuse/liquidgo | **873 (91.1%)** | 341 / 360 | **532 / 598** | **0** | **4 / 4** | **53 µs** |
+| tobi/liquid-go | 841 (87.8%) | **357 / 360** | 484 / 598 | 0 | 0 / 4 | 313 µs |
+| nchapman/go-liquid | 760 (79.3%) | 321 / 360 | 439 / 598 | 69 | 3 / 4 | 87 µs |
+| go-liquid/liquid | 618 (64.5%) | 271 / 360 | 347 / 598 | 192 | 1 / 4 | 75 µs |
+| osteele/liquid | 502 (52.4%) | 252 / 360 | 250 / 598 | 332 | 1 / 4 | 304 µs |
+| acstech/liquid | 323 (33.7%) | 193 / 360 | 130 / 598 | 484 | 1 / 4 | 54 µs |
+| Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | **4 / 4** | 366 µs |
 
-- **liquidgo**: each of its 90 differences is listed in its divergence files with its reason. 40
+- **liquidgo**: each of its 85 differences is listed in its divergence files with its reason. 41
   are deliberate (counters start at 0, an empty string is false, a filter error writes nothing,
-  whole floats without `.0`: see [the differences](differences-from-shopify.md)), 25 are malformed
-  markup Ruby's lax parser tolerates, 20 are minor and 5 compare Ruby objects with no Go
-  equivalent. It refuses one template on purpose, a lookup nested more than 100 deep, which would
+  whole floats without `.0`, `false` is not blank: see [the differences](differences-from-shopify.md)),
+  20 are malformed markup Ruby's lax parser tolerates, 19 are minor and 5 compare Ruby objects with
+  no Go equivalent. It refuses one template on purpose, a lookup nested more than 100 deep, which would
   exhaust the stack of a deeper one: a deliberate difference, not a template it cannot render.
 - **tobi/liquid-go** comes closest on Shopify's tests. It compares an `int` from Go data as a
   string (`{% if product.discount > 0 %}` gives `Liquid error: comparison of String with 0
@@ -99,13 +99,13 @@ The times of the table come from the workflow "Library comparison", started by h
 - **osteele/liquid** has no `increment` or `decrement` tag, a `cycle` that takes no group, and stops
   the render on an error, where Shopify writes it and goes on.
 - **acstech/liquid** has no `cycle`, `increment`, `decrement` or `tablerow` tag, no `round` filter,
-  and fails on whitespace control (`{{-`). It renders the newsletter template in 55 µs, the closest
-  to liquidgo's 53 µs: the three runs of each do not overlap (53.2 to 53.3 µs against 54.2 to
-  54.9 µs).
+  and fails on whitespace control (`{{-`). It renders the newsletter template in 54 µs, the closest
+  to liquidgo's 53 µs: the three runs of each do not overlap (53.2 to 53.4 µs against 53.8 to
+  54.5 µs).
 - Hostile templates: 100,000 nested blocks render with osteele/liquid, acstech/liquid and
   go-liquid/liquid; the other three templates exhaust them. liquidgo refuses the nesting while
   parsing and stops the other three with its limits.
-- **Shopify Liquid** refuses the nesting and stops the doubled string and the billion bytes with
-  its limits, but runs out of memory on the billion iterations: its `for` builds the whole range
-  before the limits count an iteration. It renders the newsletter template in 366 µs, 6.9 times the
-  time of liquidgo.
+- **Shopify Liquid** refuses the nesting and stops the other three with its limits: since 5.14 its
+  `for` counts the items of a range as it visits them, where 5.11 built the whole range first and
+  ran out of memory on the billion iterations. It renders the newsletter template in 366 µs, 6.9
+  times the time of liquidgo.

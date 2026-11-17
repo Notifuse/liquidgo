@@ -1,8 +1,8 @@
 # liquidgo - The best Liquid engine in the world
 
 A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.14: the closest to Shopify and the
-fastest of the Go engines, the only engine, Shopify's own included, that stops every hostile
-template, and 7 times faster than Shopify's. Every difference from Shopify is listed.
+fastest of the Go engines, the only Go engine that stops every hostile template, as Shopify's
+own does, and 7 times faster than Shopify's. Every difference from Shopify is listed.
 
 It renders the emails and blog pages of [Notifuse](https://www.notifuse.com/), the open-source
 emailing platform, where every template is written by its users.
@@ -15,25 +15,24 @@ emailing platform, where every template is written by its users.
 
 ## Go Liquid libraries compared
 
-Measured on 938 templates against Shopify Liquid 5.11.0 on 2026-11-16 ([method](docs/library-comparison.md)):
+Measured on 958 templates against Shopify Liquid 5.14.0 on 2026-11-17 ([method](docs/library-comparison.md)):
 
 | Library | Same output as Shopify | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|
-| **liquidgo** | **90.4%** | **0** | **4 / 4** | **53 µs** |
-| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.5% | 0 | 0 / 4 | 316 µs |
-| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 78.7% | 69 | 3 / 4 | 89 µs |
-| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.7% | 192 | 1 / 4 | 77 µs |
-| [osteele/liquid](https://github.com/osteele/liquid) | 53.0% | 324 | 1 / 4 | 298 µs |
-| [acstech/liquid](https://github.com/acstech/liquid) | 33.6% | 480 | 1 / 4 | 55 µs |
-| [Shopify Liquid](https://github.com/Shopify/liquid) (Ruby 3.3, YJIT) | the reference | | 3 / 4 | 366 µs |
+| **liquidgo** | **91.1%** | **0** | **4 / 4** | **53 µs** |
+| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.8% | 0 | 0 / 4 | 313 µs |
+| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 79.3% | 69 | 3 / 4 | 87 µs |
+| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.5% | 192 | 1 / 4 | 75 µs |
+| [osteele/liquid](https://github.com/osteele/liquid) | 52.4% | 332 | 1 / 4 | 304 µs |
+| [acstech/liquid](https://github.com/acstech/liquid) | 33.7% | 484 | 1 / 4 | 54 µs |
+| [Shopify Liquid](https://github.com/Shopify/liquid) (Ruby 3.3, YJIT) | the reference | | 4 / 4 | 366 µs |
 
 The templates are the cases of Shopify Liquid's own test suite and liquidgo's differential corpus,
-which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 347 of 350 and liquidgo 328,
+which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 357 of 360 and liquidgo 341,
 the others being liquidgo's [deliberate differences](docs/differences-from-shopify.md) and markup
 Ruby's lax parser tolerates. A hostile template is written to exhaust the process (a billion
 iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested blocks); Shopify
-Liquid, with its resource limits, runs out of memory on the billion iterations, whose range it
-builds whole.
+Liquid stops all four with its resource limits since 5.14, which no longer builds a range whole.
 
 ## Why liquidgo
 
@@ -182,7 +181,7 @@ go test -race ./...
 ## Performance
 
 The newsletter template of the comparison (a loop over 50 products with conditions and filters)
-renders in 53 µs on GitHub's arm64 runner, against 55 µs for the next Go engine and 366 µs for
+renders in 53 µs on GitHub's arm64 runner, against 54 µs for the next Go engine and 366 µs for
 Shopify Liquid with YJIT. The benchmarks of [`performance/`](performance/) render a Shopify theme; a render
 of v5.11.10 allocates half as much as v5.11.9.
 
