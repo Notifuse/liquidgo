@@ -1,7 +1,7 @@
 name: Library comparison
 
 # Times the newsletter template of tools/libcmp with each Go library and with
-# Shopify Liquid 5.11.0 (Ruby 3.3 with YJIT) on one runner, for the table of
+# Shopify Liquid 5.14.0 (Ruby 3.3 with YJIT) on one runner, for the table of
 # docs/library-comparison.md. Started by hand, and on changes to tools/libcmp.
 on:
   workflow_dispatch:
@@ -23,9 +23,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-      - name: Install Shopify Liquid 5.11.0
+      - name: Install Shopify Liquid 5.14.0
         run: |
-          git clone -q --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
+          git clone -q --depth 1 --branch v5.14.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
           gem install --no-document strscan:'>= 3.1.1' bigdecimal
       - name: Time each library, three times in turn
         working-directory: tools/libcmp

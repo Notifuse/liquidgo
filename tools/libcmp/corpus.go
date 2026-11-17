@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Case is a template with its data and the output of Shopify Liquid 5.11.0
+// Case is a template with its data and the output of Shopify Liquid 5.14.0
 // in lax mode.
 type Case struct {
 	ID       string
@@ -59,7 +59,7 @@ func numbers(v any) any {
 }
 
 // loadCorpus reads the two corpora of liquidgo whose outputs come from
-// Shopify Liquid 5.11.0: the template cases of Shopify's test suite that
+// Shopify Liquid 5.14.0: the template cases of Shopify's test suite that
 // render in lax mode without partials and without raising, and the lax
 // results of the differential corpus.
 func loadCorpus(root string) ([]Case, error) {
