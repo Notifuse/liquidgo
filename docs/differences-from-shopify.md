@@ -39,6 +39,9 @@ where every number is a `float64`, and render text meant for people (emails, pag
 - **A Go panic, a resource limit and a cancellation end the render** with the returned error and the
   output written so far; Ruby writes `Liquid error: internal` for an exception and goes on, and
   writes the message of a limit as the output.
+- **`blank`**: `false` is not blank, and a string of Unicode whitespace (a no-break space included)
+  is blank, as the display conditions of Notifuse expect; Shopify Liquid 5.14 makes `false` blank
+  and counts ASCII whitespace only.
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same
   name.

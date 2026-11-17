@@ -3446,6 +3446,18 @@
       "output": "ax"
     },
     {
+      "id": "empty-blank-01",
+      "mode": "lax",
+      "template": "{% assign f = false %}{% assign nb = \" \" %}{% assign s = \" \" %}[{% if f == blank %}f{% endif %}][{% if nb == blank %}nb{% endif %}][{% if s == blank %}s{% endif %}][{% unless f == empty %}fe{% endunless %}]{% case f %}{% when blank %}cb{% else %}cn{% endcase %}",
+      "output": "[f][][s][fe]cb"
+    },
+    {
+      "id": "empty-blank-01",
+      "mode": "strict",
+      "template": "{% assign f = false %}{% assign nb = \" \" %}{% assign s = \" \" %}[{% if f == blank %}f{% endif %}][{% if nb == blank %}nb{% endif %}][{% if s == blank %}s{% endif %}][{% unless f == empty %}fe{% endunless %}]{% case f %}{% when blank %}cb{% else %}cn{% endcase %}",
+      "output": "[f][][s][fe]cb"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

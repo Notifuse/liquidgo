@@ -253,7 +253,13 @@ func TestBlankAndEmpty(t *testing.T) {
 		{[]interface{}{}, true, true},
 		{map[string]interface{}{}, true, true},
 		{nil, true, false},
-		{false, true, false},
+		// deliberate, for Notifuse's display conditions: false is a value,
+		// not blank (Shopify Liquid 5.14 makes it blank; differential case
+		// empty-blank-01)
+		{false, false, false},
+		// deliberate: a string of Unicode whitespace is blank, a no-break
+		// space included (Ruby counts ASCII whitespace only)
+		{"\u00a0\u2003", true, false},
 		{true, false, false},
 		{42, false, false},
 		{0, false, false},
