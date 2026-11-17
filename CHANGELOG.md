@@ -10,6 +10,9 @@ corpus are those of 5.14.0, and CI compares with the 5.14.0 gem.
 ### Breaking
 - **`Usage` is gone**, with `GlobalUsage` and `IncrementUsage`: nothing called them.
 - **`NewIncrementTag` and `NewDecrementTag` return an error** too, for a name strict2 refuses.
+- **`blank` and `empty` compare as Shopify Liquid 5.14**: `false == blank`, `[] == blank` and
+  `{} == blank` are now true, and `nil == empty` is now false. `false == blank` was a listed
+  deliberate difference; it is gone.
 
 ### Added (Shopify Liquid 5.12 to 5.14)
 - **`self`**: when no variable is named `self`, `self.x` and `self['x']` read the variable `x`
