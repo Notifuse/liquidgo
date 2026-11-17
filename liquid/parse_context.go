@@ -6,7 +6,7 @@ type ParseContextOptions struct {
 	Locale          *I18n
 	ExpressionCache map[string]interface{}
 	TemplateOptions map[string]interface{}
-	ErrorMode       string
+	ErrorMode       ErrorMode
 }
 
 // ParseContext represents the context during template parsing.
@@ -18,7 +18,7 @@ type ParseContext struct {
 	expressionCache map[string]interface{}
 	templateOptions map[string]interface{}
 	partialOptions  map[string]interface{}
-	errorMode       string
+	errorMode       ErrorMode
 	warnings        []error
 	depth           int
 	trimWhitespace  bool
@@ -89,7 +89,7 @@ func (pc *ParseContext) AddWarning(warning error) {
 }
 
 // ErrorMode returns the error mode.
-func (pc *ParseContext) ErrorMode() string {
+func (pc *ParseContext) ErrorMode() ErrorMode {
 	return pc.errorMode
 }
 
@@ -140,7 +140,7 @@ func (pc *ParseContext) SetPartial(partial bool) {
 		pc.partialOptions = pc.computePartialOptions()
 		// Update error mode from partial options
 		if mode, ok := pc.partialOptions["error_mode"].(string); ok {
-			pc.errorMode = mode
+			pc.errorMode = ErrorMode(mode)
 		} else {
 			pc.errorMode = pc.environment.ErrorMode()
 		}
@@ -207,7 +207,7 @@ func (pc *ParseContext) NewTokenizer(source string, lineNumbers bool, startLineN
 // In strict/rigid mode, errors are propagated. In lax mode, errors return nil.
 func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
 	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == "strict" || rigidMode(pc.errorMode) || pc.errorMode == "warn" {
+	if pc.errorMode == ErrorModeStrict || rigidMode(pc.errorMode) || pc.errorMode == ErrorModeWarn {
 		// Check for lexer errors first
 		if err := parser.Error(); err != nil {
 			panic(err)
@@ -227,7 +227,7 @@ func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
 // This is used for standalone expression parsing where we expect the entire input to be a valid expression.
 func (pc *ParseContext) SafeParseCompleteExpression(parser *Parser) interface{} {
 	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == "strict" || rigidMode(pc.errorMode) || pc.errorMode == "warn" {
+	if pc.errorMode == ErrorModeStrict || rigidMode(pc.errorMode) || pc.errorMode == ErrorModeWarn {
 		// Check for lexer errors first
 		if err := parser.Error(); err != nil {
 			panic(err)

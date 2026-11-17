@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // Keyword arguments reach the filter as a trailing map, as in Ruby, and a call with too
 // many arguments renders nothing instead of panicking or skipping the filter.
@@ -26,8 +30,8 @@ func TestFilterKeywordArguments(t *testing.T) {
 		{`{{ "abcdefgh" | truncate: 5, omission: "!" }}`, `{"omission"=>"!"}`},
 	}
 	for _, tt := range tests {
-		for _, mode := range []string{"lax", "strict"} {
-			t.Run(tt.template+"/"+mode, func(t *testing.T) {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
+			t.Run(tt.template+"/"+string(mode), func(t *testing.T) {
 				assertTemplateResult(t, tt.expected, tt.template, assigns, TemplateResultOptions{ErrorMode: mode})
 			})
 		}

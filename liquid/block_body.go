@@ -132,7 +132,7 @@ func (bb *BlockBody) parseForLiquidTag(tokenizer *Tokenizer, parseContext ParseC
 		if parseable, ok := tag.(interface{ Parse(*Tokenizer) error }); ok {
 			err := parseable.Parse(tokenizer)
 			if err != nil {
-				if parseContext.ErrorMode() == "warn" {
+				if parseContext.ErrorMode() == ErrorModeWarn {
 					parseContext.AddWarning(err)
 					continue
 				}
@@ -225,7 +225,7 @@ func (bb *BlockBody) parseForDocument(tokenizer *Tokenizer, parseContext ParseCo
 			if parseable, ok := tag.(interface{ Parse(*Tokenizer) error }); ok {
 				err := parseable.Parse(tokenizer)
 				if err != nil {
-					if parseContext.ErrorMode() == "warn" {
+					if parseContext.ErrorMode() == ErrorModeWarn {
 						parseContext.AddWarning(err)
 						// If parsing failed, treat as text
 						bb.nodelist = append(bb.nodelist, token)
@@ -313,7 +313,7 @@ func (bb *BlockBody) createVariable(token string, parseContext ParseContextInter
 		}()
 
 		if err != nil {
-			if parseContext.ErrorMode() == "warn" {
+			if parseContext.ErrorMode() == ErrorModeWarn {
 				parseContext.AddWarning(err)
 				return token
 			}
@@ -369,7 +369,7 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 		defer func() {
 			if r := recover(); r != nil {
 				e, isErr := r.(error)
-				if !isErr || parseContext.ErrorMode() != "warn" {
+				if !isErr || parseContext.ErrorMode() != ErrorModeWarn {
 					panic(r)
 				}
 				err = e
@@ -381,7 +381,7 @@ func newTag(ctor TagConstructor, tagName, markup string, parseContext ParseConte
 		err = NewSyntaxError("the constructor of the " + tagName + " tag returned no tag")
 	}
 	if err != nil {
-		if parseContext.ErrorMode() != "warn" {
+		if parseContext.ErrorMode() != ErrorModeWarn {
 			panic(err)
 		}
 		parseContext.AddWarning(err)

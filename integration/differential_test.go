@@ -119,7 +119,7 @@ func renderDifferential(t *testing.T, r differentialResult, data map[string]inte
 			errText = fmt.Sprintf("panic: %v", p)
 		}
 	}()
-	env := newEnv(r.Mode, limits{})
+	env := newEnv(liquid.ErrorMode(r.Mode), limits{})
 	tmpl, err := liquid.ParseTemplate(r.Template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		return nil, err.Error()

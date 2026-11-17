@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/Notifuse/liquidgo/v5/liquid"
 	"strings"
 	"testing"
 )
@@ -22,7 +23,7 @@ func TestARangeIsACollectionForTheFilters(t *testing.T) {
 		{`{{ (1..3) | sort | first }}|{{ (1..3) | sort_natural | last }}`, "1|3"},
 		{`{{ (1..3) | join: ',' }}|{{ (1..3) | size }}|{{ (1..3) | last }}|{{ (1..3) | first }}`, "1,2,3|3|3|1"},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			r := renderWith(newEnv(mode, limits{}), c.source, data())
 			if r.parseErr != nil || r.output != c.want || len(r.errors) > 0 {
 				t.Errorf("%s: %q gives %q (%v, %v), want %q", mode, c.source, r.output, r.parseErr, r.errors, c.want)

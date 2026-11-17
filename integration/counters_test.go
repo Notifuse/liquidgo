@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestACounterLastsTheWholeRender checks the results of Shopify Liquid 5.11.0
 // for increment and decrement: a counter lasts the whole render, a loop or a
@@ -17,7 +21,7 @@ func TestACounterLastsTheWholeRender(t *testing.T) {
 		{"{% capture x %}{% increment c %}{% endcapture %}{% increment c %}{{ x }}", "10"},
 		{"{% liquid\nincrement c\nincrement c\necho c %}", "012"},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			r := renderWith(newEnv(mode, limits{}), c.source, nil)
 			if r.parseErr != nil || r.output != c.want || len(r.errors) > 0 {
 				t.Errorf("%s: %q gives %q (%v, %v), want %q", mode, c.source, r.output, r.parseErr, r.errors, c.want)

@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.5]
+
+### Breaking
+- **Error modes are typed**: `liquid.ErrorMode`, with `ErrorModeLax`, `ErrorModeStrict`,
+  `ErrorModeStrict2`, `ErrorModeRigid` and `ErrorModeWarn`. `EnvironmentConfig.ErrorMode`,
+  `Environment.ErrorMode()` and `ParseContextInterface.ErrorMode()` use it; a constant string such
+  as `ErrorMode: "lax"` still compiles.
+- **`ParserSwitching` is gone**: its `ParseWithSelectedParser` and `RigidMode` were called by
+  nothing, and its value could not be built outside the package. The fallback parse it held,
+  Ruby's `strict_parse_with_error_mode_fallback`, which Shopify Liquid's `Variable` still uses, is
+  now internal, with no change of behaviour.
+
 ## [5.14.0-port.4]
 
 ### Fixed (every divergence listed "minor" now follows Shopify Liquid)

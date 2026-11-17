@@ -25,7 +25,7 @@ func TestAnUnknownTagInABlockIsASyntaxError(t *testing.T) {
 		{"{% liquid\ncase 1\nwhen 1\nbogus\nendcase\n%}", "Liquid syntax error: Unknown tag 'bogus'"},
 		{"{% case 1 %}{% when %}a{% endcase %}", "Liquid syntax error: Syntax Error in tag 'case' - Valid when condition: {% when [condition] [or condition2...] %}"},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			_, err := liquid.ParseTemplate(c.source, &liquid.TemplateOptions{Environment: newEnv(mode, limits{})})
 			if err == nil || err.Error() != c.want {
 				t.Errorf("%s: %q gives the error %v, want %q", mode, c.source, err, c.want)

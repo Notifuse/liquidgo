@@ -2,109 +2,66 @@ package liquid
 
 import "strings"
 
-// ParserSwitching provides methods for switching between different parsing modes.
-// This is typically embedded in types that need parsing functionality.
-type ParserSwitching struct {
-	parseContext interface {
-		ErrorMode() string
-		AddWarning(error)
-	}
-	lineNumber    *int
-	markupContext func(string) string
-}
+// ErrorMode is how templates parse (EnvironmentConfig.ErrorMode).
+type ErrorMode string
 
-// ParseWithSelectedParser parses markup using the parser selected by error mode.
-func (p *ParserSwitching) ParseWithSelectedParser(markup string, strictParse, laxParse, rigidParse func(string) error) error {
-	errorMode := p.parseContext.ErrorMode()
-
-	switch errorMode {
-	case "rigid", "strict2":
-		return p.rigidParseWithErrorContext(markup, rigidParse)
-	case "strict":
-		return p.strictParseWithErrorContext(markup, strictParse)
-	case "lax":
-		return laxParse(markup)
-	case "warn":
-		err := p.rigidParseWithErrorContext(markup, rigidParse)
-		if err != nil {
-			if syntaxErr, ok := err.(*SyntaxError); ok {
-				p.parseContext.AddWarning(syntaxErr)
-				return laxParse(markup)
-			}
-			return err
-		}
-		return nil
-	default:
-		return laxParse(markup)
-	}
-}
-
-// StrictParseWithErrorModeFallback is deprecated. Use ParseWithSelectedParser instead.
-func (p *ParserSwitching) StrictParseWithErrorModeFallback(markup string, strictParse, laxParse, rigidParse func(string) error) error {
-	mode := p.parseContext.ErrorMode()
-	if mode == "rigid" || mode == "strict2" {
-		return p.rigidParseWithErrorContext(markup, rigidParse)
-	}
-
-	err := p.strictParseWithErrorContext(markup, strictParse)
-	if err != nil {
-		if syntaxErr, ok := err.(*SyntaxError); ok {
-			errorMode := p.parseContext.ErrorMode()
-			switch errorMode {
-			case "rigid", "strict2", "strict":
-				return err
-			case "warn":
-				p.parseContext.AddWarning(syntaxErr)
-			}
-			return laxParse(markup)
-		}
-		return err
-	}
-	return nil
-}
-
-// RigidMode returns true if error mode is rigid or strict2.
-func (p *ParserSwitching) RigidMode() bool {
-	return rigidMode(p.parseContext.ErrorMode())
-}
+const (
+	// ErrorModeLax tolerates malformed markup, as Ruby's lax parser; the
+	// default.
+	ErrorModeLax ErrorMode = "lax"
+	// ErrorModeStrict makes malformed markup a syntax error.
+	ErrorModeStrict ErrorMode = "strict"
+	// ErrorModeStrict2 is stricter still, as Shopify Liquid 5.14's strict2.
+	ErrorModeStrict2 ErrorMode = "strict2"
+	// ErrorModeRigid is strict2's other name, as Ruby's :rigid.
+	ErrorModeRigid ErrorMode = "rigid"
+	// ErrorModeWarn records a syntax error as a warning, and parses the
+	// markup as lax.
+	ErrorModeWarn ErrorMode = "warn"
+)
 
 // rigidMode reports whether mode is strict2 or rigid, its other name.
-func rigidMode(mode string) bool {
-	return mode == "rigid" || mode == "strict2"
+func rigidMode(mode ErrorMode) bool {
+	return mode == ErrorModeRigid || mode == ErrorModeStrict2
 }
 
-func (p *ParserSwitching) rigidParseWithErrorContext(markup string, rigidParse func(string) error) error {
-	err := rigidParse(markup)
-	if err != nil {
+// parseWithErrorModeFallback parses markup as Ruby's
+// strict_parse_with_error_mode_fallback, which Shopify Liquid's Variable
+// still uses: in strict2 the strict2 parse alone; otherwise the strict parse,
+// whose syntax error is raised in strict mode, recorded as a warning in warn
+// mode, and in either warn or lax mode followed by the lax parse. A syntax
+// error gets the line number and the markup context.
+func parseWithErrorModeFallback(pc interface {
+	ErrorMode() ErrorMode
+	AddWarning(error)
+}, markup string, lineNumber *int, markupContext func(string) string, strictParse, laxParse, rigidParse func(string) error) error {
+	withContext := func(err error) error {
 		if syntaxErr, ok := err.(*SyntaxError); ok {
-			if p.lineNumber != nil {
-				syntaxErr.Err.LineNumber = p.lineNumber
+			if lineNumber != nil {
+				syntaxErr.Err.LineNumber = lineNumber
 			}
-			if p.markupContext != nil {
-				syntaxErr.Err.MarkupContext = p.markupContext(markup)
-			}
-			return syntaxErr
+			syntaxErr.Err.MarkupContext = markupContext(markup)
 		}
 		return err
 	}
-	return nil
-}
-
-func (p *ParserSwitching) strictParseWithErrorContext(markup string, strictParse func(string) error) error {
-	err := strictParse(markup)
-	if err != nil {
-		if syntaxErr, ok := err.(*SyntaxError); ok {
-			if p.lineNumber != nil {
-				syntaxErr.Err.LineNumber = p.lineNumber
-			}
-			if p.markupContext != nil {
-				syntaxErr.Err.MarkupContext = p.markupContext(markup)
-			}
-			return syntaxErr
-		}
+	mode := pc.ErrorMode()
+	if rigidMode(mode) {
+		return withContext(rigidParse(markup))
+	}
+	err := withContext(strictParse(markup))
+	if err == nil {
+		return nil
+	}
+	if _, ok := err.(*SyntaxError); !ok {
 		return err
 	}
-	return nil
+	switch mode {
+	case ErrorModeStrict:
+		return err
+	case ErrorModeWarn:
+		pc.AddWarning(err)
+	}
+	return laxParse(markup)
 }
 
 // MarkupContext returns a context string for markup.

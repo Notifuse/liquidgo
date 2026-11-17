@@ -15,7 +15,7 @@ func strictTemplate(t *testing.T, source string) *liquid.Template {
 }
 
 // strictTemplateIn parses source in errorMode, or the default mode.
-func strictTemplateIn(t *testing.T, source, errorMode string) *liquid.Template {
+func strictTemplateIn(t *testing.T, source string, errorMode liquid.ErrorMode) *liquid.Template {
 	t.Helper()
 	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: errorMode})
 	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env})

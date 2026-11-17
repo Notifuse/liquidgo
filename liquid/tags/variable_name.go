@@ -13,7 +13,7 @@ import (
 // is a warning and the name is kept.
 func checkVariableName(name, markup string, parseContext liquid.ParseContextInterface) error {
 	mode := parseContext.ErrorMode()
-	if mode != "rigid" && mode != "strict2" && mode != "warn" {
+	if mode != liquid.ErrorModeRigid && mode != liquid.ErrorModeStrict2 && mode != liquid.ErrorModeWarn {
 		return nil
 	}
 	p := parseContext.NewParser(strings.TrimSpace(name))
@@ -28,7 +28,7 @@ func checkVariableName(name, markup string, parseContext liquid.ParseContextInte
 		syntaxErr.Err.LineNumber = parseContext.LineNumber()
 		syntaxErr.Err.MarkupContext = liquid.MarkupContext(markup)
 	}
-	if mode == "warn" {
+	if mode == liquid.ErrorModeWarn {
 		parseContext.AddWarning(err)
 		return nil
 	}

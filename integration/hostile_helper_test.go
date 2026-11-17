@@ -24,7 +24,7 @@ var emailLimits = limits{renderLength: 10_000_000}
 
 // envConfig returns the config of an environment with the standard tags, the
 // given error mode ("" for the default) and resource limits.
-func envConfig(mode string, l limits) liquid.EnvironmentConfig {
+func envConfig(mode liquid.ErrorMode, l limits) liquid.EnvironmentConfig {
 	config := liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: mode}
 	if l.renderLength > 0 {
 		config.Limits.RenderLengthLimit = &l.renderLength
@@ -39,7 +39,7 @@ func envConfig(mode string, l limits) liquid.EnvironmentConfig {
 }
 
 // newEnv returns the environment of envConfig.
-func newEnv(mode string, l limits) *liquid.Environment {
+func newEnv(mode liquid.ErrorMode, l limits) *liquid.Environment {
 	return mustEnv(envConfig(mode, l))
 }
 

@@ -16,7 +16,7 @@ func TestAnElsifThatDoesNotParseIsASyntaxError(t *testing.T) {
 		{"lax", "{% if x == 10 %}y{% elsif ' %}z{% endif %}", "Liquid syntax error: Syntax Error in tag 'if' - Valid syntax: if [expression]"},
 		{"strict", "{% if x == 10 %}y{% elsif a[' %}z{% endif %}", `Liquid syntax error: Unexpected character ' in "a['"`},
 	} {
-		r := renderWith(newEnv(c.mode, limits{}), c.source, nil)
+		r := renderWith(newEnv(liquid.ErrorMode(c.mode), limits{}), c.source, nil)
 		if r.parseErr == nil || r.parseErr.Error() != c.want {
 			t.Errorf("%s: %q gives %q (%v), want %q", c.mode, c.source, r.output, r.parseErr, c.want)
 		}
@@ -26,7 +26,7 @@ func TestAnElsifThatDoesNotParseIsASyntaxError(t *testing.T) {
 // TestAConditionIsLexedWholeInStrict2 checks that strict2 and rigid lex the
 // markup of a condition as strict mode does, as Ruby's strict2 parse.
 func TestAConditionIsLexedWholeInStrict2(t *testing.T) {
-	for _, mode := range []string{"strict2", "rigid"} {
+	for _, mode := range []liquid.ErrorMode{"strict2", "rigid"} {
 		r := renderWith(newEnv(mode, limits{}), "{% if a['k] == 1 %}b{% endif %}", nil)
 		want := `Liquid syntax error: Unexpected character ' in "a['k] == 1"`
 		if r.parseErr == nil || r.parseErr.Error() != want {

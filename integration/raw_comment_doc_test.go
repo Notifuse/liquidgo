@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // raw, comment and doc end at the first tag naming their delimiter, even with text
 // before it in the same token or whitespace control, as Ruby's FullTokenPossiblyInvalid.
@@ -24,8 +28,8 @@ func TestRawCommentDocDelimiters(t *testing.T) {
 		{"doc with whitespace control", "a {% doc %}x{% enddoc -%} b", "a b"},
 	}
 	for _, tt := range tests {
-		for _, mode := range []string{"lax", "strict"} {
-			t.Run(tt.name+"/"+mode, func(t *testing.T) {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
+			t.Run(tt.name+"/"+string(mode), func(t *testing.T) {
 				assertTemplateResult(t, tt.expected, tt.template, nil, TemplateResultOptions{ErrorMode: mode})
 			})
 		}

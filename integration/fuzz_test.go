@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"github.com/Notifuse/liquidgo/v5/liquid"
 	"os"
 	"regexp"
 	"sort"
@@ -79,7 +80,7 @@ func FuzzRender(f *testing.F) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, source string) {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			env := newEnv(mode, allLimits)
 			var first, second result
 			requireNoPanicEscapes(t, func() { first = renderWith(env, source, fuzzData()) })

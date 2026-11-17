@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestTheTemplateAssignsWinOverTheRenderData checks Ruby's lookup order: a
 // variable the template assigns or captures is read before the render data
@@ -20,7 +24,7 @@ func TestTheTemplateAssignsWinOverTheRenderData(t *testing.T) {
 		{"{% for i in (1..2) %}{% assign name = i %}{% endfor %}{{ name }}", "2"},
 		{"{{ name }}", "<b>"},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			if r := renderWith(newEnv(mode, limits{}), c.source, data); r.output != c.want || r.parseErr != nil || len(r.errors) > 0 {
 				t.Errorf("%s: %q renders %q (%v %v), want %q", mode, c.source, r.output, r.parseErr, r.errors, c.want)
 			}

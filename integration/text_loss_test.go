@@ -89,7 +89,7 @@ func keptEnds(source, output string) error {
 
 // endsRender renders source in mode with data, and returns its output when
 // the parse and the render succeed.
-func endsRender(mode, source string, data map[string]interface{}) (string, bool) {
+func endsRender(mode liquid.ErrorMode, source string, data map[string]interface{}) (string, bool) {
 	env := newEnv(mode, allLimits)
 	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -115,7 +115,7 @@ func TestTheCorpusKeepsTheTextAroundItsTags(t *testing.T) {
 	data := differentialData(t)
 	checked := 0
 	for _, r := range expected.Results {
-		output, ok := endsRender(r.Mode, r.Template, data)
+		output, ok := endsRender(liquid.ErrorMode(r.Mode), r.Template, data)
 		if !ok {
 			continue
 		}
@@ -161,7 +161,7 @@ func TestTheEndOfACommentDecidesItsTrim(t *testing.T) {
 		"{% comment -%}x{% endcomment -%} y": "y",
 		"{% comment %}x{% endcomment -%} y":  "y",
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			if got, ok := endsRender(mode, source, nil); !ok || got != want {
 				t.Errorf("%s: %q renders %q (%v), want %q", mode, source, got, ok, want)
 			}
