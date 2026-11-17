@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
@@ -102,6 +103,10 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 	// Check if it's a simple integer or float
 	if matches := expressionIntegerRegex.FindStringSubmatch(markup); len(matches) > 0 {
 		if val, err := strconv.Atoi(matches[1]); err == nil {
+			return val
+		}
+		// beyond an int, an integer stays exact, as Ruby's Integer
+		if val, ok := new(big.Int).SetString(matches[1], 10); ok {
 			return val
 		}
 	}

@@ -236,4 +236,3 @@ func truncateFloat(f float64) int {
 	}
 	return int(f)
 }
-

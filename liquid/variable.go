@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	variableFilterMarkupRegex        = regexp.MustCompile(`(?s)\|\s*(.*)`)
-	variableFilterParser             = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
-	variableFilterName               = regexp.MustCompile(`\w+`)
-	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
-	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
+	variableFilterMarkupRegex = regexp.MustCompile(`(?s)\|\s*(.*)`)
+	variableFilterParser      = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
+	variableFilterName        = regexp.MustCompile(`\w+`)
+	variableFilterArgsRegex   = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
+	variableJustTagAttributes = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
 	// Ruby's MarkupWithQuotedFragment, /(#{QuotedFragment})(.*)/om: the
 	// name is the first fragment of the markup, wherever it starts
 	variableMarkupWithQuotedFragment = regexp.MustCompile(`(?s)(` + QuotedFragment.String() + `)(.*)`)

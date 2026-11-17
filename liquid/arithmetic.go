@@ -160,7 +160,10 @@ func (n liquidNumber) isZero() bool {
 func (n liquidNumber) value() interface{} {
 	switch n.kind {
 	case integerNumber:
-		return int(n.i)
+		if n.i == int64(int(n.i)) {
+			return int(n.i)
+		}
+		return big.NewInt(n.i) // beyond a 32-bit int
 	case bigIntegerNumber:
 		return n.bigInt()
 	}
