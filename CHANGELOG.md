@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Breaking
+- **`Usage` is gone**, with `GlobalUsage` and `IncrementUsage`: nothing called them.
+
+### Changed
+- The standard filters are split by family into `string_filters.go`, `encoding_filters.go`,
+  `math_filters.go` and `array_filters.go`; `standardfilters.go` keeps the type and the filters shared
+  by all (`size`, `first`, `last`, `date`, `default`). No filter changes.
+
 ### Fixed
 - **A NUL byte is not the end of a template**: the tokenizer and the number parser took a NUL byte
   for the end of their input, so `{{ x\0 }}` raised a syntax error; it is now read as Ruby reads it.

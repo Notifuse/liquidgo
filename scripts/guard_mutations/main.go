@@ -38,7 +38,7 @@ type edit struct{ file, old, new string }
 // extraEdits are the other replacements of a mutation, by guard name.
 var extraEdits = map[string][]edit{
 	// the early return and the clamp each bound the precision of round
-	"round precision": {{"liquid/standardfilters.go",
+	"round precision": {{"liquid/math_filters.go",
 		"case d.Cmp(big.NewInt(maxRoundDigits)) > 0:\n\t\treturn maxRoundDigits + 1",
 		"case false:\n\t\treturn maxRoundDigits + 1"}},
 }
@@ -72,10 +72,10 @@ var guards = []guard{
 	{"range items a filter builds", "liquid/filter_limits.go",
 		"\tif n > maxRangeItems {\n\t\tif rl := sf.limits(); rl != nil {",
 		"\tif false {\n\t\tif rl := sf.limits(); rl != nil {"},
-	{"range items join writes", "liquid/standardfilters.go",
+	{"range items join writes", "liquid/array_filters.go",
 		"n := r.Len()\n\tif n > maxRangeItems {",
 		"n := r.Len()\n\tif false {"},
-	{"round precision", "liquid/standardfilters.go",
+	{"round precision", "liquid/math_filters.go",
 		"if digits > maxRoundDigits {",
 		"if false {"},
 	{"partials an environment keeps", "liquid/partial_cache.go",
@@ -123,7 +123,7 @@ var guards = []guard{
 	{"the error of a drop is raised", "liquid/drop.go",
 		"\tif err != nil {\n\t\tpanic(asLiquidError(err))\n\t}\n",
 		"\tif err != nil {\n\t\treturn nil\n\t}\n"},
-	{"array filters pass the render to a drop", "liquid/standardfilters.go",
+	{"array filters pass the render to a drop", "liquid/array_filters.go",
 		"\tif g, ok := asDrop(item); ok {\n\t\treturn dropGet(ctx, g, property)\n\t}",
 		"\tif g, ok := asDrop(item); ok {\n\t\treturn dropGet(nil, g, property)\n\t}"},
 	{"a channel or a func writes no address", "liquid/utils.go",
