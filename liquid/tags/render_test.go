@@ -95,7 +95,7 @@ func TestRenderTagRenderToOutputBuffer(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferComprehensive(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Test with non-string template name - should fail at parse time (Shopify Liquid v5.11.0)
@@ -186,7 +186,7 @@ func TestRenderTagAttributes(t *testing.T) {
 // was removed in Shopify Liquid v5.11.0. Render tag now only accepts string literals.
 
 func TestRenderTagRejectsVariableTemplateNames(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Variable template names should fail at parse time (Shopify Liquid v5.11.0)
@@ -197,7 +197,7 @@ func TestRenderTagRejectsVariableTemplateNames(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -244,7 +244,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterableObject(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -287,7 +287,7 @@ func TestRenderTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithForLoopIterable(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -327,7 +327,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopIterable(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithForLoopNonIterable(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -367,7 +367,7 @@ func TestRenderTagRenderToOutputBufferWithForLoopNonIterable(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithAttributes(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -405,7 +405,7 @@ func TestRenderTagRenderToOutputBufferWithAttributes(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithAlias(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -444,7 +444,7 @@ func TestRenderTagRenderToOutputBufferWithAlias(t *testing.T) {
 }
 
 func TestRenderTagRenderToOutputBufferWithEmptyTemplateName(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -587,7 +587,7 @@ func (m *mockIterableObject) Count() int {
 
 // TestRenderTagWithIterableObjectImplementation tests iterable interface
 func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -632,7 +632,7 @@ func TestRenderTagWithIterableObjectImplementation(t *testing.T) {
 
 // TestRenderTagPartialNotTemplate tests when LoadPartial returns non-template
 func TestRenderTagPartialNotTemplate(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a custom context that will make LoadPartial return something that's not a template
@@ -657,7 +657,7 @@ func TestRenderTagPartialNotTemplate(t *testing.T) {
 
 // TestRenderTagWithForLoopAndNilVariable tests for loop with nil variable
 func TestRenderTagWithForLoopAndNilVariable(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -694,7 +694,7 @@ func TestRenderTagWithForLoopAndNilVariable(t *testing.T) {
 
 // TestRenderTagWithoutVariableExpression tests single render without variable
 func TestRenderTagWithoutVariableExpression(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -734,8 +734,7 @@ func TestRenderTagWithoutVariableExpression(t *testing.T) {
 // TestRenderTagPassesNamedArgumentsIntoInnerScope tests parameter passing to partials
 // Ruby ref: test_render_passes_named_arguments_into_inner_scope (render_tag_test.rb:24-31)
 func TestRenderTagPassesNamedArgumentsIntoInnerScope(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{% render "product", inner_product: outer_product %}`
 	partial := `{{ inner_product.title }}`
@@ -770,8 +769,7 @@ func TestRenderTagPassesNamedArgumentsIntoInnerScope(t *testing.T) {
 // TestRenderTagDoesNotInheritParentScopeVariables verifies scope isolation
 // Ruby ref: test_render_does_not_inherit_parent_scope_variables (render_tag_test.rb:49-55)
 func TestRenderTagDoesNotInheritParentScopeVariables(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{% assign outer_variable = "should not be visible" %}{% render "snippet" %}`
 	partial := `{{ outer_variable }}`
@@ -802,8 +800,7 @@ func TestRenderTagDoesNotInheritParentScopeVariables(t *testing.T) {
 // TestRenderTagDoesNotMutateParentScope verifies render doesn't pollute parent scope
 // Ruby ref: test_render_does_not_mutate_parent_scope (render_tag_test.rb:65-71)
 func TestRenderTagDoesNotMutateParentScope(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{% render "snippet" %}{{ inner }}`
 	partial := `{% assign inner = 1 %}`
@@ -834,8 +831,7 @@ func TestRenderTagDoesNotMutateParentScope(t *testing.T) {
 // TestRenderTagOptionalCommas tests parameter syntax flexibility
 // Ruby ref: test_optional_commas (render_tag_test.rb:123-128)
 func TestRenderTagOptionalCommas(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	partial := `hello {{ arg1 }} {{ arg2 }}`
 
@@ -889,8 +885,7 @@ func TestRenderTagOptionalCommas(t *testing.T) {
 
 // Tests for Shopify Liquid v5.11.0 changes - render tag only accepts string literals
 func TestRenderTagRejectsVariableTemplateName(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	// Variable template name should fail at parse time
 	template := `{% render template_var %}`
@@ -904,8 +899,7 @@ func TestRenderTagRejectsVariableTemplateName(t *testing.T) {
 }
 
 func TestRenderTagAcceptsStringLiteral(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	// String literal should work (single quotes)
 	template := `{% render 'template' %}`

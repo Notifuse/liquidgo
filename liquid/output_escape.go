@@ -14,41 +14,6 @@ var outputEscapeKeepingFilters = map[string]bool{
 	"newline_to_br": true, "truncate": true, "truncatewords": true,
 }
 
-// SetOutputEscape turns the output escape of the environment on or off. On,
-// every {{ }} output, echo and cycle writes its text HTML-escaped, as
-// LiquidJS's outputEscape option does, so that a value of the render data
-// cannot add markup to an HTML template. It is off by default, as in Shopify
-// Liquid.
-//
-// An output is written as it is when its value is HTML on purpose:
-//   - the result of raw ({{ feed.html | raw }}), or of escape, escape_once
-//     or h, which have escaped it already;
-//   - the text of a capture of the render, however it is reached ({{ block }},
-//     or {{ copy }} after an assign): its outputs were escaped when it was
-//     captured, and the rest is the template's own markup;
-//   - either of these through strip, lstrip, rstrip, strip_newlines,
-//     newline_to_br, truncate or truncatewords ({{ bio | escape |
-//     newline_to_br }}).
-//
-// Any other filter after them makes the result ordinary text again. Values are
-// not escaped where they are read, so assign, capture, conditions and filters
-// see the data as it is. Turning the option on registers the raw filter, which
-// Shopify Liquid does not have.
-func (e *Environment) SetOutputEscape(on bool) {
-	e.outputEscape = on
-	if on && !e.rawFilterRegistered {
-		e.rawFilterRegistered = true
-		if err := e.RegisterFilter(Filter("raw", rawFilter)); err != nil {
-			panic(err)
-		}
-	}
-}
-
-// OutputEscape reports whether the output escape of the environment is on.
-func (e *Environment) OutputEscape() bool {
-	return e != nil && e.outputEscape
-}
-
 // rawFilter returns its input as it is, and the output escape writes its
 // result as it is.
 func rawFilter(_ *Context, input interface{}, args ...interface{}) (interface{}, error) {
@@ -80,7 +45,7 @@ func (c *Context) isSafeHTML(text string) bool {
 }
 
 // escapeTracker follows a variable through its filters to tell whether its
-// value is HTML on purpose (see SetOutputEscape). Its methods do nothing on a
+// value is HTML on purpose (see EnvironmentConfig.OutputEscape). Its methods do nothing on a
 // nil tracker, which Variable.Render passes.
 type escapeTracker struct {
 	ctx  *Context

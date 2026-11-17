@@ -12,8 +12,6 @@ import (
 // TestComprehensiveAllTags tests all available Liquid tags with all their parameters
 // This ensures all tags work correctly together and produce expected output
 func TestComprehensiveAllTags(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
 
 	// Create a file system for include/render tests
 	fs := &mapFileSystem{
@@ -28,7 +26,7 @@ func TestComprehensiveAllTags(t *testing.T) {
 			"with_variable": "Value: {{ with_variable }}",
 		},
 	}
-	env.SetFileSystem(fs)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: fs})
 
 	template := `
 {%- comment -%}
@@ -458,8 +456,7 @@ After doc
 
 // TestComprehensiveFilteredTags tests tag combinations with filters
 func TestComprehensiveFilteredTags(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	template := `
 {%- assign name = "john doe" -%}

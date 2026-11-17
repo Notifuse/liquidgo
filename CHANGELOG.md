@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.3]
+
+### Breaking
+- **An environment is built once, from a config, and never changes**:
+  `liquid.NewEnvironment(liquid.EnvironmentConfig{...}) (*Environment, error)` takes the tags, the
+  filters, the error mode, the file system, the resource limits (a typed `ResourceLimitsConfig`),
+  the output escape and the bounds of the partial cache, and keeps a copy of them. The setters are
+  gone (`SetErrorMode`, `SetFileSystem`, `SetOutputEscape`, `SetDefaultResourceLimits` and its
+  untyped map, `SetPartialCacheLimits`, `RegisterTag`, `RegisterFilter`), as are
+  `NewEnvironmentWithStandardTags` and `Environment.Tags`. A setter called during renders wrote
+  maps the renders read, without a lock.
+- **`tags.Standard()`** gives the standard tags, in a map of the caller's own, to which a custom
+  tag is added; it replaces `tags.RegisterStandardTags`.
+- `NewEnvironment` refuses an unknown error mode, a tag without a name or a constructor, an invalid
+  filter and negative partial cache bounds.
+
+### Tests
+- `integration/test_array_last.go` is now `array_commands_test.go`: its test never ran, as the file
+  did not end in `_test.go`.
+
 ## [5.14.0-port.2]
 
 ### Changed

@@ -7,11 +7,11 @@ import (
 )
 
 // partialCacheSize is the most partials an environment keeps parsed, unless
-// SetPartialCacheLimits sets another bound.
+// EnvironmentConfig.PartialCache sets another bound.
 const partialCacheSize = 1024
 
 // partialCacheBytes is the most bytes of partial text an environment keeps
-// parsed, unless SetPartialCacheLimits sets another bound. A parsed partial
+// parsed, unless EnvironmentConfig.PartialCache sets another bound. A parsed partial
 // holds 10 to 30 times its text: 4 MiB of text is about 100 MiB of memory.
 const partialCacheBytes = 4 << 20
 
@@ -23,7 +23,6 @@ var partialSeed = maphash.MakeSeed()
 // length of its text, which the entry keeps to compare.
 type partialKey struct {
 	name        string
-	errorMode   string
 	lineNumbers bool
 	hash        uint64
 	length      int
@@ -47,7 +46,7 @@ type partialCache struct {
 	entries    map[partialKey]*list.Element
 	order      list.List // front: most recently used
 	bytes      int
-	limited    bool // the bounds were set (SetPartialCacheLimits)
+	limited    bool // the bounds were set (EnvironmentConfig.PartialCache)
 	maxEntries int
 	maxBytes   int
 }
@@ -146,14 +145,17 @@ func LoadPartial(templateName string, context interface {
 	}
 
 	env := parseContext.Environment()
-	key := partialKey{name: templateName, errorMode: "lax"}
+	// the cache of the environment needs no error mode in its key: an
+	// environment has one, which never changes
+	key := partialKey{name: templateName}
+	errorMode := "lax"
 	if env != nil {
-		key.errorMode = env.ErrorMode()
+		errorMode = env.ErrorMode()
 	}
 	if pc, ok := parseContext.(*ParseContext); ok {
 		key.lineNumbers, _ = pc.GetOption("line_numbers").(bool)
 	}
-	renderKey := templateName + ":" + key.errorMode
+	renderKey := templateName + ":" + errorMode
 	if cached, ok := cache[renderKey]; ok {
 		return cached, nil
 	}

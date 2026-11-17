@@ -54,12 +54,13 @@ type ThemeRunner struct {
 // NewThemeRunner creates a new ThemeRunner instance
 // Will load all templates into memory to avoid profiling IO
 func NewThemeRunner() (*ThemeRunner, error) {
-	// Create environment with standard tags
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-
-	// Register Shopify custom tags and filters
-	shopify.RegisterAll(env)
+	// the standard tags, and the custom tags and filters of Shopify themes
+	config := liquid.EnvironmentConfig{Tags: tags.Standard()}
+	shopify.AddTo(&config)
+	env, err := liquid.NewEnvironment(config)
+	if err != nil {
+		return nil, err
+	}
 
 	runner := &ThemeRunner{
 		env:   env,

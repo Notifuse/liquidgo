@@ -27,8 +27,7 @@ func TestATemplateOfInvalidUTF8IsRefused(t *testing.T) {
 // Control characters in the text of a template are written as they are.
 func TestControlCharactersInTheTextAreKept(t *testing.T) {
 	text := "\x00\x01\x1b[31m\x7f\u2028\ufeff\r\n"
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(text+"{{ x }}"+text, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -42,8 +41,7 @@ func TestControlCharactersInTheTextAreKept(t *testing.T) {
 // Data with invalid UTF-8 and control characters goes through every standard
 // filter without a panic, and the text after it is written.
 func TestInvalidDataGoesThroughEveryFilter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	data := map[string]interface{}{"s": "a\xff\x00\x1bb\u2028c", "n": "\xff1", "list": []interface{}{"\xff", "\x00"}}
 	for _, name := range env.FilterNames() {
 		src := "[{{ s | " + name + " }}][{{ n | " + name + ": 1 }}][{{ list | " + name + " }}]end"

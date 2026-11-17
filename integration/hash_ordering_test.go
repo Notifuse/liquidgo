@@ -25,12 +25,9 @@ func (c *CanadianMoneyFilter) Money(input interface{}) interface{} {
 // TestHashOrdering_GlobalRegisterOrder tests that filter registration order matters.
 // Ported from: test_global_register_order
 func TestHashOrdering_GlobalRegisterOrder(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
 
 	// Register filters in order: MoneyFilter, then CanadianMoneyFilter
-	_ = env.RegisterFilter(methodfilters.Of(&MoneyFilter{})...)
-	_ = env.RegisterFilter(methodfilters.Of(&CanadianMoneyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: append(methodfilters.Of(&MoneyFilter{}), methodfilters.Of(&CanadianMoneyFilter{})...)})
 
 	// The last registered filter should take precedence
 	tmpl, err := liquid.ParseTemplate("{{1000 | money}}", &liquid.TemplateOptions{

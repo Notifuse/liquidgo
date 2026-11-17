@@ -39,9 +39,9 @@ func (t *TestTag2) RenderToOutput(ctx liquid.TagContext, output *liquid.OutputBu
 }
 
 func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibility(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.RegisterTag("blabla", tags.TagConstructor(NewTestTag1))
+	envTags := tags.Standard()
+	envTags["blabla"] = tags.TagConstructor(NewTestTag1)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	tmpl, err := liquid.ParseTemplate(`{% blabla %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -66,9 +66,9 @@ func TestCustomTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibili
 	// The output and buf are separate string values in Go
 
 	// Test with inheritance
-	env2 := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env2)
-	env2.RegisterTag("blabla", tags.TagConstructor(NewTestTag2))
+	env2Tags := tags.Standard()
+	env2Tags["blabla"] = tags.TagConstructor(NewTestTag2)
+	env2 := mustEnv(liquid.EnvironmentConfig{Tags: env2Tags})
 
 	tmpl2, err := liquid.ParseTemplate(`{% blabla %}`, &liquid.TemplateOptions{Environment: env2})
 	if err != nil {

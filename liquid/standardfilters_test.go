@@ -1311,7 +1311,7 @@ func TestSum(t *testing.T) {
 
 // TestStandardFiltersTypedSlices tests filters with typed slices ([]string, []int, etc.)
 func TestStandardFiltersTypedSlices(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	ctx := BuildContext(ContextConfig{Environment: env})
 	sf := &StandardFilters{context: ctx}
 
@@ -1473,7 +1473,7 @@ func TestStandardFiltersTypedSlices(t *testing.T) {
 
 // TestNewInputIteratorTypedSlices tests that InputIterator works with typed slices
 func TestNewInputIteratorTypedSlices(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	ctx := BuildContext(ContextConfig{Environment: env})
 
 	tests := []struct {

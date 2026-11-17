@@ -11,8 +11,7 @@ import (
 
 func renderGo(t *testing.T, src string, data map[string]interface{}) liquid.Result {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", src, err)

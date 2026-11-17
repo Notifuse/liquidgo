@@ -10,16 +10,14 @@ import (
 
 // customEnvWith returns the environment of the custom tags with limits l.
 func customEnvWith(l limits) *liquid.Environment {
-	env := customTagEnvironment()
-	set := map[string]interface{}{}
+	config := customTagConfig()
 	if l.renderLength > 0 {
-		set["render_length_limit"] = l.renderLength
+		config.Limits.RenderLengthLimit = &l.renderLength
 	}
 	if l.assignScore > 0 {
-		set["assign_score_limit"] = l.assignScore
+		config.Limits.AssignScoreLimit = &l.assignScore
 	}
-	env.SetDefaultResourceLimits(set)
-	return env
+	return mustEnv(config)
 }
 
 // TestACaptureChecksTheTagsInIt checks that a tag that renders into a string
@@ -70,8 +68,9 @@ func TestIfchangedCountsOnlyTheBodyItKeeps(t *testing.T) {
 // the output of a partial of render is in the errors of the template, as
 // Ruby's subcontexts share the errors.
 func TestTheErrorsOfARenderedPartialAreReported(t *testing.T) {
-	env := panicEnvironment(limits{})
-	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "x{% fail %}y", "r": "{% render 'r' %}"}))
+	config := panicConfig(limits{})
+	config.FileSystem = NewStubFileSystem(map[string]string{"p": "x{% fail %}y", "r": "{% render 'r' %}"})
+	env := mustEnv(config)
 	for _, c := range []struct{ source, want, wantError string }{
 		{"a{% render 'p' %}b", "axLiquid error: bad argumentyb", "bad argument"},
 		{"{% assign two = '1,2' | split: ',' %}a{% render 'p' for two %}b", "axLiquid error: bad argumentyxLiquid error: bad argumentyb", "bad argument"},

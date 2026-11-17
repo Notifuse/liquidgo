@@ -41,8 +41,7 @@ func TestAssigningFromCapture(t *testing.T) {
 }
 
 func TestIncrementAssignScoreByBytesNotCharacters(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env) // Register tags for parsing
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% capture foo %}すごい{% endcapture %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)

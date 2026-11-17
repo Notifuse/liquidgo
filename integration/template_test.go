@@ -15,8 +15,7 @@ func TestWarningsIsNotExponentialTime(t *testing.T) {
 		str = "{% if true %}true{% else %}" + str + "{% endif %}"
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(str, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -42,8 +41,7 @@ func TestWarningsIsNotExponentialTime(t *testing.T) {
 }
 
 func TestCustomAssignsDoNotPersistOnSameTemplate(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 
 	err := tmpl.Parse(`{{ foo }}`, &liquid.TemplateOptions{Environment: env})
@@ -65,8 +63,7 @@ func TestCustomAssignsDoNotPersistOnSameTemplate(t *testing.T) {
 }
 
 func TestCustomAssignsSquashInstanceAssigns(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 
 	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
@@ -92,8 +89,7 @@ func TestCustomAssignsSquashInstanceAssigns(t *testing.T) {
 }
 
 func TestPersistentAssignsSquashInstanceAssigns(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 
 	err := tmpl.Parse(`{% assign foo = 'from instance assigns' %}{{ foo }}`, &liquid.TemplateOptions{Environment: env})
@@ -122,8 +118,7 @@ func TestPersistentAssignsSquashInstanceAssigns(t *testing.T) {
 }
 
 func TestResourceLimitsWorksWithCustomLengthMethod(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% assign foo = bar %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -141,8 +136,7 @@ func TestResourceLimitsWorksWithCustomLengthMethod(t *testing.T) {
 }
 
 func TestResourceLimitsRenderLength(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate("0123456789", &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -171,8 +165,7 @@ func TestResourceLimitsRenderLength(t *testing.T) {
 }
 
 func TestResourceLimitsRenderScore(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	// Test nested loops
 	tmpl, err := liquid.ParseTemplate(`{% for a in (1..10) %} {% for a in (1..10) %} foo {% endfor %} {% endfor %}`, &liquid.TemplateOptions{Environment: env})
@@ -236,8 +229,7 @@ func TestResourceLimitsRenderScore(t *testing.T) {
 }
 
 func TestResourceLimitsAbortsRenderingAfterFirstError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% for a in (1..100) %} foo1 {% endfor %} bar {% for a in (1..100) %} foo2 {% endfor %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -257,8 +249,7 @@ func TestResourceLimitsAbortsRenderingAfterFirstError(t *testing.T) {
 }
 
 func TestResourceLimitsHashInTemplateGetsUpdatedEvenIfNoLimitsAreSet(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% for a in (1..100) %}x{% assign foo = 1 %} {% endfor %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -274,8 +265,7 @@ func TestResourceLimitsHashInTemplateGetsUpdatedEvenIfNoLimitsAreSet(t *testing.
 }
 
 func TestRenderLengthPersistsBetweenBlocks(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	// Single block
 	tmpl, err := liquid.ParseTemplate(`{% if true %}aaaa{% endif %}`, &liquid.TemplateOptions{Environment: env})
@@ -351,8 +341,7 @@ func TestRenderLengthPersistsBetweenBlocks(t *testing.T) {
 }
 
 func TestRenderLengthUsesNumberOfBytesNotCharacters(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% if true %}すごい{% endif %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -379,8 +368,7 @@ func TestRenderLengthUsesNumberOfBytesNotCharacters(t *testing.T) {
 }
 
 func TestDefaultResourceLimitsUnaffectedByRenderWithContext(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	ctx := &rubyContext{Environment: env}
 	tmpl, err := liquid.ParseTemplate(`{% for a in (1..100) %}x{% assign foo = 1 %} {% endfor %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -399,8 +387,7 @@ func TestDefaultResourceLimitsUnaffectedByRenderWithContext(t *testing.T) {
 // Ruby renders a drop as the root of the variables; liquidgo takes a map,
 // so the drop goes under the key d and the templates read d.foo.
 func TestCanUseDropAsContext(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 	tmpl.Registers()["lulz"] = "haha"
 
@@ -447,8 +434,7 @@ func TestUsingRangeLiteralWorksAsExpected(t *testing.T) {
 }
 
 func TestAllowsNonStringValuesAsSource(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	// Test nil
 	tmpl, err := liquid.ParseTemplate("", &liquid.TemplateOptions{Environment: env})
@@ -655,8 +641,7 @@ func TestConditionBlogPostContains(t *testing.T) {
 // TestNilComparisons tests nil comparisons matching Shopify Liquid behavior
 // Reference: reference-liquid/test/integration/tags/if_else_tag_test.rb:122-132
 func TestNilComparisons(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tests := []struct {
 		name     string

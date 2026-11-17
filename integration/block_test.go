@@ -31,9 +31,9 @@ func TestUnexpectedEndTag(t *testing.T) {
 }
 
 func TestWithCustomTag(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.RegisterTag("testtag", tags.TagConstructor(NewTestBlockTag))
+	envTags := tags.Standard()
+	envTags["testtag"] = tags.TagConstructor(NewTestBlockTag)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	tmpl, err := liquid.ParseTemplate(`{% testtag %} {% endtesttag %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -45,9 +45,9 @@ func TestWithCustomTag(t *testing.T) {
 }
 
 func TestCustomBlockTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompatibility(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.RegisterTag("blabla", tags.TagConstructor(NewTestBlockTag))
+	envTags := tags.Standard()
+	envTags["blabla"] = tags.TagConstructor(NewTestBlockTag)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	tmpl, err := liquid.ParseTemplate(`{% blabla %} bla {% endblabla %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
@@ -70,12 +70,12 @@ func TestCustomBlockTagsHaveADefaultRenderToOutputBufferMethodForBackwardsCompat
 	}
 
 	// Test with inheritance - TestBlockTag2 extends TestBlockTag1
-	env2 := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env2)
-	env2.RegisterTag("blabla", tags.TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+	env2Tags := tags.Standard()
+	env2Tags["blabla"] = tags.TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 		block1, _ := NewTestBlockTag(tagName, markup, parseContext)
 		return &TestBlockTag2{TestBlockTag: block1.(*TestBlockTag)}, nil
-	}))
+	})
+	env2 := mustEnv(liquid.EnvironmentConfig{Tags: env2Tags})
 
 	tmpl2, err := liquid.ParseTemplate(`{% blabla %} foo {% endblabla %}`, &liquid.TemplateOptions{Environment: env2})
 	if err != nil {

@@ -127,20 +127,18 @@ func runConformance(c conformanceCase, mode, typing string) (out string, value i
 		}
 	}()
 	fs := NewStubFileSystem(c.Partials)
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fs)
-	env.SetErrorMode(mode)
-	tags.RegisterStandardTags(env)
+	envTags := tags.Standard()
 
 	source := c.Template
 	if c.Kind == "filter" {
 		// the value of __result is read during the render, by a tag after
 		// the assign: a render keeps no assigns once it ends
-		env.RegisterTag(keepTagName, func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		envTags[keepTagName] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 			return &keepTag{Tag: liquid.NewTag(name, markup, pc), value: &value}, nil
-		})
+		}
 		source += "{% " + keepTagName + " %}"
 	}
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags, ErrorMode: mode, FileSystem: fs})
 	tmpl, perr := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if perr != nil {
 		return "", nil, fmt.Errorf("parse: %v", perr)

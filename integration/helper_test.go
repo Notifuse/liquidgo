@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/Notifuse/liquidgo/v5/internal/methodfilters"
 	"github.com/Notifuse/liquidgo/v5/liquid"
 	"github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
@@ -32,21 +31,13 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 	// Create file system for partials
 	fileSystem := NewStubFileSystem(options.Partials)
 
-	// Create environment
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fileSystem)
-
-	// Set error mode
-	if options.ErrorMode != "" {
-		env.SetErrorMode(options.ErrorMode)
-	} else {
-		// Default to strict mode (Ruby uses :strict by default from ENV, but test_helper sets it)
-		env.SetErrorMode("strict")
+	// Strict mode by default (Ruby uses :strict by default from ENV, but
+	// test_helper sets it)
+	errorMode := options.ErrorMode
+	if errorMode == "" {
+		errorMode = "strict"
 	}
-
-	// Register standard tags - need to import tags package
-	// Note: This will be done by importing tags.RegisterStandardTags
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: errorMode, FileSystem: fileSystem})
 
 	// Parse template
 	templateOptions := &liquid.TemplateOptions{
@@ -98,9 +89,7 @@ func assertMatchSyntaxError(t *testing.T, match string, template string, errorMo
 		mode = errorMode[0]
 	}
 
-	env := liquid.NewEnvironment()
-	env.SetErrorMode(mode)
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: mode})
 
 	templateOptions := &liquid.TemplateOptions{
 		Environment: env,
@@ -158,72 +147,6 @@ func assertMatchSyntaxError(t *testing.T, match string, template string, errorMo
 func _assertSyntaxError(t *testing.T, template string, errorMode ...string) {
 	t.Helper()
 	assertMatchSyntaxError(t, "", template, errorMode...)
-}
-
-// _withCustomTag temporarily registers a custom tag, runs the test function, then restores.
-// Prefixed with _ to indicate it's intentionally unused but kept for future use.
-//
-//nolint:unused
-func _withCustomTag(t *testing.T, tagName string, tagClass liquid.TagConstructor, fn func()) {
-	t.Helper()
-
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-
-	// Register custom tag
-	env.RegisterTag(tagName, tagClass)
-
-	// Store original environment
-	originalEnv := liquid.NewEnvironment()
-	tags.RegisterStandardTags(originalEnv)
-
-	// Run test with custom tag
-	fn()
-
-	// Restore is implicit - we're using a new environment for each test
-	_ = originalEnv
-}
-
-// _withErrorModes runs a test function with different error modes.
-// Prefixed with _ to indicate it's intentionally unused but kept for future use.
-//
-//nolint:unused
-func _withErrorModes(t *testing.T, modes []string, fn func()) {
-	t.Helper()
-
-	originalMode := "strict" // Default
-
-	for _, mode := range modes {
-		env := liquid.NewEnvironment()
-		env.SetErrorMode(mode)
-		tags.RegisterStandardTags(env)
-
-		// Run test
-		fn()
-	}
-
-	_ = originalMode // Restore not needed as we create new env each time
-}
-
-// _withGlobalFilter temporarily adds global filters to the environment.
-// Prefixed with _ to indicate it's intentionally unused but kept for future use.
-//
-//nolint:unused
-func _withGlobalFilter(t *testing.T, filters []interface{}, fn func()) {
-	t.Helper()
-
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-
-	// Register filters
-	for _, filter := range filters {
-		if err := env.RegisterFilter(methodfilters.Of(filter)...); err != nil {
-			t.Fatalf("RegisterFilter() error = %v", err)
-		}
-	}
-
-	// Run test
-	fn()
 }
 
 // StubFileSystem is a mock file system for testing partials/includes.

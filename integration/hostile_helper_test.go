@@ -22,28 +22,25 @@ type limits struct {
 // length of the output, at 10 MB.
 var emailLimits = limits{renderLength: 10_000_000}
 
-// newEnv returns an environment with the standard tags, the given error mode
-// ("" for the default) and resource limits.
-func newEnv(mode string, l limits) *liquid.Environment {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	if mode != "" {
-		env.SetErrorMode(mode)
-	}
-	set := map[string]interface{}{}
+// envConfig returns the config of an environment with the standard tags, the
+// given error mode ("" for the default) and resource limits.
+func envConfig(mode string, l limits) liquid.EnvironmentConfig {
+	config := liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: mode}
 	if l.renderLength > 0 {
-		set["render_length_limit"] = l.renderLength
+		config.Limits.RenderLengthLimit = &l.renderLength
 	}
 	if l.renderScore > 0 {
-		set["render_score_limit"] = l.renderScore
+		config.Limits.RenderScoreLimit = &l.renderScore
 	}
 	if l.assignScore > 0 {
-		set["assign_score_limit"] = l.assignScore
+		config.Limits.AssignScoreLimit = &l.assignScore
 	}
-	if len(set) > 0 {
-		env.SetDefaultResourceLimits(set)
-	}
-	return env
+	return config
+}
+
+// newEnv returns the environment of envConfig.
+func newEnv(mode string, l limits) *liquid.Environment {
+	return mustEnv(envConfig(mode, l))
 }
 
 // result is what one parse and render of a source gave.
@@ -152,10 +149,11 @@ func (n *outOfRangeTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) 
 
 // The fuzz and scaling checks see a render that a Go panic ended.
 func TestInternalErrorSeesAGoPanic(t *testing.T) {
-	env := newEnv("", limits{})
-	env.RegisterTag("outofrange", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config := envConfig("", limits{})
+	config.Tags["outofrange"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &outOfRangeTag{liquid.NewTag(name, markup, pc)}, nil
-	})
+	}
+	env := mustEnv(config)
 	if r := renderWith(env, "a{% outofrange %}b", nil); r.internalError() == nil {
 		t.Errorf("a render a Go panic ended gives no internal error (output %q, errors %v)", r.output, r.errors)
 	}

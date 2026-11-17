@@ -434,7 +434,7 @@ func (v *Variable) render(context TagContext, safe *escapeTracker) interface{} {
 }
 
 // RenderToOutput writes the value of the variable to output. With the
-// environment's output escape on (see Environment.SetOutputEscape), the
+// environment's output escape on (see EnvironmentConfig.OutputEscape), the
 // written text is HTML-escaped unless it is HTML on purpose (see
 // escapeTracker).
 func (v *Variable) RenderToOutput(context TagContext, output *OutputBuffer) {

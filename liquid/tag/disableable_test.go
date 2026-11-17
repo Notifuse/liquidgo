@@ -122,13 +122,13 @@ func (d *DisableBothBlock) RenderToOutput(context liquid.TagContext, output *liq
 
 func TestBlockTagDisablingNestedTag(t *testing.T) {
 	// Create environment
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
 
 	// Register custom tags
-	env.RegisterTag("custom", tags.TagConstructor(NewCustomTag))
-	env.RegisterTag("custom2", tags.TagConstructor(NewCustom2Tag))
-	env.RegisterTag("disable", tags.TagConstructor(NewDisableCustomBlock))
+	envTags := tags.Standard()
+	envTags["custom"] = tags.TagConstructor(NewCustomTag)
+	envTags["custom2"] = tags.TagConstructor(NewCustom2Tag)
+	envTags["disable"] = tags.TagConstructor(NewDisableCustomBlock)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	// Parse template
 	templateOptions := &liquid.TemplateOptions{
@@ -154,13 +154,13 @@ func TestBlockTagDisablingNestedTag(t *testing.T) {
 
 func TestBlockTagDisablingMultipleNestedTags(t *testing.T) {
 	// Create environment
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
 
 	// Register custom tags
-	env.RegisterTag("custom", tags.TagConstructor(NewCustomTag))
-	env.RegisterTag("custom2", tags.TagConstructor(NewCustom2Tag))
-	env.RegisterTag("disable", tags.TagConstructor(NewDisableBothBlock))
+	envTags := tags.Standard()
+	envTags["custom"] = tags.TagConstructor(NewCustomTag)
+	envTags["custom2"] = tags.TagConstructor(NewCustom2Tag)
+	envTags["disable"] = tags.TagConstructor(NewDisableBothBlock)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	// Parse template
 	templateOptions := &liquid.TemplateOptions{

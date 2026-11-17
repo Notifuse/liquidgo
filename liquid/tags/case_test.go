@@ -538,8 +538,7 @@ func TestCaseTagRenderToOutputBufferElseBlock(t *testing.T) {
 
 // TestCaseTagWithComma tests case/when with comma-separated values (Ruby test: test_case_when_with_comma)
 func TestCaseTagWithComma(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{%- case 1 -%}
 {%- when 2, 1 -%}
@@ -562,8 +561,7 @@ two
 
 // TestCaseTagWithOr tests case/when with 'or' operator (Ruby test: test_case_when_with_or)
 func TestCaseTagWithOr(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{%- case 1 -%}
 {%- when 2 or 1 -%}
@@ -586,8 +584,7 @@ two
 
 // TestCaseTagNodelistIntegration tests nodelist structure (Ruby test: test_case_nodelist)
 func TestCaseTagNodelistIntegration(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	template := `{% case var %}{% when true %}WHEN{% else %}ELSE{% endcase %}`
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
@@ -610,8 +607,7 @@ func TestCaseTagNodelistIntegration(t *testing.T) {
 
 // TestCaseTagIntegrationMultipleConditions tests case tag with multiple conditions matching Ruby integration tests
 func TestCaseTagIntegrationMultipleConditions(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	tests := []struct {
 		name     string

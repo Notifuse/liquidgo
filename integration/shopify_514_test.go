@@ -15,9 +15,7 @@ import (
 
 func render514(t *testing.T, src string, partials map[string]string, opts ...liquid.RenderOption) (liquid.Result, error) {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetFileSystem(&mapFileSystem{templates: partials})
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: &mapFileSystem{templates: partials}})
 	tmpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -97,8 +95,7 @@ func TestRangeLoopsChargeEachItem(t *testing.T) {
 
 // include_tag_test.rb: for_loop? tells for from with
 func TestIncludeForLoop(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	for src, want := range map[string]bool{
 		"{% include 'product' for products %}":             true,
 		"{% include 'product' with product %}":             false,
@@ -119,9 +116,7 @@ func TestIncludeForLoop(t *testing.T) {
 
 func parse514(t *testing.T, src, mode string) (*liquid.Template, error) {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetErrorMode(mode)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: mode})
 	return liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 }
 

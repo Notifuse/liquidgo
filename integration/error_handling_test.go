@@ -38,9 +38,7 @@ func TestErrorHandling_TemplatesParsedWithLineNumbersRendersThemInErrors(t *test
       Bla.
     `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetErrorMode("strict")
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -70,8 +68,7 @@ func TestErrorHandling_StandardError(t *testing.T) {
 
 	expected := " Liquid error: standard error "
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -109,8 +106,7 @@ func TestErrorHandling_SyntaxError(t *testing.T) {
 
 	expected := " Liquid syntax error: syntax error "
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -148,8 +144,7 @@ func TestErrorHandling_ArgumentError(t *testing.T) {
 
 	expected := " Liquid error: argument error "
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -191,9 +186,7 @@ func TestErrorHandling_MissingEndtagParseTimeError(t *testing.T) {
 // raise SyntaxError in strict mode.
 // Ported from: test_unrecognized_operator
 func TestErrorHandling_UnrecognizedOperator(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	templateOptions := &liquid.TemplateOptions{
 		Environment: env,
@@ -214,9 +207,7 @@ func TestErrorHandling_UnrecognizedOperator(t *testing.T) {
 // are handled gracefully in lax mode.
 // Ported from: test_lax_unrecognized_operator
 func TestErrorHandling_LaxUnrecognizedOperator(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("lax")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "lax"})
 
 	tmpl, err := liquid.ParseTemplate(" {% if 1 =! 2 %}ok{% endif %} ", &liquid.TemplateOptions{
 		Environment: env,
@@ -278,9 +269,7 @@ func TestErrorHandling_WithLineNumbersAddsNumbersToParserErrorsWithWhitespaceTri
 // warnings include line numbers in warn mode.
 // Ported from: test_parsing_warn_with_line_numbers_adds_numbers_to_lexer_errors
 func TestErrorHandling_ParsingWarnWithLineNumbersAddsNumbersToLexerErrors(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("warn")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "warn"})
 
 	template := `
         foobar
@@ -319,9 +308,7 @@ func TestErrorHandling_ParsingWarnWithLineNumbersAddsNumbersToLexerErrors(t *tes
 // strict mode errors include line numbers.
 // Ported from: test_parsing_strict_with_line_numbers_adds_numbers_to_lexer_errors
 func TestErrorHandling_ParsingStrictWithLineNumbersAddsNumbersToLexerErrors(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	template := `
           foobar
@@ -369,9 +356,7 @@ func TestErrorHandling_SyntaxErrorsInNestedBlocksHaveCorrectLineNumber(t *testin
 // TestErrorHandling_StrictErrorMessages tests strict mode error messages.
 // Ported from: test_strict_error_messages
 func TestErrorHandling_StrictErrorMessages(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	templateOptions := &liquid.TemplateOptions{
 		Environment: env,
@@ -411,9 +396,7 @@ func TestErrorHandling_StrictErrorMessages(t *testing.T) {
 // TestErrorHandling_Warnings tests that warnings are collected in warn mode.
 // Ported from: test_warnings
 func TestErrorHandling_Warnings(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("warn")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "warn"})
 
 	tmpl, err := liquid.ParseTemplate(`{% if ~~~ %}{{%%%}}{% else %}{{ hello. }}{% endif %}`, &liquid.TemplateOptions{
 		Environment: env,
@@ -476,9 +459,7 @@ func TestErrorHandling_Warnings(t *testing.T) {
 // TestErrorHandling_WarningLineNumbers tests that warnings include line numbers.
 // Ported from: test_warning_line_numbers
 func TestErrorHandling_WarningLineNumbers(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("warn")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "warn"})
 
 	tmpl, err := liquid.ParseTemplate("{% if ~~~ %}\n{{%%%}}{% else %}\n{{ hello. }}{% endif %}", &liquid.TemplateOptions{
 		Environment: env,
@@ -532,8 +513,7 @@ func TestErrorHandling_WarningLineNumbers(t *testing.T) {
 // propagate (not caught by Liquid).
 // Ported from: test_exceptions_propagate
 func TestErrorHandling_ExceptionsPropagate(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate("{{ errors.exception }}", &liquid.TemplateOptions{
 		Environment: env,
@@ -565,8 +545,7 @@ func TestErrorHandling_ExceptionsPropagate(t *testing.T) {
 // exception renderer with internal error.
 // Ported from: test_default_exception_renderer_with_internal_error
 func TestErrorHandling_DefaultExceptionRendererWithInternalError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate("This is a runtime error: {{ errors.runtime_error }}", &liquid.TemplateOptions{
 		Environment: env,
@@ -612,9 +591,7 @@ func TestErrorHandling_IncludedTemplateNameWithLineNumbers(t *testing.T) {
 		"product": "{{ errors.argument_error }}",
 	})
 
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fileSystem)
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: fileSystem})
 
 	template := "Argument error:\n{% include 'product' %}"
 
@@ -657,8 +634,7 @@ func TestErrorHandling_IncludedTemplateNameWithLineNumbers(t *testing.T) {
 // behavior where errors in blank nodes are silenced.
 // Ported from: test_bug_compatible_silencing_of_errors_in_blank_nodes
 func TestErrorHandling_BugCompatibleSilencingOfErrorsInBlankNodes(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	template1 := "{% assign x = 0 %}{% if 1 < '2' %}not blank{% assign x = 3 %}{% endif %}{{ x }}"
 	tmpl1, err := liquid.ParseTemplate(template1, &liquid.TemplateOptions{
@@ -711,9 +687,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateName(t *testing.T) {
 		"snippet": "1\n2\n{{ 1",
 	})
 
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fileSystem)
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: fileSystem})
 
 	template := `{% render "snippet" %}`
 
@@ -750,9 +724,7 @@ func TestErrorHandling_SyntaxErrorIsRaisedWithTemplateNameFromTemplateFactory(t 
 		"snippet": "1\n2\n{{ 1",
 	})
 
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fileSystem)
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: fileSystem})
 
 	template := `{% render "snippet" %}`
 
@@ -804,9 +776,7 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 		"snippet": code,
 	})
 
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(fileSystem)
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: fileSystem})
 
 	template := `{% render 'snippet' %}`
 
@@ -843,9 +813,7 @@ func TestErrorHandling_ErrorIsRaisedDuringParseWithTemplateName(t *testing.T) {
 // errors include template name.
 // Ported from: test_internal_error_is_raised_with_template_name
 func TestErrorHandling_InternalErrorIsRaisedWithTemplateName(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetFileSystem(NewStubFileSystem(map[string]string{}))
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: NewStubFileSystem(map[string]string{})})
 
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 	err := tmpl.Parse("{% render 'snippet' %}", &liquid.TemplateOptions{
@@ -878,8 +846,7 @@ func TestErrorHandling_InternalErrorIsRaisedWithTemplateName(t *testing.T) {
 // TestErrorHandling_StrictFiltersWithUndefinedFilter tests that strict_filters mode
 // raises an UndefinedFilter error when an unknown filter is used.
 func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(`{{ "hello" | unknown_filter }}`, &liquid.TemplateOptions{
 		Environment: env,
@@ -920,8 +887,7 @@ func TestErrorHandling_StrictFiltersWithUndefinedFilter(t *testing.T) {
 // TestErrorHandling_StrictFiltersWithDefinedFilter tests that strict_filters mode
 // works correctly with defined filters.
 func TestErrorHandling_StrictFiltersWithDefinedFilter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(`{{ "HELLO" | downcase }}`, &liquid.TemplateOptions{
 		Environment: env,
@@ -953,8 +919,7 @@ func TestErrorHandling_StrictFiltersWithDefinedFilter(t *testing.T) {
 // TestErrorHandling_StrictFiltersErrorIncludesLineNumber tests that UndefinedFilter
 // errors in strict mode include line numbers when available.
 func TestErrorHandling_StrictFiltersErrorIncludesLineNumber(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	template := `Line 1
 Line 2
@@ -985,8 +950,7 @@ Line 4`
 // TestErrorHandling_StrictFiltersWithFilterChain tests strict mode with chained filters
 // where one filter is undefined.
 func TestErrorHandling_StrictFiltersWithFilterChain(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(`{{ "hello" | upcase | unknown_filter | downcase }}`, &liquid.TemplateOptions{
 		Environment: env,

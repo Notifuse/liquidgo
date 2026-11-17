@@ -9,8 +9,10 @@ import (
 )
 
 func main() {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+	if err != nil {
+		panic(err)
+	}
 
 	template := `
 <h1>Product List</h1>

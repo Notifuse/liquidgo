@@ -362,7 +362,7 @@ func TestVariableLookupTypedSlices(t *testing.T) {
 			}
 
 			ctx := buildTestContext(ContextConfig{
-				Environment: NewEnvironment(),
+				Environment: newEnvironment(),
 			})
 			for k, v := range tt.data {
 				ctx.Set(k, v)
@@ -420,7 +420,7 @@ func TestVariableLookupStructFieldAccess(t *testing.T) {
 			}
 
 			ctx := buildTestContext(ContextConfig{
-				Environment: NewEnvironment(),
+				Environment: newEnvironment(),
 			})
 			ctx.Set("post", tt.post)
 

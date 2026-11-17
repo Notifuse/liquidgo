@@ -26,7 +26,7 @@ func TestRenderErrorKeepsLiquidErrorsAndWrapsTheRest(t *testing.T) {
 // context belongs to: an unparsed template writes nothing, and the context
 // takes the template's name when it has none.
 func TestTemplateRenderToOutputAsAPartial(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	buf := NewOutputBuffer()
 	NewTemplate(&TemplateOptions{Environment: env}).RenderToOutput(NewContext(), buf)
 	if buf.String() != "" {
@@ -52,7 +52,7 @@ func TestTemplateRenderToOutputAsAPartial(t *testing.T) {
 
 // Template.Environment is the environment the template was parsed in.
 func TestTemplateEnvironment(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	tmpl, err := ParseTemplate("x", &TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -68,11 +68,11 @@ func TestTemplateEnvironment(t *testing.T) {
 // In warn mode, a constructor that panics with an error gives a warning,
 // and the tag stays as text, as a constructor that returns the error.
 func TestATagConstructorThatPanicsInWarnMode(t *testing.T) {
-	env := NewEnvironment()
-	env.SetErrorMode("warn")
-	env.RegisterTag("boom", func(string, string, ParseContextInterface) (Node, error) {
+	envTags := map[string]TagConstructor{}
+	envTags["boom"] = func(string, string, ParseContextInterface) (Node, error) {
 		panic(NewSyntaxError("boom constructor"))
-	})
+	}
+	env := mustEnv(EnvironmentConfig{Tags: envTags, ErrorMode: "warn"})
 	tmpl, err := ParseTemplate("a{% boom %}b", &TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("warn mode: %v", err)

@@ -12,9 +12,7 @@ import (
 
 func renderWithOutputEscape(t *testing.T, on bool, template string, data map[string]interface{}) string {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(on)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: on})
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", template, err)
@@ -22,7 +20,7 @@ func renderWithOutputEscape(t *testing.T, on bool, template string, data map[str
 	return renderRuby(tmpl, data, nil)
 }
 
-// TestOutputEscape is the contract of Environment.SetOutputEscape: with it on,
+// TestOutputEscape is the contract of EnvironmentConfig.OutputEscape: with it on,
 // a value of the render data cannot add markup to the output; raw writes HTML
 // on purpose; an output escaped by its own last filter is not escaped twice;
 // the text of a capture is the template's own markup; and assign, conditions
@@ -76,15 +74,14 @@ func TestOutputEscape(t *testing.T) {
 	}
 }
 
-// TestOutputEscapeIsOffByDefault: without SetOutputEscape, outputs are written
+// TestOutputEscapeIsOffByDefault: without OutputEscape, outputs are written
 // as Shopify Liquid writes them, and raw is not a filter.
 func TestOutputEscapeIsOffByDefault(t *testing.T) {
 	data := map[string]interface{}{"html": `<p>Feed</p>`}
 	if got := renderWithOutputEscape(t, false, `{{ html }}`, data); got != `<p>Feed</p>` {
 		t.Errorf("got %q", got)
 	}
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{{ html | raw }}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -98,10 +95,8 @@ func TestOutputEscapeIsOffByDefault(t *testing.T) {
 // TestOutputEscapeCountsInTheLimits: the escaped text is what the render length
 // limit counts.
 func TestOutputEscapeCountsInTheLimits(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(true)
-	env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 50})
+	limit := 50
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: true, Limits: liquid.ResourceLimitsConfig{RenderLengthLimit: &limit}})
 	tmpl, err := liquid.ParseTemplate(`{{ q }}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -116,9 +111,7 @@ func TestOutputEscapeCountsInTheLimits(t *testing.T) {
 // The output escape holds in partials, which share the capture record of the
 // render.
 func TestOutputEscapeInPartials(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(true)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: true})
 	partials := recursivePartials{
 		"show":    `[{{ name }}]`,
 		"capture": `{% capture c %}<u>{{ name }}</u>{% endcapture %}{{ c }}`,
@@ -147,10 +140,8 @@ func TestOutputEscapeInPartials(t *testing.T) {
 // more on long lists.
 func TestOutputEscapeOfAListStaysWithinTheLimit(t *testing.T) {
 	allocated := func(on bool) uint64 {
-		env := liquid.NewEnvironment()
-		tags.RegisterStandardTags(env)
-		env.SetOutputEscape(on)
-		env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 1 << 20})
+		limit := 1 << 20
+		env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: on, Limits: liquid.ResourceLimitsConfig{RenderLengthLimit: &limit}})
 		items := make([]interface{}, 400000)
 		for i := range items {
 			items[i] = "<b>0123456789</b>"
@@ -180,10 +171,8 @@ func TestOutputEscapeOfAListStaysWithinTheLimit(t *testing.T) {
 // any copy.)
 func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
 	allocated := func(on bool) uint64 {
-		env := liquid.NewEnvironment()
-		tags.RegisterStandardTags(env)
-		env.SetOutputEscape(on)
-		env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 1 << 20})
+		limit := 1 << 20
+		env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: on, Limits: liquid.ResourceLimitsConfig{RenderLengthLimit: &limit}})
 		long := strings.Repeat("<", 8<<20)
 		tmpl, err := liquid.ParseTemplate(`{{ long }}`, &liquid.TemplateOptions{Environment: env})
 		if err != nil {
@@ -212,9 +201,7 @@ func TestOutputEscapeOfALongStringStaysWithinTheLimit(t *testing.T) {
 // Outlook conditional comment. Each case closes its destination in the
 // value, and the value stays inside.
 func TestOutputEscapeKeepsAValueInItsDestination(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(true)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: true})
 	data := map[string]interface{}{"v": `x"'></a><img src=x onerror=alert(1)>--><![endif]-->&`}
 	escaped := `x&quot;&#39;&gt;&lt;/a&gt;&lt;img src=x onerror=alert(1)&gt;--&gt;&lt;![endif]--&gt;&amp;`
 	for _, c := range []struct{ destination, template string }{

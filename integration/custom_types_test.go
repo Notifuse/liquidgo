@@ -40,8 +40,7 @@ func TestCustomMapTypeAlias(t *testing.T) {
 
 	template := "{{ workspace.id }}"
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
@@ -103,8 +102,7 @@ func TestCustomMapTypeAliasWithFilters(t *testing.T) {
 		},
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -137,8 +135,7 @@ func TestNestedCustomMapTypes(t *testing.T) {
 
 	template := "{{ company.workspace.project.task.id }}"
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
@@ -164,8 +161,7 @@ func TestCustomMapInLoops(t *testing.T) {
 
 	template := "{% for item in items %}{{ item.name }}: {{ item.value }}\n{% endfor %}"
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
@@ -205,8 +201,7 @@ func TestCustomMapInConditionals(t *testing.T) {
 		},
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -267,8 +262,7 @@ func TestMixedCustomAndNativeMaps(t *testing.T) {
 		},
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -341,8 +335,7 @@ func TestCustomMapWithDifferentTypes(t *testing.T) {
 		},
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -370,8 +363,7 @@ func TestCustomMapTypeAssignTag(t *testing.T) {
 
 	template := "{% assign ws_id = workspace.id %}{% assign ws_name = workspace.name %}ID: {{ ws_id }}, Name: {{ ws_name }}"
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)

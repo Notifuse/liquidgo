@@ -31,8 +31,7 @@ func TestRecursivePartialsAreBounded(t *testing.T) {
 		{"include", `{% include 'd' %}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			env := liquid.NewEnvironment()
-			tags.RegisterStandardTags(env)
+			env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 			tmpl, err := liquid.ParseTemplate(tc.template, &liquid.TemplateOptions{Environment: env})
 			if err != nil {
 				t.Fatal(err)

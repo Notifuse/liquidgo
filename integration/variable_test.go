@@ -135,8 +135,7 @@ func TestVariable_NilRendersAsEmptyString(t *testing.T) {
 // TestVariable_PresetAssigns tests preset assigns on template.
 // Ported from: test_preset_assigns
 func TestVariable_PresetAssigns(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate("{{ test }}", &liquid.TemplateOptions{
 		Environment: env,
@@ -162,8 +161,7 @@ func TestVariable_PresetAssigns(t *testing.T) {
 // TestVariable_ReuseParsedTemplate tests reusing a parsed template.
 // Ported from: test_reuse_parsed_template
 func TestVariable_ReuseParsedTemplate(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate("{{ greeting }} {{ name }}", &liquid.TemplateOptions{
 		Environment: env,
@@ -210,8 +208,7 @@ func TestVariable_ReuseParsedTemplate(t *testing.T) {
 // Ported from: test_assigns_not_polluted_from_template
 func TestVariable_AssignsNotPollutedFromTemplate(t *testing.T) {
 	t.Skip("Known issue - related to variable lookup evaluation")
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate("{{ test }}{% assign test = 'bar' %}{{ test }}", &liquid.TemplateOptions{
 		Environment: env,
@@ -337,9 +334,7 @@ func TestVariable_FilterWithSingleTrailingComma(t *testing.T) {
 	template := `{{ "hello" | append: "world", }}`
 
 	// In strict mode, this should raise an error
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -349,10 +344,6 @@ func TestVariable_FilterWithSingleTrailingComma(t *testing.T) {
 	}
 
 	// In rigid mode, it should work
-	env2 := liquid.NewEnvironment()
-	env2.SetErrorMode("rigid")
-	tags.RegisterStandardTags(env2)
-
 	assertTemplateResult(t, "helloworld", template, map[string]interface{}{}, TemplateResultOptions{ErrorMode: "rigid"})
 }
 
@@ -363,9 +354,7 @@ func TestVariable_MultipleFiltersWithTrailingCommas(t *testing.T) {
 	template := `{{ "hello" | append: "1", | append: "2", }}`
 
 	// In strict mode, this should raise an error
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -385,9 +374,7 @@ func TestVariable_FilterWithColonButNoArguments(t *testing.T) {
 	template := `{{ "test" | upcase: }}`
 
 	// In strict mode, this should raise an error
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -407,9 +394,7 @@ func TestVariable_FilterChainWithColonNoArgs(t *testing.T) {
 	template := `{{ "test" | append: "x" | upcase: }}`
 
 	// In strict mode, this should raise an error
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,
@@ -429,9 +414,7 @@ func TestVariable_CombiningTrailingCommaAndEmptyArgs(t *testing.T) {
 	template := `{{ "test" | append: "x", | upcase: }}`
 
 	// In strict mode, this should raise an error
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,

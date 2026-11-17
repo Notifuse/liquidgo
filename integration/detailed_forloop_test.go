@@ -42,8 +42,7 @@ func TestForloopLastDetailed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			env := liquid.NewEnvironment()
-			tags.RegisterStandardTags(env)
+			env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 			tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 
 			err := tmpl.Parse(tt.template, nil)

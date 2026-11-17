@@ -48,23 +48,25 @@ func (p *panicTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer) {
 
 func (p *panicTag) Blank() bool { return p.blank }
 
-func panicEnvironment(l limits) *liquid.Environment {
-	env := newEnv("", l)
+// panicConfig is the config of an environment with the tags of panicTag and
+// limits l.
+func panicConfig(l limits) liquid.EnvironmentConfig {
+	config := envConfig("", l)
 	register := func(name string, err func() error, blank bool) {
-		env.RegisterTag(name, tags.TagConstructor(func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+		config.Tags[name] = tags.TagConstructor(func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 			var e error
 			if err != nil {
 				e = err()
 			}
 			return &panicTag{Tag: liquid.NewTag(tagName, markup, pc), err: e, blank: blank}, nil
-		}))
+		})
 	}
 	register("crash", nil, false)
 	register("fail", func() error { return liquid.NewArgumentError("bad argument") }, false)
 	register("blankfail", func() error { return liquid.NewArgumentError("bad argument") }, true)
 	register("undefined", func() error { return liquid.NewUndefinedVariable("undefined variable y") }, false)
 	register("toomuch", func() error { return liquid.NewMemoryError("Memory limits exceeded") }, false)
-	return env
+	return config
 }
 
 // TestAnErrorInANodeKeepsTheRestOfTheOutput checks the rules of Ruby's
@@ -74,8 +76,9 @@ func panicEnvironment(l limits) *liquid.Environment {
 // render, from any block or partial. A Go panic (crash), which Ruby writes
 // as an internal error and goes on from, ends the render in liquidgo.
 func TestAnErrorInANodeKeepsTheRestOfTheOutput(t *testing.T) {
-	env := panicEnvironment(limits{})
-	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": "{% toomuch %}"}))
+	config := panicConfig(limits{})
+	config.FileSystem = NewStubFileSystem(map[string]string{"p": "{% toomuch %}"})
+	env := mustEnv(config)
 	for _, c := range []struct {
 		source, want, wantError string
 	}{
@@ -146,8 +149,9 @@ func (b *boomDrop) Boom() string {
 // name and the partial flag are restored when an include ends on an error,
 // as Ruby's ensure: a later error is reported for the template itself.
 func TestAnIncludeRestoresTheTemplateNameOnAnError(t *testing.T) {
-	env := newEnv("", limits{})
-	env.SetFileSystem(NewStubFileSystem(map[string]string{"part": "p"}))
+	config := envConfig("", limits{})
+	config.FileSystem = NewStubFileSystem(map[string]string{"part": "p"})
+	env := mustEnv(config)
 	source := "a\n{% include 'part', v: d.boom %}\nb\n{{ 'x' | nofilter }}"
 	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if err != nil {

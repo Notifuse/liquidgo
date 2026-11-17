@@ -50,8 +50,10 @@ import (
 
 func main() {
     // Create environment with standard tags
-    env := liquid.NewEnvironment()
-    tags.RegisterStandardTags(env)
+    env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+    if err != nil {
+        panic(err)
+    }
 
     // Parse template with conditionals and loops
     source := `
@@ -168,9 +170,11 @@ func shout(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{},
 }
 
 func main() {
-    // Create environment and register filters
-    env := liquid.NewEnvironment()
-    if err := env.RegisterFilter(liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)); err != nil {
+    // Create an environment that declares the filters
+    env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{
+        Filters: []liquid.FilterDef{liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)},
+    })
+    if err != nil {
         panic(err)
     }
 
@@ -202,6 +206,7 @@ import (
     "strings"
 
     "github.com/Notifuse/liquidgo/v5/liquid"
+    "github.com/Notifuse/liquidgo/v5/liquid/tags"
 )
 
 // Custom tag implementation
@@ -224,15 +229,19 @@ func (g *GreetingTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 }
 
 func main() {
-    // Register custom tag
-    env := liquid.NewEnvironment()
-    env.RegisterTag("greet", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+    // The standard tags and a custom one
+    envTags := tags.Standard()
+    envTags["greet"] = func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
         tag, err := NewGreetingTag(tagName, markup, parseContext)
         if err != nil {
             return nil, err
         }
         return tag, nil
-    })
+    }
+    env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: envTags})
+    if err != nil {
+        panic(err)
+    }
 
     tmpl, _ := liquid.ParseTemplate(
         "{% greet user_name %}",
@@ -347,9 +356,13 @@ import (
 
 func main() {
     // Create isolated environment
-    userEnv := liquid.NewEnvironment()
-    tags.RegisterStandardTags(userEnv)
-    userEnv.RegisterFilter(liquid.Filter("money", money))
+    userEnv, err := liquid.NewEnvironment(liquid.EnvironmentConfig{
+        Tags:    tags.Standard(),
+        Filters: []liquid.FilterDef{liquid.Filter("money", money)},
+    })
+    if err != nil {
+        panic(err)
+    }
 
     // Use environment in template
     tmpl, _ := liquid.ParseTemplate(source, &liquid.TemplateOptions{
@@ -364,22 +377,19 @@ Benefits of environments:
 - **Security** - Limit available tags/filters per context
 - **Maintainability** - Clearer scope of customizations
 - **No conflicts** - Avoid global state issues
+- **Safe to share** - An environment never changes once built: `NewEnvironment` keeps a copy of
+  its config, so renders on any number of goroutines can share it
 
 ## Error Handling
 
-Liquid supports three error modes:
+The error mode of an environment decides how its templates parse:
 
 ```go
-env := liquid.NewEnvironment()
-
-// Lax mode (default) - render errors inline
-env.SetErrorMode("lax")
-
-// Warn mode - collect warnings
-env.SetErrorMode("warn")
-
-// Strict mode - return errors immediately
-env.SetErrorMode("strict")
+// "lax" (default): markup that does not parse is tolerated, as Ruby's lax parser does
+// "warn": a syntax error is a warning, and the markup is parsed as lax
+// "strict": a syntax error fails the parse
+// "strict2" (or "rigid"): stricter still, as Shopify Liquid 5.14's strict2
+env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 ```
 
 ### Rendering and errors
@@ -433,11 +443,14 @@ to every render of untrusted templates, for the environment or for one render, a
 the context:
 
 ```go
-env := liquid.NewEnvironment()
-env.SetDefaultResourceLimits(map[string]interface{}{
-    "render_length_limit": 1 << 20, // bytes written
-    "render_score_limit":  100000,  // nodes rendered, a loop counting its body at each turn
-    "assign_score_limit":  1 << 20, // bytes assigned and captured
+written, score, assigned := 1<<20, 100000, 1<<20
+env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{
+    Tags: tags.Standard(),
+    Limits: liquid.ResourceLimitsConfig{
+        RenderLengthLimit: &written,  // bytes written
+        RenderScoreLimit:  &score,    // nodes rendered, a loop counting its body and each range item
+        AssignScoreLimit:  &assigned, // bytes assigned and captured
+    },
 })
 
 length := 1 << 20
@@ -453,8 +466,7 @@ For HTML templates that output untrusted data (contact fields, form input, feeds
 output escape, as LiquidJS's `outputEscape` option:
 
 ```go
-env := liquid.NewEnvironment()
-env.SetOutputEscape(true)
+env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: true})
 ```
 
 Every `{{ }}` output, `echo` and `cycle` is then HTML-escaped, so a value cannot add markup to the
@@ -501,8 +513,10 @@ import (
 )
 
 func main() {
-    env := liquid.NewEnvironment()
-    tags.RegisterStandardTags(env)
+    env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+    if err != nil {
+        panic(err)
+    }
     tmpl, _ := liquid.ParseTemplate(
         "{% if contact.vip %}{{ contact.first_name | default: fallback }}{% endif %}",
         &liquid.TemplateOptions{Environment: env},

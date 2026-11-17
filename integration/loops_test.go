@@ -36,9 +36,10 @@ func TestLoopsSliceAsRuby(t *testing.T) {
 // for hours stops soon after the deadline of its context.Context, in a loop,
 // a capture and a partial, and that the error wraps the context's.
 func TestRenderStopsWhenItsContextIsDone(t *testing.T) {
-	env := newEnv("", limits{})
+	config := envConfig("", limits{})
 	loops := "{% for i in (1..100000) %}{% for j in (1..100000) %}x{% endfor %}{% endfor %}"
-	env.SetFileSystem(NewStubFileSystem(map[string]string{"p": loops}))
+	config.FileSystem = NewStubFileSystem(map[string]string{"p": loops})
+	env := mustEnv(config)
 	const deadline = 50 * time.Millisecond
 	slack := 50 * time.Millisecond
 	if raceEnabled {

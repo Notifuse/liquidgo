@@ -25,9 +25,7 @@ var knownLeaks = map[string]string{
 // No error of a parse or a render, with or without strict variables and
 // filters, shows a value of the data, but for knownLeaks.
 func TestErrorsShowNoValueOfTheData(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetFileSystem(liquid.NewLocalFileSystem(t.TempDir(), ""))
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: liquid.NewLocalFileSystem(t.TempDir(), "")})
 	data := map[string]interface{}{
 		"s": leakSecret, "n": "12" + leakSecret,
 		"h": map[string]interface{}{"k": leakSecret}, "a": []interface{}{leakSecret, map[string]interface{}{"k": leakSecret}},

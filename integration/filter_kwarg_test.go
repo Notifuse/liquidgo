@@ -28,9 +28,7 @@ func (k *KwargFilter) HtmlTag(_ interface{}, attributes interface{}) interface{}
 func TestFilterKwarg_CanParseDataKwargs(t *testing.T) {
 	t.Skip("Keyword arguments not yet implemented in liquidgo")
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&KwargFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&KwargFilter{})})
 
 	template := `{{ 'img' | html_tag: data-src: 'src', data-widths: '100, 200' }}`
 	expected := "data-src='src' data-widths='100, 200'"

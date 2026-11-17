@@ -66,8 +66,10 @@ import (
 )
 
 func main() {
-    env := liquid.NewEnvironment()
-    tags.RegisterStandardTags(env)
+    env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+    if err != nil {
+        panic(err)
+    }
 
     tmpl, err := liquid.ParseTemplate(
         "Hello {{ name | capitalize }}! {% for p in products %}{{ p.title }} {% endfor %}",
@@ -123,7 +125,7 @@ with `RaiseErrors`.
 shout := liquid.Filter("shout", func(ctx *liquid.Context, input interface{}, args ...interface{}) (interface{}, error) {
     return strings.ToUpper(fmt.Sprint(input)) + "!", nil
 })
-env.RegisterFilter(shout)
+env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: []liquid.FilterDef{shout}})
 
 // A drop declares the keys a template reads: {{ user.first_name }}
 func (u *User) LiquidGet(ctx *liquid.Context, key string) (interface{}, bool, error) {
@@ -200,9 +202,9 @@ Every difference, deliberate or not, is listed with its reason:
 
 ## Version
 
-Current version: **5.14.0**, port revision 2 (`liquid.Version`, `liquid.PortRevision`). The minor
+Current version: **5.14.0**, port revision 3 (`liquid.Version`, `liquid.PortRevision`). The minor
 version is Shopify's: port revision N of Shopify Liquid 5.14.0 is tagged `v5.14.(N-1)`, so
-revision 2 is `v5.14.1`. `v5.14.0` is retracted: it made `false` blank, which changed the display
+revision 3 is `v5.14.2`. `v5.14.0` is retracted: it made `false` blank, which changed the display
 conditions of Notifuse. The port of 5.11.0 ended at revision 12, `v5.11.11`.
 
 ## Contributing

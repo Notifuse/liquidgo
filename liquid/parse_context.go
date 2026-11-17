@@ -29,7 +29,7 @@ type ParseContext struct {
 func NewParseContext(options ParseContextOptions) *ParseContext {
 	env := options.Environment
 	if env == nil {
-		env = NewEnvironment()
+		env = newEnvironment()
 	}
 
 	locale := options.Locale
