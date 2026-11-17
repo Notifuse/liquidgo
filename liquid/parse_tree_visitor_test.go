@@ -7,7 +7,7 @@ import (
 
 func TestParseTreeVisitorBasic(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	node := NewTag("test", "", pc)
 	ptv := ForParseTreeVisitor(node, nil)
 	if ptv == nil {
@@ -17,7 +17,7 @@ func TestParseTreeVisitorBasic(t *testing.T) {
 
 func TestParseTreeVisitorChildren(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	// Create a tag with nodelist
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
@@ -31,7 +31,7 @@ func TestParseTreeVisitorChildren(t *testing.T) {
 
 func TestParseTreeVisitorVisit(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello"})
 
@@ -44,7 +44,7 @@ func TestParseTreeVisitorVisit(t *testing.T) {
 
 func TestForParseTreeVisitor(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	node := NewTag("test", "", pc)
 	ptv := ForParseTreeVisitor(node, nil)
 	if ptv == nil {
@@ -74,7 +74,7 @@ func (n *nodeWithChildren) ParseTreeChildren() []interface{} { return n.children
 
 func TestParseTreeVisitorAddCallbackFor(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
 	ptv := ForParseTreeVisitor(tag, nil)
@@ -111,7 +111,7 @@ func TestParseTreeVisitorAddCallbackFor(t *testing.T) {
 
 func TestParseTreeVisitorAddCallbackForWithChaining(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	node := NewTag("test", "", pc)
 	ptv := ForParseTreeVisitor(node, nil)
 
@@ -143,7 +143,7 @@ func TestParseTreeVisitorChildrenWithInvalidNode(t *testing.T) {
 
 func TestParseTreeVisitorVisitWithCallback(t *testing.T) {
 	lineNum := 1
-	pc := &mockParseContextForTag{lineNum: &lineNum, env: NewEnvironment()}
+	pc := &mockParseContextForTag{lineNum: &lineNum, env: newEnvironment()}
 	tag := NewTag("test", "", pc)
 	tag.SetNodelist([]interface{}{"hello", "world"})
 

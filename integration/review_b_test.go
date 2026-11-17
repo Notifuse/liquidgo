@@ -14,8 +14,7 @@ import (
 
 func renderB(t *testing.T, src string, data map[string]interface{}, opts ...liquid.RenderOption) liquid.Result {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", src, err)
@@ -98,9 +97,7 @@ func TestLocalFiltersReachAPartial(t *testing.T) {
 // A standard filter given an argument too many, append and raw among them,
 // gives nil and records an ArgumentError.
 func TestTheArityOfTheStandardFilters(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetOutputEscape(true) // which declares raw
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), OutputEscape: true})
 	for _, src := range []string{`[{{ "a" | append: "b", "c" }}]`, `[{{ "a" | raw: 1 }}]`, `[{{ "a" | upcase: 1 }}]`} {
 		tmpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 		if err != nil {
@@ -117,9 +114,9 @@ func TestTheArityOfTheStandardFilters(t *testing.T) {
 // A filter with no function is refused, as a render option as in an
 // environment; so is a name no template can write.
 func TestAFilterMustBeWritable(t *testing.T) {
-	env := liquid.NewEnvironment()
-	if err := env.RegisterFilter(liquid.Filter("has space", func(*liquid.Context, interface{}, ...interface{}) (interface{}, error) { return nil, nil })); err == nil {
-		t.Error("a filter named with a space was registered")
+	spaced := liquid.Filter("has space", func(*liquid.Context, interface{}, ...interface{}) (interface{}, error) { return nil, nil })
+	if _, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Filters: []liquid.FilterDef{spaced}}); err == nil {
+		t.Error("a filter named with a space was declared")
 	}
 	tmpl, err := liquid.ParseTemplate(`{{ "A" | downcase }}`, nil)
 	if err != nil {
@@ -143,8 +140,7 @@ func TestTheVisitorWalksTheAttributesOfPartials(t *testing.T) {
 			t.Fatalf("run %d gave %v, run 0 %v", i, got, first)
 		}
 	}
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% if a %}{{ b }}{% endif %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)

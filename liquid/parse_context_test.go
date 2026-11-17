@@ -45,8 +45,7 @@ func TestParseContextParseExpressionSafe(t *testing.T) {
 }
 
 func TestParseContextWithOptions(t *testing.T) {
-	env := NewEnvironment()
-	env.SetErrorMode("strict")
+	env := mustEnv(EnvironmentConfig{ErrorMode: "strict"})
 	locale := NewI18n("en")
 
 	pc := NewParseContext(ParseContextOptions{

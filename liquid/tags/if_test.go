@@ -797,10 +797,11 @@ func TestIfTagMultipleElsif(t *testing.T) {
 // Note: This test requires an environment with registered tags for nested parsing to work
 func TestIfTagComplexNestedConditions(t *testing.T) {
 	// Create an environment and register the if tag
-	env := liquid.NewEnvironment()
-	env.RegisterTag("if", func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	envTags := map[string]liquid.TagConstructor{}
+	envTags["if"] = func(tagName, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return node(NewIfTag(tagName, markup, pc))
-	})
+	}
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 
 	pcOpts := liquid.ParseContextOptions{
 		Environment: env,

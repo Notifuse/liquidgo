@@ -18,8 +18,7 @@ import (
 )
 
 func auditEnv() *liquid.Environment {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	return env
 }
 

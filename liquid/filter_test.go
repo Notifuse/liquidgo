@@ -36,10 +36,7 @@ func constant(v string) FilterFunc {
 // A local filter of the render takes precedence over the environment's, the
 // last given first, which takes precedence over the standard one.
 func TestFilterPrecedence(t *testing.T) {
-	env := NewEnvironment()
-	if err := env.RegisterFilter(Filter("upcase", constant("env"))); err != nil {
-		t.Fatal(err)
-	}
+	env := mustEnv(EnvironmentConfig{Filters: []FilterDef{Filter("upcase", constant("env"))}})
 	res, _ := renderFilters(t, env, "{{ x | upcase }}|{{ x | downcase }}")
 	if res.Output != "env|a" {
 		t.Errorf("environment filter: %q", res.Output)
@@ -48,7 +45,7 @@ func TestFilterPrecedence(t *testing.T) {
 	if res.Output != "last" {
 		t.Errorf("local filters: %q, want the last given", res.Output)
 	}
-	if res, _ := renderFilters(t, NewEnvironment(), "{{ x | upcase }}"); res.Output != "A" {
+	if res, _ := renderFilters(t, newEnvironment(), "{{ x | upcase }}"); res.Output != "A" {
 		t.Errorf("standard filter: %q", res.Output)
 	}
 }
@@ -56,10 +53,10 @@ func TestFilterPrecedence(t *testing.T) {
 // An unknown filter passes its input through, or is an UndefinedFilter with
 // strict filters.
 func TestAnUnknownFilter(t *testing.T) {
-	if res, _ := renderFilters(t, NewEnvironment(), "{{ x | nope }}"); res.Output != "a" || len(res.Errors) != 0 {
+	if res, _ := renderFilters(t, newEnvironment(), "{{ x | nope }}"); res.Output != "a" || len(res.Errors) != 0 {
 		t.Errorf("lax: %q %v", res.Output, res.Errors)
 	}
-	res, _ := renderFilters(t, NewEnvironment(), "{{ x | nope }}", WithStrictFilters())
+	res, _ := renderFilters(t, newEnvironment(), "{{ x | nope }}", WithStrictFilters())
 	var undefined *UndefinedFilter
 	if len(res.Errors) != 1 || !errors.As(res.Errors[0], &undefined) {
 		t.Errorf("strict: errors %v, want an UndefinedFilter", res.Errors)
@@ -69,34 +66,33 @@ func TestAnUnknownFilter(t *testing.T) {
 // An argument too many, or the error a filter returns, gives nil, and is
 // raised with strict filters; a missing argument is nil.
 func TestFilterArgumentsAndErrors(t *testing.T) {
-	if res, _ := renderFilters(t, NewEnvironment(), "[{{ x | upcase: 1 }}]"); res.Output != "[]" {
+	if res, _ := renderFilters(t, newEnvironment(), "[{{ x | upcase: 1 }}]"); res.Output != "[]" {
 		t.Errorf("an argument too many: %q", res.Output)
 	}
-	res, _ := renderFilters(t, NewEnvironment(), "[{{ x | upcase: 1 }}]", WithStrictFilters())
+	res, _ := renderFilters(t, newEnvironment(), "[{{ x | upcase: 1 }}]", WithStrictFilters())
 	if len(res.Errors) != 1 || !strings.Contains(res.Errors[0].Error(), "wrong number of arguments (given 2, expected 1)") {
 		t.Errorf("strict: errors %v", res.Errors)
 	}
 	failing := Filter("fail", func(*Context, interface{}, ...interface{}) (interface{}, error) {
 		return "kept?", NewArgumentError("bad")
 	})
-	if res, _ := renderFilters(t, NewEnvironment(), "[{{ x | fail }}]", WithFilters(failing)); res.Output != "[]" {
+	if res, _ := renderFilters(t, newEnvironment(), "[{{ x | fail }}]", WithFilters(failing)); res.Output != "[]" {
 		t.Errorf("a failing filter: %q", res.Output)
 	}
-	if res, _ := renderFilters(t, NewEnvironment(), "{{ x | append }}|{{ x | default }}"); res.Output != "a|a" {
+	if res, _ := renderFilters(t, newEnvironment(), "{{ x | append }}|{{ x | default }}"); res.Output != "a|a" {
 		t.Errorf("missing arguments: %q", res.Output)
 	}
 }
 
 // A filter needs a name and a function.
-func TestRegisterFilterChecksTheFilter(t *testing.T) {
-	env := NewEnvironment()
-	if err := env.RegisterFilter(Filter("", rawFilter)); err == nil {
-		t.Error("a filter with no name was registered")
+func TestAnEnvironmentFilterIsChecked(t *testing.T) {
+	if _, err := NewEnvironment(EnvironmentConfig{Filters: []FilterDef{Filter("", rawFilter)}}); err == nil {
+		t.Error("a filter with no name was declared")
 	}
-	if err := env.RegisterFilter(Filter("x", nil)); err == nil {
-		t.Error("a filter with no function was registered")
+	if _, err := NewEnvironment(EnvironmentConfig{Filters: []FilterDef{Filter("x", nil)}}); err == nil {
+		t.Error("a filter with no function was declared")
 	}
-	if names := env.FilterNames(); !sort.StringsAreSorted(names) || containsName(names, "x") {
+	if names := newEnvironment().FilterNames(); !sort.StringsAreSorted(names) || containsName(names, "x") {
 		t.Errorf("FilterNames %v", names)
 	}
 }
@@ -171,13 +167,13 @@ func TestAFilterErrorIsRecorded(t *testing.T) {
 		return nil, NewArgumentError("bad")
 	})
 	src := `[{{ 1 | divided_by: 0 }}|{{ x | fail | default: "d" }}]`
-	res, _ := renderFilters(t, NewEnvironment(), src, WithFilters(failing))
+	res, _ := renderFilters(t, newEnvironment(), src, WithFilters(failing))
 	var zero *ZeroDivisionError
 	var argument *ArgumentError
 	if res.Output != "[|d]" || len(res.Errors) != 2 || !errors.As(res.Errors[0], &zero) || !errors.As(res.Errors[1], &argument) {
 		t.Errorf("lax: %q %v, want %q and the two errors", res.Output, res.Errors, "[|d]")
 	}
-	res, _ = renderFilters(t, NewEnvironment(), `[{{ 1 | divided_by: 0 }}]`, WithStrictFilters())
+	res, _ = renderFilters(t, newEnvironment(), `[{{ 1 | divided_by: 0 }}]`, WithStrictFilters())
 	if res.Output != "[Liquid error: divided by 0]" || len(res.Errors) != 1 {
 		t.Errorf("strict: %q %v", res.Output, res.Errors)
 	}
@@ -209,11 +205,9 @@ func TestAFilterKeepsItsArguments(t *testing.T) {
 		return input, nil
 	}
 	for _, opts := range [][]RenderOption{{WithFilters(Filter("append", keep))}, nil} {
-		env := NewEnvironment()
+		env := newEnvironment()
 		if opts == nil {
-			if err := env.RegisterFilter(Filter("append", keep)); err != nil {
-				t.Fatal(err)
-			}
+			env = mustEnv(EnvironmentConfig{Filters: []FilterDef{Filter("append", keep)}})
 		}
 		kept = nil
 		if res, _ := renderFilters(t, env, `{{ x | append: "1" }}{{ x | upcase | append: "2" }}`, opts...); res.Output != "aA" {

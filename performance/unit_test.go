@@ -103,7 +103,7 @@ func init() {
 
 // BenchmarkExpressionParseString benchmarks Expression.Parse with string literals
 func BenchmarkExpressionParseString(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -115,7 +115,7 @@ func BenchmarkExpressionParseString(b *testing.B) {
 
 // BenchmarkExpressionParseLiteral benchmarks Expression.Parse with literal values
 func BenchmarkExpressionParseLiteral(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -127,7 +127,7 @@ func BenchmarkExpressionParseLiteral(b *testing.B) {
 
 // BenchmarkExpressionParseVariable benchmarks Expression.Parse with variables
 func BenchmarkExpressionParseVariable(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -139,7 +139,7 @@ func BenchmarkExpressionParseVariable(b *testing.B) {
 
 // BenchmarkExpressionParseNumber benchmarks Expression.Parse with numbers
 func BenchmarkExpressionParseNumber(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -151,7 +151,7 @@ func BenchmarkExpressionParseNumber(b *testing.B) {
 
 // BenchmarkExpressionParseRange benchmarks Expression.Parse with ranges
 func BenchmarkExpressionParseRange(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -163,7 +163,7 @@ func BenchmarkExpressionParseRange(b *testing.B) {
 
 // BenchmarkExpressionParseAll benchmarks Expression.Parse with all markup types
 func BenchmarkExpressionParseAll(b *testing.B) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	parseCtx := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

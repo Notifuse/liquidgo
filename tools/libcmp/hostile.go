@@ -34,8 +34,10 @@ func limited(name string) func(src string) (func(map[string]any) (string, error)
 	switch name {
 	case "liquidgo":
 		return func(src string) (func(map[string]any) (string, error), error) {
-			env := liquid.NewEnvironment()
-			tags.RegisterStandardTags(env)
+			env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+			if err != nil {
+				return nil, err
+			}
 			length, score, assign := limitLength, limitScore, limitAssign
 			t, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 			if err != nil {

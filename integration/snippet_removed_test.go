@@ -10,8 +10,7 @@ import (
 // TestSnippetTagReturnsUnknownTagError verifies that the snippet tag
 // was removed in Shopify Liquid v5.11.0 and now returns an unknown tag error.
 func TestSnippetTagReturnsUnknownTagError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	template := `{% snippet foo %}content{% endsnippet %}`
 	_, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{

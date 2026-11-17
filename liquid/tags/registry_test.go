@@ -6,11 +6,8 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
-func TestRegisterStandardTags(t *testing.T) {
-	env := liquid.NewEnvironment()
-
-	// Register all standard tags
-	RegisterStandardTags(env)
+func TestStandardTags(t *testing.T) {
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 
 	// Verify all standard tags are registered
 	// Note: snippet tag was removed in Shopify Liquid v5.11.0
@@ -80,5 +77,17 @@ func TestRegisterStandardTags(t *testing.T) {
 				t.Logf("Tag %q instantiation error (may be expected): %v", tagName, err)
 			}
 		}
+	}
+}
+
+// Each call of Standard gives a map of its own: a tag a caller adds or
+// replaces is not in the next one.
+func TestStandardGivesAMapOfItsOwn(t *testing.T) {
+	first := Standard()
+	first["assign"] = nil
+	first["extra"] = nil
+	second := Standard()
+	if second["assign"] == nil || second["extra"] != nil || len(second) != 20 {
+		t.Errorf("Standard() changed by a caller: %d tags", len(second))
 	}
 }

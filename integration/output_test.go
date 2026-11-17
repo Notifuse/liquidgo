@@ -92,9 +92,7 @@ func TestOutput_VariablePiping(t *testing.T) {
 	text := ` {{ car.gm | make_funny }} `
 	expected := ` LOL `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -126,9 +124,7 @@ func TestOutput_VariablePipingWithInput(t *testing.T) {
 	text := ` {{ car.gm | cite_funny }} `
 	expected := ` LOL: bad `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -160,9 +156,7 @@ func TestOutput_VariablePipingWithArgs(t *testing.T) {
 	text := ` {{ car.gm | add_smiley: ':-(' }} `
 	expected := ` bad :-( `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -194,9 +188,7 @@ func TestOutput_VariablePipingWithNoArgs(t *testing.T) {
 	text := ` {{ car.gm | add_smiley }} `
 	expected := ` bad :-) `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -228,9 +220,7 @@ func TestOutput_MultipleVariablePipingWithArgs(t *testing.T) {
 	text := ` {{ car.gm | add_smiley: ':-(' | add_smiley: ':-('}} `
 	expected := ` bad :-( :-( `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -262,9 +252,7 @@ func TestOutput_VariablePipingWithMultipleArgs(t *testing.T) {
 	text := ` {{ car.gm | add_tag: 'span', 'bar'}} `
 	expected := ` <span id="bar">bad</span> `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -296,9 +284,7 @@ func TestOutput_VariablePipingWithVariableArgs(t *testing.T) {
 	text := ` {{ car.gm | add_tag: 'span', car.bmw}} `
 	expected := ` <span id="good">bad</span> `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -331,9 +317,7 @@ func TestOutput_MultiplePipings(t *testing.T) {
 	text := ` {{ best_cars | cite_funny | paragraph }} `
 	expected := ` <p>LOL: bmw</p> `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -360,9 +344,7 @@ func TestOutput_LinkTo(t *testing.T) {
 	text := ` {{ 'Typo' | link_to: 'http://typo.leetsoft.com' }} `
 	expected := ` <a href="http://typo.leetsoft.com">Typo</a> `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	_ = env.RegisterFilter(methodfilters.Of(&FunnyFilter{})...)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: methodfilters.Of(&FunnyFilter{})})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,

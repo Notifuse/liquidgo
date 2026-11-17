@@ -13,12 +13,10 @@ import (
 // partials without writing to the tags' shared parse state (detected under
 // -race), and each gets its own output.
 func TestConcurrentRendersOfPartials(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetFileSystem(&mapFileSystem{templates: map[string]string{
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: &mapFileSystem{templates: map[string]string{
 		"p": "{% assign z = v %}{{ v }}{{ z }}",
 		"q": "{% increment c %}{{ v }}",
-	}})
+	}}})
 	tpl, err := liquid.ParseTemplate(`{% render 'p', v: v %}|{% include 'q' %}|{% assign y = v %}{{ y }}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)

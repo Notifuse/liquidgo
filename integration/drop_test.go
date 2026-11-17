@@ -176,8 +176,7 @@ func (e *EnumerableDrop) Max() interface{} {
 
 // renderTemplateForDropTest is a helper to render templates for drop testing.
 func renderTemplateForDropTest(template string, assigns map[string]interface{}) string {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(template, &liquid.TemplateOptions{
 		Environment: env,

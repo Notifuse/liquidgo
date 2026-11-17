@@ -46,8 +46,7 @@ func TestExpressionWithWhitespaceInSquareBrackets(t *testing.T) {
 }
 
 func TestAssignScoreExceedingResourceLimit(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env) // Register tags for parsing
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% assign foo = 42 %}{% assign bar = 23 %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -79,8 +78,7 @@ func TestAssignScoreExceedingResourceLimit(t *testing.T) {
 }
 
 func TestAssignScoreExceedingLimitFromCompositeObject(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env) // Register tags for parsing
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(`{% assign foo = 'aaaa' | reverse %}`, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("ParseTemplate() error = %v", err)
@@ -134,8 +132,7 @@ func (o *ObjectWrapperDrop) Value() interface{} {
 
 // assignScoreOf calculates the assign score for an object by assigning it and checking the score.
 func assignScoreOf(obj interface{}) int {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env) // Register tags for parsing
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	drop := NewObjectWrapperDrop(obj)
 	// Create resource limits for tracking assign score
 	rl := liquid.ResourceLimitsConfig{}

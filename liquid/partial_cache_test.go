@@ -18,7 +18,7 @@ func TestPartialCacheLoad(t *testing.T) {
 	registers.Set("file_system", &BlankFileSystem{})
 
 	ctx := &mockContextForPartial{registers: registers}
-	parseCtx := &mockParseContextForTag{env: NewEnvironment()}
+	parseCtx := &mockParseContextForTag{env: newEnvironment()}
 
 	// This will fail because BlankFileSystem doesn't have the template
 	// but that's expected for now
@@ -34,7 +34,7 @@ func TestLoadPartial(t *testing.T) {
 	registers.Set("file_system", &BlankFileSystem{})
 
 	ctx := &mockContextForPartial{registers: registers}
-	parseCtx := &mockParseContextForTag{env: NewEnvironment()}
+	parseCtx := &mockParseContextForTag{env: newEnvironment()}
 
 	_, err := LoadPartial("test", ctx, parseCtx)
 	if err == nil {
@@ -189,7 +189,7 @@ func TestPartialCacheLoadDifferentErrorModes(t *testing.T) {
 	ctx := &mockContextForPartial{registers: registers}
 
 	// Load with default error mode (lax)
-	env1 := NewEnvironment()
+	env1 := mustEnv(EnvironmentConfig{})
 	parseCtx1 := NewParseContext(ParseContextOptions{Environment: env1})
 	partial1, err1 := LoadPartial("test", ctx, parseCtx1)
 	if err1 != nil {
@@ -197,8 +197,7 @@ func TestPartialCacheLoadDifferentErrorModes(t *testing.T) {
 	}
 
 	// Load with different error mode should create separate cache entry
-	env2 := NewEnvironment()
-	env2.SetErrorMode("strict")
+	env2 := mustEnv(EnvironmentConfig{ErrorMode: "strict"})
 	parseCtx2 := NewParseContext(ParseContextOptions{Environment: env2})
 	partial2, err2 := LoadPartial("test", ctx, parseCtx2)
 	if err2 != nil {

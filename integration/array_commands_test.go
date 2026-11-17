@@ -9,8 +9,7 @@ import (
 
 // TestArrayCommandMethods tests array command methods like .last, .first, and .size.
 func TestArrayCommandMethods(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tests := []struct {
 		name     string

@@ -46,15 +46,13 @@ func TestSecurity_NoInstanceEvalLaterInChain(t *testing.T) {
 	expected := ` 1+1 + 1 `
 
 	// Register a custom filter
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
 
 	// Add a simple filter that adds " + 1" to the input
 	addOneFilter := func(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{}, error) {
 		return liquid.ToS(input, nil) + " + 1", nil
 	}
 
-	_ = env.RegisterFilter(liquid.Filter("add_one", addOneFilter))
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: []liquid.FilterDef{liquid.Filter("add_one", addOneFilter)}})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -90,8 +88,7 @@ func TestSecurity_DoesNotPermanentlyAddFiltersToSymbolTable(t *testing.T) {
 	// This test verifies that using unknown filters doesn't crash
 	text := ` {{ "some_string" | a_bad_filter }} `
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(text, &liquid.TemplateOptions{
 		Environment: env,
@@ -144,8 +141,7 @@ func TestSecurity_MaxDepthNestedBlocksDoesNotRaiseException(t *testing.T) {
 		code += "{% endif %}"
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(code, &liquid.TemplateOptions{
 		Environment: env,
@@ -185,8 +181,7 @@ func TestSecurity_MoreThanMaxDepthNestedBlocksRaisesException(t *testing.T) {
 		code += "{% endif %}"
 	}
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl, err := liquid.ParseTemplate(code, &liquid.TemplateOptions{
 		Environment: env,

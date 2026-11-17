@@ -50,7 +50,7 @@ func (m *mockParseContext) SetLineNumber(ln *int) {
 
 func (m *mockParseContext) Environment() *Environment {
 	if m.env == nil {
-		m.env = NewEnvironment()
+		m.env = newEnvironment()
 	}
 	return m.env
 }

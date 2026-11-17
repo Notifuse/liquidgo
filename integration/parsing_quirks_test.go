@@ -36,8 +36,7 @@ func TestParsingQuirks_RaiseOnLabelAndNoCloseBracketsPercent(t *testing.T) {
 // Ported from: test_error_on_empty_filter
 func TestParsingQuirks_ErrorOnEmptyFilter(t *testing.T) {
 	// Should parse fine
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	_, err := liquid.ParseTemplate("{{test}}", &liquid.TemplateOptions{
 		Environment: env,
@@ -47,9 +46,7 @@ func TestParsingQuirks_ErrorOnEmptyFilter(t *testing.T) {
 	}
 
 	// In lax mode, empty filter should parse
-	env2 := liquid.NewEnvironment()
-	env2.SetErrorMode("lax")
-	tags.RegisterStandardTags(env2)
+	env2 := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "lax"})
 
 	_, err = liquid.ParseTemplate("{{|test}}", &liquid.TemplateOptions{
 		Environment: env2,
@@ -59,9 +56,7 @@ func TestParsingQuirks_ErrorOnEmptyFilter(t *testing.T) {
 	}
 
 	// In strict mode, empty filter should raise error
-	env3 := liquid.NewEnvironment()
-	env3.SetErrorMode("strict")
-	tags.RegisterStandardTags(env3)
+	env3 := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	_, err = liquid.ParseTemplate("{{|test}}", &liquid.TemplateOptions{
 		Environment: env3,
@@ -81,9 +76,7 @@ func TestParsingQuirks_ErrorOnEmptyFilter(t *testing.T) {
 // TestParsingQuirks_MeaninglessParensError tests meaningless parentheses error.
 // Ported from: test_meaningless_parens_error
 func TestParsingQuirks_MeaninglessParensError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	markup := "a == 'foo' or (b == 'bar' and c == 'baz') or false"
 	template := "{% if " + markup + " %} YES {% endif %}"
@@ -99,9 +92,7 @@ func TestParsingQuirks_MeaninglessParensError(t *testing.T) {
 // TestParsingQuirks_UnexpectedCharactersSyntaxError tests unexpected characters error.
 // Ported from: test_unexpected_characters_syntax_error
 func TestParsingQuirks_UnexpectedCharactersSyntaxError(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("strict")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
 
 	markup1 := "true && false"
 	template1 := "{% if " + markup1 + " %} YES {% endif %}"
@@ -127,9 +118,7 @@ func TestParsingQuirks_UnexpectedCharactersSyntaxError(t *testing.T) {
 // TestParsingQuirks_NoErrorOnLaxEmptyFilter tests that lax mode allows empty filters.
 // Ported from: test_no_error_on_lax_empty_filter
 func TestParsingQuirks_NoErrorOnLaxEmptyFilter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	env.SetErrorMode("lax")
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "lax"})
 
 	_, err := liquid.ParseTemplate("{{test |a|b|}}", &liquid.TemplateOptions{
 		Environment: env,
@@ -174,8 +163,7 @@ func TestParsingQuirks_UnexpectedCharactersSilentlyEatLogicLax(t *testing.T) {
 // TestParsingQuirks_RaiseOnInvalidTagDelimiter tests invalid tag delimiter error.
 // Ported from: test_raise_on_invalid_tag_delimiter
 func TestParsingQuirks_RaiseOnInvalidTagDelimiter(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	tmpl := liquid.NewTemplate(&liquid.TemplateOptions{Environment: env})
 	err := tmpl.Parse("{% end %}", &liquid.TemplateOptions{

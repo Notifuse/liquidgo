@@ -42,8 +42,10 @@ func main() {
 
 	template := "{{ workspace.id }}"
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+	if err != nil {
+		panic(err)
+	}
 	tmpl, _ := liquid.ParseTemplate(template, &liquid.TemplateOptions{Environment: env})
 
 	res1, _ := tmpl.Render(context.Background(), data1)

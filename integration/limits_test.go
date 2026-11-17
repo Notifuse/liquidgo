@@ -109,10 +109,11 @@ func TestHostileTemplatesAreBounded(t *testing.T) {
 	for _, c := range boundedCases {
 		seen[c.name] = true
 		t.Run(c.name, func(t *testing.T) {
-			env := newEnv("", c.limits)
+			config := envConfig("", c.limits)
 			if c.partials != nil {
-				env.SetFileSystem(NewStubFileSystem(c.partials))
+				config.FileSystem = NewStubFileSystem(c.partials)
 			}
+			env := mustEnv(config)
 			var r result
 			runtime.GC()
 			alloc := allocated(func() {

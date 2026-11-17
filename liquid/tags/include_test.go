@@ -88,7 +88,7 @@ func TestIncludeTagRenderToOutputBuffer(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Test with non-string template name
@@ -158,7 +158,7 @@ func TestIncludeTagTemplateNameExpr(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -201,7 +201,7 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -241,7 +241,7 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -281,7 +281,7 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -319,7 +319,7 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template
@@ -358,7 +358,7 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	locale := liquid.NewI18n("en")
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env, Locale: locale})
 
@@ -379,7 +379,7 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 }
 
 func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
-	env := liquid.NewEnvironment()
+	env := mustEnv(liquid.EnvironmentConfig{})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 
 	// Create a file system with a template

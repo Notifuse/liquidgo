@@ -22,8 +22,10 @@ type library struct {
 
 var libraries = []library{
 	{"liquidgo", func(src string) (func(map[string]any) (string, error), error) {
-		env := liquid.NewEnvironment()
-		tags.RegisterStandardTags(env)
+		env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard()})
+		if err != nil {
+			return nil, err
+		}
 		t, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 		if err != nil {
 			return nil, err

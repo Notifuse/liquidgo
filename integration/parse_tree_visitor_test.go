@@ -16,8 +16,7 @@ import (
 // source whose callback gives the name of each variable lookup.
 func variableTraversal(t *testing.T, source string) *liquid.ParseTreeVisitor {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 	tmpl, err := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", source, err)

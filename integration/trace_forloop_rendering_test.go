@@ -8,8 +8,7 @@ import (
 )
 
 func TestTraceForloopRendering(t *testing.T) {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard()})
 
 	// Test direct variable lookup in context
 	ctx := liquid.BuildContext(liquid.ContextConfig{Environment: env})

@@ -15,9 +15,12 @@ import (
 )
 
 func rcEnv() *liquid.Environment {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	return env
+	return mustEnv(rcConfig())
+}
+
+// rcConfig is the config of rcEnv.
+func rcConfig() liquid.EnvironmentConfig {
+	return liquid.EnvironmentConfig{Tags: tags.Standard()}
 }
 
 func rcParse(t *testing.T, env *liquid.Environment, src string) *liquid.Template {
@@ -32,8 +35,9 @@ func rcParse(t *testing.T, env *liquid.Environment, src string) *liquid.Template
 // Concurrent renders of one template each get their own output, errors and
 // limits, and the template keeps none of them.
 func TestRenderIsolatesConcurrentRenders(t *testing.T) {
-	env := rcEnv()
-	env.SetDefaultResourceLimits(map[string]interface{}{"render_length_limit": 200})
+	config := rcConfig()
+	config.Limits.RenderLengthLimit = intPtr(200)
+	env := mustEnv(config)
 	tpl := rcParse(t, env, `{% if admin %}{% assign secret = token %}{% endif %}[{{ secret }}]{% if fail %}{{ errors.standard_error }}{% endif %}{% for i in (1..n) %}x{% endfor %}`)
 	var wg sync.WaitGroup
 	failures := make(chan string, 2000)
@@ -107,10 +111,12 @@ func TestRenderLeavesTheTemplateAlone(t *testing.T) {
 // A template register stays readable next to WithFileSystem, by a tag that
 // reads the registers.
 func TestRenderKeepsTemplateRegisters(t *testing.T) {
-	env := rcEnv()
-	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config := rcConfig()
+
+	config.Tags["marker"] = tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
-	}))
+	})
+	env := mustEnv(config)
 	tpl := rcParse(t, env, `[{% marker %}{% render "p" %}]`)
 	tpl.Registers()["marker"] = "M"
 	fs := &mapFileSystem{templates: map[string]string{"p": "{% marker %}"}}
@@ -242,8 +248,9 @@ func TestRenderRecordedErrors(t *testing.T) {
 
 // WithLimits replaces the limits it sets and keeps the template's others.
 func TestRenderWithLimitsKeepsTheOthers(t *testing.T) {
-	env := rcEnv()
-	env.SetDefaultResourceLimits(map[string]interface{}{"render_score_limit": 50})
+	config := rcConfig()
+	config.Limits.RenderScoreLimit = intPtr(50)
+	env := mustEnv(config)
 	tpl := rcParse(t, env, `{% for i in (1..1000) %}{% endfor %}`)
 	_, err := tpl.Render(gocontext.Background(), nil, liquid.WithLimits(liquid.ResourceLimitsConfig{RenderLengthLimit: intPtr(1000000)}))
 	var limit *liquid.MemoryError
@@ -295,11 +302,10 @@ func (d *rcPanicDrop) Name() interface{} {
 // A Go panic in a filter, a drop or a partial ends the render with its
 // stack, and the output written before.
 func TestRenderGoPanicIsFatal(t *testing.T) {
-	env := rcEnv()
-	if err := env.RegisterFilter(methodfilters.Of(&rcPanicFilters{})...); err != nil {
-		t.Fatal(err)
-	}
-	env.SetFileSystem(&mapFileSystem{templates: map[string]string{"p": "{{ d.name }}"}})
+	config := rcConfig()
+	config.Filters = methodfilters.Of(&rcPanicFilters{})
+	config.FileSystem = &mapFileSystem{templates: map[string]string{"p": "{{ d.name }}"}}
+	env := mustEnv(config)
 	data := map[string]interface{}{"d": &rcPanicDrop{}}
 	for _, c := range []struct{ src, frame string }{
 		{`a{{ "x" | explode }}b`, "Explode"},
@@ -352,10 +358,12 @@ func (f *rcShoutFilters) Shout(input interface{}) string { return fmt.Sprint(inp
 // The render options reach the render: registers read by a tag, local
 // filters, and strict variables and filters, which record their error.
 func TestRenderOptions(t *testing.T) {
-	env := rcEnv()
-	env.RegisterTag("marker", tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config := rcConfig()
+
+	config.Tags["marker"] = tags.TagConstructor(func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
-	}))
+	})
+	env := mustEnv(config)
 	tpl := rcParse(t, env, `[{% marker %}]`)
 	res, err := tpl.Render(gocontext.Background(), nil, liquid.WithRegisters(map[string]interface{}{"marker": "R"}))
 	if err != nil || res.Output != "[R]" {
@@ -423,11 +431,12 @@ func TestRenderCallsTheFuncOfEachScope(t *testing.T) {
 		t.Errorf("funcs in a loop and in assigns render %q, want %q", res.Output, "12|12")
 	}
 
-	env := rcEnv()
+	config := rcConfig()
 	n := 0
-	env.RegisterTag("lazy", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config.Tags["lazy"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &lazyTag{Block: liquid.NewBlock(name, markup, pc), n: &n}, nil
-	})
+	}
+	env := mustEnv(config)
 	loop := rcParse(t, env, `{% for i in (1..200) %}{% lazy %}{{ lazy }}{% endlazy %},{% endfor %}`)
 	res, err := loop.Render(gocontext.Background(), nil)
 	if err != nil {
@@ -447,10 +456,12 @@ func TestRenderCallsTheFuncOfEachScope(t *testing.T) {
 // render inherits; and a file system given as a register serves nested
 // partials too.
 func TestRenderRegistersReachPartials(t *testing.T) {
-	env := rcEnv()
-	env.RegisterTag("marker", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config := rcConfig()
+
+	config.Tags["marker"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &markerTag{liquid.NewTag(name, markup, pc)}, nil
-	})
+	}
+	env := mustEnv(config)
 	fs := &mapFileSystem{templates: map[string]string{"p": "<{% marker %}>", "outer": "[{% render 'inner' %}]", "inner": "I"}}
 	tpl := rcParse(t, env, `<{% marker %}>{% render 'p' %}{% include 'p' %}`)
 	res, err := tpl.Render(gocontext.Background(), nil, liquid.WithFileSystem(fs), liquid.WithRegisters(map[string]interface{}{"marker": "me"}))
@@ -578,10 +589,12 @@ func (u *uncomparableTag) RenderToOutput(liquid.TagContext, *liquid.OutputBuffer
 // With RaiseErrors, an error whose value cannot be compared is raised as
 // itself through enclosing blocks.
 func TestRaiseErrorsWithAnUncomparableError(t *testing.T) {
-	env := rcEnv()
-	env.RegisterTag("uncomparable", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	config := rcConfig()
+
+	config.Tags["uncomparable"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		return &uncomparableTag{liquid.NewTag(name, markup, pc)}, nil
-	})
+	}
+	env := mustEnv(config)
 	tpl := rcParse(t, env, `{% if true %}{% uncomparable %}{% endif %}`)
 	_, err := tpl.Render(gocontext.Background(), nil, liquid.RaiseErrors())
 	var raised uncomparableError

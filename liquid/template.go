@@ -1,8 +1,6 @@
 package liquid
 
 import (
-	"math"
-	"reflect"
 	"sync/atomic"
 	"unicode/utf8"
 )
@@ -58,20 +56,12 @@ func NewTemplate(options *TemplateOptions) *Template {
 	if options != nil && options.Environment != nil {
 		env = options.Environment
 	} else {
-		env = NewEnvironment()
-	}
-
-	config := ResourceLimitsConfig{}
-	if env.defaultResourceLimits != nil {
-		// Convert map[string]interface{} to ResourceLimitsConfig
-		config.RenderLengthLimit = limitValue(env.defaultResourceLimits["render_length_limit"])
-		config.RenderScoreLimit = limitValue(env.defaultResourceLimits["render_score_limit"])
-		config.AssignScoreLimit = limitValue(env.defaultResourceLimits["assign_score_limit"])
+		env = newEnvironment()
 	}
 
 	return &Template{
 		environment: env,
-		limits:      config,
+		limits:      copyLimits(env.limits),
 		registers:   make(map[string]interface{}, 4),
 		assigns:     make(map[string]interface{}, 8),
 	}
@@ -211,7 +201,7 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 	if options.Environment != nil {
 		t.environment = options.Environment
 	} else if t.environment == nil {
-		t.environment = NewEnvironment()
+		t.environment = newEnvironment()
 	}
 
 	t.lineNumbers = options.LineNumbers
@@ -228,36 +218,4 @@ func (t *Template) configureOptions(options *TemplateOptions) ParseContextInterf
 	}
 
 	return NewParseContext(parseContextOpts)
-}
-
-// limitValue returns a resource limit given as any integer type, or as a
-// whole float such as a number decoded from JSON, saturated to the int range,
-// or nil when v is not an integer.
-func limitValue(v interface{}) *int {
-	var limit int
-	switch n := v.(type) {
-	case int:
-		limit = n
-	case int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		var err error
-		if limit, err = ToInteger(n); err != nil {
-			return nil
-		}
-	case float64, float32:
-		f := reflect.ValueOf(n).Float()
-		if math.IsNaN(f) || math.IsInf(f, 0) || f != math.Trunc(f) {
-			return nil
-		}
-		switch {
-		case f >= math.MaxInt:
-			limit = math.MaxInt
-		case f <= math.MinInt:
-			limit = math.MinInt
-		default:
-			limit = int(f)
-		}
-	default:
-		return nil
-	}
-	return &limit
 }

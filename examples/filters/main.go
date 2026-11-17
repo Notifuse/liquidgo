@@ -26,9 +26,11 @@ func shout(_ *liquid.Context, input interface{}, _ ...interface{}) (interface{},
 func main() {
 	// Create environment with standard tags and custom filters: reverse
 	// takes the place of the standard reverse
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	if err := env.RegisterFilter(liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)); err != nil {
+	env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{
+		Tags:    tags.Standard(),
+		Filters: []liquid.FilterDef{liquid.Filter("reverse", reverse), liquid.Filter("shout", shout)},
+	})
+	if err != nil {
 		panic(err)
 	}
 

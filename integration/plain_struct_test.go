@@ -76,11 +76,9 @@ func (d *valueDrop) LiquidGet(_ *liquid.Context, key string) (interface{}, bool,
 
 func renderPlain(t *testing.T, src string, data interface{}) string {
 	t.Helper()
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.SetFileSystem(&mapFileSystem{templates: map[string]string{
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), FileSystem: &mapFileSystem{templates: map[string]string{
 		"u": "{{ u.name }}{{ u.password_hash }};",
-	}})
+	}}})
 	tpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatalf("parse %q: %v", src, err)

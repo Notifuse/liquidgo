@@ -29,12 +29,9 @@ func (f *envFilters) EnvOnly(input interface{}) string { return "env" }
 // Tenant is overridden by a local filter of the same name.
 func (f *envFilters) Tenant(input interface{}) string { return "env-tenant" }
 
-func localFiltersTemplate(t *testing.T, env *liquid.Environment, src string) *liquid.Template {
+func localFiltersTemplate(t *testing.T, envFilters []liquid.FilterDef, src string) *liquid.Template {
 	t.Helper()
-	if env == nil {
-		env = liquid.NewEnvironment()
-	}
-	tags.RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), Filters: envFilters})
 	tpl, err := liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env})
 	if err != nil {
 		t.Fatal(err)
@@ -80,11 +77,7 @@ func TestConcurrentRendersWithLocalFilters(t *testing.T) {
 // The filters registered on the environment apply when a render also passes
 // local filters, which take precedence for a name both define.
 func TestEnvironmentFiltersApplyWithLocalOnes(t *testing.T) {
-	env := liquid.NewEnvironment()
-	if err := env.RegisterFilter(methodfilters.Of(&envFilters{})...); err != nil {
-		t.Fatal(err)
-	}
-	tpl := localFiltersTemplate(t, env, `{{ "x" | env_only }}|{{ "x" | tenant }}`)
+	tpl := localFiltersTemplate(t, methodfilters.Of(&envFilters{}), `{{ "x" | env_only }}|{{ "x" | tenant }}`)
 	if got := renderRuby(tpl, map[string]interface{}{}, nil); got != "env|env-tenant" {
 		t.Errorf("without local filters = %q, want %q", got, "env|env-tenant")
 	}

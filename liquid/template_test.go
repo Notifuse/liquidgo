@@ -8,8 +8,8 @@ import (
 )
 
 func TestTemplateParse(t *testing.T) {
-	env := NewEnvironment()
-	// Note: Tags should be registered via tags.RegisterStandardTags from outside
+	env := mustEnv(EnvironmentConfig{})
+	// Note: the standard tags come from tags.Standard(), outside this package
 	// For now, test without tags (just variables)
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
@@ -24,8 +24,8 @@ func TestTemplateParse(t *testing.T) {
 }
 
 func TestTemplateRender(t *testing.T) {
-	env := NewEnvironment()
-	// Note: Tags should be registered via tags.RegisterStandardTags from outside
+	env := mustEnv(EnvironmentConfig{})
+	// Note: the standard tags come from tags.Standard(), outside this package
 	// For now, test without tags (just variables)
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
@@ -42,7 +42,7 @@ func TestTemplateRender(t *testing.T) {
 }
 
 func TestTemplateRenderEmpty(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	err := template.Parse("", nil)
@@ -57,7 +57,7 @@ func TestTemplateRenderEmpty(t *testing.T) {
 }
 
 func TestTemplateRenderNilRoot(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	// Don't parse, so root is nil
@@ -70,13 +70,9 @@ func TestTemplateRenderNilRoot(t *testing.T) {
 
 // TestTemplateDefaultResourceLimits tests that default resource limits are applied
 func TestTemplateDefaultResourceLimits(t *testing.T) {
-	env := NewEnvironment()
 	renderLimit := 100
 	assignLimit := 50
-	env.SetDefaultResourceLimits(map[string]interface{}{
-		"render_length_limit": renderLimit,
-		"assign_score_limit":  assignLimit,
-	})
+	env := mustEnv(EnvironmentConfig{Limits: ResourceLimitsConfig{RenderLengthLimit: &renderLimit, AssignScoreLimit: &assignLimit}})
 
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
@@ -91,7 +87,7 @@ func TestTemplateDefaultResourceLimits(t *testing.T) {
 
 // TestTemplateEncodingValidation tests UTF-8 encoding validation
 func TestTemplateEncodingValidation(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
 	// Test invalid UTF-8 sequence
@@ -113,7 +109,7 @@ func TestTemplateEncodingValidation(t *testing.T) {
 
 // TestParseTemplate tests the ParseTemplate function
 func TestParseTemplate(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 
 	// Test basic parsing
 	template, err := ParseTemplate("Hello {{ name }}", &TemplateOptions{Environment: env})
@@ -145,7 +141,7 @@ func TestParseTemplate(t *testing.T) {
 
 // TestTemplateGettersSetters tests all getters and setters
 func TestTemplateGettersSetters(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
 	// Test Registers
@@ -189,7 +185,7 @@ func TestTemplateGettersSetters(t *testing.T) {
 }
 
 func TestTemplateRegisters(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
 	// Test Registers() - should return non-nil map
@@ -212,7 +208,7 @@ func TestTemplateRegisters(t *testing.T) {
 }
 
 func TestTemplateAssigns(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
 	// Test Assigns() - should return non-nil map
@@ -236,7 +232,7 @@ func TestTemplateAssigns(t *testing.T) {
 
 // TestTemplateLazyInitialization tests lazy initialization of nil fields
 func TestTemplateLazyInitialization(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 
 	// Manually set fields to nil to test lazy initialization
@@ -266,7 +262,7 @@ func TestTemplateLazyInitialization(t *testing.T) {
 // TestTemplateRenderToOutputBufferNilRoot tests a render of a template with
 // nil root, through Render, where RenderToOutputBuffer is gone
 func TestTemplateRenderToOutputBufferNilRoot(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	// Don't parse, so root is nil
 
@@ -282,7 +278,7 @@ func TestTemplateRenderToOutputBufferNilRoot(t *testing.T) {
 // concurrently without race conditions.
 // This test reproduces the issue from https://github.com/Notifuse/liquidgo/issues/2
 func TestTemplateConcurrentRender(t *testing.T) {
-	env := NewEnvironment()
+	env := mustEnv(EnvironmentConfig{})
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	err := template.Parse("Hello {{ name }}", nil)
 	if err != nil {

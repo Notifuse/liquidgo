@@ -69,7 +69,7 @@ type Context struct {
 	strictVariables bool
 	partial         bool
 	// safeHTML holds the texts of the captures of the render, which an
-	// output does not escape (see Environment.SetOutputEscape). Only the
+	// output does not escape (see EnvironmentConfig.OutputEscape). Only the
 	// reporter context of the render keeps it.
 	safeHTML map[string]struct{}
 }
@@ -78,7 +78,7 @@ type Context struct {
 func BuildContext(config ContextConfig) *Context {
 	env := config.Environment
 	if env == nil {
-		env = NewEnvironment()
+		env = newEnvironment()
 	}
 
 	// As Ruby's Context.new, whose environments default to {}: a context

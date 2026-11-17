@@ -113,35 +113,39 @@ func blockOf(make func(*liquid.Block) liquid.Node) liquid.TagConstructor {
 }
 
 func customTagEnvironment() *liquid.Environment {
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.RegisterTag("renderonly", tagOf(func(t *liquid.Tag) liquid.Node { return &renderOnlyTag{t} }))
-	env.RegisterTag("emptyrender", tagOf(func(t *liquid.Tag) liquid.Node { return &emptyRenderTag{t} }))
-	env.RegisterTag("bufferonly", tagOf(func(t *liquid.Tag) liquid.Node { return &bufferOnlyTag{t} }))
-	env.RegisterTag("unembedded", tagOf(func(*liquid.Tag) liquid.Node { return &unembeddedTag{} }))
-	env.RegisterTag("blockrender", blockOf(func(b *liquid.Block) liquid.Node { return &blockRenderTag{b} }))
-	env.RegisterTag("blockbuffer", blockOf(func(b *liquid.Block) liquid.Node { return &blockBufferTag{b} }))
-	env.RegisterTag("plainblock", blockOf(func(b *liquid.Block) liquid.Node { return &plainBlockTag{b} }))
-	env.RegisterTag("nestedbuffer", blockOf(func(b *liquid.Block) liquid.Node { return &nestedBufferTag{&blockBufferTag{b}} }))
-	env.RegisterTag("valuebuffer", tagOf(func(t *liquid.Tag) liquid.Node { return &valueBufferTag{t} }))
-	env.RegisterTag("valuebufferbyvalue", tagOf(func(t *liquid.Tag) liquid.Node { return valueBufferTag{t} }))
-	env.RegisterTag("valueblock", blockOf(func(b *liquid.Block) liquid.Node { return &valueBlockTag{b} }))
-	env.RegisterTag("disableable", tagOf(func(t *liquid.Tag) liquid.Node { return &disableableTag{Tag: t} }))
-	env.RegisterTag("wrappedif", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	return mustEnv(customTagConfig())
+}
+
+// customTagConfig is the config of the environment of the custom tags.
+func customTagConfig() liquid.EnvironmentConfig {
+	envTags := tags.Standard()
+	envTags["renderonly"] = tagOf(func(t *liquid.Tag) liquid.Node { return &renderOnlyTag{t} })
+	envTags["emptyrender"] = tagOf(func(t *liquid.Tag) liquid.Node { return &emptyRenderTag{t} })
+	envTags["bufferonly"] = tagOf(func(t *liquid.Tag) liquid.Node { return &bufferOnlyTag{t} })
+	envTags["unembedded"] = tagOf(func(*liquid.Tag) liquid.Node { return &unembeddedTag{} })
+	envTags["blockrender"] = blockOf(func(b *liquid.Block) liquid.Node { return &blockRenderTag{b} })
+	envTags["blockbuffer"] = blockOf(func(b *liquid.Block) liquid.Node { return &blockBufferTag{b} })
+	envTags["plainblock"] = blockOf(func(b *liquid.Block) liquid.Node { return &plainBlockTag{b} })
+	envTags["nestedbuffer"] = blockOf(func(b *liquid.Block) liquid.Node { return &nestedBufferTag{&blockBufferTag{b}} })
+	envTags["valuebuffer"] = tagOf(func(t *liquid.Tag) liquid.Node { return &valueBufferTag{t} })
+	envTags["valuebufferbyvalue"] = tagOf(func(t *liquid.Tag) liquid.Node { return valueBufferTag{t} })
+	envTags["valueblock"] = blockOf(func(b *liquid.Block) liquid.Node { return &valueBlockTag{b} })
+	envTags["disableable"] = tagOf(func(t *liquid.Tag) liquid.Node { return &disableableTag{Tag: t} })
+	envTags["wrappedif"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		t, err := tags.NewIfTag(name, markup, pc)
 		if err != nil {
 			return nil, err
 		}
 		return &wrappedIfTag{t}, nil
-	})
-	env.RegisterTag("wrappedfor", func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
+	}
+	envTags["wrappedfor"] = func(name, markup string, pc liquid.ParseContextInterface) (liquid.Node, error) {
 		t, err := tags.NewForTag(name, markup, pc)
 		if err != nil {
 			return nil, err
 		}
 		return &wrappedForTag{t}, nil
-	})
-	return env
+	}
+	return liquid.EnvironmentConfig{Tags: envTags}
 }
 
 func TestCustomTagsRenderThroughNode(t *testing.T) {
@@ -182,28 +186,28 @@ func TestCustomTagsRenderThroughNode(t *testing.T) {
 func TestAConstructorThatGivesNoTagIsASyntaxError(t *testing.T) {
 	noTag := func(string, string, liquid.ParseContextInterface) (liquid.Node, error) { return nil, nil }
 
-	env := liquid.NewEnvironment()
-	tags.RegisterStandardTags(env)
-	env.RegisterTag("notag", noTag)
+	envTags := tags.Standard()
+	envTags["notag"] = noTag
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 	if _, err := liquid.ParseTemplate("a{% notag %}b", &liquid.TemplateOptions{Environment: env}); err == nil ||
 		!strings.Contains(err.Error(), "notag") {
 		t.Errorf("parse error %v, want a syntax error that names notag", err)
 	}
 	// a nil *T in a Node is no tag either
-	env.RegisterTag("typednil", func(string, string, liquid.ParseContextInterface) (liquid.Node, error) {
+	envTags["typednil"] = func(string, string, liquid.ParseContextInterface) (liquid.Node, error) {
 		var tag *renderOnlyTag
 		return tag, nil
-	})
+	}
+	env = mustEnv(liquid.EnvironmentConfig{Tags: envTags})
 	_, err := liquid.ParseTemplate("a{% typednil %}b", &liquid.TemplateOptions{Environment: env})
 	var syntaxErr *liquid.SyntaxError
 	if !errors.As(err, &syntaxErr) || !strings.Contains(err.Error(), "typednil") {
 		t.Errorf("parse error %v (%T), want a syntax error that names typednil", err, err)
 	}
 
-	warn := liquid.NewEnvironment()
-	tags.RegisterStandardTags(warn)
-	warn.SetErrorMode("warn")
-	warn.RegisterTag("notag", noTag)
+	warnTags := tags.Standard()
+	warnTags["notag"] = noTag
+	warn := mustEnv(liquid.EnvironmentConfig{Tags: warnTags, ErrorMode: "warn"})
 	tmpl, err := liquid.ParseTemplate("a{% notag %}b", &liquid.TemplateOptions{Environment: warn})
 	if err != nil {
 		t.Fatalf("warn mode: %v", err)

@@ -5,28 +5,28 @@ import (
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
-// RegisterAll registers all Shopify custom tags and filters with the environment
-func RegisterAll(env *liquid.Environment) {
-	// Register tags
-	env.RegisterTag("paginate", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+// AddTo adds the custom tags and filters of Shopify themes to config.
+func AddTo(config *liquid.EnvironmentConfig) {
+	if config.Tags == nil {
+		config.Tags = map[string]liquid.TagConstructor{}
+	}
+	config.Tags["paginate"] = func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 		tag, err := NewPaginate(tagName, markup, parseContext)
 		if err != nil {
 			return nil, err
 		}
 		return tag, nil
-	})
-	env.RegisterTag("form", func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
+	}
+	config.Tags["form"] = func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 		tag, err := NewCommentForm(tagName, markup, parseContext)
 		if err != nil {
 			return nil, err
 		}
 		return tag, nil
-	})
+	}
 
-	// Register filters (each filter object exposes multiple methods)
-	_ = env.RegisterFilter(methodfilters.Of(&JSONFilter{})...)
-	_ = env.RegisterFilter(methodfilters.Of(&MoneyFilter{})...)
-	_ = env.RegisterFilter(methodfilters.Of(&WeightFilter{})...)
-	_ = env.RegisterFilter(methodfilters.Of(&ShopFilter{})...)
-	_ = env.RegisterFilter(methodfilters.Of(&TagFilter{})...)
+	// each filter object exposes several methods
+	for _, filters := range []interface{}{&JSONFilter{}, &MoneyFilter{}, &WeightFilter{}, &ShopFilter{}, &TagFilter{}} {
+		config.Filters = append(config.Filters, methodfilters.Of(filters)...)
+	}
 }

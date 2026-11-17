@@ -699,8 +699,7 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 
 // Test renderSegment with break interrupt
 func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	tag, err := NewForTag("for", "item in array", pc)
 	if err != nil {
@@ -730,8 +729,7 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 
 // Test renderSegment with continue interrupt
 func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
-	env := liquid.NewEnvironment()
-	RegisterStandardTags(env)
+	env := mustEnv(liquid.EnvironmentConfig{Tags: Standard()})
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{Environment: env})
 	tag, err := NewForTag("for", "item in array", pc)
 	if err != nil {
