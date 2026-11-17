@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // and, or, | and parentheses inside a quoted string are part of the string, not of the
 // condition (Ruby's If::ExpressionsAndOperators scans quoted fragments whole).
@@ -27,8 +31,8 @@ func TestIfQuotedOperators(t *testing.T) {
 		{"unless with quoted or", `{% unless v == "x or y" %}U{% endunless %}`, map[string]interface{}{"v": "x"}, "U"},
 	}
 	for _, tt := range tests {
-		for _, mode := range []string{"lax", "strict"} {
-			t.Run(tt.name+"/"+mode, func(t *testing.T) {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
+			t.Run(tt.name+"/"+string(mode), func(t *testing.T) {
 				assertTemplateResult(t, tt.expected, tt.template, tt.assigns, TemplateResultOptions{ErrorMode: mode})
 			})
 		}

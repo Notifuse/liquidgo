@@ -138,7 +138,7 @@ func runConformance(c conformanceCase, mode, typing string) (out string, value i
 		}
 		source += "{% " + keepTagName + " %}"
 	}
-	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags, ErrorMode: mode, FileSystem: fs})
+	env := mustEnv(liquid.EnvironmentConfig{Tags: envTags, ErrorMode: liquid.ErrorMode(mode), FileSystem: fs})
 	tmpl, perr := liquid.ParseTemplate(source, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
 	if perr != nil {
 		return "", nil, fmt.Errorf("parse: %v", perr)

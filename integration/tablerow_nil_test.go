@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestATablerowOverNilRendersNothing checks the results of Shopify Liquid
 // 5.11.0 for a tablerow over nil, which renders nothing, and over a value
@@ -14,7 +18,7 @@ func TestATablerowOverNilRendersNothing(t *testing.T) {
 		{"{% tablerow i in f %}x{% endtablerow %}", "<tr class=\"row1\">\n</tr>\n"},
 		{"{% tablerow i in (1..0) %}x{% endtablerow %}", "<tr class=\"row1\">\n</tr>\n"},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			r := renderWith(newEnv(mode, limits{}), c.source, data)
 			if r.parseErr != nil || r.output != c.want {
 				t.Errorf("%s: %q gives %q (%v), want %q", mode, c.source, r.output, r.parseErr, c.want)

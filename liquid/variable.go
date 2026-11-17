@@ -35,7 +35,7 @@ type ParseContextInterface interface {
 	DecrementDepth()
 	NewBlockBody() *BlockBody
 	NewTokenizer(source string, lineNumbers bool, startLineNumber *int, forLiquidTag bool) *Tokenizer
-	ErrorMode() string
+	ErrorMode() ErrorMode
 	AddWarning(error)
 }
 
@@ -62,29 +62,7 @@ func NewVariable(markup string, parseContext ParseContextInterface) *Variable {
 		lineNumber:   lineNum,
 	}
 
-	// Use parser switching based on error mode
-	// Create a wrapper that implements the ParserSwitching interface
-	var psContext interface {
-		ErrorMode() string
-		AddWarning(error)
-	}
-	if pc, ok := parseContext.(*ParseContext); ok {
-		psContext = pc
-	} else {
-		// Fallback: create a minimal wrapper
-		psContext = &parseContextWrapper{
-			errorMode: "lax", // Default to lax if we can't determine
-		}
-	}
-
-	ps := &ParserSwitching{
-		parseContext:  psContext,
-		lineNumber:    lineNum,
-		markupContext: v.markupContext,
-	}
-
-	err := ps.StrictParseWithErrorModeFallback(
-		markup,
+	err := parseWithErrorModeFallback(parseContext, markup, lineNum, v.markupContext,
 		func(m string) error {
 			// Catch panics from SafeParseExpression and convert to errors
 			var parseErr error
@@ -514,18 +492,4 @@ func writeValue(output stringWriter, value interface{}, seen map[uintptr]bool) {
 		return
 	}
 	output.WriteString(ToS(value, nil))
-}
-
-// parseContextWrapper is a minimal wrapper for ParseContextInterface when it doesn't implement ErrorMode/AddWarning.
-type parseContextWrapper struct {
-	errorMode string
-}
-
-func (p *parseContextWrapper) ErrorMode() string {
-	return p.errorMode
-}
-
-func (p *parseContextWrapper) AddWarning(err error) {
-	// No-op for wrapper
-	_ = err // no-op to register coverage
 }

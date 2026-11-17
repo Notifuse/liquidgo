@@ -385,11 +385,11 @@ Benefits of environments:
 The error mode of an environment decides how its templates parse:
 
 ```go
-// "lax" (default): markup that does not parse is tolerated, as Ruby's lax parser does
-// "warn": a syntax error is a warning, and the markup is parsed as lax
-// "strict": a syntax error fails the parse
-// "strict2" (or "rigid"): stricter still, as Shopify Liquid 5.14's strict2
-env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: "strict"})
+// liquid.ErrorModeLax (default): markup that does not parse is tolerated, as Ruby's lax parser does
+// liquid.ErrorModeWarn: a syntax error is a warning, and the markup is parsed as lax
+// liquid.ErrorModeStrict: a syntax error fails the parse
+// liquid.ErrorModeStrict2 (or ErrorModeRigid): stricter still, as Shopify Liquid 5.14's strict2
+env, err := liquid.NewEnvironment(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: liquid.ErrorModeStrict})
 ```
 
 ### Rendering and errors

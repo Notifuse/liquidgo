@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // A tag or a variable may span several lines, as in Ruby (whose regexes use /m).
 func TestMultilineTags(t *testing.T) {
@@ -21,8 +25,8 @@ func TestMultilineTags(t *testing.T) {
 		{"named cycle over several lines", "{% cycle 'g':\n 'a', 'b' %}", "a"},
 	}
 	for _, tt := range tests {
-		for _, mode := range []string{"lax", "strict"} {
-			t.Run(tt.name+"/"+mode, func(t *testing.T) {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
+			t.Run(tt.name+"/"+string(mode), func(t *testing.T) {
 				assertTemplateResult(t, tt.expected, tt.template, map[string]interface{}{"x": true, "n": 2}, TemplateResultOptions{ErrorMode: mode})
 			})
 		}

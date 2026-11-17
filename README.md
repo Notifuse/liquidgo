@@ -202,9 +202,9 @@ Every difference, deliberate or not, is listed with its reason:
 
 ## Version
 
-Current version: **5.14.0**, port revision 4 (`liquid.Version`, `liquid.PortRevision`). The minor
+Current version: **5.14.0**, port revision 5 (`liquid.Version`, `liquid.PortRevision`). The minor
 version is Shopify's: port revision N of Shopify Liquid 5.14.0 is tagged `v5.14.(N-1)`, so
-revision 4 is `v5.14.3`. `v5.14.0` is retracted: it made `false` blank, which changed the display
+revision 5 is `v5.14.4`. `v5.14.0` is retracted: it made `false` blank, which changed the display
 conditions of Notifuse. The port of 5.11.0 ended at revision 12, `v5.11.11`.
 
 ## Contributing

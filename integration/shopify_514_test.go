@@ -114,7 +114,7 @@ func TestIncludeForLoop(t *testing.T) {
 	}
 }
 
-func parse514(t *testing.T, src, mode string) (*liquid.Template, error) {
+func parse514(t *testing.T, src string, mode liquid.ErrorMode) (*liquid.Template, error) {
 	t.Helper()
 	env := mustEnv(liquid.EnvironmentConfig{Tags: tags.Standard(), ErrorMode: mode})
 	return liquid.ParseTemplate(src, &liquid.TemplateOptions{Environment: env, LineNumbers: true})
@@ -147,7 +147,7 @@ func TestBlankBodyErrorText(t *testing.T) {
 		{`{% if 5 > "x" %}{{ "" }}{% endif %}`, "strict", comparison},
 		{`{% if 5 > "x" %}{% else %}E{% endif %}`, "strict2", comparison},
 	} {
-		tmpl, err := parse514(t, c.src, c.mode)
+		tmpl, err := parse514(t, c.src, liquid.ErrorMode(c.mode))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -155,7 +155,7 @@ func TestBlankBodyErrorText(t *testing.T) {
 		if err != nil || res.Output != c.want {
 			t.Errorf("%s in %s: %q (%v), want %q", c.src, c.mode, res.Output, err, c.want)
 		}
-		for _, mode := range []string{"lax", "strict", "strict2"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict", "strict2"} {
 			tmpl, _ := parse514(t, c.src, mode)
 			if _, err := tmpl.Render(gocontext.Background(), data, liquid.RaiseErrors()); err == nil {
 				t.Errorf("%s in %s: a raised error is swallowed", c.src, mode)
@@ -173,7 +173,7 @@ func TestStrict2RejectsBareBrackets(t *testing.T) {
 			t.Errorf("%s in strict2: %v, want the bare bracket error", src, err)
 		}
 	}
-	for _, mode := range []string{"lax", "strict"} {
+	for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 		tmpl, err := parse514(t, `{{ ["foo"] }}|{{ [bar] }}`, mode)
 		if err != nil {
 			t.Fatal(err)
@@ -218,7 +218,7 @@ func TestStrict2VariableNames(t *testing.T) {
 		{"{% increment my-var %}", "strict2", "0"},
 		{"{% decrement my-var %}", "strict2", "-1"},
 	} {
-		tmpl, err := parse514(t, c.src, c.mode)
+		tmpl, err := parse514(t, c.src, liquid.ErrorMode(c.mode))
 		if err != nil {
 			t.Errorf("%s in %s: %v", c.src, c.mode, err)
 			continue
@@ -278,7 +278,7 @@ func TestBlankAndEmpty(t *testing.T) {
 	}
 
 	const caseWhenEmpty = "{%- case x -%}{%- when 2 or empty -%}2 or empty{%- else -%}not 2 or empty{%- endcase -%}"
-	for _, mode := range []string{"lax", "strict", "strict2"} {
+	for _, mode := range []liquid.ErrorMode{"lax", "strict", "strict2"} {
 		tmpl, err := parse514(t, caseWhenEmpty, mode)
 		if err != nil {
 			t.Fatal(err)

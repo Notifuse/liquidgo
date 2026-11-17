@@ -126,7 +126,7 @@ func TestNewEnvironmentRefusesAnInvalidConfig(t *testing.T) {
 			t.Errorf("%s: NewEnvironment = %v, %v; want an error", name, env, err)
 		}
 	}
-	for _, mode := range []string{"", "lax", "strict", "strict2", "rigid", "warn"} {
+	for _, mode := range []ErrorMode{"", ErrorModeLax, ErrorModeStrict, ErrorModeStrict2, ErrorModeRigid, ErrorModeWarn} {
 		if _, err := NewEnvironment(EnvironmentConfig{ErrorMode: mode}); err != nil {
 			t.Errorf("error mode %q: %v", mode, err)
 		}

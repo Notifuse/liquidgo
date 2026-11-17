@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestALoneQuoteParsesAsRuby checks the results of Shopify Liquid 5.11.0 for
 // a lone quote: an empty string in lax mode, in an output, an assign or a
@@ -20,7 +24,7 @@ func TestALoneQuoteParsesAsRuby(t *testing.T) {
 		{"{% case ' %}{% when ' %}w{% endcase %}", "Liquid syntax error: Syntax Error in 'case' - Valid syntax: case [condition]", "Liquid syntax error: Syntax Error in 'case' - Valid syntax: case [condition]"},
 	} {
 		for _, m := range []struct{ mode, want string }{{"lax", c.lax}, {"strict", c.strict}} {
-			r := renderWith(newEnv(m.mode, limits{}), c.source, nil)
+			r := renderWith(newEnv(liquid.ErrorMode(m.mode), limits{}), c.source, nil)
 			got := r.output
 			if r.parseErr != nil {
 				got = r.parseErr.Error()

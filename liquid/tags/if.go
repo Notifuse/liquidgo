@@ -33,7 +33,7 @@ func NewIfTag(tagName, markup string, parseContext liquid.ParseContextInterface)
 	condition, err := parseIfCondition(markup, parseContext)
 	if err != nil {
 		// In warn mode, we add warning and continue with a dummy condition
-		if parseContext.ErrorMode() == "warn" {
+		if parseContext.ErrorMode() == liquid.ErrorModeWarn {
 			parseContext.AddWarning(err)
 			// Use a condition that evaluates to false
 			condition = liquid.NewCondition(nil, "", nil)
@@ -415,8 +415,8 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 
 		if !valid {
 			// Check if we are in strict mode
-			if pc, ok := parseContext.(interface{ ErrorMode() string }); ok {
-				if pc.ErrorMode() == "strict" {
+			if pc, ok := parseContext.(interface{ ErrorMode() liquid.ErrorMode }); ok {
+				if pc.ErrorMode() == liquid.ErrorModeStrict {
 					return nil, liquid.NewSyntaxError("Unexpected character = in \"" + matches[0] + "\"")
 				}
 			}
@@ -441,7 +441,7 @@ func parseSingleCondition(expr string, parseContext liquid.ParseContextInterface
 // strict, strict2 or rigid mode, with the markup as its context.
 func lexCondition(markup string, parseContext liquid.ParseContextInterface) error {
 	switch parseContext.ErrorMode() {
-	case "strict", "strict2", "rigid":
+	case liquid.ErrorModeStrict, liquid.ErrorModeStrict2, liquid.ErrorModeRigid:
 	default:
 		return nil
 	}
@@ -458,7 +458,7 @@ func lexCondition(markup string, parseContext liquid.ParseContextInterface) erro
 
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {
 	switch parseContext.ErrorMode() {
-	case "strict", "warn", "rigid", "strict2":
+	case liquid.ErrorModeStrict, liquid.ErrorModeWarn, liquid.ErrorModeRigid, liquid.ErrorModeStrict2:
 	default:
 		return nil
 	}

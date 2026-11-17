@@ -148,14 +148,14 @@ func LoadPartial(templateName string, context interface {
 	// the cache of the environment needs no error mode in its key: an
 	// environment has one, which never changes
 	key := partialKey{name: templateName}
-	errorMode := "lax"
+	errorMode := ErrorModeLax
 	if env != nil {
 		errorMode = env.ErrorMode()
 	}
 	if pc, ok := parseContext.(*ParseContext); ok {
 		key.lineNumbers, _ = pc.GetOption("line_numbers").(bool)
 	}
-	renderKey := templateName + ":" + errorMode
+	renderKey := templateName + ":" + string(errorMode)
 	if cached, ok := cache[renderKey]; ok {
 		return cached, nil
 	}

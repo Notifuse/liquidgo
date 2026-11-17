@@ -10,7 +10,7 @@ type Environment struct {
 	fileSystem   FileSystem
 	tags         map[string]TagConstructor
 	limits       ResourceLimitsConfig
-	errorMode    string
+	errorMode    ErrorMode
 	outputEscape bool
 	// filters are the filters the environment declares, which take
 	// precedence over the standard ones.
@@ -28,9 +28,10 @@ type EnvironmentConfig struct {
 	// Filters are declared next to the standard ones, over which they take
 	// precedence for a name both define.
 	Filters []FilterDef
-	// ErrorMode is how templates parse: "lax" (the default), "strict",
-	// "strict2" (or "rigid", its other name) or "warn".
-	ErrorMode string
+	// ErrorMode is how templates parse: ErrorModeLax (the default),
+	// ErrorModeStrict, ErrorModeStrict2 (or ErrorModeRigid, its other name)
+	// or ErrorModeWarn.
+	ErrorMode ErrorMode
 	// FileSystem reads the partials of render and include; nil reads none.
 	FileSystem FileSystem
 	// Limits are the resource limits of each render; a render's WithLimits
@@ -79,7 +80,7 @@ func NewEnvironment(config EnvironmentConfig) (*Environment, error) {
 	env := newEnvironment()
 	switch config.ErrorMode {
 	case "":
-	case "lax", "strict", "strict2", "rigid", "warn":
+	case ErrorModeLax, ErrorModeStrict, ErrorModeStrict2, ErrorModeRigid, ErrorModeWarn:
 		env.errorMode = config.ErrorMode
 	default:
 		return nil, fmt.Errorf("liquid: unknown error mode %q", config.ErrorMode)
@@ -123,7 +124,7 @@ func NewEnvironment(config EnvironmentConfig) (*Environment, error) {
 // limits.
 func newEnvironment() *Environment {
 	return &Environment{
-		errorMode:  "lax",
+		errorMode:  ErrorModeLax,
 		tags:       make(map[string]TagConstructor),
 		fileSystem: &BlankFileSystem{},
 	}
@@ -147,7 +148,7 @@ func copyLimits(limits ResourceLimitsConfig) ResourceLimitsConfig {
 }
 
 // ErrorMode returns the error mode.
-func (e *Environment) ErrorMode() string {
+func (e *Environment) ErrorMode() ErrorMode {
 	return e.errorMode
 }
 

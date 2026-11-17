@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestAConditionIsLexedWholeInStrictMode checks the results of Shopify
 // Liquid 5.11.0 in strict mode for a character the lexer refuses in the
@@ -16,7 +20,7 @@ func TestAConditionIsLexedWholeInStrictMode(t *testing.T) {
 		{"{% for i in (1..2) reversed limit: 1 offset: 1 %}{{ i }}{% endfor %}", "2", "2"},
 	} {
 		for _, m := range []struct{ mode, want string }{{"strict", c.strict}, {"lax", c.lax}} {
-			r := renderWith(newEnv(m.mode, limits{}), c.source, nil)
+			r := renderWith(newEnv(liquid.ErrorMode(m.mode), limits{}), c.source, nil)
 			got := r.output
 			if r.parseErr != nil {
 				got = r.parseErr.Error()

@@ -13,7 +13,7 @@ type mockParseContext struct {
 	warnings       []error
 }
 
-func (m *mockParseContext) ErrorMode() string {
+func (m *mockParseContext) ErrorMode() ErrorMode {
 	if m.env != nil {
 		return m.env.ErrorMode()
 	}

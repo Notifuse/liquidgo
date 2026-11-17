@@ -13,7 +13,7 @@ import (
 type TemplateResultOptions struct {
 	Message      string
 	Partials     map[string]string
-	ErrorMode    string
+	ErrorMode    liquid.ErrorMode
 	RenderErrors bool
 }
 
@@ -81,10 +81,10 @@ func assertTemplateResult(t *testing.T, expected, template string, assigns map[s
 
 // assertMatchSyntaxError tests that parsing a template raises a SyntaxError
 // and that the error message matches the given pattern.
-func assertMatchSyntaxError(t *testing.T, match string, template string, errorMode ...string) {
+func assertMatchSyntaxError(t *testing.T, match string, template string, errorMode ...liquid.ErrorMode) {
 	t.Helper()
 
-	mode := "strict"
+	mode := liquid.ErrorModeStrict
 	if len(errorMode) > 0 && errorMode[0] != "" {
 		mode = errorMode[0]
 	}
@@ -138,15 +138,6 @@ func assertMatchSyntaxError(t *testing.T, match string, template string, errorMo
 			t.Errorf("Error message %q does not match pattern %q", syntaxErr.Error(), match)
 		}
 	}
-}
-
-// _assertSyntaxError is a simplified version that just checks for a SyntaxError.
-// Prefixed with _ to indicate it's intentionally unused but kept for future use.
-//
-//nolint:unused
-func _assertSyntaxError(t *testing.T, template string, errorMode ...string) {
-	t.Helper()
-	assertMatchSyntaxError(t, "", template, errorMode...)
 }
 
 // StubFileSystem is a mock file system for testing partials/includes.

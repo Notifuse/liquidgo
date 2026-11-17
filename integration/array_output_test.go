@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Notifuse/liquidgo/v5/liquid"
+)
 
 // TestAnArrayRendersItsItemsAsRuby checks the results of Shopify Liquid
 // 5.11.0 for an array in an output, an echo or a cycle: its items one after
@@ -29,7 +33,7 @@ func TestAnArrayRendersItsItemsAsRuby(t *testing.T) {
 		{`{{ strs | append: "!" }}`, `["x", "y"]!`},
 		{`{{ arr | append: "" }}`, `[1, [2, nil, [3]], "a", {"k"=>"v"}]`},
 	} {
-		for _, mode := range []string{"lax", "strict"} {
+		for _, mode := range []liquid.ErrorMode{"lax", "strict"} {
 			r := renderWith(newEnv(mode, limits{}), c.source, data())
 			if r.parseErr != nil || r.output != c.want || len(r.errors) > 0 {
 				t.Errorf("%s: %q gives %q (%v, %v), want %q", mode, c.source, r.output, r.parseErr, r.errors, c.want)
