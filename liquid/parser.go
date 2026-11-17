@@ -11,6 +11,9 @@ type Parser struct {
 	p      int   // pointer to current location
 	err    error // Stored lexer error
 	depth  int   // nesting of the expression being parsed
+	// rejectBareBrackets refuses an expression that starts with [, as
+	// Shopify Liquid 5.14 in strict2: self[...] replaces it.
+	rejectBareBrackets bool
 }
 
 // NewParser creates a new parser from a string scanner or string.
@@ -154,6 +157,9 @@ func (p *Parser) Expression() (string, error) {
 		}
 		return str + lookups, nil
 	case ":open_square":
+		if p.rejectBareBrackets {
+			return "", NewSyntaxError("Bare bracket access is not allowed. Use " + selfKeyword + "['...'] instead")
+		}
 		str, err := p.Consume(":open_square")
 		if err != nil {
 			return "", err

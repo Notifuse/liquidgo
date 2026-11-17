@@ -1,7 +1,7 @@
 # Shopify Liquid conformance data
 
 `cases.json` holds test cases taken from the test suite of
-[Shopify Liquid](https://github.com/Shopify/liquid) v5.11.0 (commit `32b50ec`), the Ruby
+[Shopify Liquid](https://github.com/Shopify/liquid) v5.14.0 (commit `4e39ae4`), the Ruby
 implementation that liquidgo ports. `integration/shopify_conformance_test.go` replays every case
 against liquidgo.
 

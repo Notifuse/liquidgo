@@ -227,7 +227,12 @@ func (c *CaseTag) recordWhenCondition(markup string) error {
 		}
 
 		// Parse the value expression
+		// blank and empty are compared by their method, as Ruby's
+		// Condition.parse_expression
 		valueExpr := c.Block.ParseContext().ParseExpression(matches[1])
+		if ml := liquid.MethodLiteralOf(matches[1]); ml != nil {
+			valueExpr = ml
+		}
 
 		// Create condition: left == value
 		condition := liquid.NewCondition(c.left, "==", valueExpr)
@@ -284,9 +289,7 @@ func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.Outpu
 
 		result, err := block.Evaluate(ctx)
 		if err != nil {
-			errorMsg := context.HandleError(err, nil)
-			output.WriteString(errorMsg)
-			return
+			liquid.Raise(err) // as Ruby: the block body handles it
 		}
 
 		if result {

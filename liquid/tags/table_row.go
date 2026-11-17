@@ -2,7 +2,9 @@ package tags
 
 import (
 	"fmt"
+	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
@@ -64,11 +66,9 @@ func (t *TableRowTag) parseMarkup(markup string, parseContext liquid.ParseContex
 	for _, match := range attributeMatches {
 		if len(match) >= 3 {
 			key := strings.TrimSpace(match[1])
+			// the value is parsed as Ruby parses it: "a" is a string, not
+			// the variable a
 			value := strings.TrimSpace(match[2])
-			// Remove quotes if present
-			if len(value) > 0 && (value[0] == '"' || value[0] == '\'') {
-				value = value[1 : len(value)-1]
-			}
 
 			// Validate attribute
 			if !allowedAttributes[key] {
@@ -112,58 +112,25 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 		return
 	}
 
-	// Calculate from (offset)
+	// As Ruby, the attributes are read with to_i: nil is 0, so a nil limit
+	// keeps no item and nil cols put every item in one row
 	var from int
 	if offsetAttr, ok := t.attributes["offset"]; ok {
-		offsetValue := context.Evaluate(offsetAttr)
-		if offsetValue != nil {
-			offsetInt, err := liquid.ToInteger(offsetValue)
-			if err != nil {
-				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				output.WriteString(errorMsg)
-				return
-			}
-			from = offsetInt
-		}
+		from = tablerowInteger(context.Evaluate(offsetAttr))
 	}
-
-	// Calculate to (limit)
 	var to *int
 	if limitAttr, ok := t.attributes["limit"]; ok {
-		limitValue := context.Evaluate(limitAttr)
-		if limitValue != nil {
-			limitInt, err := liquid.ToInteger(limitValue)
-			if err != nil {
-				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				output.WriteString(errorMsg)
-				return
-			}
-			toVal := addSaturated(from, limitInt)
-			to = &toVal
-		}
+		toVal := addSaturated(from, tablerowInteger(context.Evaluate(limitAttr)))
+		to = &toVal
 	}
 
 	// Slice collection; a range is iterated, not built
 	segment := sliceSegment(collection, from, to)
 	length := segment.Len()
 
-	// Calculate cols
-	var cols int
+	cols := length
 	if colsAttr, ok := t.attributes["cols"]; ok {
-		colsValue := context.Evaluate(colsAttr)
-		if colsValue != nil {
-			colsInt, err := liquid.ToInteger(colsValue)
-			if err != nil {
-				errorMsg := context.HandleError(liquid.NewArgumentError("invalid integer"), nil)
-				output.WriteString(errorMsg)
-				return
-			}
-			cols = colsInt
-		} else {
-			cols = length
-		}
-	} else {
-		cols = length
+		cols = tablerowInteger(context.Evaluate(colsAttr))
 	}
 
 	// Start first row
@@ -181,6 +148,7 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 		// Iterate over segment
 		for i := 0; i < length; i++ {
 			ctx.CheckCanceled()
+			segment.chargeItem(ctx, t.Nodelist())
 
 			// Set variable
 			ctx.Set(t.variableName, segment.At(i))
@@ -214,4 +182,39 @@ func (t *TableRowTag) RenderToOutput(context liquid.TagContext, output *liquid.O
 
 	// Close last row
 	output.WriteString("</tr>\n")
+}
+
+// tablerowLeadingInteger is the integer a string starts with, as Ruby's
+// String#to_i reads it.
+var tablerowLeadingInteger = regexp.MustCompile(`^[ \t\n\v\f\r]*([+-]?[0-9]+(?:_[0-9]+)*)`)
+
+// tablerowInteger converts an attribute of tablerow as Ruby's to_i, which
+// the tag calls: nil is 0, a float is truncated, a string gives the integer
+// it starts with or 0, and a value without to_i (true, a list...) raises
+// invalid integer.
+func tablerowInteger(value interface{}) int {
+	switch v := value.(type) {
+	case nil:
+		return 0
+	case string:
+		m := tablerowLeadingInteger.FindStringSubmatch(v)
+		if m == nil {
+			return 0
+		}
+		n, err := strconv.ParseInt(strings.ReplaceAll(m[1], "_", ""), 10, 0)
+		if err != nil { // out of range: the bound, as Ruby's integers never overflow
+			if strings.HasPrefix(m[1], "-") {
+				return math.MinInt
+			}
+			return math.MaxInt
+		}
+		return int(n)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		n, err := liquid.ToInteger(v)
+		if err == nil {
+			return n
+		}
+	}
+	liquid.Raise(liquid.NewArgumentError("invalid integer"))
+	return 0
 }

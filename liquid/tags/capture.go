@@ -2,17 +2,13 @@ package tags
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/Notifuse/liquidgo/v5/liquid"
 )
 
-var (
-	// captureSyntax matches variable names, including quoted strings
-	// Matches: var, 'var', "var", this-thing, etc.
-	// Capture group 1: the variable name (with or without quotes)
-	captureSyntax = regexp.MustCompile(`^("(?:"|[^"])*"|'[^']*'|[\w\-\.\[\]]+)$`)
-)
+// captureSyntax is Ruby's /(#{VariableSignature}+)/o: the name is the first
+// run of name characters in the markup, so 'var' captures into var.
+var captureSyntax = regexp.MustCompile(`(?:\(?[\w\-\.\[\]]\)?)+`)
 
 // CaptureTag represents a capture block tag that captures rendered content into a variable.
 type CaptureTag struct {
@@ -22,26 +18,15 @@ type CaptureTag struct {
 
 // NewCaptureTag creates a new CaptureTag.
 func NewCaptureTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*CaptureTag, error) {
-	// Trim whitespace from markup
-	markup = strings.TrimSpace(markup)
-
-	// Parse variable name from markup
-	matches := captureSyntax.FindStringSubmatch(markup)
-	if len(matches) == 0 {
+	varName := captureSyntax.FindString(markup)
+	if varName == "" {
 		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.capture", nil)
+	}
+	if err := checkVariableName(markup, markup, parseContext); err != nil {
+		return nil, err
 	}
 
 	block := liquid.NewBlock(tagName, markup, parseContext)
-
-	// Extract variable name, stripping quotes if present
-	varName := matches[1]
-	// Strip surrounding quotes if present (both single and double)
-	if len(varName) >= 2 {
-		if (varName[0] == '"' && varName[len(varName)-1] == '"') ||
-			(varName[0] == '\'' && varName[len(varName)-1] == '\'') {
-			varName = varName[1 : len(varName)-1]
-		}
-	}
 
 	return &CaptureTag{
 		Block: block,

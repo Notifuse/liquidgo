@@ -57,9 +57,9 @@ jobs:
 
   reference:
     # The expected outputs of the differential corpus are those of Shopify
-    # Liquid 5.11.0, which liquidgo ports, and every result of liquidgo
+    # Liquid 5.14.0, which liquidgo ports, and every result of liquidgo
     # matches them or is a listed divergence. The reference-liquid submodule
-    # is at another version, so the job checks out 5.11.0 itself.
+    # is at another version, so the job checks out 5.14.0 itself.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,9 +69,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-      - name: Install Shopify Liquid 5.11.0
+      - name: Install Shopify Liquid 5.14.0
         run: |
-          git clone -q --depth 1 --branch v5.11.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
+          git clone -q --depth 1 --branch v5.14.0 https://github.com/Shopify/liquid "$RUNNER_TEMP/shopify-liquid"
           gem install --no-document strscan:'>= 3.1.1' bigdecimal
       - name: Check the expected outputs
         run: TZ=UTC ruby -I "$RUNNER_TEMP/shopify-liquid/lib" scripts/differential_reference.rb --check

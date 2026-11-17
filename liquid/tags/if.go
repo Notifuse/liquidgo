@@ -207,15 +207,7 @@ func (i *IfTag) RenderToOutput(context liquid.TagContext, output *liquid.OutputB
 	for _, block := range i.blocks {
 		result, err := block.Evaluate(ctx)
 		if err != nil {
-			// Handle error
-			// If the tag is blank (produces no output), suppress the error from output
-			// This matches Ruby Liquid's behavior for blank nodes
-			if i.Blank() {
-				return
-			}
-			errorMsg := context.HandleError(err, i.LineNumber())
-			output.WriteString(errorMsg)
-			return
+			liquid.Raise(err) // as Ruby: the block body handles it
 		}
 
 		// The condition holds: result is its truth
@@ -461,6 +453,26 @@ func lexCondition(markup string, parseContext liquid.ParseContextInterface) erro
 
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {
 	mode := parseContext.ErrorMode()
+	if mode == "rigid" || mode == "strict2" {
+		// as Ruby's strict2 parse: each operand is one expression of the
+		// parser, which refuses a bare bracket
+		p := parseContext.NewParser(expr)
+		err := p.Error()
+		if err == nil {
+			_, err = p.Expression()
+		}
+		if err == nil {
+			_, err = p.Consume(":end_of_string")
+		}
+		if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
+			syntaxErr.Err.MarkupContext = "in \"" + expr + "\""
+			if parseContext.LineNumber() != nil {
+				ln := *parseContext.LineNumber()
+				syntaxErr.Err.LineNumber = &ln
+			}
+		}
+		return err
+	}
 	if mode == "strict" || mode == "warn" {
 		// Check for parentheses which are not allowed in Liquid conditions
 		if strings.ContainsAny(withoutQuotedStrings(expr), "()") {

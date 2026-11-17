@@ -1,5 +1,5 @@
 {
-  "liquid": "5.11.0",
+  "liquid": "5.14.0",
   "results": [
     {
       "id": "lookup-01",
@@ -287,7 +287,7 @@
       "id": "panic-05",
       "mode": "strict",
       "template": "{% assign v = ' %}[{{ v }}]",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character ' in \"{{' }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character ' in \"v = '\""
     },
     {
       "id": "panic-06",
@@ -917,13 +917,13 @@
       "id": "index-03",
       "mode": "lax",
       "template": "{{ s.size }} {{ s.first }}",
-      "output": "11 "
+      "output": "11 h"
     },
     {
       "id": "index-03",
       "mode": "strict",
       "template": "{{ s.size }} {{ s.first }}",
-      "output": "11 "
+      "output": "11 h"
     },
     {
       "id": "index-04",
@@ -965,13 +965,13 @@
       "id": "index-07",
       "mode": "lax",
       "template": "{% if empty == empty %}a{% endif %}{% if arr == empty %}b{% endif %}{% if '' == blank %}c{% endif %}",
-      "output": ""
+      "output": "c"
     },
     {
       "id": "index-07",
       "mode": "strict",
       "template": "{% if empty == empty %}a{% endif %}{% if arr == empty %}b{% endif %}{% if '' == blank %}c{% endif %}",
-      "output": ""
+      "output": "c"
     },
     {
       "id": "index-08",
@@ -1655,7 +1655,7 @@
       "id": "lax-quirks-07",
       "mode": "strict",
       "template": "{% assign = 1 %}{{ x }}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'assign' - Valid syntax: assign [var] = [source]"
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'assign' - Valid syntax: assign [var] = [source] in \"= 1\""
     },
     {
       "id": "lax-quirks-08",
@@ -1751,7 +1751,7 @@
       "id": "lax-quirks-15",
       "mode": "strict",
       "template": "{% assign v = (1..3 %}{{ v }}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Expected close_round but found end_of_string in \"{{(1..3 }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected close_round but found end_of_string in \"v = (1..3\""
     },
     {
       "id": "lax-quirks-16",
@@ -1823,7 +1823,7 @@
       "id": "lax-quirks-21",
       "mode": "strict",
       "template": "{% capture %}x{% endcapture %}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var]"
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var] in \"\""
     },
     {
       "id": "lax-quirks-22",
@@ -2783,7 +2783,7 @@
       "id": "loss-17",
       "mode": "strict",
       "template": "{% capture %}a{% endcapture %}tail",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var]"
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in 'capture' - Valid syntax: capture [var] in \"\""
     },
     {
       "id": "loss-18",
@@ -3317,13 +3317,13 @@
       "id": "empty-string-01",
       "mode": "lax",
       "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}",
-      "output": "yes|yes||"
+      "output": "yes|yes||blank"
     },
     {
       "id": "empty-string-01",
       "mode": "strict",
       "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}",
-      "output": "yes|yes||"
+      "output": "yes|yes||blank"
     },
     {
       "id": "control-01",
@@ -3386,16 +3386,76 @@
       "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character   in \"{{ x }}\""
     },
     {
+      "id": "tags-17",
+      "mode": "lax",
+      "template": "{% assign h = \"x\" | split: \",\" %}[{% for i in (1..3) offset: h %}{{ i }}{% endfor %}][{% for i in (1..3) limit: \"a\" %}{{ i }}{% endfor %}][{% tablerow i in (1..2) cols: \"a\" %}{{ i }}{% endtablerow %}]",
+      "output": "[Liquid error: invalid integer][Liquid error: invalid integer][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td></tr>\n]"
+    },
+    {
+      "id": "tags-17",
+      "mode": "strict",
+      "template": "{% assign h = \"x\" | split: \",\" %}[{% for i in (1..3) offset: h %}{{ i }}{% endfor %}][{% for i in (1..3) limit: \"a\" %}{{ i }}{% endfor %}][{% tablerow i in (1..2) cols: \"a\" %}{{ i }}{% endtablerow %}]",
+      "output": "[Liquid error: invalid integer][Liquid error: invalid integer][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td></tr>\n]"
+    },
+    {
+      "id": "tags-18",
+      "mode": "lax",
+      "template": "[{% if 5 > \"x\" %}{% endif %}][{% unless 5 > \"x\" %} {% endunless %}][{% for i in (1..3) offset: \"a\" %}{% endfor %}][{% if 5 > \"x\" %}x{% endif %}][{% unless 5 > \"x\" %}y{% endunless %}]",
+      "output": "[][][][Liquid error: comparison of Integer with String failed][Liquid error: comparison of Integer with String failed]"
+    },
+    {
+      "id": "tags-18",
+      "mode": "strict",
+      "template": "[{% if 5 > \"x\" %}{% endif %}][{% unless 5 > \"x\" %} {% endunless %}][{% for i in (1..3) offset: \"a\" %}{% endfor %}][{% if 5 > \"x\" %}x{% endif %}][{% unless 5 > \"x\" %}y{% endunless %}]",
+      "output": "[][][][Liquid error: comparison of Integer with String failed][Liquid error: comparison of Integer with String failed]"
+    },
+    {
+      "id": "tags-19",
+      "mode": "lax",
+      "template": "[{% tablerow i in (1..3) limit: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \" 1x\" cols: \"2.9\" %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: true %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) limit: 1.9 %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \"-1\" %}{{ i }}{% endtablerow %}]",
+      "output": "[<tr class=\"row1\">\n</tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">2</td><td class=\"col2\">3</td></tr>\n][Liquid error: invalid integer][<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n]"
+    },
+    {
+      "id": "tags-19",
+      "mode": "strict",
+      "template": "[{% tablerow i in (1..3) limit: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \" 1x\" cols: \"2.9\" %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: true %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) limit: 1.9 %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \"-1\" %}{{ i }}{% endtablerow %}]",
+      "output": "[<tr class=\"row1\">\n</tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">2</td><td class=\"col2\">3</td></tr>\n][Liquid error: invalid integer][<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n]"
+    },
+    {
+      "id": "tags-20",
+      "mode": "lax",
+      "template": "[{% for i in (1..2) %}{{ i }}{% endfor %}]00000{%break%}1",
+      "output": "[12]00000"
+    },
+    {
+      "id": "tags-20",
+      "mode": "strict",
+      "template": "[{% for i in (1..2) %}{{ i }}{% endfor %}]00000{%break%}1",
+      "output": "[12]00000"
+    },
+    {
+      "id": "tags-21",
+      "mode": "lax",
+      "template": "a{% if true %}x{% continue %}y{% endif %}z",
+      "output": "ax"
+    },
+    {
+      "id": "tags-21",
+      "mode": "strict",
+      "template": "a{% if true %}x{% continue %}y{% endif %}z",
+      "output": "ax"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",
-      "output": "1"
+      "output": "1a"
     },
     {
       "id": "generated-001",
       "mode": "strict",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",
-      "output": "1"
+      "output": "1a"
     },
     {
       "id": "generated-002",
@@ -3695,7 +3755,7 @@
       "id": "generated-026",
       "mode": "strict",
       "template": "{% assign v = f | floor | minus 2.5 %}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found number in \"{{f | floor | minus 2.5 }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found number in \"v = f | floor | minus 2.5\""
     },
     {
       "id": "generated-027",
@@ -3833,13 +3893,13 @@
       "id": "generated-038",
       "mode": "lax",
       "template": "{% comment %}\n{% endcomment %}{% case name.title %}{% when empty %}{{ n | concat: arr }}\n{% when blank %}{{- empty }}a{% endcase %}",
-      "output": ""
+      "output": "a"
     },
     {
       "id": "generated-038",
       "mode": "strict",
       "template": "{% comment %}\n{% endcomment %}{% case name.title %}{% when empty %}{{ n | concat: arr }}\n{% when blank %}{{- empty }}a{% endcase %}",
-      "output": ""
+      "output": "a"
     },
     {
       "id": "generated-039",
@@ -4787,7 +4847,7 @@
       "id": "generated-117",
       "mode": "strict",
       "template": "{% unless x contains s %}a<p>{% endunless %}{% assign w =  | times: 3 %}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: [:pipe, \"|\"] is not a valid expression in \"{{| times: 3 }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: [:pipe, \"|\"] is not a valid expression in \"w =  | times: 3\""
     },
     {
       "id": "generated-118",
@@ -5717,13 +5777,13 @@
       "id": "generated-195",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | first\necho v\n%}{% cycle 'a', 'b' %}",
-      "output": "a"
+      "output": "qa"
     },
     {
       "id": "generated-195",
       "mode": "strict",
       "template": "{% liquid\nassign v = \"q\" | first\necho v\n%}{% cycle 'a', 'b' %}",
-      "output": "a"
+      "output": "qa"
     },
     {
       "id": "generated-196",
@@ -6215,7 +6275,7 @@
       "id": "generated-236",
       "mode": "strict",
       "template": "{% assign x = f | floor  remove: 'o' %}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found id in \"{{f | floor  remove: 'o' }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found id in \"x = f | floor  remove: 'o'\""
     },
     {
       "id": "generated-237",
@@ -6725,13 +6785,13 @@
       "id": "generated-279",
       "mode": "lax",
       "template": "{% comment %}{% assign x = empty %}<p>{% endcomment %}{% if false > words %}<p>{{ missing -}}{% elsif 'lit' < posts.title or \"q\" %}{{- 1 | newline_to_br | last }}<p>{% else %}{% assign x = missing['k'] | sort %}{% endif %}",
-      "output": "<p>"
+      "output": "1<p>"
     },
     {
       "id": "generated-279",
       "mode": "strict",
       "template": "{% comment %}{% assign x = empty %}<p>{% endcomment %}{% if false > words %}<p>{{ missing -}}{% elsif 'lit' < posts.title or \"q\" %}{{- 1 | newline_to_br | last }}<p>{% else %}{% assign x = missing['k'] | sort %}{% endif %}",
-      "output": "<p>"
+      "output": "1<p>"
     },
     {
       "id": "generated-280",
@@ -7697,13 +7757,13 @@
       "id": "generated-360",
       "mode": "lax",
       "template": "{{ posts[0] }}{% if true != name %}{{- s | last -}}{% elsif name != true and arr %}<p>{{- missing | truncatewords: 1 }}{% else %}é{% endif %}",
-      "output": "{\"title\"=>\"t1\", \"public\"=>true}"
+      "output": "{\"title\"=>\"t1\", \"public\"=>true}d"
     },
     {
       "id": "generated-360",
       "mode": "strict",
       "template": "{{ posts[0] }}{% if true != name %}{{- s | last -}}{% elsif name != true and arr %}<p>{{- missing | truncatewords: 1 }}{% else %}é{% endif %}",
-      "output": "{\"title\"=>\"t1\", \"public\"=>true}"
+      "output": "{\"title\"=>\"t1\", \"public\"=>true}d"
     },
     {
       "id": "generated-361",
@@ -7763,7 +7823,7 @@
       "id": "generated-365",
       "mode": "strict",
       "template": "{% unless name != x %}{% assign v = \"q | at_least: 2 %}{% endunless %}{% increment k %}",
-      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character \" in \"{{\"q | at_least: 2 }}\""
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character \" in \"v = \"q | at_least: 2\""
     },
     {
       "id": "generated-366",
@@ -7937,13 +7997,13 @@
       "id": "generated-380",
       "mode": "lax",
       "template": "{% tablerow i in (1..3) limit: 2 %}{{ i }}{{- s | last }}{% assign v = blank %}{% endtablerow %}",
-      "output": "<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td></tr>\n"
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">1d</td><td class=\"col2\">2d</td></tr>\n"
     },
     {
       "id": "generated-380",
       "mode": "strict",
       "template": "{% tablerow i in (1..3) limit: 2 %}{{ i }}{{- s | last }}{% assign v = blank %}{% endtablerow %}",
-      "output": "<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td></tr>\n"
+      "output": "<tr class=\"row1\">\n<td class=\"col1\">1d</td><td class=\"col2\">2d</td></tr>\n"
     },
     {
       "id": "generated-381",

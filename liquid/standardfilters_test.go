@@ -512,9 +512,10 @@ func TestStandardFiltersFirst(t *testing.T) {
 	})
 
 	t.Run("non-array", func(t *testing.T) {
+		// a string gives its first character, as Shopify Liquid 5.14
 		result := sf.First("not an array")
-		if result != nil {
-			t.Errorf("First() with non-array = %v, want nil", result)
+		if result != "n" {
+			t.Errorf("First() with non-array = %v, want n", result)
 		}
 	})
 
@@ -544,9 +545,10 @@ func TestStandardFiltersLast(t *testing.T) {
 	})
 
 	t.Run("non-array", func(t *testing.T) {
+		// a string gives its last character, as Shopify Liquid 5.14
 		result := sf.Last("not an array")
-		if result != nil {
-			t.Errorf("Last() with non-array = %v, want nil", result)
+		if result != "y" {
+			t.Errorf("Last() with non-array = %v, want y", result)
 		}
 	})
 

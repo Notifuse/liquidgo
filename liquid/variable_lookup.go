@@ -373,6 +373,12 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 					case "empty":
 						obj = str == ""
 						continue
+					case "first": // its first character, as Shopify Liquid 5.14
+						obj = firstChar(str)
+						continue
+					case "last":
+						obj = lastChar(str)
+						continue
 					}
 				}
 			}

@@ -222,7 +222,11 @@ def context(lines, lineno, col_text):
     indent = len(lines[lineno - 1]) - len(lines[lineno - 1].lstrip())
     for k in range(lineno - 2, -1, -1):
         line = lines[k]
-        if not line.strip():
+        # a line at column 0 that opens no class, module or file statement is
+        # inside a string that spans lines (rubocop indents every other line)
+        if not line.strip() or (
+            not line[0].isspace() and not re.match(r"(class|module|end|require|#)\b", line)
+        ):
             continue
         ind = len(line) - len(line.lstrip())
         if ind >= indent:

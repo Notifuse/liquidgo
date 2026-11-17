@@ -7,8 +7,9 @@ import (
 )
 
 // assignSyntax matches: variable_name = value
-// Using Ruby Liquid regex: /(#{VariableSignature}+)\s*=\s*(.*)\s*/om
-var assignSyntax = regexp.MustCompile(`(?s)([\w\-\.\[\]]+)\s*=\s*(.*)\s*`)
+// Using Ruby Liquid regex: /(#{VariableSignature}+)\s*=\s*(.*)\s*/om, with
+// VariableSignature = /\(?[\w\-\.\[\]]\)?/
+var assignSyntax = regexp.MustCompile(`(?s)((?:\(?[\w\-\.\[\]]\)?)+)\s*=\s*(.*)\s*`)
 
 // AssignTag represents an assign tag that creates a new variable.
 type AssignTag struct {
@@ -23,6 +24,9 @@ func NewAssignTag(tagName, markup string, parseContext liquid.ParseContextInterf
 	if len(matches) < 3 {
 		// Get locale from parse context if it's a ParseContext struct
 		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.assign", nil)
+	}
+	if err := checkVariableName(matches[1], markup, parseContext); err != nil {
+		return nil, err
 	}
 
 	return &AssignTag{

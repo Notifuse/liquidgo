@@ -2,8 +2,38 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.1]
+
+liquidgo now ports Shopify Liquid 5.14.0 (from 5.11.0): Shopify's test suite and the differential
+corpus are those of 5.14.0, and CI compares with the 5.14.0 gem.
+
 ### Breaking
 - **`Usage` is gone**, with `GlobalUsage` and `IncrementUsage`: nothing called them.
+- **`NewIncrementTag` and `NewDecrementTag` return an error** too, for a name strict2 refuses.
+- **`blank` and `empty` compare as Shopify Liquid 5.14**: `false == blank`, `[] == blank` and
+  `{} == blank` are now true, and `nil == empty` is now false. `false == blank` was a listed
+  deliberate difference; it is gone.
+
+### Added (Shopify Liquid 5.12 to 5.14)
+- **`self`**: when no variable is named `self`, `self.x` and `self['x']` read the variable `x`
+  through the scopes and the data, so a name that is not an identifier can be read
+  (`self['(a(b(c)']`); a `SelfDrop` given to a partial reads the variables of its caller.
+- **The `squish` filter**: strips the input and turns each run of whitespace into one space.
+- **`first` and `last` on a string** give its first and last character.
+- **`blank` and `empty` without ActiveSupport**: `nil` and `false` are blank and not empty, a
+  string of whitespace is blank and not empty, a number or `true` is neither; `case`/`when` compares
+  with `blank` and `empty` as `if` does.
+- **A range costs what the loop visits**: `for` and `tablerow` count each item of a range they
+  visit in the render score, an empty body included, and never build the range.
+- **strict2 is stricter**: the name of an `assign`, a `capture`, an `increment` or a `decrement`
+  must be one identifier; a bare bracket (`{{ ['x'] }}`) is refused, `self['x']` replaces it; the
+  error of a tag whose body is blank writes its message (lax and strict still write nothing).
+- **`IncludeTag.ForLoop`** tells `include ... for` from `include ... with`.
+- **`liquid.Raise`** stops the render of a custom tag with an error, as a standard tag raises.
+
+Shopify's `cumulative_render_score_limit` and `cumulative_assign_score_limit` are not ported: the
+limits of a liquidgo render already cover its partials, which do not reset them, and each render
+has limits of its own (see [differences](docs/differences-from-shopify.md)).
 
 ### Changed
 - The standard filters are split by family into `string_filters.go`, `encoding_filters.go`,
@@ -11,6 +41,15 @@
   by all (`size`, `first`, `last`, `date`, `default`). No filter changes.
 
 ### Fixed
+- **strict2 parsed some expressions as lax**: three checks of the parse context knew `rigid` but not
+  `strict2`, its other name, so a malformed expression in strict2 was tolerated.
+- **The errors of `if`, `unless`, `case`, `for` and `tablerow` are handled as Ruby's**: they are
+  recorded, numbered with their line and raised with `RaiseErrors()`; a blank `if` used to skip them.
+- **`for` and `tablerow` read a quoted attribute as a string**: `limit: "a"` read the variable `a`.
+  An invalid `offset` or `limit` of `for` now raises `invalid integer` as Ruby (it was ignored), and
+  `tablerow` reads its attributes with Ruby's `to_i` (`nil` is 0, `"2.9"` is 2).
+- **A `for` with a body was taken for a blank tag**, so its errors wrote nothing.
+- **`capture` names its variable as Ruby**: the first run of name characters in its markup.
 - **A NUL byte is not the end of a template**: the tokenizer and the number parser took a NUL byte
   for the end of their input, so `{{ x\0 }}` raised a syntax error; it is now read as Ruby reads it.
 - **Lax parsing follows Ruby's on malformed markup**: an expression is stripped as Ruby's `strip`

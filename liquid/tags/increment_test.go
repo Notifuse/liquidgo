@@ -8,7 +8,10 @@ import (
 
 func TestIncrementTag(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
-	tag := NewIncrementTag("increment", "counter", pc)
+	tag, err := NewIncrementTag("increment", "counter", pc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if tag == nil {
 		t.Fatal("Expected IncrementTag, got nil")
 	}
@@ -37,7 +40,10 @@ func TestIncrementTag(t *testing.T) {
 // TestIncrementTagRenderToOutputBufferEdgeCases tests RenderToOutputBuffer edge cases
 func TestIncrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
-	tag := NewIncrementTag("increment", "counter", pc)
+	tag, err := NewIncrementTag("increment", "counter", pc)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx := liquid.NewContext()
 

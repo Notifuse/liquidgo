@@ -352,6 +352,12 @@ var standardFilters = map[string]FilterFunc{
 		a0 := filterArg(args, 0)
 		return ctx.standard().Split(input, a0), nil
 	},
+	"squish": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
+		if len(args) > 0 {
+			return nil, tooManyFilterArgs(len(args)+1, 1)
+		}
+		return ctx.standard().Squish(input), nil
+	},
 	"strip": func(ctx *Context, input interface{}, args ...interface{}) (interface{}, error) {
 		if len(args) > 0 {
 			return nil, tooManyFilterArgs(len(args)+1, 1)

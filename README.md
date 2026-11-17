@@ -1,6 +1,6 @@
 # liquidgo - The best Liquid engine in the world
 
-A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.11: the closest to Shopify and the
+A Go port of [Shopify Liquid](https://github.com/Shopify/liquid) 5.14: the closest to Shopify and the
 fastest of the Go engines, the only engine, Shopify's own included, that stops every hostile
 template, and 7 times faster than Shopify's. Every difference from Shopify is listed.
 
@@ -10,7 +10,7 @@ emailing platform, where every template is written by its users.
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)
 [![Coverage](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
 [![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo/v5.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo/v5)
-![Liquid](https://img.shields.io/badge/Liquid-5.11-orange)
+![Liquid](https://img.shields.io/badge/Liquid-5.14-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Go Liquid libraries compared
@@ -37,7 +37,7 @@ builds whole.
 
 ## Why liquidgo
 
-- **Same output as Shopify Liquid.** A port of the Ruby gem 5.11.0, file by file. Shopify's test
+- **Same output as Shopify Liquid.** A port of the Ruby gem 5.14.0, file by file. Shopify's test
   suite and a differential corpus run against the gem in CI; every difference is listed with its
   reason.
 - **Safe with untrusted templates.** A template cannot crash your program, exhaust its memory or CPU,
@@ -164,9 +164,9 @@ Limits are off by default, as in Ruby: set them for untrusted templates (see the
 
 ## Tests
 
-- **Shopify's test suite**: the cases of Shopify Liquid 5.11.0's tests replayed in each error mode,
+- **Shopify's test suite**: the cases of Shopify Liquid 5.14.0's tests replayed in each error mode,
   with Ruby numbers and JSON numbers ([its README](integration/testdata/shopify_conformance/README.md)).
-- **Differential corpus**: 274 templates, each in lax and strict mode, whose expected outputs CI
+- **Differential corpus**: 284 templates, each in lax and strict mode, whose expected outputs CI
   renders with the Ruby gem on each pull request; liquidgo matches each or lists why not.
 - **Fuzzing**: two minutes on each pull request, for panics and outputs that change from one parse
   to the next.
@@ -201,9 +201,9 @@ Every difference, deliberate or not, is listed with its reason:
 
 ## Version
 
-Current version: **5.11.0**, port revision 12 (`liquid.Version`, `liquid.PortRevision`). Port
-revision N is tagged `v5.11.(N-1)`: revision 12 is `v5.11.11`. Revision 2 has no tag of its own: it ships
-in `v5.11.2` with revision 3.
+Current version: **5.14.0**, port revision 1 (`liquid.Version`, `liquid.PortRevision`). The minor
+version is Shopify's: port revision N of Shopify Liquid 5.14.0 is tagged `v5.14.(N-1)`, so
+revision 1 is `v5.14.0`. The port of 5.11.0 ended at revision 12, `v5.11.11`.
 
 ## Contributing
 

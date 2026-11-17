@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,7 +17,9 @@ import (
 // last one ends it. A delimiter read wrong can make a render lose the rest of
 // a template without an error (category 6 of the security check); this
 // catches it. An end next to a tag that strips whitespace ({%- or -}}) is not
-// checked.
+// checked, nor the tail of a template that may break or continue: a break or
+// a continue outside a loop ends the render there, as in Ruby
+// (differential cases tags-20 and tags-21).
 
 // textEnds returns the text before the first tag or output of source and the
 // text after the last one, and whether each is to be checked. A source with
@@ -35,11 +38,15 @@ func textEnds(source string) (head, tail string, checkHead, checkTail bool) {
 	tail = source[last+2:]
 	checkTail = last == 0 || source[last-1] != '-'
 	// a tail that opens a tag or an output is no text: the parse decides
-	if strings.Contains(tail, "{{") || strings.Contains(tail, "{%") {
+	if strings.Contains(tail, "{{") || strings.Contains(tail, "{%") || mayInterrupt.MatchString(source) {
 		checkTail = false
 	}
 	return head, tail, checkHead, checkTail
 }
+
+// mayInterrupt finds the words break and continue, which may be a tag that
+// ends the render.
+var mayInterrupt = regexp.MustCompile(`\b(?:break|continue)\b`)
 
 func firstIndex(s string, subs ...string) int {
 	best := -1

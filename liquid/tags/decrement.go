@@ -13,11 +13,14 @@ type DecrementTag struct {
 }
 
 // NewDecrementTag creates a new DecrementTag.
-func NewDecrementTag(tagName, markup string, parseContext liquid.ParseContextInterface) *DecrementTag {
+func NewDecrementTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*DecrementTag, error) {
+	if err := checkVariableName(markup, markup, parseContext); err != nil {
+		return nil, err
+	}
 	return &DecrementTag{
 		Tag:          liquid.NewTag(tagName, markup, parseContext),
 		variableName: strings.TrimSpace(markup),
-	}
+	}, nil
 }
 
 // VariableName returns the variable name.

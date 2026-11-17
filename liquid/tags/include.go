@@ -10,7 +10,7 @@ import (
 var (
 	// includeSyntax matches: 'filename' [with|for expression] [as alias] [attributes...]
 	// Note: QuotedFragment already has +, so we don't add another
-	includeSyntax = regexp.MustCompile(`(` + liquid.QuotedFragment.String() + `)(\s+(?:with|for)\s+(` + liquid.QuotedFragment.String() + `))?(\s+(?:as)\s+(` + liquid.VariableSegment.String() + `+))?`)
+	includeSyntax = regexp.MustCompile(`(` + liquid.QuotedFragment.String() + `)(\s+(with|for)\s+(` + liquid.QuotedFragment.String() + `))?(\s+(?:as)\s+(` + liquid.VariableSegment.String() + `+))?`)
 )
 
 // IncludeTag represents an include tag that renders a partial template.
@@ -21,7 +21,12 @@ type IncludeTag struct {
 	variableNameExpr interface{}            // Expression or nil
 	aliasName        string                 // Alias name or ""
 	attributes       map[string]interface{} // Attribute expressions
+	forLoop          bool                   // the variable follows for, not with
 }
+
+// ForLoop reports whether the include iterates its variable, written with
+// for rather than with, as Shopify Liquid 5.14's for_loop?.
+func (i *IncludeTag) ForLoop() bool { return i.forLoop }
 
 // NewIncludeTag creates a new IncludeTag.
 func NewIncludeTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*IncludeTag, error) {
@@ -53,13 +58,14 @@ func (i *IncludeTag) parseMarkup(markup string, parseContext liquid.ParseContext
 	i.templateNameExpr = parseContext.ParseExpression(templateNameStr)
 
 	// Variable name (with/for)
-	if len(matches) > 3 && matches[3] != "" {
-		i.variableNameExpr = parseContext.ParseExpression(matches[3])
+	if len(matches) > 4 && matches[4] != "" {
+		i.variableNameExpr = parseContext.ParseExpression(matches[4])
+		i.forLoop = matches[3] == "for"
 	}
 
 	// Alias name (as)
-	if len(matches) > 5 && matches[5] != "" {
-		i.aliasName = matches[5]
+	if len(matches) > 6 && matches[6] != "" {
+		i.aliasName = matches[6]
 	}
 
 	// Parse attributes

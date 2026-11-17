@@ -141,7 +141,7 @@
    "lax/ruby": "output: "
   }
  },
- "test/integration/standard_filter_test.rb:695": {
+ "test/integration/standard_filter_test.rb:730": {
   "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
   "actual": {
    "lax/ruby": "output: 2",
@@ -149,7 +149,7 @@
    "strict2/ruby": "output: 2"
   }
  },
- "test/integration/standard_filter_test.rb:739": {
+ "test/integration/standard_filter_test.rb:774": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
    "lax/ruby": "output: ",
@@ -157,7 +157,7 @@
    "strict2/ruby": "output: "
   }
  },
- "test/integration/standard_filter_test.rb:748": {
+ "test/integration/standard_filter_test.rb:783": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
    "lax/ruby": "output: ",
@@ -165,7 +165,7 @@
    "strict2/ruby": "output: "
   }
  },
- "test/integration/standard_filter_test.rb:759": {
+ "test/integration/standard_filter_test.rb:794": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
    "lax/ruby": "output: 0",
@@ -173,7 +173,7 @@
    "strict2/ruby": "output: 0"
   }
  },
- "test/integration/standard_filter_test.rb:770": {
+ "test/integration/standard_filter_test.rb:805": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
    "lax/ruby": "output: 0",
@@ -181,7 +181,7 @@
    "strict2/ruby": "output: 0"
   }
  },
- "test/integration/standard_filter_test.rb:780": {
+ "test/integration/standard_filter_test.rb:815": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
    "lax/ruby": "output: 0",

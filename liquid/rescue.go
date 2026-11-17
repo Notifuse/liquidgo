@@ -28,8 +28,9 @@ func stopsRender(err error) bool {
 // BlockBody#rescue_render_node: a limit or a cancellation goes on up; an
 // undefined variable, drop method or filter is recorded and writes nothing;
 // any other error is recorded and its message written in place of the node,
-// unless the node is a blank tag.
-func rescueRenderNode(context TagContext, output *OutputBuffer, node interface{}, r interface{}) {
+// unless the node is a blank tag and blankErrorText is false (a body parsed
+// outside strict2, as Shopify Liquid 5.14).
+func rescueRenderNode(context TagContext, output *OutputBuffer, node interface{}, r interface{}, blankErrorText bool) {
 	if p := fatalPanic(context, r); p != nil {
 		panic(p)
 	}
@@ -47,7 +48,7 @@ func rescueRenderNode(context TagContext, output *OutputBuffer, node interface{}
 		return
 	}
 	message := context.HandleError(err, lineNumber)
-	if _, isVariable := node.(*Variable); !isVariable {
+	if _, isVariable := node.(*Variable); !isVariable && !blankErrorText {
 		if b, ok := node.(interface{ Blank() bool }); ok && b.Blank() {
 			return
 		}
