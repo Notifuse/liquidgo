@@ -1112,5 +1112,25 @@
  {
   "id": "empty-string-01",
   "template": "{% assign e = \"\" %}{% if \"\" %}yes{% else %}no{% endif %}|{% if e %}yes{% else %}no{% endif %}|{% unless e %}u{% endunless %}|{% if e == blank %}blank{% endif %}"
+ },
+ {
+  "id": "control-01",
+  "template": "{{ x\u0000 }}|{{ x | upcase\u0000 }}|{{\u0001x}}|"
+ },
+ {
+  "id": "control-02",
+  "template": "{% if\u0000 x %}y{% endif %}|"
+ },
+ {
+  "id": "control-03",
+  "template": "{% assign\u0000a = 1 %}{{ a }}|{{ x }}\u0000{{ x }}|{{ x\t}}|"
+ },
+ {
+  "id": "control-04",
+  "template": "{%\u0000 if x %}y{% endif %}|"
+ },
+ {
+  "id": "control-05",
+  "template": "{{ x }}|{{ 1\u0000 }}|{{ n\u0000 | plus: 1 }}|"
  }
 ]

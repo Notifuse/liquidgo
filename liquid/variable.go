@@ -11,6 +11,7 @@ import (
 var (
 	variableFilterMarkupRegex        = regexp.MustCompile(`(?s)\|\s*(.*)`)
 	variableFilterParser             = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
+	variableFilterName               = regexp.MustCompile(`\w+`)
 	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
 	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
 	variableMarkupWithQuotedFragment = regexp.MustCompile(`(?s)^([^\|]+)(.*)$`)
@@ -177,14 +178,19 @@ func (v *Variable) laxParse(markup string) {
 				if f == "" {
 					continue
 				}
-				// Extract filter name (first word)
-				parts := strings.Fields(f)
-				if len(parts) == 0 {
+				// The filter name is the first word of the filter, as
+				// Ruby's f =~ /\w+/
+				filterName := variableFilterName.FindString(f)
+				if filterName == "" {
 					continue
 				}
-				filterName := parts[0]
-				// Extract filter args
-				filterArgs := variableFilterArgsRegex.FindAllString(f, -1)
+				// The arguments are the captures of FilterArgsRegex, as
+				// Ruby's f.scan(FilterArgsRegex).flatten: without the
+				// separator before each
+				var filterArgs []string
+				for _, m := range variableFilterArgsRegex.FindAllStringSubmatch(f, -1) {
+					filterArgs = append(filterArgs, m[1])
+				}
 				v.filters = append(v.filters, v.laxParseFilterExpressions(filterName, filterArgs))
 			}
 		}
