@@ -3,7 +3,7 @@
 # (Ruby 3.3 with YJIT), each in a Docker container on the same machine, and
 # renders the hostile templates with Shopify Liquid and its resource limits,
 # bounded as hostile.sh bounds the Go libraries.
-# ./ruby.sh SHOPIFY_LIQUID_5_11_CHECKOUT
+# ./ruby.sh SHOPIFY_LIQUID_5_14_CHECKOUT
 set -e
 cd "$(dirname "$0")"
 liquid=$(cd "$1" && pwd)

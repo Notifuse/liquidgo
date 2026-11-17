@@ -1,4 +1,4 @@
-// Command libcmp compares Go Liquid libraries with Shopify Liquid 5.11.0.
+// Command libcmp compares Go Liquid libraries with Shopify Liquid 5.14.0.
 //
 //	go run . render LIB OUT.json    renders the corpus with LIB, writes each result
 //	go run . report OUT.json...     compares the results with Shopify's outputs
@@ -7,7 +7,7 @@
 //	go run . export DIR             writes the benchmark and hostile templates for ruby/
 //
 // It runs from tools/libcmp in the liquidgo repository, whose corpora hold the
-// outputs of Shopify Liquid 5.11.0. See docs/library-comparison.md.
+// outputs of Shopify Liquid 5.14.0. See docs/library-comparison.md.
 package main
 
 import (
