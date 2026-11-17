@@ -204,16 +204,19 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 }
 
 // liquidBlank is Ruby's liquid_blank? (Shopify Liquid 5.14), ActiveSupport's
-// blank?: nil, false, a string of ASCII whitespace only, and an empty list or
-// hash are blank; true and numbers are not.
+// blank?: nil, a string of whitespace only, and an empty list or hash are
+// blank; true and numbers are not. Two differences are deliberate, for the
+// display conditions of Notifuse: false is a value, not blank, and the
+// whitespace of a string is Unicode's (a no-break space is blank), where
+// Ruby makes false blank and counts ASCII whitespace only.
 func liquidBlank(obj interface{}) bool {
 	switch v := obj.(type) {
 	case nil:
 		return true
 	case bool:
-		return !v
+		return false
 	case string:
-		return strings.Trim(v, " \t\n\v\f\r") == ""
+		return strings.TrimSpace(v) == ""
 	}
 	if _, ok := asNumber(obj); ok {
 		return false

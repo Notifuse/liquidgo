@@ -166,7 +166,7 @@ Limits are off by default, as in Ruby: set them for untrusted templates (see the
 
 - **Shopify's test suite**: the cases of Shopify Liquid 5.14.0's tests replayed in each error mode,
   with Ruby numbers and JSON numbers ([its README](integration/testdata/shopify_conformance/README.md)).
-- **Differential corpus**: 284 templates, each in lax and strict mode, whose expected outputs CI
+- **Differential corpus**: 285 templates, each in lax and strict mode, whose expected outputs CI
   renders with the Ruby gem on each pull request; liquidgo matches each or lists why not.
 - **Fuzzing**: two minutes on each pull request, for panics and outputs that change from one parse
   to the next.
@@ -201,9 +201,10 @@ Every difference, deliberate or not, is listed with its reason:
 
 ## Version
 
-Current version: **5.14.0**, port revision 1 (`liquid.Version`, `liquid.PortRevision`). The minor
+Current version: **5.14.0**, port revision 2 (`liquid.Version`, `liquid.PortRevision`). The minor
 version is Shopify's: port revision N of Shopify Liquid 5.14.0 is tagged `v5.14.(N-1)`, so
-revision 1 is `v5.14.0`. The port of 5.11.0 ended at revision 12, `v5.11.11`.
+revision 2 is `v5.14.1`. `v5.14.0` is retracted: it made `false` blank, which changed the display
+conditions of Notifuse. The port of 5.11.0 ended at revision 12, `v5.11.11`.
 
 ## Contributing
 

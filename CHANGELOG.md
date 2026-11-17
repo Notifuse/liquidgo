@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.2]
+
+### Changed
+- **`false` is not blank, and a string of Unicode whitespace is blank** (a no-break space
+  included), as before 5.14.0-port.1: two deliberate differences from Shopify Liquid 5.14, which
+  makes `false` blank and counts ASCII whitespace only. Notifuse's display conditions compare with
+  `blank`, and 5.14.0-port.1 changed what they show for `false` and for a no-break space. The rest
+  of 5.14's `blank` and `empty` stays (`[] == blank` and `{} == blank` are true, `nil == empty` is
+  false).
+- **`v5.14.0` is retracted** (`retract` in `go.mod`), for that change.
+
 ## [5.14.0-port.1]
 
 liquidgo now ports Shopify Liquid 5.14.0 (from 5.11.0): Shopify's test suite and the differential

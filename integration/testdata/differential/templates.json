@@ -1152,5 +1152,9 @@
  {
   "id": "tags-21",
   "template": "a{% if true %}x{% continue %}y{% endif %}z"
+ },
+ {
+  "id": "empty-blank-01",
+  "template": "{% assign f = false %}{% assign nb = \" \" %}{% assign s = \" \" %}[{% if f == blank %}f{% endif %}][{% if nb == blank %}nb{% endif %}][{% if s == blank %}s{% endif %}][{% unless f == empty %}fe{% endunless %}]{% case f %}{% when blank %}cb{% else %}cn{% endcase %}"
  }
 ]
