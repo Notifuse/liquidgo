@@ -60,8 +60,6 @@ where every number is a `float64`, and render text meant for people (emails, pag
 - **A filter result longer than `render_length_limit`** raises `Memory limits exceeded`, even when
   it is assigned rather than written; the filters that can multiply their input check before they
   build it.
-- Some malformed markup that Ruby's lax parser tolerates (`{{ 'a' | split$$$:' ' }}`,
-  `{{ false - }}`) renders differently.
 
 ## Other differences
 

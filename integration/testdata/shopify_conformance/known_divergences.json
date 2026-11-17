@@ -51,12 +51,6 @@
   "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
   "skip": true
  },
- "test/integration/parsing_quirks_test.rb:104": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: h"
-  }
- },
  "test/integration/standard_filter_test.rb:730": {
   "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
   "actual": {

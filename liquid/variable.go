@@ -10,9 +10,12 @@ import (
 
 var (
 	variableFilterMarkupRegex = regexp.MustCompile(`(?s)\|\s*(.*)`)
-	variableFilterParser      = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
-	variableFilterName        = regexp.MustCompile(`\w+`)
-	variableFilterArgsRegex   = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
+	// Ruby's FilterParser, /(?:\s+|#{QuotedFragment}|#{ArgumentSeparator})+/o
+	variableFilterParser = regexp.MustCompile(`(?:\s+|(?:` + QuotedFragment.String() + `)|,)+`)
+	variableFilterName   = regexp.MustCompile(`\w+`)
+	// Ruby's FilterArgsRegex: a quoted string is tried before a fragment,
+	// as the alternation of QuotedFragment orders them
+	variableFilterArgsRegex   = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:` + QuotedFragment.String() + `))`)
 	variableJustTagAttributes = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
 	// Ruby's MarkupWithQuotedFragment, /(#{QuotedFragment})(.*)/om: the
 	// name is the first fragment of the markup, wherever it starts

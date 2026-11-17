@@ -3542,6 +3542,18 @@
       "output": "9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|1.3835058055282164e+19|eq|9223372036854775808|0"
     },
     {
+      "id": "tags-27",
+      "mode": "lax",
+      "template": "{% capture (x[y %}hello{% endcapture %}[{{ self['(x[y'] }}][{{ arr[ }}][{{ h.k. }}][{{ a[b[c] }}]",
+      "output": "[][123][v][]"
+    },
+    {
+      "id": "tags-27",
+      "mode": "strict",
+      "template": "{% capture (x[y %}hello{% endcapture %}[{{ self['(x[y'] }}][{{ arr[ }}][{{ h.k. }}][{{ a[b[c] }}]",
+      "error": "Liquid::SyntaxError: Liquid syntax error: [:end_of_string] is not a valid expression in \"{{ arr[ }}\""
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

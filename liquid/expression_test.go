@@ -143,18 +143,3 @@ func TestExpressionParseNumberComplex(t *testing.T) {
 		t.Errorf("parseNumber with StringScanner (different string) = %v, want 100", result2)
 	}
 }
-
-// TestExpressionSafeParse tests SafeParse method
-func TestExpressionSafeParse(t *testing.T) {
-	// Test with valid expression
-	p := NewParser("42")
-	result := SafeParse(p, nil, nil)
-	if result != 42 {
-		t.Errorf("SafeParse('42') = %v, want 42", result)
-	}
-
-	// Test with invalid expression (should return nil)
-	p2 := NewParser("invalid{{")
-	result2 := SafeParse(p2, nil, nil)
-	_ = result2 // May be nil or error value
-}

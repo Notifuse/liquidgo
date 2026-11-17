@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.6]
+
+### Fixed (no lax quirk is left: malformed markup renders as in Ruby)
+- **In lax mode, a variable tries the strict parse first, as Ruby**: an expression error of that
+  parse was swallowed, leaving the variable empty (`{{ h.k. }}`); it now falls back to the lax
+  parse, which reads `h.k`.
+- **A bracket that is never closed is skipped** in a lookup, as Ruby's `VariableParser`
+  (`{{ arr[ }}` reads `arr`).
+- **A number with several dots is Ruby's `to_f`** of it (`{{ 1..3 }}` is the float 1, written `1`
+  as every whole float).
+- **Lax filters split as Ruby's `FilterParser` and `FilterArgsRegex`**: a comma separates, and a
+  quoted argument ends at its closing quote (`split:"t""` takes `"t"`).
+
+### Breaking
+- `liquid.SafeParse` and `ParseContext.SafeParseCompleteExpression` are gone: the first swallowed
+  the error Ruby raises, and the second was called by nothing. `SafeParseExpression` raises in every
+  error mode, as Ruby's `safe_parse_expression`.
+
+### Tests
+- `TestStrict2VariableNames`: `{{ self['(x[y'] }}` in lax reads nothing, as Ruby, whose lookup
+  split ignores quotes (differential case `tags-27`); it expected `hello`, which Ruby never gave.
+- Removed with the functions they tested: `TestExpressionSafeParse` and the three tests of
+  `SafeParseCompleteExpression`.
+- `TestHostileTemplatesAreBounded`: a lookup nested 101 deep in a condition is refused, as in an
+  output. An output now meets the depth bound of the strict parse first, so the bound of a lookup
+  needed a case of its own.
+
 ## [5.14.0-port.5]
 
 ### Breaking

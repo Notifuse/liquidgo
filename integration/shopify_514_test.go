@@ -214,7 +214,9 @@ func TestStrict2VariableNames(t *testing.T) {
 		{"{% capture my_var %}hello{% endcapture %}{{ my_var }}", "strict2", "hello"},
 		{"{% capture my-var %}hello{% endcapture %}{{ my-var }}", "strict2", "hello"},
 		{"{% capture 'var' %}test string{% endcapture %}{{var}}", "lax", "test string"},
-		{"{% capture (x[y %}hello{% endcapture %}{{ self['(x[y'] }}", "lax", "hello"},
+		// Ruby splits a lookup without regard to quotes, so self['(x[y']
+		// reads nothing (differential case tags-27)
+		{"{% capture (x[y %}hello{% endcapture %}{{ self['(x[y'] }}", "lax", ""},
 		{"{% increment my-var %}", "strict2", "0"},
 		{"{% decrement my-var %}", "strict2", "-1"},
 	} {
