@@ -27,15 +27,6 @@ var expressionLiterals = map[string]interface{}{
 // Expression represents a parsed Liquid expression.
 type Expression struct{}
 
-// SafeParse parses an expression from a parser.
-func SafeParse(parser *Parser, ss *StringScanner, cache map[string]interface{}) interface{} {
-	expr, err := parser.Expression()
-	if err != nil {
-		return nil
-	}
-	return Parse(expr, ss, cache)
-}
-
 // rubyStrip is Ruby's String#strip: it removes the ASCII whitespace and the
 // NUL bytes at both ends, and no other character (Go's strings.TrimSpace also
 // removes Unicode spaces and keeps NUL bytes).
@@ -184,19 +175,28 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 		numEndPos = len(markup)
 	}
 
+	// as Ruby, the number is String#to_f of the markup up to its end: the
+	// float it starts with ("1..3" is 1.0, "1.2.3" is 1.2)
 	if numEndPos >= 0 {
 		// Number ends with a number "123.123"
-		numStr := markup[0:numEndPos]
-		if val, err := strconv.ParseFloat(numStr, 64); err == nil {
-			return val
-		}
+		return rubyToF(markup[0:numEndPos])
 	} else if firstDotPos >= 0 {
 		// Number ends with a dot "123."
-		numStr := markup[0:firstDotPos]
-		if val, err := strconv.ParseFloat(numStr, 64); err == nil {
-			return val
-		}
+		return rubyToF(markup[0:firstDotPos])
 	}
 
 	return nil
+}
+
+// rubyLeadingFloat is the float a string starts with, as Ruby's String#to_f
+// reads it.
+var rubyLeadingFloat = regexp.MustCompile(`^[+-]?\d+(?:\.\d+)?`)
+
+// rubyToF is Ruby's String#to_f for a string that starts with a number.
+func rubyToF(s string) interface{} {
+	val, err := strconv.ParseFloat(rubyLeadingFloat.FindString(s), 64)
+	if err != nil {
+		return nil
+	}
+	return val
 }

@@ -63,9 +63,6 @@
  "generated-399/strict": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: -1"},
  "generated-400/lax": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: -1"},
  "generated-400/strict": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: -1"},
- "lax-quirks-10/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
- "lax-quirks-12/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
- "lax-quirks-13/lax": {"reason":"lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops","actual":"output: "},
  "lookup-07/lax": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: 012"},
  "lookup-07/strict": {"reason":"deliberate: increment and decrement counters start at 0, never at a render data value of the same name","actual":"output: 012"},
  "nesting-02/lax": {"reason":"deliberate: a lookup nested more than 100 deep is refused while parsing, as a block is","actual":"error: Liquid error: Nesting too deep"},
@@ -105,5 +102,6 @@
  "filters-errors-10/strict": {"reason":"deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)","actual":"output: ab"},
  "panic-07/lax": {"reason":"deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)","actual":"output: "},
  "numbers-22/lax": {"reason":"deliberate: whole floats render without \".0\" (JSON data is all float64)","actual":"output: 9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|13835058055282164000|eq|9223372036854775808|0"},
- "numbers-22/strict": {"reason":"deliberate: whole floats render without \".0\" (JSON data is all float64)","actual":"output: 9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|13835058055282164000|eq|9223372036854775808|0"}
+ "numbers-22/strict": {"reason":"deliberate: whole floats render without \".0\" (JSON data is all float64)","actual":"output: 9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|13835058055282164000|eq|9223372036854775808|0"},
+ "lax-quirks-13/lax": {"reason":"deliberate: whole floats render without \".0\" (JSON data is all float64)","actual":"output: 1"}
 }

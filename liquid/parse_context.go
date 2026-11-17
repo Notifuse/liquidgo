@@ -203,59 +203,17 @@ func (pc *ParseContext) NewTokenizer(source string, lineNumbers bool, startLineN
 	return NewTokenizer(source, pc.stringScanner, lineNumbers, startLineNumber, forLiquidTag)
 }
 
-// SafeParseExpression safely parses an expression.
-// In strict/rigid mode, errors are propagated. In lax mode, errors return nil.
+// SafeParseExpression parses the next expression of parser, as Ruby's
+// safe_parse_expression: a lexer or a parser error is raised in every error
+// mode. In lax mode the variable parse that tries the strict parse first
+// catches it and parses the markup as lax, as Ruby's.
 func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
-	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == ErrorModeStrict || rigidMode(pc.errorMode) || pc.errorMode == ErrorModeWarn {
-		// Check for lexer errors first
-		if err := parser.Error(); err != nil {
-			panic(err)
-		}
-		expr, err := parser.Expression()
-		if err != nil {
-			// Don't add markup context here - let ParserSwitching handle it
-			panic(err)
-		}
-		return Parse(expr, pc.stringScanner, pc.expressionCache)
-	}
-	// In lax mode, swallow errors
-	return SafeParse(parser, pc.stringScanner, pc.expressionCache)
-}
-
-// SafeParseCompleteExpression parses a complete expression and validates all tokens are consumed.
-// This is used for standalone expression parsing where we expect the entire input to be a valid expression.
-func (pc *ParseContext) SafeParseCompleteExpression(parser *Parser) interface{} {
-	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == ErrorModeStrict || rigidMode(pc.errorMode) || pc.errorMode == ErrorModeWarn {
-		// Check for lexer errors first
-		if err := parser.Error(); err != nil {
-			panic(err)
-		}
-		expr, err := parser.Expression()
-		if err != nil {
-			panic(err)
-		}
-		// Ensure we consumed the entire expression
-		if !parser.Look(":end_of_string", 0) {
-			_, err := parser.Consume(":end_of_string")
-			if err != nil {
-				panic(err)
-			}
-		}
-		return Parse(expr, pc.stringScanner, pc.expressionCache)
-	}
-	// In lax mode, return nil if there are leftover tokens
 	if err := parser.Error(); err != nil {
-		return nil
+		panic(err)
 	}
 	expr, err := parser.Expression()
 	if err != nil {
-		return nil
-	}
-	// In lax mode, if there are leftover tokens, return nil (invalid expression)
-	if !parser.Look(":end_of_string", 0) {
-		return nil
+		panic(err)
 	}
 	return Parse(expr, pc.stringScanner, pc.expressionCache)
 }

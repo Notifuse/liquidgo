@@ -1184,5 +1184,9 @@
  {
   "id": "numbers-22",
   "template": "{% assign b = 9223372036854775807 | plus: 1 %}{{ b | minus: 1 }}|{% if b > 9223372036854775807 %}gt{% endif %}|{{ b | ceil }}|{{ b | floor }}|{{ b | round }}|{{ b | abs }}|{{ b | divided_by: 2 }}|{{ b | modulo: 7 }}|{{ b | times: 1.5 }}|{% if b == 9223372036854775808 %}eq{% endif %}|{{ b | at_least: 3 }}|{% assign l = '1,2' | split: ',' %}{{ b | times: -1 | abs | minus: b }}"
+ },
+ {
+  "id": "tags-27",
+  "template": "{% capture (x[y %}hello{% endcapture %}[{{ self['(x[y'] }}][{{ arr[ }}][{{ h.k. }}][{{ a[b[c] }}]"
  }
 ]

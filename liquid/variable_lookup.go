@@ -47,6 +47,12 @@ func parseVariableTokens(markup string) []string {
 				}
 				i++
 			}
+			if bracketCount > 0 {
+				// never closed: as Ruby's VariableParser, which does not
+				// match here, the bracket is skipped and the scan goes on
+				i = start + 1
+				continue
+			}
 			tokens = append(tokens, markup[start:i])
 		case (markup[i] >= 'a' && markup[i] <= 'z') ||
 			(markup[i] >= 'A' && markup[i] <= 'Z') ||
