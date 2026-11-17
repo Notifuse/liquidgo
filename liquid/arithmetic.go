@@ -29,7 +29,23 @@ const (
 	integerNumber liquidNumberKind = iota
 	decimalNumber
 	specialNumber
+	// bigIntegerNumber is an integer beyond int64, held exact in r, as
+	// Ruby's Integer
+	bigIntegerNumber
 )
+
+// isInteger reports whether n is an integer, of any size.
+func (n liquidNumber) isInteger() bool {
+	return n.kind == integerNumber || n.kind == bigIntegerNumber
+}
+
+// bigInt returns an integer n as a big.Int of its own.
+func (n liquidNumber) bigInt() *big.Int {
+	if n.kind == integerNumber {
+		return big.NewInt(n.i)
+	}
+	return new(big.Int).Set(n.r.Num())
+}
 
 var rubyToIPrefix = regexp.MustCompile(`^[+-]?\d+(?:_\d+)*`)
 
@@ -42,7 +58,7 @@ func decimalOfInteger(i *big.Int) liquidNumber {
 	if i.IsInt64() {
 		return integerOf(i.Int64())
 	}
-	return decimalOf(new(big.Rat).SetInt(i))
+	return liquidNumber{kind: bigIntegerNumber, r: new(big.Rat).SetInt(i)}
 }
 
 // decimalOfFloat converts a float as Ruby's BigDecimal(float.to_s): through its shortest
@@ -69,6 +85,11 @@ func toLiquidNumber(v interface{}) liquidNumber {
 		return decimalOfFloat(x, 64)
 	case string:
 		return stringNumber(x)
+	case *big.Int:
+		if x == nil {
+			return integerOf(0)
+		}
+		return decimalOfInteger(x)
 	case interface{ ToNumber() interface{} }:
 		return toLiquidNumber(x.ToNumber())
 	}
@@ -116,7 +137,7 @@ func (n liquidNumber) float64() float64 {
 	switch n.kind {
 	case integerNumber:
 		return float64(n.i)
-	case decimalNumber:
+	case decimalNumber, bigIntegerNumber:
 		f, _ := n.r.Float64()
 		return f
 	}
@@ -127,17 +148,24 @@ func (n liquidNumber) isZero() bool {
 	switch n.kind {
 	case integerNumber:
 		return n.i == 0
-	case decimalNumber:
+	case decimalNumber, bigIntegerNumber:
 		return n.r.Sign() == 0
 	}
 	return n.f == 0
 }
 
-// value returns the filter result: an int for an integer, a float64 otherwise (Ruby's
-// BigDecimal#to_f). A decimal that came from an integer too large for int64 is a float.
+// value returns the filter result: an int for an integer, a *big.Int for an
+// integer beyond int64 (Ruby's Integer has no bound), a float64 otherwise
+// (Ruby's BigDecimal#to_f).
 func (n liquidNumber) value() interface{} {
-	if n.kind == integerNumber {
-		return int(n.i)
+	switch n.kind {
+	case integerNumber:
+		if n.i == int64(int(n.i)) {
+			return int(n.i)
+		}
+		return big.NewInt(n.i) // beyond a 32-bit int
+	case bigIntegerNumber:
+		return n.bigInt()
 	}
 	return n.float64()
 }
@@ -160,11 +188,13 @@ func arithmetic(a, b liquidNumber, op byte) liquidNumber {
 			return decimalOfFloat(x-y*math.Floor(x/y), 64)
 		}
 	}
-	if a.kind == integerNumber && b.kind == integerNumber {
-		if r, ok := int64Arithmetic(a.i, b.i, op); ok {
-			return integerOf(r)
+	if a.isInteger() && b.isInteger() {
+		if a.kind == integerNumber && b.kind == integerNumber {
+			if r, ok := int64Arithmetic(a.i, b.i, op); ok {
+				return integerOf(r)
+			}
 		}
-		x, y := big.NewInt(a.i), big.NewInt(b.i)
+		x, y := a.bigInt(), b.bigInt()
 		switch op {
 		case '+':
 			return decimalOfInteger(x.Add(x, y))

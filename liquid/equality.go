@@ -156,12 +156,21 @@ func liquidEqualDepth(left, right interface{}, depth int) (equal bool) {
 	if ln, ok := asNumber(left); ok {
 		rn, ok := asNumber(right)
 		if !ok {
+			if isBigInt(right) {
+				return compareBigInts(left, right) == 0
+			}
 			return false
 		}
 		cmp, ok := compareNumbers(ln, rn)
 		return ok && cmp == 0
 	}
-	if _, ok := asNumber(right); ok {
+	if isBigInt(left) {
+		if _, ok := asNumber(right); ok || isBigInt(right) {
+			return compareBigInts(left, right) == 0
+		}
+		return false
+	}
+	if _, ok := asNumber(right); ok || isBigInt(right) {
 		return false
 	}
 
@@ -217,4 +226,18 @@ func isList(k reflect.Kind) bool {
 func toNumber(v interface{}) (float64, bool) {
 	n, ok := asNumber(v)
 	return n.float64(), ok
+}
+
+// isBigInt reports whether v is an integer beyond int64, which arithmetic
+// gives as a *big.Int. Comparisons check it only where asNumber fails, so
+// that the comparison of ordinary numbers does not pay for it.
+func isBigInt(v interface{}) bool {
+	b, ok := v.(*big.Int)
+	return ok && b != nil
+}
+
+// compareBigInts compares two numbers one of which at least is a *big.Int,
+// exactly, as Ruby compares an Integer with any number.
+func compareBigInts(left, right interface{}) int {
+	return compareLiquidNumbers(toLiquidNumber(left), toLiquidNumber(right))
 }

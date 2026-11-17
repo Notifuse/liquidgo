@@ -292,11 +292,13 @@ func (c *CaseTag) RenderToOutput(context liquid.TagContext, output *liquid.Outpu
 			liquid.Raise(err) // as Ruby: the block body handles it
 		}
 
+		// as Ruby, every when that matches renders, and the else only when
+		// none before it did
 		if result {
+			executeElseBlock = false
 			if attachment, ok := block.Attachment().(*liquid.BlockBody); ok {
 				attachment.RenderToOutput(context, output)
 			}
-			return
 		}
 	}
 }

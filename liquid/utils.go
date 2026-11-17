@@ -1,8 +1,10 @@
 package liquid
 
 import (
+	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
 	"regexp"
 	"sort"
@@ -77,6 +79,9 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 
 	// Use reflection to iterate
 	v := reflect.ValueOf(collection)
+	if v.Kind() == reflect.Map {
+		return slicePairs(hashPairs(v), from, to)
+	}
 	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
 		return []interface{}{}
 	}
@@ -95,6 +100,47 @@ func sliceCollectionUsingEach(collection interface{}, from int, to *int) []inter
 	}
 
 	return segments
+}
+
+// hashPairs returns the pairs of a hash as Ruby's Hash#each gives them, each
+// a [key, value] list, in the order of their keys as written: a Go map keeps
+// no order, and the hash output (hashInspect) sorts the same way.
+func hashPairs(v reflect.Value) [][2]interface{} {
+	pairs := make([][2]interface{}, 0, v.Len())
+	iter := v.MapRange()
+	for iter.Next() {
+		pairs = append(pairs, [2]interface{}{iter.Key().Interface(), iter.Value().Interface()})
+	}
+	sort.Slice(pairs, func(i, j int) bool { return ToS(pairs[i][0], nil) < ToS(pairs[j][0], nil) })
+	return pairs
+}
+
+// slicePairs returns the pairs from from to to, each as a list.
+func slicePairs(pairs [][2]interface{}, from int, to *int) []interface{} {
+	hi := len(pairs)
+	if to != nil {
+		hi = min(hi, *to)
+	}
+	lo := max(from, 0)
+	if hi <= lo {
+		return []interface{}{}
+	}
+	items := make([]interface{}, 0, hi-lo)
+	for _, p := range pairs[lo:hi] {
+		items = append(items, []interface{}{p[0], p[1]})
+	}
+	return items
+}
+
+// wholeFloat returns a float with no fraction as an integer, saturated to the
+// int range: a number decoded from JSON is a float64 (a deliberate difference
+// from Ruby, which refuses any Float). A fraction, NaN and the infinities are
+// an invalid integer, as Ruby's Utils.to_integer.
+func wholeFloat(f float64) (int, error) {
+	if f != math.Trunc(f) || math.IsInf(f, 0) {
+		return 0, NewArgumentError("invalid integer")
+	}
+	return saturateFloat(f), nil
 }
 
 // ToInteger converts a value to an integer.
@@ -125,16 +171,32 @@ func ToInteger(num interface{}) (int, error) {
 		return saturateUint64(uint64(v)), nil
 	case uint64:
 		return saturateUint64(v), nil
-	case float32:
-		return saturateFloat(float64(v)), nil
-	case float64:
-		return saturateFloat(v), nil
-	case string:
-		i, err := strconv.Atoi(v)
-		if err != nil {
+	case *big.Int:
+		if v == nil {
 			return 0, NewArgumentError("invalid integer")
 		}
-		return i, nil
+		if v.IsInt64() {
+			return saturateInt64(v.Int64()), nil
+		}
+		if v.Sign() < 0 {
+			return math.MinInt, nil
+		}
+		return math.MaxInt, nil
+	case float32:
+		return wholeFloat(float64(v))
+	case float64:
+		return wholeFloat(v)
+	case string:
+		// as Ruby's Integer(): around spaces, a sign, underscores and the
+		// 0x, 0o, 0b and 0 prefixes; nothing else
+		i, err := strconv.ParseInt(strings.TrimSpace(v), 0, 0)
+		if err != nil {
+			if errors.Is(err, strconv.ErrRange) {
+				return saturateInt64(i), nil
+			}
+			return 0, NewArgumentError("invalid integer")
+		}
+		return int(i), nil
 	default:
 		return 0, NewArgumentError("invalid integer")
 	}
@@ -403,7 +465,7 @@ func ToS(obj interface{}, seen map[uintptr]bool) string {
 		}
 		return "false"
 	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
+		return floatToS(v)
 	case time.Time:
 		return rubyTime(v, false)
 	case *time.Time:
@@ -661,4 +723,18 @@ func hashInspect(hash map[string]interface{}, seen map[uintptr]bool) string {
 		values[k] = value
 	}
 	return writeInspectedHash(keys, values, seen)
+}
+
+// floatToS writes a float as Ruby's Float#to_s for the special values
+// (Infinity, -Infinity, NaN), and without exponent otherwise.
+func floatToS(f float64) string {
+	switch {
+	case math.IsInf(f, 1):
+		return "Infinity"
+	case math.IsInf(f, -1):
+		return "-Infinity"
+	case math.IsNaN(f):
+		return "NaN"
+	}
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }

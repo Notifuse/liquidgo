@@ -38,7 +38,7 @@ func TestSliceAndTruncateWalkAsRunes(t *testing.T) {
 	for _, in := range inputs {
 		for _, offset := range numbers {
 			for _, length := range numbers {
-				if got, want := sf.Slice(in, offset, length), sliceByRunes(in, offset, length); got != want {
+				if got, want := sliceOf(sf, in, offset, length), sliceByRunes(in, offset, length); got != want {
 					t.Errorf("slice(%q, %d, %d) = %q, want %q", in, offset, length, got, want)
 				}
 			}

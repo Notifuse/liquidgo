@@ -9,9 +9,14 @@ where every number is a `float64`, and render text meant for people (emails, pag
   string to the number it writes (`where: "id", "10"` keeps an `id` of `10`).
 - **Whole floats render without `.0`**: `{{ 2.0 }}` renders `2`, and `{{ 100 | plus: 1 }}` with a
   JSON number renders `101`, not `101.0`. A JSON integer stays a float in arithmetic, so
-  `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`).
+  `{{ 1999 | divided_by: 100 }}` with JSON data gives `19.99` (an integer literal gives `19`). A
+  large whole float keeps its digits (`13835058055282164000`), where Ruby writes
+  `1.3835058055282164e+19`.
+- **A hash iterates in the order of its keys**: `{% for pair in hash %}` gives each `[key, value]`
+  as Ruby does, but sorted by key, as a whole hash is written: a Go map keeps no order, where Ruby
+  keeps the order the keys were added.
 - **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode`, `map`
-  over integers and a filter given too many arguments render an empty string instead of
+  over integers and a filter given too many or too few arguments render an empty string instead of
   `Liquid error: ...`, and the error is recorded in `Result.Errors` (with strict filters it is
   raised, as in Ruby); a `truncate` or `truncatewords` length that is not an integer keeps the
   input.

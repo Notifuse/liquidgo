@@ -247,9 +247,9 @@ func parseIfCondition(markup string, parseContext liquid.ParseContextInterface) 
 
 	// Split by 'and' and 'or' operators, keeping track of which operator was used
 	// We need to parse from right to left like Ruby does
-	parts := splitByBooleanOperators(markup)
+	parts, ok := splitByBooleanOperators(markup)
 
-	if len(parts) == 0 {
+	if !ok || len(parts) == 0 {
 		return nil, liquid.NewSyntaxErrorFor(parseContext, "errors.syntax.if", nil)
 	}
 
@@ -289,7 +289,7 @@ type conditionPart struct {
 // If::ExpressionsAndOperators: an operator is a bare "and" or "or" word that starts a
 // fragment, and a quoted string is part of its fragment, spaces and operators included.
 // Each expression is kept as written.
-func splitByBooleanOperators(markup string) []conditionPart {
+func splitByBooleanOperators(markup string) ([]conditionPart, bool) {
 	var parts []conditionPart
 	start, end := -1, 0
 	for i := 0; i < len(markup); {
@@ -298,10 +298,13 @@ func splitByBooleanOperators(markup string) []conditionPart {
 			continue
 		}
 		if op := booleanOperatorAt(markup, i); op != "" {
-			if start >= 0 {
-				parts = append(parts, conditionPart{expr: markup[start:end], nextOp: op})
-				start = -1
+			// an operator with no expression before it is a syntax error,
+			// as in Ruby's parse
+			if start < 0 {
+				return nil, false
 			}
+			parts = append(parts, conditionPart{expr: markup[start:end], nextOp: op})
+			start = -1
 			i += len(op)
 			continue
 		}
@@ -313,8 +316,10 @@ func splitByBooleanOperators(markup string) []conditionPart {
 	}
 	if start >= 0 {
 		parts = append(parts, conditionPart{expr: markup[start:end]})
+	} else if len(parts) > 0 {
+		return nil, false // an operator with no expression after it
 	}
-	return parts
+	return parts, true
 }
 
 // booleanOperatorAt returns "and" or "or" when that whole word starts at markup[i].
@@ -452,44 +457,28 @@ func lexCondition(markup string, parseContext liquid.ParseContextInterface) erro
 }
 
 func validateExpression(expr string, parseContext liquid.ParseContextInterface) error {
-	mode := parseContext.ErrorMode()
-	if mode == "rigid" || mode == "strict2" {
-		// as Ruby's strict2 parse: each operand is one expression of the
-		// parser, which refuses a bare bracket
-		p := parseContext.NewParser(expr)
-		err := p.Error()
-		if err == nil {
-			_, err = p.Expression()
-		}
-		if err == nil {
-			_, err = p.Consume(":end_of_string")
-		}
-		if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
-			syntaxErr.Err.MarkupContext = "in \"" + expr + "\""
-			if parseContext.LineNumber() != nil {
-				ln := *parseContext.LineNumber()
-				syntaxErr.Err.LineNumber = &ln
-			}
-		}
-		return err
+	switch parseContext.ErrorMode() {
+	case "strict", "warn", "rigid", "strict2":
+	default:
+		return nil
 	}
-	if mode == "strict" || mode == "warn" {
-		// Check for parentheses which are not allowed in Liquid conditions
-		if strings.ContainsAny(withoutQuotedStrings(expr), "()") {
-			return liquid.NewSyntaxError("Liquid syntax error: parentheses are not allowed in Liquid conditions")
-		}
-
-		p := parseContext.NewParser(expr)
-		if err := p.Error(); err != nil {
-			if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
-				syntaxErr.Err.MarkupContext = "in \"" + expr + "\""
-				if parseContext.LineNumber() != nil {
-					ln := *parseContext.LineNumber()
-					syntaxErr.Err.LineNumber = &ln
-				}
-			}
-			return err
+	// as Ruby's strict and strict2 parses: each operand is one expression of
+	// the parser, a range included ((1..3)); strict2's parser also refuses a
+	// bare bracket
+	p := parseContext.NewParser(expr)
+	err := p.Error()
+	if err == nil {
+		_, err = p.Expression()
+	}
+	if err == nil {
+		_, err = p.Consume(":end_of_string")
+	}
+	if syntaxErr, ok := err.(*liquid.SyntaxError); ok {
+		syntaxErr.Err.MarkupContext = "in \"" + expr + "\""
+		if parseContext.LineNumber() != nil {
+			ln := *parseContext.LineNumber()
+			syntaxErr.Err.LineNumber = &ln
 		}
 	}
-	return nil
+	return err
 }

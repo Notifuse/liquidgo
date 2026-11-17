@@ -2,6 +2,7 @@ package liquid
 
 import (
 	"math"
+	"math/big"
 	"reflect"
 	"testing"
 )
@@ -66,14 +67,22 @@ func TestArithmeticIntegers(t *testing.T) {
 		{"nil + 1", sf.Plus(nil, 1), 1},
 		{"JSON integer + int", sf.Plus(100.0, 1), 101.0},
 		{"JSON integer / int", div(1999.0, 100), 19.99},
-		{"overflow", sf.Plus(int64(math.MaxInt64), 1), float64(math.MaxInt64) + 1},
+		// an integer beyond int64 stays exact, as Ruby's Integer
+		// (differential case numbers-04)
+		{"overflow", sf.Plus(int64(math.MaxInt64), 1), new(big.Int).Add(big.NewInt(math.MaxInt64), big.NewInt(1))},
 	})
 }
 
 func TestArithmeticDivisionByZero(t *testing.T) {
 	sf := &StandardFilters{}
 	for _, operand := range []interface{}{0, 0.0, "0", nil} {
-		if _, err := sf.DividedBy(1, operand); err == nil {
+		// as Ruby: an integer by an integer zero raises; by a decimal zero
+		// it is Infinity (differential case numbers-21)
+		if got, err := sf.DividedBy(1, operand); operand == 0.0 {
+			if f, ok := got.(float64); err != nil || !ok || !math.IsInf(f, 1) {
+				t.Errorf("DividedBy(1, 0.0) = %v, %v; want +Inf", got, err)
+			}
+		} else if err == nil {
 			t.Errorf("DividedBy(1, %#v): want a division by zero error", operand)
 		}
 		if _, err := sf.Modulo(1, operand); err == nil {

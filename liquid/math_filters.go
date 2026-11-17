@@ -15,6 +15,8 @@ func (sf *StandardFilters) Abs(input interface{}) interface{} {
 			return arithmetic(integerOf(0), n, '-').value()
 		}
 		return n.value()
+	case bigIntegerNumber:
+		return decimalOfInteger(new(big.Int).Abs(n.bigInt())).value()
 	case decimalNumber:
 		return decimalOf(new(big.Rat).Abs(n.r)).value()
 	}
@@ -43,10 +45,23 @@ func (sf *StandardFilters) Times(input interface{}, operand interface{}) interfa
 // Mirrors Ruby's divided_by from standardfilters.rb:837
 func (sf *StandardFilters) DividedBy(input interface{}, operand interface{}) (interface{}, error) {
 	divisor := toLiquidNumber(operand)
+	dividend := toLiquidNumber(input)
 	if divisor.isZero() {
-		return nil, NewZeroDivisionError("divided by 0")
+		// as Ruby: only an integer by an integer raises; a decimal side
+		// gives Infinity, -Infinity, or NaN for 0
+		if dividend.isInteger() && divisor.isInteger() {
+			return nil, NewZeroDivisionError("divided by 0")
+		}
+		switch x := dividend.float64(); {
+		case x > 0:
+			return math.Inf(1), nil
+		case x < 0:
+			return math.Inf(-1), nil
+		default:
+			return math.NaN(), nil
+		}
 	}
-	return arithmetic(toLiquidNumber(input), divisor, '/').value(), nil
+	return arithmetic(dividend, divisor, '/').value(), nil
 }
 
 // Modulo returns the remainder of division, with the sign of the divisor (Ruby %).
@@ -76,7 +91,7 @@ func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{},
 	if num.kind == specialNumber {
 		return nil, NewFloatDomainError(ToS(num.f, nil))
 	}
-	if num.kind == integerNumber && digits >= 0 {
+	if num.isInteger() && digits >= 0 {
 		return num.value(), nil
 	}
 	// beyond a float64's range of digits the result is known without computing 10^digits
@@ -84,13 +99,13 @@ func (sf *StandardFilters) Round(input interface{}, n interface{}) (interface{},
 		return num.value(), nil
 	}
 	if digits < -maxRoundDigits {
-		if num.kind == integerNumber {
+		if num.isInteger() {
 			return 0, nil
 		}
 		return 0.0, nil
 	}
 	rounded := decimalOf(roundRat(num.rat(), digits))
-	if digits == 0 || num.kind == integerNumber {
+	if digits == 0 || num.isInteger() {
 		return decimalOfInteger(floorRat(rounded.r)).value(), nil
 	}
 	return rounded.value(), nil
@@ -112,22 +127,22 @@ func clampRoundDigits(d *big.Int) int {
 
 // Ceil rounds a number up to the nearest integer.
 // Mirrors Ruby's ceil from standardfilters.rb:879
-func (sf *StandardFilters) Ceil(input interface{}) (int, error) {
+func (sf *StandardFilters) Ceil(input interface{}) (interface{}, error) {
 	num := toLiquidNumber(input)
 	if num.kind == specialNumber {
 		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
-	return int(ceilRat(num.rat()).Int64()), nil
+	return decimalOfInteger(ceilRat(num.rat())).value(), nil
 }
 
 // Floor rounds a number down to the nearest integer.
 // Mirrors Ruby's floor from standardfilters.rb:892
-func (sf *StandardFilters) Floor(input interface{}) (int, error) {
+func (sf *StandardFilters) Floor(input interface{}) (interface{}, error) {
 	num := toLiquidNumber(input)
 	if num.kind == specialNumber {
 		return 0, NewFloatDomainError(ToS(num.f, nil))
 	}
-	return int(floorRat(num.rat()).Int64()), nil
+	return decimalOfInteger(floorRat(num.rat())).value(), nil
 }
 
 // AtLeast limits a number to a minimum value.

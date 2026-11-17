@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.4]
+
+### Fixed (every divergence listed "minor" now follows Shopify Liquid)
+- **`case` renders each `when` that matches**, as Ruby, not only the first; `else` renders when
+  none before it did.
+- **`for` and `tablerow` over a hash** iterate its `[key, value]` pairs, sorted by key (Ruby keeps
+  the order the keys were added, which a Go map does not).
+- **A decimal divided by zero** is `Infinity`, `-Infinity` or `NaN`, written as Ruby writes them;
+  only an integer divided by an integer zero raises.
+- **Integers beyond 64 bits stay exact** through the arithmetic filters, comparisons and output,
+  as Ruby's `Integer` (`{{ 9223372036854775807 | plus: 1 }}` gives `9223372036854775808`);
+  `ceil` and `floor` return them exact too.
+- **A filter given fewer arguments than it requires** raises Ruby's `wrong number of arguments
+  (given 1, expected 2)` (`{{ x | replace }}`, `{{ x | split }}`, `{{ 1 | plus }}`), which, as any
+  filter error, writes nothing and is recorded.
+- **An integer argument is read as Ruby's `Integer()`**: `offset` and `limit` of `for`, and
+  `slice`, refuse a fraction (`limit: 2.7`) or text (`slice: 'x'`) with `invalid integer`, and
+  read `" 2 "`, `"1_000"`, `"0x1A"`. A whole float still counts as an integer, for JSON data.
+  `ToInteger` follows the same rules.
+- **strict mode** accepts a range in a condition (`{% if (1..3) != a %}`), refuses a filter colon
+  with no argument (`{{ x | upcase: }}`), and every mode refuses an `and` or `or` with no
+  expression before or after it (`{% if true and %}`).
+- **The name of a variable in lax mode** is Ruby's first quoted fragment of the markup, so
+  malformed outputs render as Ruby renders them (`{{{ x }}}`, and 16 listed lax quirks).
+
+### Changed
+- `StandardFilters.Slice`, `Ceil` and `Floor` return `(interface{}, error)`.
+
 ## [5.14.0-port.3]
 
 ### Breaking

@@ -309,14 +309,14 @@ func TestStandardFiltersSlice(t *testing.T) {
 	sf := &StandardFilters{}
 
 	t.Run("string", func(t *testing.T) {
-		got := sf.Slice("hello", 1, 3)
+		got := sliceOf(sf, "hello", 1, 3)
 		if got != "ell" {
 			t.Errorf("Slice() = %v, want 'ell'", got)
 		}
 	})
 
 	t.Run("array", func(t *testing.T) {
-		got := sf.Slice([]interface{}{1, 2, 3, 4}, 1, 2)
+		got := sliceOf(sf, []interface{}{1, 2, 3, 4}, 1, 2)
 		gotArr, ok := got.([]interface{})
 		if !ok {
 			t.Fatalf("Slice() = %T, want []interface{}", got)
@@ -330,28 +330,28 @@ func TestStandardFiltersSlice(t *testing.T) {
 	})
 
 	t.Run("string negative offset counts from the end", func(t *testing.T) {
-		got := sf.Slice("hello", -1, 3)
+		got := sliceOf(sf, "hello", -1, 3)
 		if got != "o" {
 			t.Errorf("Slice() with negative offset = %v, want 'o'", got)
 		}
 	})
 
 	t.Run("string offset too large", func(t *testing.T) {
-		got := sf.Slice("hello", 10, 3)
+		got := sliceOf(sf, "hello", 10, 3)
 		if got != "" {
 			t.Errorf("Slice() with offset too large = %v, want empty string", got)
 		}
 	})
 
 	t.Run("string end exceeds length", func(t *testing.T) {
-		got := sf.Slice("hello", 1, 10)
+		got := sliceOf(sf, "hello", 1, 10)
 		if got != "ello" {
 			t.Errorf("Slice() with end exceeding length = %v, want 'ello'", got)
 		}
 	})
 
 	t.Run("array negative offset counts from the end", func(t *testing.T) {
-		got := sf.Slice([]interface{}{1, 2, 3}, -1, 2)
+		got := sliceOf(sf, []interface{}{1, 2, 3}, -1, 2)
 		gotArr, ok := got.([]interface{})
 		if !ok || len(gotArr) != 1 || gotArr[0] != 3 {
 			t.Errorf("Slice() with negative offset = %v, want [3]", got)
@@ -359,7 +359,7 @@ func TestStandardFiltersSlice(t *testing.T) {
 	})
 
 	t.Run("array offset too large", func(t *testing.T) {
-		got := sf.Slice([]interface{}{1, 2, 3}, 10, 2)
+		got := sliceOf(sf, []interface{}{1, 2, 3}, 10, 2)
 		gotArr, ok := got.([]interface{})
 		if !ok || len(gotArr) != 0 {
 			t.Errorf("Slice() with offset too large = %v, want empty array", got)
@@ -367,7 +367,7 @@ func TestStandardFiltersSlice(t *testing.T) {
 	})
 
 	t.Run("array end exceeds length", func(t *testing.T) {
-		got := sf.Slice([]interface{}{1, 2, 3}, 1, 10)
+		got := sliceOf(sf, []interface{}{1, 2, 3}, 1, 10)
 		gotArr, ok := got.([]interface{})
 		if !ok || len(gotArr) != 2 {
 			t.Errorf("Slice() with end exceeding length = %v, want [2 3]", gotArr)
@@ -375,14 +375,14 @@ func TestStandardFiltersSlice(t *testing.T) {
 	})
 
 	t.Run("non-string non-array is sliced as text", func(t *testing.T) {
-		got := sf.Slice(42, 1, 2)
+		got := sliceOf(sf, 42, 1, 2)
 		if got != "2" {
 			t.Errorf("Slice() with non-string non-array = %v, want '2'", got)
 		}
 	})
 
 	t.Run("nil length", func(t *testing.T) {
-		got := sf.Slice("hello", 1, nil)
+		got := sliceOf(sf, "hello", 1, nil)
 		if got != "e" {
 			t.Errorf("Slice() with nil length = %v, want 'e'", got)
 		}

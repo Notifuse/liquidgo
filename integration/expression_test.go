@@ -85,8 +85,10 @@ func TestExpression_Logical(t *testing.T) {
 
 // TestExpression_OperatorPrecedence tests operator precedence.
 func TestExpression_OperatorPrecedence(t *testing.T) {
-	// Multiplication before addition
-	assertTemplateResult(t, "11", "{% if 5 + 3 * 2 == 11 %}11{% else %}wrong{% endif %}", map[string]interface{}{})
+	// Liquid has no arithmetic in a condition: Ruby's lax parser reads
+	// this as "11", and its strict parser refuses it (differential case
+	// tags-22 compares both modes)
+	assertTemplateResult(t, "11", "{% if 5 + 3 * 2 == 11 %}11{% else %}wrong{% endif %}", map[string]interface{}{}, TemplateResultOptions{ErrorMode: "lax"})
 
 	// AND before OR
 	assertTemplateResult(t, "true", "{% if true or false and false %}true{% else %}false{% endif %}", map[string]interface{}{})

@@ -3458,6 +3458,90 @@
       "output": "[f][][s][fe]cb"
     },
     {
+      "id": "numbers-21",
+      "mode": "lax",
+      "template": "{{ 10.5 | divided_by: 0 }}|{{ -10.5 | divided_by: 0 }}|{{ 0.0 | divided_by: 0 }}|{{ 1 | divided_by: 0.0 }}|{{ 10 | divided_by: 0 }}|{{ 10.5 | modulo: 0 }}|{{ 10 | modulo: 0.0 }}|{{ 10.5 | divided_by: 0 | plus: 1 }}",
+      "output": "Infinity|-Infinity|NaN|Infinity|Liquid error: divided by 0|Liquid error: divided by 0|Liquid error: divided by 0|Infinity"
+    },
+    {
+      "id": "numbers-21",
+      "mode": "strict",
+      "template": "{{ 10.5 | divided_by: 0 }}|{{ -10.5 | divided_by: 0 }}|{{ 0.0 | divided_by: 0 }}|{{ 1 | divided_by: 0.0 }}|{{ 10 | divided_by: 0 }}|{{ 10.5 | modulo: 0 }}|{{ 10 | modulo: 0.0 }}|{{ 10.5 | divided_by: 0 | plus: 1 }}",
+      "output": "Infinity|-Infinity|NaN|Infinity|Liquid error: divided by 0|Liquid error: divided by 0|Liquid error: divided by 0|Infinity"
+    },
+    {
+      "id": "tags-22",
+      "mode": "lax",
+      "template": "{% if 5 + 3 * 2 == 11 %}11{% else %}wrong{% endif %}",
+      "output": "11"
+    },
+    {
+      "id": "tags-22",
+      "mode": "strict",
+      "template": "{% if 5 + 3 * 2 == 11 %}11{% else %}wrong{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character + in \"5 + 3 * 2 == 11\""
+    },
+    {
+      "id": "tags-23",
+      "mode": "lax",
+      "template": "{% if and true %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in tag 'if' - Valid syntax: if [expression]"
+    },
+    {
+      "id": "tags-23",
+      "mode": "strict",
+      "template": "{% if and true %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found id in \"and true\""
+    },
+    {
+      "id": "tags-24",
+      "mode": "lax",
+      "template": "{% if true and and false %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in tag 'if' - Valid syntax: if [expression]"
+    },
+    {
+      "id": "tags-24",
+      "mode": "strict",
+      "template": "{% if true and and false %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Expected end_of_string but found id in \"true and and false\""
+    },
+    {
+      "id": "tags-25",
+      "mode": "lax",
+      "template": "{% if true or %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Syntax Error in tag 'if' - Valid syntax: if [expression]"
+    },
+    {
+      "id": "tags-25",
+      "mode": "strict",
+      "template": "{% if true or %}y{% endif %}",
+      "error": "Liquid::SyntaxError: Liquid syntax error: [:end_of_string] is not a valid expression in \"true or\""
+    },
+    {
+      "id": "tags-26",
+      "mode": "lax",
+      "template": "{% for i in (1..5) offset: \" 2 \" limit: \"0x2\" %}{{ i }}{% endfor %}|{{ 'abcdefghijkl' | slice: \" 1 \", \"1_0\" }}|{% for i in (1..3) offset: \"012\" %}{{ i }}{% else %}none{% endfor %}",
+      "output": "34|bcdefghijk|none"
+    },
+    {
+      "id": "tags-26",
+      "mode": "strict",
+      "template": "{% for i in (1..5) offset: \" 2 \" limit: \"0x2\" %}{{ i }}{% endfor %}|{{ 'abcdefghijkl' | slice: \" 1 \", \"1_0\" }}|{% for i in (1..3) offset: \"012\" %}{{ i }}{% else %}none{% endfor %}",
+      "output": "34|bcdefghijk|none"
+    },
+    {
+      "id": "numbers-22",
+      "mode": "lax",
+      "template": "{% assign b = 9223372036854775807 | plus: 1 %}{{ b | minus: 1 }}|{% if b > 9223372036854775807 %}gt{% endif %}|{{ b | ceil }}|{{ b | floor }}|{{ b | round }}|{{ b | abs }}|{{ b | divided_by: 2 }}|{{ b | modulo: 7 }}|{{ b | times: 1.5 }}|{% if b == 9223372036854775808 %}eq{% endif %}|{{ b | at_least: 3 }}|{% assign l = '1,2' | split: ',' %}{{ b | times: -1 | abs | minus: b }}",
+      "output": "9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|1.3835058055282164e+19|eq|9223372036854775808|0"
+    },
+    {
+      "id": "numbers-22",
+      "mode": "strict",
+      "template": "{% assign b = 9223372036854775807 | plus: 1 %}{{ b | minus: 1 }}|{% if b > 9223372036854775807 %}gt{% endif %}|{{ b | ceil }}|{{ b | floor }}|{{ b | round }}|{{ b | abs }}|{{ b | divided_by: 2 }}|{{ b | modulo: 7 }}|{{ b | times: 1.5 }}|{% if b == 9223372036854775808 %}eq{% endif %}|{{ b | at_least: 3 }}|{% assign l = '1,2' | split: ',' %}{{ b | times: -1 | abs | minus: b }}",
+      "output": "9223372036854775807|gt|9223372036854775808|9223372036854775808|9223372036854775808|9223372036854775808|4611686018427387904|1|1.3835058055282164e+19|eq|9223372036854775808|0"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

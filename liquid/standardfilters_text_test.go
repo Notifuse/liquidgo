@@ -56,7 +56,7 @@ func TestSliceStrings(t *testing.T) {
 		{12345, 1, 2, "23"},
 		{"测试测试", 1, 2, "试测"},
 	} {
-		if got := sf.Slice(tt.in, tt.offset, tt.length); got != tt.want {
+		if got := sliceOf(sf, tt.in, tt.offset, tt.length); got != tt.want {
 			t.Errorf("Slice(%#v, %v, %v) = %#v, want %q", tt.in, tt.offset, tt.length, got, tt.want)
 		}
 	}
@@ -80,7 +80,7 @@ func TestSliceArrays(t *testing.T) {
 		{[]string{"a", "b", "c"}, -2, 5, []interface{}{"b", "c"}},
 		{[2]int{1, 2}, -1, 1, []interface{}{2}},
 	} {
-		got := sf.Slice(tt.in, tt.offset, tt.length)
+		got := sliceOf(sf, tt.in, tt.offset, tt.length)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("Slice(%#v, %v, %v) = %#v, want %#v", tt.in, tt.offset, tt.length, got, tt.want)
 		}
@@ -183,4 +183,13 @@ func TestTruncateInvalidUTF8(t *testing.T) {
 			t.Errorf("Truncate(%q, %d) = %q, want %q", tt.in, tt.n, got, tt.want)
 		}
 	}
+}
+
+// sliceOf returns the result of slice, an error giving nil.
+func sliceOf(sf *StandardFilters, input, offset, length interface{}) interface{} {
+	result, err := sf.Slice(input, offset, length)
+	if err != nil {
+		return nil
+	}
+	return result
 }

@@ -366,6 +366,9 @@ func nilSafeCompare(a, b interface{}) int {
 		cmp, _ := compareNumbers(aNum, bNum)
 		return cmp
 	}
+	if (aOk || isBigInt(a)) && (bOk || isBigInt(b)) {
+		return compareBigInts(a, b)
+	}
 
 	// String comparison
 	aStr := ToS(a, nil)
