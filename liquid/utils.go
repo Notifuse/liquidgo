@@ -399,8 +399,6 @@ func ToDate(obj interface{}) *time.Time {
 				return nil
 			}
 			t = time.Unix(int64(n.u), 0)
-		case bigNumber:
-			return nil // beyond any date
 		default:
 			if math.IsNaN(n.f) || math.IsInf(n.f, 0) || math.Abs(n.f) > 1e15 {
 				return nil

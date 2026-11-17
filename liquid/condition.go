@@ -274,6 +274,9 @@ func orderKindOf(v interface{}) orderKind {
 	if _, ok := asNumber(v); ok {
 		return orderedNumber
 	}
+	if isBigInt(v) {
+		return orderedNumber
+	}
 	if _, ok := timeOf(v); ok {
 		return orderedTime
 	}
@@ -298,8 +301,11 @@ func compareValues(left, right interface{}) (cmp int, ok bool, err error) {
 	}
 	switch lk {
 	case orderedNumber:
-		ln, _ := asNumber(left)
-		rn, _ := asNumber(right)
+		ln, lok := asNumber(left)
+		rn, rok := asNumber(right)
+		if !lok || !rok { // a *big.Int
+			return compareBigInts(left, right), true, nil
+		}
 		cmp, ok = compareNumbers(ln, rn)
 		return cmp, ok, nil
 	case orderedTime:

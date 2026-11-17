@@ -19,7 +19,6 @@ type number struct {
 	i    int64
 	u    uint64
 	f    float64
-	b    *big.Int
 }
 
 type numberKind int
@@ -28,7 +27,6 @@ const (
 	signedNumber numberKind = iota + 1
 	unsignedNumber
 	floatNumber
-	bigNumber // an integer beyond int64 and uint64, in b
 )
 
 // asNumber reports whether v is a number: any Go integer or float kind, named numeric
@@ -45,16 +43,6 @@ func asNumber(v interface{}) (number, bool) {
 		return number{kind: floatNumber, f: n}, true
 	case float32:
 		return number{kind: floatNumber, f: float32Decimal(float64(n))}, true
-	case *big.Int:
-		switch {
-		case n == nil:
-			return number{}, false
-		case n.IsInt64():
-			return number{kind: signedNumber, i: n.Int64()}, true
-		case n.IsUint64():
-			return number{kind: unsignedNumber, u: n.Uint64()}, true
-		}
-		return number{kind: bigNumber, b: n}, true
 	case json.Number:
 		if i, err := n.Int64(); err == nil {
 			return number{kind: signedNumber, i: i}, true
@@ -94,9 +82,6 @@ func (n number) float64() float64 {
 		return float64(n.i)
 	case unsignedNumber:
 		return float64(n.u)
-	case bigNumber:
-		f, _ := new(big.Float).SetInt(n.b).Float64()
-		return f
 	}
 	return n.f
 }
@@ -107,8 +92,6 @@ func (n number) bigFloat() *big.Float {
 		return new(big.Float).SetInt64(n.i)
 	case unsignedNumber:
 		return new(big.Float).SetUint64(n.u)
-	case bigNumber:
-		return new(big.Float).SetInt(n.b)
 	}
 	return new(big.Float).SetFloat64(n.f)
 }
@@ -173,12 +156,21 @@ func liquidEqualDepth(left, right interface{}, depth int) (equal bool) {
 	if ln, ok := asNumber(left); ok {
 		rn, ok := asNumber(right)
 		if !ok {
+			if isBigInt(right) {
+				return compareBigInts(left, right) == 0
+			}
 			return false
 		}
 		cmp, ok := compareNumbers(ln, rn)
 		return ok && cmp == 0
 	}
-	if _, ok := asNumber(right); ok {
+	if isBigInt(left) {
+		if _, ok := asNumber(right); ok || isBigInt(right) {
+			return compareBigInts(left, right) == 0
+		}
+		return false
+	}
+	if _, ok := asNumber(right); ok || isBigInt(right) {
 		return false
 	}
 
@@ -234,4 +226,18 @@ func isList(k reflect.Kind) bool {
 func toNumber(v interface{}) (float64, bool) {
 	n, ok := asNumber(v)
 	return n.float64(), ok
+}
+
+// isBigInt reports whether v is an integer beyond int64, which arithmetic
+// gives as a *big.Int. Comparisons check it only where asNumber fails, so
+// that the comparison of ordinary numbers does not pay for it.
+func isBigInt(v interface{}) bool {
+	b, ok := v.(*big.Int)
+	return ok && b != nil
+}
+
+// compareBigInts compares two numbers one of which at least is a *big.Int,
+// exactly, as Ruby compares an Integer with any number.
+func compareBigInts(left, right interface{}) int {
+	return compareLiquidNumbers(toLiquidNumber(left), toLiquidNumber(right))
 }
