@@ -147,7 +147,7 @@ A template is untrusted input. Each threat is countered and tested:
 
 | Threat | Countered by | Tests |
 |---|---|---|
-| A loop, a string or an output that grows without end | the render length, render score and assign score limits, checked as the render goes, filters included | `TestHostileTemplatesAreBounded` (25 templates), `TestFilterResultsStayWithinTheRenderLength` |
+| A loop, a string or an output that grows without end | the render length, render score and assign score limits, checked as the render goes, filters included | `TestHostileTemplatesAreBounded` (26 templates), `TestFilterResultsStayWithinTheRenderLength` |
 | A render that runs too long | the deadline of the context, checked at each node | `TestRenderLimitsAndCancellation` |
 | Nesting deep enough to exhaust the stack | blocks, lookups and brackets nested more than 100 deep are refused while parsing | `TestSecurity_MoreThanMaxDepthNestedBlocksRaisesException`, `TestHostileTemplatesAreBounded` |
 | A partial that renders itself | the depth of partials is bounded | `TestRecursivePartialsAreBounded` |
@@ -171,7 +171,7 @@ Limits are off by default, as in Ruby: set them for untrusted templates (see the
   renders with the Ruby gem on each pull request; liquidgo matches each or lists why not.
 - **Fuzzing**: two minutes on each pull request, for panics and outputs that change from one parse
   to the next.
-- **Guard mutations**: 36 checks of the library are removed one at a time, and a test must fail
+- **Guard mutations**: 40 checks of the library are removed one at a time, and a test must fail
   each time (`scripts/guard_mutations`), before each release.
 - **Platforms**: the suite runs on amd64, arm64, 386 and Windows, and under the race detector;
   coverage stays over 90%.
