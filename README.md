@@ -15,22 +15,22 @@ emailing platform, where every template is written by its users.
 
 ## Go Liquid libraries compared
 
-Measured on 962 templates against Shopify Liquid 5.14.0 on 2026-11-17 ([method](docs/library-comparison.md)):
+Measured on 963 templates against Shopify Liquid 5.14.0 on 2026-11-17 ([method](docs/library-comparison.md)):
 
 | Library | Same output as Shopify | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|
-| **liquidgo** | **93.9%** | **0** | **4 / 4** | **53 µs** |
-| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.4% | 0 | 0 / 4 | 317 µs |
-| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 79.0% | 71 | 3 / 4 | 88 µs |
-| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.2% | 194 | 1 / 4 | 76 µs |
-| [osteele/liquid](https://github.com/osteele/liquid) | 52.2% | 336 | 1 / 4 | 304 µs |
-| [acstech/liquid](https://github.com/acstech/liquid) | 33.6% | 488 | 1 / 4 | 54 µs |
+| **liquidgo** | **94.2%** | **0** | **4 / 4** | **53 µs** |
+| [tobi/liquid-go](https://github.com/tobi/liquid-go) | 87.3% | 0 | 0 / 4 | 317 µs |
+| [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | 78.9% | 72 | 3 / 4 | 88 µs |
+| [go-liquid/liquid](https://github.com/go-liquid/liquid) | 64.2% | 195 | 1 / 4 | 76 µs |
+| [osteele/liquid](https://github.com/osteele/liquid) | 52.1% | 337 | 1 / 4 | 304 µs |
+| [acstech/liquid](https://github.com/acstech/liquid) | 33.5% | 489 | 1 / 4 | 54 µs |
 | [Shopify Liquid](https://github.com/Shopify/liquid) (Ruby 3.3, YJIT) | the reference | | 4 / 4 | 368 µs |
 
 The templates are the cases of Shopify Liquid's own test suite and liquidgo's differential corpus,
-which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 357 of 360 and liquidgo 355,
-the others being liquidgo's [deliberate differences](docs/differences-from-shopify.md) and markup
-Ruby's lax parser tolerates. A hostile template is written to exhaust the process (a billion
+which favours liquidgo; on Shopify's tests alone, tobi/liquid-go matches 357 of 360 and liquidgo 356,
+the others being a [deliberate difference](docs/differences-from-shopify.md) and three hashes Ruby
+writes in the order their keys were added, which a Go map does not keep. A hostile template is written to exhaust the process (a billion
 iterations, a string doubled 40 times, a billion bytes of output, 100,000 nested blocks); Shopify
 Liquid stops all four with its resource limits since 5.14, which no longer builds a range whole.
 

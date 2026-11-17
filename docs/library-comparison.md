@@ -1,12 +1,13 @@
 # Go Liquid libraries compared
 
-Measured on 2026-11-17, with Shopify Liquid 5.14.0 as the reference; liquidgo v5.14.3.
+Measured on 2026-11-17, with Shopify Liquid 5.14.0 as the reference; liquidgo v5.14.5 (its times were
+measured with v5.14.3, whose render is the same: v5.14.5 changes how malformed markup parses).
 
 ## Libraries
 
 | Library | Version | Error mode used | Resource limits |
 |---|---|---|---|
-| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.14.3 | lax | yes, and a deadline (`context`) |
+| [Notifuse/liquidgo](https://github.com/Notifuse/liquidgo) (this one) | v5.14.5 | lax | yes, and a deadline (`context`) |
 | [tobi/liquid-go](https://github.com/tobi/liquid-go) | commit of 2026-07-10 (no tag) | lax | no |
 | [nchapman/go-liquid](https://github.com/nchapman/go-liquid) | commit of 2026-05-11 (no tag) | lax | yes |
 | [go-liquid/liquid](https://github.com/go-liquid/liquid) | v0.2.0 | lax | no |
@@ -20,12 +21,12 @@ a fork of osteele/liquid that keeps its module path.
 
 ## Cases
 
-962 templates, each with the output Shopify Liquid 5.14.0 renders for it in lax mode:
+963 templates, each with the output Shopify Liquid 5.14.0 renders for it in lax mode:
 
 - the 360 template cases of Shopify Liquid's own test suite that render without partials and
   without raising (`integration/testdata/shopify_conformance/cases.json`, extracted from the Ruby
   tests);
-- the 602 templates of liquidgo's differential corpus (`integration/testdata/differential`),
+- the 603 templates of liquidgo's differential corpus (`integration/testdata/differential`),
   rendered by Ruby with the data of `data.json`, the strict variables runs left out.
 
 Shopify's tests are independent of liquidgo. The differential corpus is liquidgo's own test data:
@@ -76,19 +77,19 @@ The times of the table come from the workflow "Library comparison", started by h
 
 | Library | Matches Shopify | Shopify's tests | Differential corpus | Templates it cannot render | Hostile templates contained | Newsletter template |
 |---|---|---|---|---|---|---|
-| Notifuse/liquidgo | **903 (93.9%)** | 355 / 360 | **548 / 602** | **0** | **4 / 4** | **53 µs** |
-| tobi/liquid-go | 841 (87.4%) | **357 / 360** | 484 / 602 | 0 | 0 / 4 | 317 µs |
-| nchapman/go-liquid | 760 (79.0%) | 321 / 360 | 439 / 602 | 71 | 3 / 4 | 88 µs |
-| go-liquid/liquid | 618 (64.2%) | 271 / 360 | 347 / 602 | 194 | 1 / 4 | 76 µs |
-| osteele/liquid | 502 (52.2%) | 252 / 360 | 250 / 602 | 336 | 1 / 4 | 304 µs |
-| acstech/liquid | 323 (33.6%) | 193 / 360 | 130 / 602 | 488 | 1 / 4 | 54 µs |
+| Notifuse/liquidgo | **907 (94.2%)** | 356 / 360 | **551 / 603** | **0** | **4 / 4** | **53 µs** |
+| tobi/liquid-go | 841 (87.3%) | **357 / 360** | 484 / 603 | 0 | 0 / 4 | 317 µs |
+| nchapman/go-liquid | 760 (78.9%) | 321 / 360 | 439 / 603 | 72 | 3 / 4 | 88 µs |
+| go-liquid/liquid | 618 (64.2%) | 271 / 360 | 347 / 603 | 195 | 1 / 4 | 76 µs |
+| osteele/liquid | 502 (52.1%) | 252 / 360 | 250 / 603 | 337 | 1 / 4 | 304 µs |
+| acstech/liquid | 323 (33.5%) | 193 / 360 | 130 / 603 | 489 | 1 / 4 | 54 µs |
 | Shopify Liquid (Ruby 3.3, YJIT) | the reference | | | | **4 / 4** | 368 µs |
 
-- **liquidgo**: each of its 59 differences is listed in its divergence files with its reason. 50
+- **liquidgo**: each of its 56 differences is listed in its divergence files with its reason. 51
   are deliberate (counters start at 0, an empty string is false, a filter error writes nothing,
-  whole floats without `.0`, `false` is not blank: see [the differences](differences-from-shopify.md)),
-  4 are malformed markup Ruby's lax parser tolerates and 5 compare Ruby objects with no Go
-  equivalent; none is left to fix. It refuses one template on purpose, a lookup nested more than 100 deep, which would
+  whole floats without `.0`, `false` is not blank: see [the differences](differences-from-shopify.md))
+  and 5 compare Ruby objects with no Go equivalent (a hash with several keys, which Ruby writes in
+  the order they were added); none is left to fix. It refuses one template on purpose, a lookup nested more than 100 deep, which would
   exhaust the stack of a deeper one: a deliberate difference, not a template it cannot render.
 - **tobi/liquid-go** comes closest on Shopify's tests. It compares an `int` from Go data as a
   string (`{% if product.discount > 0 %}` gives `Liquid error: comparison of String with 0
