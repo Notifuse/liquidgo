@@ -1144,5 +1144,13 @@
  {
   "id": "tags-19",
   "template": "[{% tablerow i in (1..3) limit: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \" 1x\" cols: \"2.9\" %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: true %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) limit: 1.9 %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \"-1\" %}{{ i }}{% endtablerow %}]"
+ },
+ {
+  "id": "tags-20",
+  "template": "[{% for i in (1..2) %}{{ i }}{% endfor %}]00000{%break%}1"
+ },
+ {
+  "id": "tags-21",
+  "template": "a{% if true %}x{% continue %}y{% endif %}z"
  }
 ]

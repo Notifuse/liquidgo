@@ -3422,6 +3422,30 @@
       "output": "[<tr class=\"row1\">\n</tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">2</td><td class=\"col2\">3</td></tr>\n][Liquid error: invalid integer][<tr class=\"row1\">\n<td class=\"col1\">1</td></tr>\n][<tr class=\"row1\">\n<td class=\"col1\">1</td><td class=\"col2\">2</td><td class=\"col3\">3</td></tr>\n]"
     },
     {
+      "id": "tags-20",
+      "mode": "lax",
+      "template": "[{% for i in (1..2) %}{{ i }}{% endfor %}]00000{%break%}1",
+      "output": "[12]00000"
+    },
+    {
+      "id": "tags-20",
+      "mode": "strict",
+      "template": "[{% for i in (1..2) %}{{ i }}{% endfor %}]00000{%break%}1",
+      "output": "[12]00000"
+    },
+    {
+      "id": "tags-21",
+      "mode": "lax",
+      "template": "a{% if true %}x{% continue %}y{% endif %}z",
+      "output": "ax"
+    },
+    {
+      "id": "tags-21",
+      "mode": "strict",
+      "template": "a{% if true %}x{% continue %}y{% endif %}z",
+      "output": "ax"
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",
