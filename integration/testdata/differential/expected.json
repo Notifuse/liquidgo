@@ -3326,6 +3326,66 @@
       "output": "yes|yes||"
     },
     {
+      "id": "control-01",
+      "mode": "lax",
+      "template": "{{ x\u0000 }}|{{ x | upcase\u0000 }}|{{\u0001x}}|",
+      "output": "a|A|a|"
+    },
+    {
+      "id": "control-01",
+      "mode": "strict",
+      "template": "{{ x\u0000 }}|{{ x | upcase\u0000 }}|{{\u0001x}}|",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character \u0000 in \"{{ x\u0000 }}\""
+    },
+    {
+      "id": "control-02",
+      "mode": "lax",
+      "template": "{% if\u0000 x %}y{% endif %}|",
+      "output": "Liquid error: Unknown operator x|"
+    },
+    {
+      "id": "control-02",
+      "mode": "strict",
+      "template": "{% if\u0000 x %}y{% endif %}|",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character \u0000 in \"x\""
+    },
+    {
+      "id": "control-03",
+      "mode": "lax",
+      "template": "{% assign\u0000a = 1 %}{{ a }}|{{ x }}\u0000{{ x }}|{{ x\t}}|",
+      "output": "1|a\u0000a|a|"
+    },
+    {
+      "id": "control-03",
+      "mode": "strict",
+      "template": "{% assign\u0000a = 1 %}{{ a }}|{{ x }}\u0000{{ x }}|{{ x\t}}|",
+      "output": "1|a\u0000a|a|"
+    },
+    {
+      "id": "control-04",
+      "mode": "lax",
+      "template": "{%\u0000 if x %}y{% endif %}|",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag '{%\u0000 if x %}'"
+    },
+    {
+      "id": "control-04",
+      "mode": "strict",
+      "template": "{%\u0000 if x %}y{% endif %}|",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unknown tag '{%\u0000 if x %}'"
+    },
+    {
+      "id": "control-05",
+      "mode": "lax",
+      "template": "{{ x }}|{{ 1\u0000 }}|{{ n\u0000 | plus: 1 }}|",
+      "output": "a|1|4|"
+    },
+    {
+      "id": "control-05",
+      "mode": "strict",
+      "template": "{{ x }}|{{ 1\u0000 }}|{{ n\u0000 | plus: 1 }}|",
+      "error": "Liquid::SyntaxError: Liquid syntax error: Unexpected character   in \"{{ x }}\""
+    },
+    {
       "id": "generated-001",
       "mode": "lax",
       "template": "{% liquid\nassign v = \"q\" | plus: 1\necho v\n%}{{- x | first }}",

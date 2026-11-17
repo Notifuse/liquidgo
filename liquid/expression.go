@@ -35,6 +35,13 @@ func SafeParse(parser *Parser, ss *StringScanner, cache map[string]interface{}) 
 	return Parse(expr, ss, cache)
 }
 
+// rubyStrip is Ruby's String#strip: it removes the ASCII whitespace and the
+// NUL bytes at both ends, and no other character (Go's strings.TrimSpace also
+// removes Unicode spaces and keeps NUL bytes).
+func rubyStrip(s string) string {
+	return strings.Trim(s, " \t\n\v\f\r\x00")
+}
+
 // Parse parses a markup string into an expression value. cache, when set,
 // keeps the expressions of one parse; nothing is kept across parses, so that
 // the memory a template takes goes with it.
@@ -43,7 +50,7 @@ func Parse(markup string, ss *StringScanner, cache map[string]interface{}) inter
 		return nil
 	}
 
-	markup = strings.TrimSpace(markup)
+	markup = rubyStrip(markup)
 
 	// Handle quoted strings (fast path, don't cache)
 	if (strings.HasPrefix(markup, `"`) && strings.HasSuffix(markup, `"`)) ||
@@ -113,10 +120,10 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 	}
 
 	// Check first byte
-	byte := ss.PeekByte()
-	if byte == 0 {
+	if ss.EOS() {
 		return nil
 	}
+	byte := ss.PeekByte()
 
 	const (
 		dash = '-'
@@ -134,7 +141,7 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 		ss.ScanByte() // consume dash
 		peekedByte := ss.PeekByte()
 		// If it starts with a dash, the next byte must be a digit
-		if peekedByte == 0 || peekedByte < zero || peekedByte > nine {
+		if ss.EOS() || peekedByte < zero || peekedByte > nine {
 			return nil
 		}
 		ss.SetPos(ss.Pos() - 1) // back up
@@ -144,8 +151,8 @@ func parseNumber(markup string, ss *StringScanner) interface{} {
 	numEndPos := -1
 
 	for {
-		byte := ss.ScanByte()
-		if byte == 0 {
+		byte, ok := ss.next()
+		if !ok { // the end of the markup; a NUL byte is a byte, which no number has
 			break
 		}
 

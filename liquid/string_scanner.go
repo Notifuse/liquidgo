@@ -53,6 +53,18 @@ func (s *StringScanner) PeekByte() byte {
 }
 
 // ScanByte advances and returns the byte at the current position.
+// next returns the next byte and advances, and false at the end of the
+// string: a NUL byte of the source is a byte, not the end, as Ruby's
+// scan_byte gives nil only at the end.
+func (s *StringScanner) next() (byte, bool) {
+	if s.pos >= len(s.source) {
+		return 0, false
+	}
+	b := s.source[s.pos]
+	s.pos++
+	return b, true
+}
+
 func (s *StringScanner) ScanByte() byte {
 	if s.pos >= len(s.source) {
 		return 0

@@ -51,16 +51,10 @@
   "reason": "not comparable: Ruby hash rendering with symbol keys or several keys (Go map order is random)",
   "skip": true
  },
- "test/integration/parsing_quirks_test.rb:103": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: hi there"
-  }
- },
  "test/integration/parsing_quirks_test.rb:104": {
   "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
-   "lax/ruby": "output: "
+   "lax/ruby": "output: h"
   }
  },
  "test/integration/parsing_quirks_test.rb:137": {
@@ -145,18 +139,6 @@
   "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
   "actual": {
    "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:97": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:99": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: X"
   }
  },
  "test/integration/standard_filter_test.rb:695": {

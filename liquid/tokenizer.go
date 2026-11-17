@@ -175,16 +175,18 @@ func (t *Tokenizer) nextTextToken() string {
 func (t *Tokenizer) nextVariableToken() string {
 	start := t.ss.Pos() - 2
 
-	byteA := t.ss.ScanByte()
-	byteB := byteA
+	// okA and okB are false at the end of the source: a NUL byte is a byte
+	byteA, okA := t.ss.next()
+	var byteB byte
+	okB := okA
 
-	for byteB != 0 {
+	for okB {
 		// Scan until we find a closing brace or opening brace
-		for byteA != 0 && byteA != closeCurley && byteA != openCurley {
-			byteA = t.ss.ScanByte()
+		for okA && byteA != closeCurley && byteA != openCurley {
+			byteA, okA = t.ss.next()
 		}
 
-		if byteA == 0 {
+		if !okA {
 			break
 		}
 
@@ -195,7 +197,7 @@ func (t *Tokenizer) nextVariableToken() string {
 			return "{{"
 		}
 
-		byteB = t.ss.ScanByte()
+		byteB, okB = t.ss.next()
 
 		if byteA == closeCurley {
 			if byteB == closeCurley {
@@ -208,7 +210,7 @@ func (t *Tokenizer) nextVariableToken() string {
 			return t.nextTagTokenWithStart(start)
 		}
 
-		byteA = byteB
+		byteA, okA = byteB, okB
 	}
 
 	return "{{"

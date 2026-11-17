@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Fixed
+- **A NUL byte is not the end of a template**: the tokenizer and the number parser took a NUL byte
+  for the end of their input, so `{{ x\0 }}` raised a syntax error; it is now read as Ruby reads it.
+- **Lax parsing follows Ruby's on malformed markup**: an expression is stripped as Ruby's `strip`
+  (ASCII whitespace and NUL bytes, not Unicode spaces), a filter is named by its first word, its
+  arguments are the captures of Ruby's `FilterArgsRegex` (without the separator before each), and
+  `assign` finds its `name = value` anywhere in its markup, as Ruby's unanchored `Syntax`. Five
+  listed divergences now match Shopify (`numbers-08`, `lax-quirks-16`, `parsing_quirks_test.rb`
+  97, 99 and 103).
+
+### Tests
+- **Invalid input** (security category 8): a template of invalid UTF-8 is refused, control
+  characters in its text are kept, data of invalid UTF-8 and control characters goes through every
+  standard filter, and the differential corpus compares control characters inside tags with Shopify
+  (`control-01` to `control-05`).
+
 ## [5.11.0-port.12]
 
 A render is faster: the newsletter template of the [library comparison](docs/library-comparison.md)
