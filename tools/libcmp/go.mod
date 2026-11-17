@@ -5,7 +5,7 @@ go 1.27.1
 replace github.com/Notifuse/liquidgo/v5 => ../..
 
 require (
-	github.com/Notifuse/liquidgo/v5 v5.14.1
+	github.com/Notifuse/liquidgo/v5 v5.14.3
 	github.com/acstech/liquid v1.1.0
 	github.com/go-liquid/liquid v0.2.0
 	github.com/nchapman/go-liquid v0.0.0-20260511032621-74c3a8437a2e
