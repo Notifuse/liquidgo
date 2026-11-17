@@ -14,7 +14,9 @@ var (
 	variableFilterName               = regexp.MustCompile(`\w+`)
 	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
 	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
-	variableMarkupWithQuotedFragment = regexp.MustCompile(`(?s)^([^\|]+)(.*)$`)
+	// Ruby's MarkupWithQuotedFragment, /(#{QuotedFragment})(.*)/om: the
+	// name is the first fragment of the markup, wherever it starts
+	variableMarkupWithQuotedFragment = regexp.MustCompile(`(?s)(` + QuotedFragment.String() + `)(.*)`)
 )
 
 // ParseContextInterface interface for parsing expressions
@@ -220,7 +222,9 @@ func (v *Variable) strictParse(markup string) error {
 		}
 		var filterArgs []string
 		if _, ok := p.ConsumeOptional(":colon"); ok {
-			filterArgs = v.parseFilterArgs(p)
+			if filterArgs, err = v.parseFilterArgs(p); err != nil {
+				return err
+			}
 		} else {
 			filterArgs = []string{}
 		}
@@ -259,10 +263,12 @@ func (v *Variable) rigidParse(markup string) error {
 	return nil
 }
 
-func (v *Variable) parseFilterArgs(p *Parser) []string {
+func (v *Variable) parseFilterArgs(p *Parser) ([]string, error) {
+	// as Ruby's parse_filterargs: an argument after the colon and after
+	// each comma, or a syntax error
 	arg, err := p.Argument()
 	if err != nil {
-		return []string{}
+		return nil, err
 	}
 	filterArgs := []string{arg}
 	for {
@@ -271,11 +277,12 @@ func (v *Variable) parseFilterArgs(p *Parser) []string {
 			break
 		}
 		arg, err := p.Argument()
-		if err == nil {
-			filterArgs = append(filterArgs, arg)
+		if err != nil {
+			return nil, err
 		}
+		filterArgs = append(filterArgs, arg)
 	}
-	return filterArgs
+	return filterArgs, nil
 }
 
 func (v *Variable) laxParseFilterExpressions(filterName string, unparsedArgs []string) []interface{} {

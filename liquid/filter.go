@@ -54,6 +54,17 @@ func tooManyFilterArgs(given, expected int) error {
 	return NewArgumentError(fmt.Sprintf("wrong number of arguments (given %d, expected %d)", given, expected))
 }
 
+// tooFewFilterArgs is Ruby's ArgumentError for a filter given fewer
+// arguments than it requires, the input included: "expected 2", or "expected
+// 2..3" when it takes optional ones.
+func tooFewFilterArgs(given, required, most int) error {
+	expected := fmt.Sprint(required)
+	if most > required {
+		expected = fmt.Sprintf("%d..%d", required, most)
+	}
+	return NewArgumentError(fmt.Sprintf("wrong number of arguments (given %d, expected %s)", given, expected))
+}
+
 // filterNames returns the names of the filters of the table, sorted.
 func filterNames(tables ...map[string]FilterFunc) []string {
 	seen := map[string]bool{}

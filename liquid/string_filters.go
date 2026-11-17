@@ -32,32 +32,39 @@ func (sf *StandardFilters) Capitalize(input interface{}) string {
 // Slice returns a substring or series of array items, as Ruby's slice(offset, length):
 // a negative offset counts from the end, and an offset or length out of range gives an
 // empty result. Anything that is not a list is sliced as text, by characters.
-func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length interface{}) interface{} {
-	offsetInt, _ := ToInteger(offset)
+func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length interface{}) (interface{}, error) {
+	// as Ruby's Utils.to_integer: an offset or length that is not an
+	// integer is an error
+	offsetInt, err := ToInteger(offset)
+	if err != nil {
+		return nil, err
+	}
 	lengthInt := 1
 	if length != nil {
-		lengthInt, _ = ToInteger(length)
+		if lengthInt, err = ToInteger(length); err != nil {
+			return nil, err
+		}
 	}
 
 	if input != nil {
 		if items, ok := input.([]interface{}); ok {
 			start, end, ok := sliceBounds(len(items), offsetInt, lengthInt)
 			if !ok {
-				return []interface{}{}
+				return []interface{}{}, nil
 			}
-			return items[start:end]
+			return items[start:end], nil
 		}
 		val := reflect.ValueOf(input)
 		if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
 			start, end, ok := sliceBounds(val.Len(), offsetInt, lengthInt)
 			if !ok {
-				return []interface{}{}
+				return []interface{}{}, nil
 			}
 			result := make([]interface{}, end-start)
 			for i := start; i < end; i++ {
 				result[i-start] = itemAt(val, i)
 			}
-			return result
+			return result, nil
 		}
 	}
 
@@ -67,19 +74,19 @@ func (sf *StandardFilters) Slice(input interface{}, offset interface{}, length i
 	if offsetInt < 0 {
 		start, end, ok := sliceBounds(utf8.RuneCountInString(str), offsetInt, lengthInt)
 		if !ok {
-			return ""
+			return "", nil
 		}
 		offsetInt, lengthInt = start, end-start
 	}
 	if lengthInt < 0 {
-		return ""
+		return "", nil
 	}
 	start, ok := runeOffset(str, offsetInt)
 	if !ok {
-		return ""
+		return "", nil
 	}
 	size, _ := runeOffset(str[start:], lengthInt)
-	return asRunes(str[start : start+size])
+	return asRunes(str[start : start+size]), nil
 }
 
 // runeOffset returns the byte index after the first n characters of s, as

@@ -57,90 +57,6 @@
    "lax/ruby": "output: h"
   }
  },
- "test/integration/parsing_quirks_test.rb:137": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:138": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:139": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:140": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:141": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:142": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:143": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:145": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:146": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:147": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:148": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:149": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:150": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
- "test/integration/parsing_quirks_test.rb:151": {
-  "reason": "lax quirk: Ruby lax parsing tolerates malformed markup that liquidgo drops",
-  "actual": {
-   "lax/ruby": "output: "
-  }
- },
  "test/integration/standard_filter_test.rb:730": {
   "reason": "deliberate: whole floats render without \".0\" (JSON data is all float64)",
   "actual": {
@@ -168,25 +84,25 @@
  "test/integration/standard_filter_test.rb:794": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
-   "lax/ruby": "output: 0",
-   "strict/ruby": "output: 0",
-   "strict2/ruby": "output: 0"
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
   }
  },
  "test/integration/standard_filter_test.rb:805": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
-   "lax/ruby": "output: 0",
-   "strict/ruby": "output: 0",
-   "strict2/ruby": "output: 0"
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
   }
  },
  "test/integration/standard_filter_test.rb:815": {
   "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
   "actual": {
-   "lax/ruby": "output: 0",
-   "strict/ruby": "output: 0",
-   "strict2/ruby": "output: 0"
+   "lax/ruby": "output: ",
+   "strict/ruby": "output: ",
+   "strict2/ruby": "output: "
   }
  }
 }

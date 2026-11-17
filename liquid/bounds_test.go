@@ -66,8 +66,8 @@ func TestOutOfRangeLengths(t *testing.T) {
 		{"truncate -huge", sf.Truncate("foobar", negHuge, nil), "..."},
 		{"truncate unparsable", sf.Truncate("foobar", "7.0", nil), "foobar"},
 		{"truncatewords huge", sf.TruncateWords("hello world", huge, nil), "hello world"},
-		{"slice huge length", sf.Slice("hello", 0, huge), "hello"},
-		{"slice huge offset", sf.Slice("hello", huge, 1), ""},
+		{"slice huge length", sliceOf(sf, "hello", 0, huge), "hello"},
+		{"slice huge offset", sliceOf(sf, "hello", huge, 1), ""},
 	}
 	for _, c := range checks {
 		if c.got != c.want {

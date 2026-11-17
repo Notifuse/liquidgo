@@ -79,7 +79,9 @@ func TestFilterArgumentsAndErrors(t *testing.T) {
 	if res, _ := renderFilters(t, newEnvironment(), "[{{ x | fail }}]", WithFilters(failing)); res.Output != "[]" {
 		t.Errorf("a failing filter: %q", res.Output)
 	}
-	if res, _ := renderFilters(t, newEnvironment(), "{{ x | append }}|{{ x | default }}"); res.Output != "a|a" {
+	// append requires its argument, as in Ruby, which raises (differential
+	// case filters-errors-03): the error writes nothing; default does not
+	if res, _ := renderFilters(t, newEnvironment(), "{{ x | append }}|{{ x | default }}"); res.Output != "|a" {
 		t.Errorf("missing arguments: %q", res.Output)
 	}
 }

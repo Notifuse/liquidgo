@@ -209,7 +209,11 @@ func tablerowInteger(value interface{}) int {
 			return math.MaxInt
 		}
 		return int(n)
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+	case float64:
+		return truncateFloat(v)
+	case float32:
+		return truncateFloat(float64(v))
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		n, err := liquid.ToInteger(v)
 		if err == nil {
 			return n
@@ -218,3 +222,18 @@ func tablerowInteger(value interface{}) int {
 	liquid.Raise(liquid.NewArgumentError("invalid integer"))
 	return 0
 }
+
+// truncateFloat is Ruby's Float#to_i, saturated to the int range; NaN and the
+// infinities raise FloatDomainError in Ruby, an invalid integer here.
+func truncateFloat(f float64) int {
+	switch {
+	case math.IsNaN(f) || math.IsInf(f, 0):
+		liquid.Raise(liquid.NewArgumentError("invalid integer"))
+	case f >= math.MaxInt:
+		return math.MaxInt
+	case f <= math.MinInt:
+		return math.MinInt
+	}
+	return int(f)
+}
+

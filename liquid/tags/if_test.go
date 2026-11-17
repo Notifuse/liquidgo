@@ -440,11 +440,19 @@ func TestSplitByBooleanOperators(t *testing.T) {
 		{"no operators", "a", 1, []string{""}},
 		{"with spaces", "a  or  b", 2, []string{"or", ""}},
 	}
+	// an operator with no expression before or after it does not split, as
+	// Ruby raises a syntax error (differential cases tags-23 to tags-25 and
+	// lax-quirks-17)
+	for _, markup := range []string{"true and", "and true", "true and and false", "a or"} {
+		if _, ok := splitByBooleanOperators(markup); ok {
+			t.Errorf("splitByBooleanOperators(%q) split", markup)
+		}
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parts := splitByBooleanOperators(tt.markup)
-			if len(parts) != tt.wantLen {
+			parts, ok := splitByBooleanOperators(tt.markup)
+			if !ok || len(parts) != tt.wantLen {
 				t.Errorf("splitByBooleanOperators() got %d parts, want %d", len(parts), tt.wantLen)
 				return
 			}

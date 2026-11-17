@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -380,9 +381,13 @@ func TestToIntegerEdgeCases(t *testing.T) {
 		{"uint16", uint16(42), 42, false},
 		{"uint32", uint32(42), 42, false},
 		{"uint64", uint64(42), 42, false},
-		{"float64", float64(42.7), 42, false},
-		{"negative float64", float64(-42.7), -42, false},
-		{"string with spaces", "  42  ", 0, true}, // ToInteger doesn't trim spaces
+		// as Ruby's Utils.to_integer (differential cases range-16 and
+		// tags-26): a fraction is an invalid integer, spaces around a string
+		// are read; a whole float is an integer, for JSON data (deliberate)
+		{"float64", float64(42.7), 0, true},
+		{"negative float64", float64(-42.7), 0, true},
+		{"whole float64", float64(42), 42, false},
+		{"string with spaces", "  42  ", 42, false},
 		{"invalid string", "abc", 0, true},
 		{"empty string", "", 0, true},
 		{"nil", nil, 0, true},
@@ -406,10 +411,11 @@ func TestToIntegerEdgeCases(t *testing.T) {
 
 // TestSliceCollectionEdgeCases tests SliceCollection edge cases
 func TestSliceCollectionEdgeCases(t *testing.T) {
-	// Test with non-slice, non-string collection
+	// A hash gives its [key, value] pairs, as Ruby's Hash#each
+	// (differential case range-21)
 	result := SliceCollection(map[string]interface{}{"key": "value"}, 0, nil)
-	if len(result) != 0 {
-		t.Errorf("Expected empty result for map, got %d items", len(result))
+	if len(result) != 1 || !reflect.DeepEqual(result[0], []interface{}{"key", "value"}) {
+		t.Errorf("Expected the pair of the map, got %v", result)
 	}
 
 	// Test with empty array
