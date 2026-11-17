@@ -210,7 +210,18 @@ func TestResourceLimitsRenderScore(t *testing.T) {
 		t.Error("Expected resource limits to be reached")
 	}
 
+	// Shopify Liquid 5.14 counts each range item besides its body: 100
+	// items and 100 bodies score 201, past the limit of 200 that sufficed in
+	// 5.11, and Shopify's test now sets 201
 	limit = 200
+	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
+		RenderScoreLimit: &limit,
+	})
+	if result := renderRuby(tmpl, nil, &rubyOptions{}); !strings.Contains(result, "Memory limits exceeded") {
+		t.Errorf("Expected memory limit error at 200, got %q", result)
+	}
+
+	limit = 201
 	setRubyLimits(tmpl, liquid.ResourceLimitsConfig{
 		RenderScoreLimit: &limit,
 	})

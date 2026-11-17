@@ -65,7 +65,11 @@ func (p *ParserSwitching) StrictParseWithErrorModeFallback(markup string, strict
 
 // RigidMode returns true if error mode is rigid or strict2.
 func (p *ParserSwitching) RigidMode() bool {
-	mode := p.parseContext.ErrorMode()
+	return rigidMode(p.parseContext.ErrorMode())
+}
+
+// rigidMode reports whether mode is strict2 or rigid, its other name.
+func rigidMode(mode string) bool {
 	return mode == "rigid" || mode == "strict2"
 }
 

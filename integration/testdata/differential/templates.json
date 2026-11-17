@@ -1132,5 +1132,17 @@
  {
   "id": "control-05",
   "template": "{{ x }}|{{ 1\u0000 }}|{{ n\u0000 | plus: 1 }}|"
+ },
+ {
+  "id": "tags-17",
+  "template": "{% assign h = \"x\" | split: \",\" %}[{% for i in (1..3) offset: h %}{{ i }}{% endfor %}][{% for i in (1..3) limit: \"a\" %}{{ i }}{% endfor %}][{% tablerow i in (1..2) cols: \"a\" %}{{ i }}{% endtablerow %}]"
+ },
+ {
+  "id": "tags-18",
+  "template": "[{% if 5 > \"x\" %}{% endif %}][{% unless 5 > \"x\" %} {% endunless %}][{% for i in (1..3) offset: \"a\" %}{% endfor %}][{% if 5 > \"x\" %}x{% endif %}][{% unless 5 > \"x\" %}y{% endunless %}]"
+ },
+ {
+  "id": "tags-19",
+  "template": "[{% tablerow i in (1..3) limit: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: nothing %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \" 1x\" cols: \"2.9\" %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) cols: true %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) limit: 1.9 %}{{ i }}{% endtablerow %}][{% tablerow i in (1..3) offset: \"-1\" %}{{ i }}{% endtablerow %}]"
  }
 ]

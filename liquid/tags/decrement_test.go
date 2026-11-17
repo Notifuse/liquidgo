@@ -8,7 +8,10 @@ import (
 
 func TestDecrementTag(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
-	tag := NewDecrementTag("decrement", "counter", pc)
+	tag, err := NewDecrementTag("decrement", "counter", pc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if tag == nil {
 		t.Fatal("Expected DecrementTag, got nil")
 	}
@@ -37,7 +40,10 @@ func TestDecrementTag(t *testing.T) {
 // TestDecrementTagRenderToOutputBufferEdgeCases tests RenderToOutputBuffer edge cases
 func TestDecrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	pc := liquid.NewParseContext(liquid.ParseContextOptions{})
-	tag := NewDecrementTag("decrement", "counter", pc)
+	tag, err := NewDecrementTag("decrement", "counter", pc)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx := liquid.NewContext()
 

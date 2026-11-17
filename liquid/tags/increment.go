@@ -13,11 +13,14 @@ type IncrementTag struct {
 }
 
 // NewIncrementTag creates a new IncrementTag.
-func NewIncrementTag(tagName, markup string, parseContext liquid.ParseContextInterface) *IncrementTag {
+func NewIncrementTag(tagName, markup string, parseContext liquid.ParseContextInterface) (*IncrementTag, error) {
+	if err := checkVariableName(markup, markup, parseContext); err != nil {
+		return nil, err
+	}
 	return &IncrementTag{
 		Tag:          liquid.NewTag(tagName, markup, parseContext),
 		variableName: strings.TrimSpace(markup),
-	}
+	}, nil
 }
 
 // VariableName returns the variable name.

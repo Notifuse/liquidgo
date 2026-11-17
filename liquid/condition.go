@@ -195,33 +195,52 @@ func (c *Condition) equalVariables(left, right interface{}) bool {
 func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 	switch ml.MethodName {
 	case "blank":
-		if str, ok := obj.(string); ok {
-			return strings.TrimSpace(str) == ""
-		}
-		return obj == nil || obj == ""
+		return liquidBlank(obj)
 	case "empty":
-		if str, ok := obj.(string); ok {
-			return str == ""
-		}
-		if arr, ok := obj.([]interface{}); ok {
-			return len(arr) == 0
-		}
-		if m, ok := obj.(map[string]interface{}); ok {
-			return len(m) == 0
-		}
-		// Reflection fallback for typed slices/arrays/maps
-		// This matches Ruby's duck-typing behavior: objects respond to .empty?
-		if obj != nil {
-			v := reflect.ValueOf(obj)
-			kind := v.Kind()
-			if kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map {
-				return v.Len() == 0
-			}
-		}
-		return obj == nil || obj == ""
+		return liquidEmpty(obj)
 	default:
 		return false
 	}
+}
+
+// liquidBlank is Ruby's liquid_blank? (Shopify Liquid 5.14), ActiveSupport's
+// blank?: nil, false, a string of ASCII whitespace only, and an empty list or
+// hash are blank; true and numbers are not.
+func liquidBlank(obj interface{}) bool {
+	switch v := obj.(type) {
+	case nil:
+		return true
+	case bool:
+		return !v
+	case string:
+		return strings.Trim(v, " \t\n\v\f\r") == ""
+	}
+	if _, ok := asNumber(obj); ok {
+		return false
+	}
+	return liquidEmpty(obj)
+}
+
+// liquidEmpty is Ruby's liquid_empty?: a string, a list or a hash with nothing
+// in it; nil is not empty.
+func liquidEmpty(obj interface{}) bool {
+	switch v := obj.(type) {
+	case string:
+		return v == ""
+	case []interface{}:
+		return len(v) == 0
+	case map[string]interface{}:
+		return len(v) == 0
+	case nil:
+		return false
+	}
+	// typed lists and hashes, which Ruby has as Array and Hash
+	v := reflect.ValueOf(obj)
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return v.Len() == 0
+	}
+	return false
 }
 
 // orderOperator returns <, >, <= or >=, holding when holds accepts the
@@ -368,6 +387,13 @@ func containsOperator(left, right interface{}) bool {
 	}
 
 	return false
+}
+
+// MethodLiteralOf returns the method literal markup names (blank, empty), or
+// nil: a condition compares a value with it by its method, as Ruby's
+// Condition.parse_expression.
+func MethodLiteralOf(markup string) *MethodLiteral {
+	return conditionMethodLiterals[markup]
 }
 
 // ParseConditionExpression parses an expression for use in conditions.

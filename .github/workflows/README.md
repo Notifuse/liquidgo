@@ -14,7 +14,7 @@ This directory contains GitHub Actions workflows for continuous integration and 
    on amd64, `go test -short ./...` for `386` and the build for `arm`.
 2. **windows** - `go test -short ./...`, for the paths of `LocalFileSystem`.
 3. **reference** - Checks that `integration/testdata/differential/expected.json` is what
-   Shopify Liquid 5.11.0 renders (`scripts/differential_reference.rb --check`), then runs the
+   Shopify Liquid 5.14.0 renders (`scripts/differential_reference.rb --check`), then runs the
    conformance and differential tests.
 4. **fuzz** - `FuzzRender` for 2 minutes; the input it fails on is kept as an artifact.
 5. **lint** - `golangci-lint` with `.golangci.yml`.

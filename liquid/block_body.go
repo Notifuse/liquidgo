@@ -43,6 +43,9 @@ const (
 type BlockBody struct {
 	nodelist []interface{}
 	blank    bool
+	// blankErrorText is set when the body was parsed in strict2: the error
+	// of a blank tag writes its message then, as in Shopify Liquid 5.14.
+	blankErrorText bool
 }
 
 // NewBlockBody creates a new BlockBody.
@@ -61,6 +64,7 @@ func (bb *BlockBody) Nodelist() []interface{} {
 // Parse parses tokens into the block body.
 func (bb *BlockBody) Parse(tokenizer *Tokenizer, parseContext ParseContextInterface, unknownTagHandler func(string, string) bool) error {
 	parseContext.SetLineNumber(tokenizer.LineNumber())
+	bb.blankErrorText = rigidMode(parseContext.ErrorMode())
 
 	if tokenizer.ForLiquidTag() {
 		return bb.parseForLiquidTag(tokenizer, parseContext, unknownTagHandler)
@@ -401,7 +405,7 @@ func isNilNode(tag Node) bool {
 func (bb *BlockBody) renderNode(context TagContext, output *OutputBuffer, node interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			rescueRenderNode(context, output, node, r)
+			rescueRenderNode(context, output, node, r, bb.blankErrorText)
 		}
 	}()
 	node.(Node).RenderToOutput(context, output)

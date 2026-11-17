@@ -26,10 +26,10 @@ func RegisterStandardTags(env *liquid.Environment) {
 		return NewEchoTag(tagName, markup, parseContext), nil
 	}))
 	env.RegisterTag("increment", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
-		return NewIncrementTag(tagName, markup, parseContext), nil
+		return NewIncrementTag(tagName, markup, parseContext)
 	}))
 	env.RegisterTag("decrement", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
-		return NewDecrementTag(tagName, markup, parseContext), nil
+		return NewDecrementTag(tagName, markup, parseContext)
 	}))
 	env.RegisterTag("break", TagConstructor(func(tagName, markup string, parseContext liquid.ParseContextInterface) (liquid.Node, error) {
 		return NewBreakTag(tagName, markup, parseContext), nil

@@ -75,11 +75,9 @@ func (f *ForTag) parseMarkup(markup string, parseContext liquid.ParseContextInte
 	for _, match := range attributeMatches {
 		if len(match) >= 3 {
 			key := strings.TrimSpace(match[1])
+			// the value is parsed as Ruby parses it: "a" is a string, not
+			// the variable a
 			value := strings.TrimSpace(match[2])
-			// Remove quotes if present
-			if len(value) > 0 && (value[0] == '"' || value[0] == '\'') {
-				value = value[1 : len(value)-1]
-			}
 			err := f.setAttribute(key, value, parseContext)
 			if err != nil {
 				return err
@@ -147,6 +145,12 @@ func (f *ForTag) Parse(tokenizer *liquid.Tokenizer) error {
 	}
 
 	return nil
+}
+
+// Blank reports whether the loop writes nothing, as Ruby's blank?: its body
+// and its else block are blank.
+func (f *ForTag) Blank() bool {
+	return f.forBlock.Blank() && (f.elseBlock == nil || f.elseBlock.Blank())
 }
 
 // parseBody parses a block body (for_block or else_block).
@@ -241,7 +245,7 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) segment {
 			var err error
 			from, err = liquid.ToInteger(fromValue)
 			if err != nil {
-				from = 0
+				liquid.Raise(liquid.NewArgumentError("invalid integer")) // as Ruby's Utils.to_integer
 			}
 		}
 	}
@@ -258,10 +262,11 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) segment {
 		limitValue := context.Evaluate(f.limit)
 		if limitValue != nil {
 			limitInt, err := liquid.ToInteger(limitValue)
-			if err == nil {
-				toVal := addSaturated(from, limitInt)
-				to = &toVal
+			if err != nil {
+				liquid.Raise(liquid.NewArgumentError("invalid integer")) // as Ruby's Utils.to_integer
 			}
+			toVal := addSaturated(from, limitInt)
+			to = &toVal
 		}
 	}
 
@@ -323,6 +328,7 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *liquid.OutputB
 	forLoop:
 		for i := 0; i < length; i++ {
 			ctx.CheckCanceled()
+			segment.chargeItem(ctx, f.forBlock.Nodelist())
 
 			// Set variable
 			ctx.Set(f.variableName, segment.At(i))

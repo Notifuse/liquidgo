@@ -45,10 +45,7 @@ func (u *UnlessTag) RenderToOutput(context liquid.TagContext, output *liquid.Out
 	for i, block := range u.Blocks() {
 		result, err := block.Evaluate(ctx)
 		if err != nil {
-			// Handle error
-			errorMsg := context.HandleError(err, nil)
-			output.WriteString(errorMsg)
-			return
+			liquid.Raise(err) // as Ruby: the block body handles it
 		}
 
 		// The first block (unless) renders when its condition does not

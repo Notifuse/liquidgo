@@ -44,6 +44,9 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 // First returns the first element of an array, or the start of a range, as
 // Range#first, even when the range is empty.
 func (sf *StandardFilters) First(input interface{}) interface{} {
+	if s, ok := input.(string); ok {
+		return firstChar(s)
+	}
 	if r, ok := input.(*Range); ok {
 		return r.Start
 	}
@@ -64,6 +67,9 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 // Last returns the last element of an array, or the end of a range, as
 // Range#last, even when the range is empty.
 func (sf *StandardFilters) Last(input interface{}) interface{} {
+	if s, ok := input.(string); ok {
+		return lastChar(s)
+	}
 	if r, ok := input.(*Range); ok {
 		return r.End
 	}
@@ -429,3 +435,16 @@ func raisePropertyError(property interface{}) error {
 }
 
 // Array Filters
+
+// firstChar is Ruby's s[0] || "": the first character of s, or "" for an
+// empty string (Shopify Liquid 5.14, as ActiveSupport's String#first).
+func firstChar(s string) string {
+	_, size := utf8.DecodeRuneInString(s)
+	return s[:size]
+}
+
+// lastChar is Ruby's s[-1] || "": the last character of s, or "".
+func lastChar(s string) string {
+	_, size := utf8.DecodeLastRuneInString(s)
+	return s[len(s)-size:]
+}

@@ -193,7 +193,9 @@ func (pc *ParseContext) NewBlockBody() *BlockBody {
 func (pc *ParseContext) NewParser(input string) *Parser {
 	pc.stringScanner.SetString(input)
 	// Create parser from scanner (it will tokenize the scanner's string)
-	return NewParser(pc.stringScanner)
+	p := NewParser(pc.stringScanner)
+	p.rejectBareBrackets = rigidMode(pc.errorMode)
+	return p
 }
 
 // NewTokenizer creates a new Tokenizer with the shared StringScanner.
@@ -205,7 +207,7 @@ func (pc *ParseContext) NewTokenizer(source string, lineNumbers bool, startLineN
 // In strict/rigid mode, errors are propagated. In lax mode, errors return nil.
 func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
 	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == "strict" || pc.errorMode == "rigid" || pc.errorMode == "warn" {
+	if pc.errorMode == "strict" || rigidMode(pc.errorMode) || pc.errorMode == "warn" {
 		// Check for lexer errors first
 		if err := parser.Error(); err != nil {
 			panic(err)
@@ -225,7 +227,7 @@ func (pc *ParseContext) SafeParseExpression(parser *Parser) interface{} {
 // This is used for standalone expression parsing where we expect the entire input to be a valid expression.
 func (pc *ParseContext) SafeParseCompleteExpression(parser *Parser) interface{} {
 	// In strict/rigid/warn mode, we need to propagate errors
-	if pc.errorMode == "strict" || pc.errorMode == "rigid" || pc.errorMode == "warn" {
+	if pc.errorMode == "strict" || rigidMode(pc.errorMode) || pc.errorMode == "warn" {
 		// Check for lexer errors first
 		if err := parser.Error(); err != nil {
 			panic(err)
@@ -265,7 +267,7 @@ func (pc *ParseContext) ParseExpression(markup string) interface{} {
 
 // ParseExpressionSafe parses an expression with safe flag.
 func (pc *ParseContext) ParseExpressionSafe(markup string, safe bool) interface{} {
-	if !safe && pc.errorMode == "rigid" {
+	if !safe && rigidMode(pc.errorMode) {
 		panic(NewInternalError("unsafe parse_expression cannot be used in rigid mode"))
 	}
 	return Parse(markup, pc.stringScanner, pc.expressionCache)

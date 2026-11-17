@@ -39,12 +39,14 @@ where every number is a `float64`, and render text meant for people (emails, pag
 - **A Go panic, a resource limit and a cancellation end the render** with the returned error and the
   output written so far; Ruby writes `Liquid error: internal` for an exception and goes on, and
   writes the message of a limit as the output.
-- **`blank`** compares as before (`false == blank` is false).
 - **`date`** accepts a float Unix timestamp, and reads a date without a zone as UTC.
 - **`increment` and `decrement`** counters start at 0, never at a render data value of the same
   name.
 - **Partials share the resource limits** of the template that renders them: `render` and `include`
-  do not reset them, as Ruby does.
+  do not reset them, as Ruby does. Ruby's cumulative limits (`cumulative_render_score_limit`,
+  `cumulative_assign_score_limit`), which bound a render with its partials, are therefore not
+  needed and not ported; each render has limits of its own, where Ruby's cumulative scores go on
+  across the renders of a template.
 - **Nesting is bounded at 100** for lookups and `liquid` tags too, as for blocks: `a[a[a[...]]]`
   nested deeper is a parse error.
 - **A filter result longer than `render_length_limit`** raises `Memory limits exceeded`, even when
@@ -55,7 +57,7 @@ where every number is a `float64`, and render text meant for people (emails, pag
 
 ## Other differences
 
-Every other output where liquidgo differs from Shopify Liquid 5.11.0 is listed with its reason, so
+Every other output where liquidgo differs from Shopify Liquid 5.14.0 is listed with its reason, so
 that a change fails a test:
 
 - [`integration/testdata/shopify_conformance/known_divergences.json`](../integration/testdata/shopify_conformance/known_divergences.json),

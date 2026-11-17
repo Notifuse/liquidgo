@@ -551,11 +551,15 @@ func TestForTagCollectionSegmentWithInvalidFromValue(t *testing.T) {
 	ctx.Set("array", []interface{}{1, 2, 3})
 	ctx.Set("invalid_var", map[string]interface{}{"not": "an_int"})
 
-	segment := tag.collectionSegment(ctx)
-	// Should default to from = 0 when ToInteger fails
-	if segment.Len() != 3 {
-		t.Errorf("Expected segment length 3, got %d", segment.Len())
-	}
+	// As Ruby's Utils.to_integer: invalid integer (differential case tags-17)
+	defer func() {
+		err, _ := recover().(*liquid.ArgumentError)
+		if err == nil || !strings.Contains(err.Error(), "invalid integer") {
+			t.Errorf("Expected an invalid integer error, got %v", err)
+		}
+	}()
+	tag.collectionSegment(ctx)
+	t.Error("Expected collectionSegment to raise")
 }
 
 // Test collectionSegment with Range collection
@@ -608,11 +612,15 @@ func TestForTagCollectionSegmentWithInvalidLimitValue(t *testing.T) {
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
 	ctx.Set("invalid_var", map[string]interface{}{"not": "an_int"})
 
-	segment := tag.collectionSegment(ctx)
-	// Should use all items when ToInteger fails
-	if segment.Len() != 5 {
-		t.Errorf("Expected segment length 5, got %d", segment.Len())
-	}
+	// As Ruby's Utils.to_integer: invalid integer (differential case tags-17)
+	defer func() {
+		err, _ := recover().(*liquid.ArgumentError)
+		if err == nil || !strings.Contains(err.Error(), "invalid integer") {
+			t.Errorf("Expected an invalid integer error, got %v", err)
+		}
+	}()
+	tag.collectionSegment(ctx)
+	t.Error("Expected collectionSegment to raise")
 }
 
 // Test renderSegment with invalid for_stack type

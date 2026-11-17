@@ -59,3 +59,17 @@ func sliceSegment(collection interface{}, from int, to *int) segment {
 	}
 	return segment{isRange: true, first: r.Start + lo, length: hi - lo}
 }
+
+// chargeItem counts an item of a range the loop visits in the render score,
+// as Shopify Liquid 5.14's RangeSlice, so that a range costs what it is
+// iterated over, not what it holds. A body without nodes is already counted 1
+// at each iteration (BlockBody), which stands for the item: the item is
+// counted apart only with a body, so that the score is Ruby's in both cases.
+func (s segment) chargeItem(ctx *liquid.Context, body []interface{}) {
+	if !s.isRange || len(body) == 0 {
+		return
+	}
+	if rl := ctx.ResourceLimits(); rl != nil {
+		rl.IncrementRenderScore(1)
+	}
+}

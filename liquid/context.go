@@ -30,6 +30,9 @@ type Context struct {
 	// on the root context of the render (see reporter), keyed by the map the
 	// func was read from and its key: the data itself is never written.
 	funcValues map[funcValueKey]funcValue
+	// self is the SelfDrop of the context, made when a template first reads
+	// self (see FindVariable).
+	self *SelfDrop
 	// argScratch is the slice lent to the calls of standard filters, and
 	// argLent whether a call holds it (see lendFilterArgs).
 	argScratch []interface{}
@@ -561,8 +564,30 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	}
 
 	// As Ruby: the first environment that gives a value; with strict
-	// variables, the first environment decides (tryVariableFindInEnvironments)
-	return c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
+	// variables, the first environment decides (tryVariableFindInEnvironments).
+	// self, found nowhere, is the SelfDrop of the context (Shopify Liquid 5.13).
+	isSelf := keyStr == selfKeyword
+	value := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound && !isSelf)
+	if isSelf && value == nil {
+		if c.self == nil {
+			c.self = &SelfDrop{context: c}
+		}
+		return c.self
+	}
+	return value
+}
+
+// variableDefined reports whether key is in a scope or an environment, nil
+// values included, as Ruby's variable_defined?.
+func (c *Context) variableDefined(key string) bool {
+	for _, scopes := range [3][]map[string]interface{}{c.scopes, c.environments, c.staticEnvironments} {
+		for _, s := range scopes {
+			if _, ok := s[key]; ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // valueIn returns the value of key in obj, a map the render does not own

@@ -4,7 +4,7 @@
 # that integration/differential_test.go compares liquidgo with.
 #
 # Usage, from the root of the repository, with a checkout of Shopify Liquid
-# v5.11.0 (its gems strscan >= 3.1.1 and bigdecimal installed):
+# v5.14.0 (its gems strscan >= 3.1.1 and bigdecimal installed):
 #
 #   TZ=UTC ruby -I <shopify-liquid>/lib scripts/differential_reference.rb         # write
 #   TZ=UTC ruby -I <shopify-liquid>/lib scripts/differential_reference.rb --check # compare

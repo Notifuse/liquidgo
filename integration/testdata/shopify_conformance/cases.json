@@ -16,6 +16,66 @@
  },
  {
   "assigns": {},
+  "expected": "hello",
+  "id": "test/integration/assign_test.rb:101",
+  "kind": "template",
+  "modes": [
+   "strict"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/assign_test.rb:101",
+  "template": "{% assign my_var = 'hello' %}{{ my_var }}",
+  "test": "test_assign_with_valid_identifier_in_strict2"
+ },
+ {
+  "assigns": {},
+  "expected": "hello",
+  "id": "test/integration/assign_test.rb:105",
+  "kind": "template",
+  "modes": [
+   "strict"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/assign_test.rb:105",
+  "template": "{% assign my-var = 'hello' %}{{ my-var }}",
+  "test": "test_assign_with_hyphen_in_strict2"
+ },
+ {
+  "assigns": {},
+  "expected": "1234",
+  "id": "test/integration/assign_test.rb:133",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/assign_test.rb:133",
+  "template": "{% assign (a(b(c) = 1234 %}{{ self['(a(b(c)'] }}",
+  "test": "test_assign_allows_invalid_names_in_lax"
+ },
+ {
+  "assigns": {},
+  "expected": "HELLO",
+  "id": "test/integration/assign_test.rb:137",
+  "kind": "template",
+  "modes": [
+   "strict"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/assign_test.rb:137",
+  "template": "{% assign my_var = 'hello' | upcase %}{{ my_var }}",
+  "test": "test_assign_with_filter_in_strict2"
+ },
+ {
+  "assigns": {},
   "expected": "",
   "id": "test/integration/blank_test.rb:39",
   "kind": "template",
@@ -37,8 +97,53 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/capture_test.rb:9",
-  "template": "{% capture 'var' %}test string{% endcapture %}{{var}}",
+  "template": "{% capture var %}test string{% endcapture %}{{var}}",
   "test": "test_captures_block_content_in_variable"
+ },
+ {
+  "assigns": {},
+  "expected": "test string",
+  "id": "test/integration/capture_test.rb:13",
+  "kind": "template",
+  "modes": [
+   "lax"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/capture_test.rb:13",
+  "template": "{% capture 'var' %}test string{% endcapture %}{{var}}",
+  "test": "test_captures_block_content_in_quoted_variable_in_lax"
+ },
+ {
+  "assigns": {},
+  "expected": "hello",
+  "id": "test/integration/capture_test.rb:58",
+  "kind": "template",
+  "modes": [
+   "strict"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/capture_test.rb:58",
+  "template": "{% capture my_var %}hello{% endcapture %}{{ my_var }}",
+  "test": "test_capture_with_valid_identifier_in_strict2"
+ },
+ {
+  "assigns": {},
+  "expected": "hello",
+  "id": "test/integration/capture_test.rb:62",
+  "kind": "template",
+  "modes": [
+   "strict"
+  ],
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/capture_test.rb:62",
+  "template": "{% capture my-var %}hello{% endcapture %}{{ my-var }}",
+  "test": "test_capture_with_hyphen_in_strict2"
  },
  {
   "assigns": {},
@@ -168,7 +273,7 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/context_test.rb:299",
-  "template": "{{ [\"foo\"] }}",
+  "template": "{{ foo }}",
   "test": "test_access_variable_with_hash_notation"
  },
  {
@@ -184,7 +289,7 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/context_test.rb:300",
-  "template": "{{ [bar] }}",
+  "template": "{{ self[bar] }}",
   "test": "test_access_variable_with_hash_notation"
  },
  {
@@ -1148,17 +1253,58 @@
   "test": "test_incomplete_expression"
  },
  {
-  "assigns": {},
-  "expected": "",
-  "id": "test/integration/standard_filter_test.rb:487",
+  "assigns": {
+   "x": 42
+  },
+  "expected": "42",
+  "id": "test/integration/self_drop_context_test.rb:77",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:487",
-  "template": "{{ \"foo\" | map: \"__id__\" }}",
-  "test": "test_map_doesnt_call_arbitrary_stuff"
+  "source": "test/integration/self_drop_context_test.rb:77",
+  "template": "{{ self.x }}",
+  "test": "test_self_drop_context_setter_is_undefined"
+ },
+ {
+  "assigns": {},
+  "expected": "T",
+  "id": "test/integration/self_drop_context_test.rb:91",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/self_drop_context_test.rb:91",
+  "template": "{% assign s = self %}{% if s == s %}T{% else %}F{% endif %}",
+  "test": "test_assigned_self_drop_compares_equal_to_itself"
+ },
+ {
+  "assigns": {},
+  "expected": "T",
+  "id": "test/integration/self_drop_context_test.rb:95",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/self_drop_context_test.rb:95",
+  "template": "{% assign a = self %}{% assign b = self %}{% if a == b %}T{% else %}F{% endif %}",
+  "test": "test_distinct_self_assignments_compare_equal_for_same_context"
+ },
+ {
+  "assigns": {},
+  "expected": "T",
+  "id": "test/integration/self_drop_context_test.rb:99",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/self_drop_context_test.rb:99",
+  "template": "{% if self == self %}T{% else %}F{% endif %}",
+  "test": "test_bare_self_compares_equal_to_bare_self"
  },
  {
   "assigns": {},
@@ -1170,90 +1316,27 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:488",
-  "template": "{{ \"foo\" | map: \"inspect\" }}",
+  "template": "{{ \"foo\" | map: \"__id__\" }}",
   "test": "test_map_doesnt_call_arbitrary_stuff"
  },
  {
   "assigns": {},
-  "expected": "2 2 2 2",
-  "id": "test/integration/standard_filter_test.rb:640",
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:489",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:640",
-  "template": "{{ '1 1 1 1' | replace: '1', 2 }}",
-  "test": "test_replace"
+  "source": "test/integration/standard_filter_test.rb:489",
+  "template": "{{ \"foo\" | map: \"inspect\" }}",
+  "test": "test_map_doesnt_call_arbitrary_stuff"
  },
  {
-  "assigns": {},
-  "expected": "2 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:645",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:645",
-  "template": "{{ '1 1 1 1' | replace_first: '1', 2 }}",
-  "test": "test_replace"
- },
- {
-  "assigns": {},
-  "expected": "1 1 1 2",
-  "id": "test/integration/standard_filter_test.rb:650",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:650",
-  "template": "{{ '1 1 1 1' | replace_last: '1', 2 }}",
-  "test": "test_replace"
- },
- {
-  "assigns": {},
-  "expected": "   ",
-  "id": "test/integration/standard_filter_test.rb:655",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:655",
-  "template": "{{ '1 1 1 1' | remove: 1 }}",
-  "test": "test_remove"
- },
- {
-  "assigns": {},
-  "expected": " 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:658",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:658",
-  "template": "{{ '1 1 1 1' | remove_first: 1 }}",
-  "test": "test_remove"
- },
- {
-  "assigns": {},
-  "expected": "1 1 1 ",
-  "id": "test/integration/standard_filter_test.rb:661",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:661",
-  "template": "{{ '1 1 1 1' | remove_last: 1 }}",
-  "test": "test_remove"
- },
- {
-  "assigns": {},
-  "expected": "foobar",
+  "assigns": {
+   "name": "foo"
+  },
+  "expected": "f",
   "id": "test/integration/standard_filter_test.rb:665",
   "kind": "template",
   "modes": null,
@@ -1261,6 +1344,142 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:665",
+  "template": "{{ name | first }}",
+  "test": "test_first_last_on_strings_via_template"
+ },
+ {
+  "assigns": {
+   "name": "foo"
+  },
+  "expected": "o",
+  "id": "test/integration/standard_filter_test.rb:666",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:666",
+  "template": "{{ name | last }}",
+  "test": "test_first_last_on_strings_via_template"
+ },
+ {
+  "assigns": {
+   "name": ""
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:667",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:667",
+  "template": "{{ name | first }}",
+  "test": "test_first_last_on_strings_via_template"
+ },
+ {
+  "assigns": {
+   "name": ""
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:668",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:668",
+  "template": "{{ name | last }}",
+  "test": "test_first_last_on_strings_via_template"
+ },
+ {
+  "assigns": {},
+  "expected": "2 2 2 2",
+  "id": "test/integration/standard_filter_test.rb:675",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:675",
+  "template": "{{ '1 1 1 1' | replace: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "2 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:680",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:680",
+  "template": "{{ '1 1 1 1' | replace_first: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "1 1 1 2",
+  "id": "test/integration/standard_filter_test.rb:685",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:685",
+  "template": "{{ '1 1 1 1' | replace_last: '1', 2 }}",
+  "test": "test_replace"
+ },
+ {
+  "assigns": {},
+  "expected": "   ",
+  "id": "test/integration/standard_filter_test.rb:690",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:690",
+  "template": "{{ '1 1 1 1' | remove: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": " 1 1 1",
+  "id": "test/integration/standard_filter_test.rb:693",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:693",
+  "template": "{{ '1 1 1 1' | remove_first: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": "1 1 1 ",
+  "id": "test/integration/standard_filter_test.rb:696",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:696",
+  "template": "{{ '1 1 1 1' | remove_last: 1 }}",
+  "test": "test_remove"
+ },
+ {
+  "assigns": {},
+  "expected": "foobar",
+  "id": "test/integration/standard_filter_test.rb:700",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:700",
   "template": "{{ 'foo|bar' | remove: '|' }}",
   "test": "test_pipes_in_string_arguments"
  },
@@ -1269,13 +1488,13 @@
    "source": " ab c  "
   },
   "expected": "ab c",
-  "id": "test/integration/standard_filter_test.rb:669",
+  "id": "test/integration/standard_filter_test.rb:704",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:669",
+  "source": "test/integration/standard_filter_test.rb:704",
   "template": "{{ source | strip }}",
   "test": "test_strip"
  },
@@ -1284,13 +1503,13 @@
    "source": " \tab c  \n \t"
   },
   "expected": "ab c",
-  "id": "test/integration/standard_filter_test.rb:670",
+  "id": "test/integration/standard_filter_test.rb:705",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:670",
+  "source": "test/integration/standard_filter_test.rb:705",
   "template": "{{ source | strip }}",
   "test": "test_strip"
  },
@@ -1299,13 +1518,13 @@
    "source": " ab c  "
   },
   "expected": "ab c  ",
-  "id": "test/integration/standard_filter_test.rb:674",
+  "id": "test/integration/standard_filter_test.rb:709",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:674",
+  "source": "test/integration/standard_filter_test.rb:709",
   "template": "{{ source | lstrip }}",
   "test": "test_lstrip"
  },
@@ -1314,13 +1533,13 @@
    "source": " \tab c  \n \t"
   },
   "expected": "ab c  \n \t",
-  "id": "test/integration/standard_filter_test.rb:675",
+  "id": "test/integration/standard_filter_test.rb:710",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:675",
+  "source": "test/integration/standard_filter_test.rb:710",
   "template": "{{ source | lstrip }}",
   "test": "test_lstrip"
  },
@@ -1329,13 +1548,13 @@
    "source": " ab c  "
   },
   "expected": " ab c",
-  "id": "test/integration/standard_filter_test.rb:679",
+  "id": "test/integration/standard_filter_test.rb:714",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:679",
+  "source": "test/integration/standard_filter_test.rb:714",
   "template": "{{ source | rstrip }}",
   "test": "test_rstrip"
  },
@@ -1344,13 +1563,13 @@
    "source": " \tab c  \n \t"
   },
   "expected": " \tab c",
-  "id": "test/integration/standard_filter_test.rb:680",
+  "id": "test/integration/standard_filter_test.rb:715",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:680",
+  "source": "test/integration/standard_filter_test.rb:715",
   "template": "{{ source | rstrip }}",
   "test": "test_rstrip"
  },
@@ -1359,13 +1578,13 @@
    "source": "a\nb\nc"
   },
   "expected": "abc",
-  "id": "test/integration/standard_filter_test.rb:684",
+  "id": "test/integration/standard_filter_test.rb:719",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:684",
+  "source": "test/integration/standard_filter_test.rb:719",
   "template": "{{ source | strip_newlines }}",
   "test": "test_strip_newlines"
  },
@@ -1374,13 +1593,13 @@
    "source": "a\r\nb\nc"
   },
   "expected": "abc",
-  "id": "test/integration/standard_filter_test.rb:685",
+  "id": "test/integration/standard_filter_test.rb:720",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:685",
+  "source": "test/integration/standard_filter_test.rb:720",
   "template": "{{ source | strip_newlines }}",
   "test": "test_strip_newlines"
  },
@@ -1389,13 +1608,13 @@
    "source": "a\nb\nc"
   },
   "expected": "a<br />\nb<br />\nc",
-  "id": "test/integration/standard_filter_test.rb:689",
+  "id": "test/integration/standard_filter_test.rb:724",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:689",
+  "source": "test/integration/standard_filter_test.rb:724",
   "template": "{{ source | newline_to_br }}",
   "test": "test_newlines_to_br"
  },
@@ -1404,39 +1623,39 @@
    "source": "a\r\nb\nc"
   },
   "expected": "a<br />\nb<br />\nc",
-  "id": "test/integration/standard_filter_test.rb:690",
+  "id": "test/integration/standard_filter_test.rb:725",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:690",
+  "source": "test/integration/standard_filter_test.rb:725",
   "template": "{{ source | newline_to_br }}",
   "test": "test_newlines_to_br"
  },
  {
   "assigns": {},
   "expected": "2",
-  "id": "test/integration/standard_filter_test.rb:694",
+  "id": "test/integration/standard_filter_test.rb:729",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:694",
+  "source": "test/integration/standard_filter_test.rb:729",
   "template": "{{ 1 | plus:1 }}",
   "test": "test_plus"
  },
  {
   "assigns": {},
   "expected": "2.0",
-  "id": "test/integration/standard_filter_test.rb:695",
+  "id": "test/integration/standard_filter_test.rb:730",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:695",
+  "source": "test/integration/standard_filter_test.rb:730",
   "template": "{{ '1' | plus:'1.0' }}",
   "test": "test_plus"
  },
@@ -1446,279 +1665,19 @@
    "operand": 1
   },
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:701",
+  "id": "test/integration/standard_filter_test.rb:736",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:701",
+  "source": "test/integration/standard_filter_test.rb:736",
   "template": "{{ input | minus:operand }}",
   "test": "test_minus"
  },
  {
   "assigns": {},
   "expected": "2.3",
-  "id": "test/integration/standard_filter_test.rb:702",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:702",
-  "template": "{{ '4.3' | minus:'2' }}",
-  "test": "test_minus"
- },
- {
-  "assigns": {},
-  "expected": "17",
-  "id": "test/integration/standard_filter_test.rb:708",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:708",
-  "template": "{{ 17 | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17",
-  "id": "test/integration/standard_filter_test.rb:709",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:709",
-  "template": "{{ -17 | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17",
-  "id": "test/integration/standard_filter_test.rb:710",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:710",
-  "template": "{{ '17' | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17",
-  "id": "test/integration/standard_filter_test.rb:711",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:711",
-  "template": "{{ '-17' | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "0",
-  "id": "test/integration/standard_filter_test.rb:712",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:712",
-  "template": "{{ 0 | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "0",
-  "id": "test/integration/standard_filter_test.rb:713",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:713",
-  "template": "{{ '0' | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17.42",
-  "id": "test/integration/standard_filter_test.rb:714",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:714",
-  "template": "{{ 17.42 | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17.42",
-  "id": "test/integration/standard_filter_test.rb:715",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:715",
-  "template": "{{ -17.42 | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17.42",
-  "id": "test/integration/standard_filter_test.rb:716",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:716",
-  "template": "{{ '17.42' | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "17.42",
-  "id": "test/integration/standard_filter_test.rb:717",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:717",
-  "template": "{{ '-17.42' | abs }}",
-  "test": "test_abs"
- },
- {
-  "assigns": {},
-  "expected": "12",
-  "id": "test/integration/standard_filter_test.rb:721",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:721",
-  "template": "{{ 3 | times:4 }}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "0",
-  "id": "test/integration/standard_filter_test.rb:722",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:722",
-  "template": "{{ 'foo' | times:4 }}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "6",
-  "id": "test/integration/standard_filter_test.rb:723",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:723",
-  "template": "{{ '2.1' | times:3 | replace: '.','-' | plus:0}}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "7.25",
-  "id": "test/integration/standard_filter_test.rb:724",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:724",
-  "template": "{{ 0.0725 | times:100 }}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "-7.25",
-  "id": "test/integration/standard_filter_test.rb:725",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:725",
-  "template": "{{ \"-0.0725\" | times:100 }}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "7.25",
-  "id": "test/integration/standard_filter_test.rb:726",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:726",
-  "template": "{{ \"-0.0725\" | times: -100 }}",
-  "test": "test_times"
- },
- {
-  "assigns": {},
-  "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:731",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:731",
-  "template": "{{ 12 | divided_by:3 }}",
-  "test": "test_divided_by"
- },
- {
-  "assigns": {},
-  "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:732",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:732",
-  "template": "{{ 14 | divided_by:3 }}",
-  "test": "test_divided_by"
- },
- {
-  "assigns": {},
-  "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:734",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:734",
-  "template": "{{ 15 | divided_by:3 }}",
-  "test": "test_divided_by"
- },
- {
-  "assigns": {},
-  "expected": "0.5",
   "id": "test/integration/standard_filter_test.rb:737",
   "kind": "template",
   "modes": null,
@@ -1726,25 +1685,51 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:737",
-  "template": "{{ 2.0 | divided_by:4 }}",
-  "test": "test_divided_by"
+  "template": "{{ '4.3' | minus:'2' }}",
+  "test": "test_minus"
  },
  {
   "assigns": {},
-  "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:739",
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:743",
   "kind": "template",
   "modes": null,
   "partials": {},
-  "raises": "Liquid::ZeroDivisionError",
+  "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:739",
-  "template": "{{ 1 | modulo: 0 }}",
-  "test": "test_divided_by"
+  "source": "test/integration/standard_filter_test.rb:743",
+  "template": "{{ 17 | abs }}",
+  "test": "test_abs"
  },
  {
   "assigns": {},
-  "expected": "1",
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:744",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:744",
+  "template": "{{ -17 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
+  "id": "test/integration/standard_filter_test.rb:745",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:745",
+  "template": "{{ '17' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17",
   "id": "test/integration/standard_filter_test.rb:746",
   "kind": "template",
   "modes": null,
@@ -1752,19 +1737,253 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:746",
+  "template": "{{ '-17' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:747",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:747",
+  "template": "{{ 0 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:748",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:748",
+  "template": "{{ '0' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:749",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:749",
+  "template": "{{ 17.42 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:750",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:750",
+  "template": "{{ -17.42 | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:751",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:751",
+  "template": "{{ '17.42' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "17.42",
+  "id": "test/integration/standard_filter_test.rb:752",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:752",
+  "template": "{{ '-17.42' | abs }}",
+  "test": "test_abs"
+ },
+ {
+  "assigns": {},
+  "expected": "12",
+  "id": "test/integration/standard_filter_test.rb:756",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:756",
+  "template": "{{ 3 | times:4 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "0",
+  "id": "test/integration/standard_filter_test.rb:757",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:757",
+  "template": "{{ 'foo' | times:4 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "6",
+  "id": "test/integration/standard_filter_test.rb:758",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:758",
+  "template": "{{ '2.1' | times:3 | replace: '.','-' | plus:0}}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "7.25",
+  "id": "test/integration/standard_filter_test.rb:759",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:759",
+  "template": "{{ 0.0725 | times:100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "-7.25",
+  "id": "test/integration/standard_filter_test.rb:760",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:760",
+  "template": "{{ \"-0.0725\" | times:100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "7.25",
+  "id": "test/integration/standard_filter_test.rb:761",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:761",
+  "template": "{{ \"-0.0725\" | times: -100 }}",
+  "test": "test_times"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:766",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:766",
+  "template": "{{ 12 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:767",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:767",
+  "template": "{{ 14 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "5",
+  "id": "test/integration/standard_filter_test.rb:769",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:769",
+  "template": "{{ 15 | divided_by:3 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "0.5",
+  "id": "test/integration/standard_filter_test.rb:772",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:772",
+  "template": "{{ 2.0 | divided_by:4 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "4",
+  "id": "test/integration/standard_filter_test.rb:774",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "Liquid::ZeroDivisionError",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:774",
+  "template": "{{ 1 | modulo: 0 }}",
+  "test": "test_divided_by"
+ },
+ {
+  "assigns": {},
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:781",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:781",
   "template": "{{ 3 | modulo:2 }}",
   "test": "test_modulo"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:748",
+  "id": "test/integration/standard_filter_test.rb:783",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "Liquid::ZeroDivisionError",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:748",
+  "source": "test/integration/standard_filter_test.rb:783",
   "template": "{{ 1 | modulo: 0 }}",
   "test": "test_modulo"
  },
@@ -1775,26 +1994,26 @@
    }
   },
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:755",
+  "id": "test/integration/standard_filter_test.rb:790",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:755",
+  "source": "test/integration/standard_filter_test.rb:790",
   "template": "{{ input | round }}",
   "test": "test_round"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:756",
+  "id": "test/integration/standard_filter_test.rb:791",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:756",
+  "source": "test/integration/standard_filter_test.rb:791",
   "template": "{{ '4.3' | round }}",
   "test": "test_round"
  },
@@ -1805,26 +2024,26 @@
    }
   },
   "expected": "4.56",
-  "id": "test/integration/standard_filter_test.rb:757",
+  "id": "test/integration/standard_filter_test.rb:792",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:757",
+  "source": "test/integration/standard_filter_test.rb:792",
   "template": "{{ input | round: 2 }}",
   "test": "test_round"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:759",
+  "id": "test/integration/standard_filter_test.rb:794",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "Liquid::FloatDomainError",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:759",
+  "source": "test/integration/standard_filter_test.rb:794",
   "template": "{{ 1.0 | divided_by: 0.0 | round }}",
   "test": "test_round"
  },
@@ -1835,39 +2054,39 @@
    }
   },
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:767",
+  "id": "test/integration/standard_filter_test.rb:802",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:767",
+  "source": "test/integration/standard_filter_test.rb:802",
   "template": "{{ input | ceil }}",
   "test": "test_ceil"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:768",
+  "id": "test/integration/standard_filter_test.rb:803",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:768",
+  "source": "test/integration/standard_filter_test.rb:803",
   "template": "{{ '4.3' | ceil }}",
   "test": "test_ceil"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:770",
+  "id": "test/integration/standard_filter_test.rb:805",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "Liquid::FloatDomainError",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:770",
+  "source": "test/integration/standard_filter_test.rb:805",
   "template": "{{ 1.0 | divided_by: 0.0 | ceil }}",
   "test": "test_ceil"
  },
@@ -1878,149 +2097,136 @@
    }
   },
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:777",
+  "id": "test/integration/standard_filter_test.rb:812",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:777",
+  "source": "test/integration/standard_filter_test.rb:812",
   "template": "{{ input | floor }}",
   "test": "test_floor"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:778",
+  "id": "test/integration/standard_filter_test.rb:813",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:778",
+  "source": "test/integration/standard_filter_test.rb:813",
   "template": "{{ '4.3' | floor }}",
   "test": "test_floor"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:780",
+  "id": "test/integration/standard_filter_test.rb:815",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "Liquid::FloatDomainError",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:780",
+  "source": "test/integration/standard_filter_test.rb:815",
   "template": "{{ 1.0 | divided_by: 0.0 | floor }}",
   "test": "test_floor"
  },
  {
   "assigns": {},
   "expected": "4",
-  "id": "test/integration/standard_filter_test.rb:787",
+  "id": "test/integration/standard_filter_test.rb:822",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:787",
+  "source": "test/integration/standard_filter_test.rb:822",
   "template": "{{ 5 | at_most:4 }}",
   "test": "test_at_most"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:788",
+  "id": "test/integration/standard_filter_test.rb:823",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:788",
+  "source": "test/integration/standard_filter_test.rb:823",
   "template": "{{ 5 | at_most:5 }}",
   "test": "test_at_most"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:789",
+  "id": "test/integration/standard_filter_test.rb:824",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:789",
+  "source": "test/integration/standard_filter_test.rb:824",
   "template": "{{ 5 | at_most:6 }}",
   "test": "test_at_most"
  },
  {
   "assigns": {},
   "expected": "4.5",
-  "id": "test/integration/standard_filter_test.rb:791",
+  "id": "test/integration/standard_filter_test.rb:826",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:791",
+  "source": "test/integration/standard_filter_test.rb:826",
   "template": "{{ 4.5 | at_most:5 }}",
   "test": "test_at_most"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:798",
+  "id": "test/integration/standard_filter_test.rb:833",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:798",
+  "source": "test/integration/standard_filter_test.rb:833",
   "template": "{{ 5 | at_least:4 }}",
   "test": "test_at_least"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:799",
+  "id": "test/integration/standard_filter_test.rb:834",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:799",
+  "source": "test/integration/standard_filter_test.rb:834",
   "template": "{{ 5 | at_least:5 }}",
   "test": "test_at_least"
  },
  {
   "assigns": {},
   "expected": "6",
-  "id": "test/integration/standard_filter_test.rb:800",
+  "id": "test/integration/standard_filter_test.rb:835",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:800",
+  "source": "test/integration/standard_filter_test.rb:835",
   "template": "{{ 5 | at_least:6 }}",
   "test": "test_at_least"
  },
  {
   "assigns": {},
   "expected": "5",
-  "id": "test/integration/standard_filter_test.rb:802",
-  "kind": "template",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:802",
-  "template": "{{ 4.5 | at_least:5 }}",
-  "test": "test_at_least"
- },
- {
-  "assigns": {},
-  "expected": "bar",
   "id": "test/integration/standard_filter_test.rb:837",
   "kind": "template",
   "modes": null,
@@ -2028,58 +2234,71 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:837",
+  "template": "{{ 4.5 | at_least:5 }}",
+  "test": "test_at_least"
+ },
+ {
+  "assigns": {},
+  "expected": "bar",
+  "id": "test/integration/standard_filter_test.rb:872",
+  "kind": "template",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:872",
   "template": "{{ false | default: 'bar' }}",
   "test": "test_default"
  },
  {
   "assigns": {},
   "expected": "false",
-  "id": "test/integration/standard_filter_test.rb:849",
+  "id": "test/integration/standard_filter_test.rb:884",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:849",
+  "source": "test/integration/standard_filter_test.rb:884",
   "template": "{{ false | default: 'bar', allow_false: true }}",
   "test": "test_default_handle_false"
  },
  {
   "assigns": {},
   "expected": "a",
-  "id": "test/integration/standard_filter_test.rb:855",
+  "id": "test/integration/standard_filter_test.rb:890",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:855",
+  "source": "test/integration/standard_filter_test.rb:890",
   "template": "{{ 'a' | to_number }}",
   "test": "test_cannot_access_private_methods"
  },
  {
   "assigns": {},
   "expected": "",
-  "id": "test/integration/standard_filter_test.rb:859",
+  "id": "test/integration/standard_filter_test.rb:894",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:859",
+  "source": "test/integration/standard_filter_test.rb:894",
   "template": "{{ '' | date: '%D' }}",
   "test": "test_date_raises_nothing"
  },
  {
   "assigns": {},
   "expected": "abc",
-  "id": "test/integration/standard_filter_test.rb:860",
+  "id": "test/integration/standard_filter_test.rb:895",
   "kind": "template",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:860",
+  "source": "test/integration/standard_filter_test.rb:895",
   "template": "{{ 'abc' | date: '%D' }}",
   "test": "test_date_raises_nothing"
  },
@@ -2586,36 +2805,6 @@
    "in": "<strong>"
   },
   "expected": "&lt;strong&gt;",
-  "id": "test/integration/standard_filter_test.rb:168",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:168",
-  "template": "{% assign __result = in | escape %}",
-  "test": "test_escape"
- },
- {
-  "assigns": {
-   "in": 1
-  },
-  "expected": "1",
-  "id": "test/integration/standard_filter_test.rb:169",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:169",
-  "template": "{% assign __result = in | escape %}",
-  "test": "test_escape"
- },
- {
-  "assigns": {
-   "in": "<strong>"
-  },
-  "expected": "&lt;strong&gt;",
   "id": "test/integration/standard_filter_test.rb:175",
   "kind": "filter",
   "modes": null,
@@ -2623,8 +2812,8 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:175",
-  "template": "{% assign __result = in | h %}",
-  "test": "test_h"
+  "template": "{% assign __result = in | escape %}",
+  "test": "test_escape"
  },
  {
   "assigns": {
@@ -2638,6 +2827,36 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:176",
+  "template": "{% assign __result = in | escape %}",
+  "test": "test_escape"
+ },
+ {
+  "assigns": {
+   "in": "<strong>"
+  },
+  "expected": "&lt;strong&gt;",
+  "id": "test/integration/standard_filter_test.rb:182",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:182",
+  "template": "{% assign __result = in | h %}",
+  "test": "test_h"
+ },
+ {
+  "assigns": {
+   "in": 1
+  },
+  "expected": "1",
+  "id": "test/integration/standard_filter_test.rb:183",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:183",
   "template": "{% assign __result = in | h %}",
   "test": "test_h"
  },
@@ -2646,13 +2865,13 @@
    "in": "&lt;strong&gt;Hulk</strong>"
   },
   "expected": "&lt;strong&gt;Hulk&lt;/strong&gt;",
-  "id": "test/integration/standard_filter_test.rb:182",
+  "id": "test/integration/standard_filter_test.rb:189",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:182",
+  "source": "test/integration/standard_filter_test.rb:189",
   "template": "{% assign __result = in | escape_once %}",
   "test": "test_escape_once"
  },
@@ -2661,13 +2880,13 @@
    "in": "foo+1@example.com"
   },
   "expected": "foo%2B1%40example.com",
-  "id": "test/integration/standard_filter_test.rb:241",
+  "id": "test/integration/standard_filter_test.rb:248",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:241",
+  "source": "test/integration/standard_filter_test.rb:248",
   "template": "{% assign __result = in | url_encode %}",
   "test": "test_url_encode"
  },
@@ -2676,13 +2895,13 @@
    "in": 1
   },
   "expected": "1",
-  "id": "test/integration/standard_filter_test.rb:242",
+  "id": "test/integration/standard_filter_test.rb:249",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:242",
+  "source": "test/integration/standard_filter_test.rb:249",
   "template": "{% assign __result = in | url_encode %}",
   "test": "test_url_encode"
  },
@@ -2691,13 +2910,13 @@
    "in": "foo+bar"
   },
   "expected": "foo bar",
-  "id": "test/integration/standard_filter_test.rb:248",
+  "id": "test/integration/standard_filter_test.rb:255",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:248",
+  "source": "test/integration/standard_filter_test.rb:255",
   "template": "{% assign __result = in | url_decode %}",
   "test": "test_url_decode"
  },
@@ -2706,13 +2925,13 @@
    "in": "foo%20bar"
   },
   "expected": "foo bar",
-  "id": "test/integration/standard_filter_test.rb:249",
+  "id": "test/integration/standard_filter_test.rb:256",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:249",
+  "source": "test/integration/standard_filter_test.rb:256",
   "template": "{% assign __result = in | url_decode %}",
   "test": "test_url_decode"
  },
@@ -2721,13 +2940,13 @@
    "in": "foo%2B1%40example.com"
   },
   "expected": "foo+1@example.com",
-  "id": "test/integration/standard_filter_test.rb:250",
+  "id": "test/integration/standard_filter_test.rb:257",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:250",
+  "source": "test/integration/standard_filter_test.rb:257",
   "template": "{% assign __result = in | url_decode %}",
   "test": "test_url_decode"
  },
@@ -2736,13 +2955,13 @@
    "in": 1
   },
   "expected": "1",
-  "id": "test/integration/standard_filter_test.rb:251",
+  "id": "test/integration/standard_filter_test.rb:258",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:251",
+  "source": "test/integration/standard_filter_test.rb:258",
   "template": "{% assign __result = in | url_decode %}",
   "test": "test_url_decode"
  },
@@ -2752,69 +2971,6 @@
    "p0": 4
   },
   "expected": "one two three",
-  "id": "test/integration/standard_filter_test.rb:261",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:261",
-  "template": "{% assign __result = in | truncatewords: p0 %}",
-  "test": "test_truncatewords"
- },
- {
-  "assigns": {
-   "in": "one two three",
-   "p0": 2
-  },
-  "expected": "one two...",
-  "id": "test/integration/standard_filter_test.rb:262",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:262",
-  "template": "{% assign __result = in | truncatewords: p0 %}",
-  "test": "test_truncatewords"
- },
- {
-  "assigns": {
-   "in": "one two three"
-  },
-  "expected": "one two three",
-  "id": "test/integration/standard_filter_test.rb:263",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:263",
-  "template": "{% assign __result = in | truncatewords %}",
-  "test": "test_truncatewords"
- },
- {
-  "assigns": {
-   "in": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221; x 16&#8221; x 10.5&#8221; high) with cover.",
-   "p0": 15
-  },
-  "expected": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221;...",
-  "id": "test/integration/standard_filter_test.rb:264",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:264",
-  "template": "{% assign __result = in | truncatewords: p0 %}",
-  "test": "test_truncatewords"
- },
- {
-  "assigns": {
-   "in": "测试测试测试测试",
-   "p0": 5
-  },
-  "expected": "测试测试测试测试",
   "id": "test/integration/standard_filter_test.rb:268",
   "kind": "filter",
   "modes": null,
@@ -2828,10 +2984,9 @@
  {
   "assigns": {
    "in": "one two three",
-   "p0": 2,
-   "p1": 1
+   "p0": 2
   },
-  "expected": "one two1",
+  "expected": "one two...",
   "id": "test/integration/standard_filter_test.rb:269",
   "kind": "filter",
   "modes": null,
@@ -2839,15 +2994,14 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:269",
-  "template": "{% assign __result = in | truncatewords: p0, p1 %}",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
   "test": "test_truncatewords"
  },
  {
   "assigns": {
-   "in": "one  two\tthree\nfour",
-   "p0": 3
+   "in": "one two three"
   },
-  "expected": "one two three...",
+  "expected": "one two three",
   "id": "test/integration/standard_filter_test.rb:270",
   "kind": "filter",
   "modes": null,
@@ -2855,15 +3009,15 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/standard_filter_test.rb:270",
-  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "template": "{% assign __result = in | truncatewords %}",
   "test": "test_truncatewords"
  },
  {
   "assigns": {
-   "in": "one two three four",
-   "p0": 2
+   "in": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221; x 16&#8221; x 10.5&#8221; high) with cover.",
+   "p0": 15
   },
-  "expected": "one two...",
+  "expected": "Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221;...",
   "id": "test/integration/standard_filter_test.rb:271",
   "kind": "filter",
   "modes": null,
@@ -2876,17 +3030,82 @@
  },
  {
   "assigns": {
-   "in": "one two three four",
-   "p0": 0
+   "in": "测试测试测试测试",
+   "p0": 5
   },
-  "expected": "one...",
-  "id": "test/integration/standard_filter_test.rb:272",
+  "expected": "测试测试测试测试",
+  "id": "test/integration/standard_filter_test.rb:275",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:272",
+  "source": "test/integration/standard_filter_test.rb:275",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three",
+   "p0": 2,
+   "p1": 1
+  },
+  "expected": "one two1",
+  "id": "test/integration/standard_filter_test.rb:276",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:276",
+  "template": "{% assign __result = in | truncatewords: p0, p1 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one  two\tthree\nfour",
+   "p0": 3
+  },
+  "expected": "one two three...",
+  "id": "test/integration/standard_filter_test.rb:277",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:277",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three four",
+   "p0": 2
+  },
+  "expected": "one two...",
+  "id": "test/integration/standard_filter_test.rb:278",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:278",
+  "template": "{% assign __result = in | truncatewords: p0 %}",
+  "test": "test_truncatewords"
+ },
+ {
+  "assigns": {
+   "in": "one two three four",
+   "p0": 0
+  },
+  "expected": "one...",
+  "id": "test/integration/standard_filter_test.rb:279",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:279",
   "template": "{% assign __result = in | truncatewords: p0 %}",
   "test": "test_truncatewords"
  },
@@ -2895,13 +3114,13 @@
    "in": "<div>test</div>"
   },
   "expected": "test",
-  "id": "test/integration/standard_filter_test.rb:278",
+  "id": "test/integration/standard_filter_test.rb:285",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:278",
+  "source": "test/integration/standard_filter_test.rb:285",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2910,13 +3129,13 @@
    "in": "<div id='test'>test</div>"
   },
   "expected": "test",
-  "id": "test/integration/standard_filter_test.rb:279",
+  "id": "test/integration/standard_filter_test.rb:286",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:279",
+  "source": "test/integration/standard_filter_test.rb:286",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2925,13 +3144,13 @@
    "in": "<script type='text/javascript'>document.write('some stuff');</script>"
   },
   "expected": "",
-  "id": "test/integration/standard_filter_test.rb:280",
+  "id": "test/integration/standard_filter_test.rb:287",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:280",
+  "source": "test/integration/standard_filter_test.rb:287",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2940,13 +3159,13 @@
    "in": "<style type='text/css'>foo bar</style>"
   },
   "expected": "",
-  "id": "test/integration/standard_filter_test.rb:281",
+  "id": "test/integration/standard_filter_test.rb:288",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:281",
+  "source": "test/integration/standard_filter_test.rb:288",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2955,13 +3174,13 @@
    "in": "<div\nclass='multiline'>test</div>"
   },
   "expected": "test",
-  "id": "test/integration/standard_filter_test.rb:282",
+  "id": "test/integration/standard_filter_test.rb:289",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:282",
+  "source": "test/integration/standard_filter_test.rb:289",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2970,13 +3189,13 @@
    "in": "<!-- foo bar \n test -->test"
   },
   "expected": "test",
-  "id": "test/integration/standard_filter_test.rb:283",
+  "id": "test/integration/standard_filter_test.rb:290",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:283",
+  "source": "test/integration/standard_filter_test.rb:290",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -2985,13 +3204,13 @@
    "in": null
   },
   "expected": "",
-  "id": "test/integration/standard_filter_test.rb:284",
+  "id": "test/integration/standard_filter_test.rb:291",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:284",
+  "source": "test/integration/standard_filter_test.rb:291",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -3000,13 +3219,13 @@
    "in": "<<<script </script>script>foo;</script>"
   },
   "expected": "foo;",
-  "id": "test/integration/standard_filter_test.rb:287",
+  "id": "test/integration/standard_filter_test.rb:294",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:287",
+  "source": "test/integration/standard_filter_test.rb:294",
   "template": "{% assign __result = in | strip_html %}",
   "test": "test_strip_html"
  },
@@ -3020,13 +3239,13 @@
    ]
   },
   "expected": "1 2 3 4",
-  "id": "test/integration/standard_filter_test.rb:291",
+  "id": "test/integration/standard_filter_test.rb:298",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:291",
+  "source": "test/integration/standard_filter_test.rb:298",
   "template": "{% assign __result = in | join %}",
   "test": "test_join"
  },
@@ -3041,13 +3260,13 @@
    "p0": " - "
   },
   "expected": "1 - 2 - 3 - 4",
-  "id": "test/integration/standard_filter_test.rb:292",
+  "id": "test/integration/standard_filter_test.rb:299",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:292",
+  "source": "test/integration/standard_filter_test.rb:299",
   "template": "{% assign __result = in | join: p0 %}",
   "test": "test_join"
  },
@@ -3062,13 +3281,13 @@
    "p0": 1
   },
   "expected": "1121314",
-  "id": "test/integration/standard_filter_test.rb:293",
+  "id": "test/integration/standard_filter_test.rb:300",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:293",
+  "source": "test/integration/standard_filter_test.rb:300",
   "template": "{% assign __result = in | join: p0 %}",
   "test": "test_join"
  },
@@ -3087,13 +3306,13 @@
    3,
    4
   ],
-  "id": "test/integration/standard_filter_test.rb:307",
+  "id": "test/integration/standard_filter_test.rb:308",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:307",
+  "source": "test/integration/standard_filter_test.rb:308",
   "template": "{% assign __result = in | sort %}",
   "test": "test_sort"
  },
@@ -3129,13 +3348,13 @@
     "a": 4
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:308",
+  "id": "test/integration/standard_filter_test.rb:309",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:308",
+  "source": "test/integration/standard_filter_test.rb:309",
   "template": "{% assign __result = in | sort: p0 %}",
   "test": "test_sort"
  },
@@ -3156,13 +3375,13 @@
    4,
    null
   ],
-  "id": "test/integration/standard_filter_test.rb:312",
+  "id": "test/integration/standard_filter_test.rb:313",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:312",
+  "source": "test/integration/standard_filter_test.rb:313",
   "template": "{% assign __result = in | sort %}",
   "test": "test_sort_with_nils"
  },
@@ -3200,13 +3419,13 @@
    },
    {}
   ],
-  "id": "test/integration/standard_filter_test.rb:313",
+  "id": "test/integration/standard_filter_test.rb:314",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:313",
+  "source": "test/integration/standard_filter_test.rb:314",
   "template": "{% assign __result = in | sort: p0 %}",
   "test": "test_sort_with_nils"
  },
@@ -3225,13 +3444,13 @@
    "c",
    "D"
   ],
-  "id": "test/integration/standard_filter_test.rb:335",
+  "id": "test/integration/standard_filter_test.rb:336",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:335",
+  "source": "test/integration/standard_filter_test.rb:336",
   "template": "{% assign __result = in | sort_natural %}",
   "test": "test_sort_natural"
  },
@@ -3267,13 +3486,13 @@
     "a": "D"
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:336",
+  "id": "test/integration/standard_filter_test.rb:337",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:336",
+  "source": "test/integration/standard_filter_test.rb:337",
   "template": "{% assign __result = in | sort_natural: p0 %}",
   "test": "test_sort_natural"
  },
@@ -3294,13 +3513,13 @@
    "D",
    null
   ],
-  "id": "test/integration/standard_filter_test.rb:340",
+  "id": "test/integration/standard_filter_test.rb:341",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:340",
+  "source": "test/integration/standard_filter_test.rb:341",
   "template": "{% assign __result = in | sort_natural %}",
   "test": "test_sort_natural_with_nils"
  },
@@ -3338,13 +3557,13 @@
    },
    {}
   ],
-  "id": "test/integration/standard_filter_test.rb:341",
+  "id": "test/integration/standard_filter_test.rb:342",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:341",
+  "source": "test/integration/standard_filter_test.rb:342",
   "template": "{% assign __result = in | sort_natural: p0 %}",
   "test": "test_sort_natural_with_nils"
  },
@@ -3367,13 +3586,13 @@
    "Y",
    "Z"
   ],
-  "id": "test/integration/standard_filter_test.rb:382",
+  "id": "test/integration/standard_filter_test.rb:383",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:382",
+  "source": "test/integration/standard_filter_test.rb:383",
   "template": "{% assign __result = in | sort_natural %}",
   "test": "test_sort_natural_case_check"
  },
@@ -3383,13 +3602,13 @@
    "p0": "a"
   },
   "expected": [],
-  "id": "test/integration/standard_filter_test.rb:386",
+  "id": "test/integration/standard_filter_test.rb:387",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:386",
+  "source": "test/integration/standard_filter_test.rb:387",
   "template": "{% assign __result = in | sort: p0 %}",
   "test": "test_sort_empty_array"
  },
@@ -3399,13 +3618,13 @@
    "p0": "a"
   },
   "expected": [],
-  "id": "test/integration/standard_filter_test.rb:402",
+  "id": "test/integration/standard_filter_test.rb:403",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:402",
+  "source": "test/integration/standard_filter_test.rb:403",
   "template": "{% assign __result = in | sort_natural: p0 %}",
   "test": "test_sort_natural_empty_array"
  },
@@ -3420,13 +3639,13 @@
    2,
    10
   ],
-  "id": "test/integration/standard_filter_test.rb:422",
+  "id": "test/integration/standard_filter_test.rb:423",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:422",
+  "source": "test/integration/standard_filter_test.rb:423",
   "template": "{% assign __result = in | sort %}",
   "test": "test_numerical_vs_lexicographical_sort"
  },
@@ -3450,13 +3669,13 @@
     "a": 10
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:423",
+  "id": "test/integration/standard_filter_test.rb:424",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:423",
+  "source": "test/integration/standard_filter_test.rb:424",
   "template": "{% assign __result = in | sort: p0 %}",
   "test": "test_numerical_vs_lexicographical_sort"
  },
@@ -3471,13 +3690,13 @@
    "10",
    "2"
   ],
-  "id": "test/integration/standard_filter_test.rb:424",
+  "id": "test/integration/standard_filter_test.rb:425",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:424",
+  "source": "test/integration/standard_filter_test.rb:425",
   "template": "{% assign __result = in | sort %}",
   "test": "test_numerical_vs_lexicographical_sort"
  },
@@ -3501,13 +3720,13 @@
     "a": "2"
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:425",
+  "id": "test/integration/standard_filter_test.rb:426",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:425",
+  "source": "test/integration/standard_filter_test.rb:426",
   "template": "{% assign __result = in | sort: p0 %}",
   "test": "test_numerical_vs_lexicographical_sort"
  },
@@ -3518,13 +3737,13 @@
   "expected": [
    "foo"
   ],
-  "id": "test/integration/standard_filter_test.rb:429",
+  "id": "test/integration/standard_filter_test.rb:430",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:429",
+  "source": "test/integration/standard_filter_test.rb:430",
   "template": "{% assign __result = in | uniq %}",
   "test": "test_uniq"
  },
@@ -3549,13 +3768,13 @@
    2,
    4
   ],
-  "id": "test/integration/standard_filter_test.rb:430",
+  "id": "test/integration/standard_filter_test.rb:431",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:430",
+  "source": "test/integration/standard_filter_test.rb:431",
   "template": "{% assign __result = in | uniq %}",
   "test": "test_uniq"
  },
@@ -3588,13 +3807,13 @@
     "a": 2
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:431",
+  "id": "test/integration/standard_filter_test.rb:432",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:431",
+  "source": "test/integration/standard_filter_test.rb:432",
   "template": "{% assign __result = in | uniq: p0 %}",
   "test": "test_uniq"
  },
@@ -3604,13 +3823,13 @@
    "p0": "a"
   },
   "expected": [],
-  "id": "test/integration/standard_filter_test.rb:438",
+  "id": "test/integration/standard_filter_test.rb:439",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:438",
+  "source": "test/integration/standard_filter_test.rb:439",
   "template": "{% assign __result = in | uniq: p0 %}",
   "test": "test_uniq_empty_array"
  },
@@ -3620,13 +3839,13 @@
    "p0": "a"
   },
   "expected": [],
-  "id": "test/integration/standard_filter_test.rb:454",
+  "id": "test/integration/standard_filter_test.rb:455",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:454",
+  "source": "test/integration/standard_filter_test.rb:455",
   "template": "{% assign __result = in | compact: p0 %}",
   "test": "test_compact_empty_array"
  },
@@ -3645,13 +3864,13 @@
    2,
    1
   ],
-  "id": "test/integration/standard_filter_test.rb:470",
+  "id": "test/integration/standard_filter_test.rb:471",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:470",
+  "source": "test/integration/standard_filter_test.rb:471",
   "template": "{% assign __result = in | reverse %}",
   "test": "test_reverse"
  },
@@ -3679,13 +3898,13 @@
    3,
    4
   ],
-  "id": "test/integration/standard_filter_test.rb:478",
+  "id": "test/integration/standard_filter_test.rb:479",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:478",
+  "source": "test/integration/standard_filter_test.rb:479",
   "template": "{% assign __result = in | map: p0 %}",
   "test": "test_map"
  },
@@ -3695,22 +3914,6 @@
    "p0": "%B"
   },
   "expected": "May",
-  "id": "test/integration/standard_filter_test.rb:603",
-  "kind": "filter",
-  "modes": null,
-  "partials": {},
-  "raises": "",
-  "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:603",
-  "template": "{% assign __result = in | date: p0 %}",
-  "test": "test_date"
- },
- {
-  "assigns": {
-   "in": "2006-06-05 10:00:00",
-   "p0": "%B"
-  },
-  "expected": "June",
   "id": "test/integration/standard_filter_test.rb:604",
   "kind": "filter",
   "modes": null,
@@ -3723,10 +3926,10 @@
  },
  {
   "assigns": {
-   "in": "2006-07-05 10:00:00",
+   "in": "2006-06-05 10:00:00",
    "p0": "%B"
   },
-  "expected": "July",
+  "expected": "June",
   "id": "test/integration/standard_filter_test.rb:605",
   "kind": "filter",
   "modes": null,
@@ -3740,16 +3943,16 @@
  {
   "assigns": {
    "in": "2006-07-05 10:00:00",
-   "p0": ""
+   "p0": "%B"
   },
-  "expected": "2006-07-05 10:00:00",
-  "id": "test/integration/standard_filter_test.rb:607",
+  "expected": "July",
+  "id": "test/integration/standard_filter_test.rb:606",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:607",
+  "source": "test/integration/standard_filter_test.rb:606",
   "template": "{% assign __result = in | date: p0 %}",
   "test": "test_date"
  },
@@ -3788,7 +3991,7 @@
  {
   "assigns": {
    "in": "2006-07-05 10:00:00",
-   "p0": null
+   "p0": ""
   },
   "expected": "2006-07-05 10:00:00",
   "id": "test/integration/standard_filter_test.rb:610",
@@ -3804,16 +4007,32 @@
  {
   "assigns": {
    "in": "2006-07-05 10:00:00",
-   "p0": "%m/%d/%Y"
+   "p0": null
   },
-  "expected": "07/05/2006",
-  "id": "test/integration/standard_filter_test.rb:612",
+  "expected": "2006-07-05 10:00:00",
+  "id": "test/integration/standard_filter_test.rb:611",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:612",
+  "source": "test/integration/standard_filter_test.rb:611",
+  "template": "{% assign __result = in | date: p0 %}",
+  "test": "test_date"
+ },
+ {
+  "assigns": {
+   "in": "2006-07-05 10:00:00",
+   "p0": "%m/%d/%Y"
+  },
+  "expected": "07/05/2006",
+  "id": "test/integration/standard_filter_test.rb:613",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:613",
   "template": "{% assign __result = in | date: p0 %}",
   "test": "test_date"
  },
@@ -3823,13 +4042,13 @@
    "p0": "%m/%d/%Y"
   },
   "expected": "07/16/2004",
-  "id": "test/integration/standard_filter_test.rb:614",
+  "id": "test/integration/standard_filter_test.rb:615",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:614",
+  "source": "test/integration/standard_filter_test.rb:615",
   "template": "{% assign __result = in | date: p0 %}",
   "test": "test_date"
  },
@@ -3839,13 +4058,13 @@
    "p0": "%B"
   },
   "expected": "",
-  "id": "test/integration/standard_filter_test.rb:621",
+  "id": "test/integration/standard_filter_test.rb:622",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:621",
+  "source": "test/integration/standard_filter_test.rb:622",
   "template": "{% assign __result = in | date: p0 %}",
   "test": "test_date"
  },
@@ -3858,13 +4077,13 @@
    ]
   },
   "expected": 1,
-  "id": "test/integration/standard_filter_test.rb:630",
+  "id": "test/integration/standard_filter_test.rb:631",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:630",
+  "source": "test/integration/standard_filter_test.rb:631",
   "template": "{% assign __result = in | first %}",
   "test": "test_first_last"
  },
@@ -3877,15 +4096,105 @@
    ]
   },
   "expected": 3,
-  "id": "test/integration/standard_filter_test.rb:631",
+  "id": "test/integration/standard_filter_test.rb:632",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:631",
+  "source": "test/integration/standard_filter_test.rb:632",
   "template": "{% assign __result = in | last %}",
   "test": "test_first_last"
+ },
+ {
+  "assigns": {
+   "in": "foo"
+  },
+  "expected": "f",
+  "id": "test/integration/standard_filter_test.rb:647",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:647",
+  "template": "{% assign __result = in | first %}",
+  "test": "test_first_last_on_strings"
+ },
+ {
+  "assigns": {
+   "in": "foo"
+  },
+  "expected": "o",
+  "id": "test/integration/standard_filter_test.rb:648",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:648",
+  "template": "{% assign __result = in | last %}",
+  "test": "test_first_last_on_strings"
+ },
+ {
+  "assigns": {
+   "in": ""
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:649",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:649",
+  "template": "{% assign __result = in | first %}",
+  "test": "test_first_last_on_strings"
+ },
+ {
+  "assigns": {
+   "in": ""
+  },
+  "expected": "",
+  "id": "test/integration/standard_filter_test.rb:650",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:650",
+  "template": "{% assign __result = in | last %}",
+  "test": "test_first_last_on_strings"
+ },
+ {
+  "assigns": {
+   "in": "고스트빈"
+  },
+  "expected": "고",
+  "id": "test/integration/standard_filter_test.rb:658",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:658",
+  "template": "{% assign __result = in | first %}",
+  "test": "test_first_last_on_unicode_strings"
+ },
+ {
+  "assigns": {
+   "in": "고스트빈"
+  },
+  "expected": "빈",
+  "id": "test/integration/standard_filter_test.rb:659",
+  "kind": "filter",
+  "modes": null,
+  "partials": {},
+  "raises": "",
+  "render_errors": false,
+  "source": "test/integration/standard_filter_test.rb:659",
+  "template": "{% assign __result = in | last %}",
+  "test": "test_first_last_on_unicode_strings"
  },
  {
   "assigns": {
@@ -3894,13 +4203,13 @@
    "p1": "b"
   },
   "expected": "b b b b",
-  "id": "test/integration/standard_filter_test.rb:637",
+  "id": "test/integration/standard_filter_test.rb:672",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:637",
+  "source": "test/integration/standard_filter_test.rb:672",
   "template": "{% assign __result = in | replace: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3911,13 +4220,13 @@
    "p1": 2
   },
   "expected": "2 2 2 2",
-  "id": "test/integration/standard_filter_test.rb:638",
+  "id": "test/integration/standard_filter_test.rb:673",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:638",
+  "source": "test/integration/standard_filter_test.rb:673",
   "template": "{% assign __result = in | replace: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3928,13 +4237,13 @@
    "p1": 3
   },
   "expected": "1 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:639",
+  "id": "test/integration/standard_filter_test.rb:674",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:639",
+  "source": "test/integration/standard_filter_test.rb:674",
   "template": "{% assign __result = in | replace: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3945,13 +4254,13 @@
    "p1": "b"
   },
   "expected": "b a a a",
-  "id": "test/integration/standard_filter_test.rb:642",
+  "id": "test/integration/standard_filter_test.rb:677",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:642",
+  "source": "test/integration/standard_filter_test.rb:677",
   "template": "{% assign __result = in | replace_first: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3962,13 +4271,13 @@
    "p1": 2
   },
   "expected": "2 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:643",
+  "id": "test/integration/standard_filter_test.rb:678",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:643",
+  "source": "test/integration/standard_filter_test.rb:678",
   "template": "{% assign __result = in | replace_first: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3979,13 +4288,13 @@
    "p1": 3
   },
   "expected": "1 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:644",
+  "id": "test/integration/standard_filter_test.rb:679",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:644",
+  "source": "test/integration/standard_filter_test.rb:679",
   "template": "{% assign __result = in | replace_first: p0, p1 %}",
   "test": "test_replace"
  },
@@ -3996,13 +4305,13 @@
    "p1": "b"
   },
   "expected": "a a a b",
-  "id": "test/integration/standard_filter_test.rb:647",
+  "id": "test/integration/standard_filter_test.rb:682",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:647",
+  "source": "test/integration/standard_filter_test.rb:682",
   "template": "{% assign __result = in | replace_last: p0, p1 %}",
   "test": "test_replace"
  },
@@ -4013,13 +4322,13 @@
    "p1": 2
   },
   "expected": "1 1 1 2",
-  "id": "test/integration/standard_filter_test.rb:648",
+  "id": "test/integration/standard_filter_test.rb:683",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:648",
+  "source": "test/integration/standard_filter_test.rb:683",
   "template": "{% assign __result = in | replace_last: p0, p1 %}",
   "test": "test_replace"
  },
@@ -4030,13 +4339,13 @@
    "p1": 3
   },
   "expected": "1 1 1 1",
-  "id": "test/integration/standard_filter_test.rb:649",
+  "id": "test/integration/standard_filter_test.rb:684",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:649",
+  "source": "test/integration/standard_filter_test.rb:684",
   "template": "{% assign __result = in | replace_last: p0, p1 %}",
   "test": "test_replace"
  },
@@ -4046,13 +4355,13 @@
    "p0": "a"
   },
   "expected": "   ",
-  "id": "test/integration/standard_filter_test.rb:654",
+  "id": "test/integration/standard_filter_test.rb:689",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:654",
+  "source": "test/integration/standard_filter_test.rb:689",
   "template": "{% assign __result = in | remove: p0 %}",
   "test": "test_remove"
  },
@@ -4062,13 +4371,13 @@
    "p0": "a "
   },
   "expected": "b a a",
-  "id": "test/integration/standard_filter_test.rb:657",
+  "id": "test/integration/standard_filter_test.rb:692",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:657",
+  "source": "test/integration/standard_filter_test.rb:692",
   "template": "{% assign __result = in | remove_first: p0 %}",
   "test": "test_remove"
  },
@@ -4078,13 +4387,13 @@
    "p0": " a"
   },
   "expected": "a a b",
-  "id": "test/integration/standard_filter_test.rb:660",
+  "id": "test/integration/standard_filter_test.rb:695",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:660",
+  "source": "test/integration/standard_filter_test.rb:695",
   "template": "{% assign __result = in | remove_last: p0 %}",
   "test": "test_remove"
  },
@@ -4105,13 +4414,13 @@
    3,
    4
   ],
-  "id": "test/integration/standard_filter_test.rb:815",
+  "id": "test/integration/standard_filter_test.rb:850",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:815",
+  "source": "test/integration/standard_filter_test.rb:850",
   "template": "{% assign __result = in | concat: p0 %}",
   "test": "test_concat"
  },
@@ -4130,13 +4439,13 @@
    2,
    "a"
   ],
-  "id": "test/integration/standard_filter_test.rb:816",
+  "id": "test/integration/standard_filter_test.rb:851",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:816",
+  "source": "test/integration/standard_filter_test.rb:851",
   "template": "{% assign __result = in | concat: p0 %}",
   "test": "test_concat"
  },
@@ -4155,13 +4464,13 @@
    2,
    10
   ],
-  "id": "test/integration/standard_filter_test.rb:817",
+  "id": "test/integration/standard_filter_test.rb:852",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:817",
+  "source": "test/integration/standard_filter_test.rb:852",
   "template": "{% assign __result = in | concat: p0 %}",
   "test": "test_concat"
  },
@@ -4171,13 +4480,13 @@
    "p0": "bar"
   },
   "expected": "foo",
-  "id": "test/integration/standard_filter_test.rb:831",
+  "id": "test/integration/standard_filter_test.rb:866",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:831",
+  "source": "test/integration/standard_filter_test.rb:866",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4187,13 +4496,13 @@
    "p0": "bar"
   },
   "expected": "bar",
-  "id": "test/integration/standard_filter_test.rb:832",
+  "id": "test/integration/standard_filter_test.rb:867",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:832",
+  "source": "test/integration/standard_filter_test.rb:867",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4203,13 +4512,13 @@
    "p0": "bar"
   },
   "expected": "bar",
-  "id": "test/integration/standard_filter_test.rb:833",
+  "id": "test/integration/standard_filter_test.rb:868",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:833",
+  "source": "test/integration/standard_filter_test.rb:868",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4219,13 +4528,13 @@
    "p0": "bar"
   },
   "expected": "bar",
-  "id": "test/integration/standard_filter_test.rb:834",
+  "id": "test/integration/standard_filter_test.rb:869",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:834",
+  "source": "test/integration/standard_filter_test.rb:869",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4235,13 +4544,13 @@
    "p0": "bar"
   },
   "expected": "bar",
-  "id": "test/integration/standard_filter_test.rb:835",
+  "id": "test/integration/standard_filter_test.rb:870",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:835",
+  "source": "test/integration/standard_filter_test.rb:870",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4251,13 +4560,13 @@
    "p0": "bar"
   },
   "expected": "bar",
-  "id": "test/integration/standard_filter_test.rb:836",
+  "id": "test/integration/standard_filter_test.rb:871",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:836",
+  "source": "test/integration/standard_filter_test.rb:871",
   "template": "{% assign __result = in | default: p0 %}",
   "test": "test_default"
  },
@@ -4274,13 +4583,13 @@
     "a": "ok"
    }
   ],
-  "id": "test/integration/standard_filter_test.rb:1122",
+  "id": "test/integration/standard_filter_test.rb:1157",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:1122",
+  "source": "test/integration/standard_filter_test.rb:1157",
   "template": "{% assign __result = in | where: p0, p1 %}",
   "test": "test_where_non_array_map_input"
  },
@@ -4293,13 +4602,13 @@
    "p1": "ok"
   },
   "expected": [],
-  "id": "test/integration/standard_filter_test.rb:1123",
+  "id": "test/integration/standard_filter_test.rb:1158",
   "kind": "filter",
   "modes": null,
   "partials": {},
   "raises": "",
   "render_errors": false,
-  "source": "test/integration/standard_filter_test.rb:1123",
+  "source": "test/integration/standard_filter_test.rb:1158",
   "template": "{% assign __result = in | where: p0, p1 %}",
   "test": "test_where_non_array_map_input"
  },
@@ -4460,7 +4769,7 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/variable_test.rb:58",
-  "template": "{{ a[ [ 'b' ] ] }}",
+  "template": "{{ a[ self[ 'b' ] ] }}",
   "test": "test_expression_with_whitespace_in_square_brackets"
  },
  {
@@ -4652,7 +4961,7 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/variable_test.rb:138",
-  "template": "{{ [key] }}",
+  "template": "{{ self[key] }}",
   "test": "test_dynamic_find_var"
  },
  {
@@ -4668,7 +4977,7 @@
   "raises": "",
   "render_errors": false,
   "source": "test/integration/variable_test.rb:142",
-  "template": "{{ [key] }}",
+  "template": "{{ self[key] }}",
   "test": "test_raw_value_variable"
  },
  {

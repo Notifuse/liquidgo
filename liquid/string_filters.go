@@ -435,3 +435,15 @@ func (sf *StandardFilters) Prepend(input interface{}, str interface{}) string {
 	sf.checkLength(len(inputStr) + len(prependStr))
 	return prependStr + inputStr
 }
+
+// squishSpaces is Ruby's /\s+/: runs of ASCII whitespace.
+var squishSpaces = regexp.MustCompile(`[ \t\n\v\f\r]+`)
+
+// Squish removes the whitespace at both ends of the input and turns each run
+// of whitespace in it into one space (Shopify Liquid 5.14). nil gives nil.
+func (sf *StandardFilters) Squish(input interface{}) interface{} {
+	if input == nil {
+		return nil
+	}
+	return squishSpaces.ReplaceAllString(rubyStrip(ToS(input, nil)), " ")
+}

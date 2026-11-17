@@ -12,7 +12,7 @@ func renderToString(node Node, context TagContext, output *string) {
 		if v, ok := node.(*Variable); ok {
 			defer func() {
 				if r := recover(); r != nil {
-					rescueRenderNode(context, buf, v, r)
+					rescueRenderNode(context, buf, v, r, false)
 				}
 			}()
 		}

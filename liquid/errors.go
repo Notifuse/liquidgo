@@ -411,3 +411,11 @@ func (e *CanceledError) GetError() *Error { return e.Err }
 
 // Unwrap returns the error of the context.
 func (e *CanceledError) Unwrap() error { return e.cause }
+
+// Raise stops the render of the tag with err, as Ruby raises: the block body
+// that renders the tag records err and writes its message in place of the
+// tag, or nothing for a blank tag outside strict2 (see Template.Render). An
+// error that is not a Liquid error is written as "internal".
+func Raise(err error) {
+	panic(asLiquidError(err))
+}
