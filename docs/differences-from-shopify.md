@@ -17,8 +17,8 @@ where every number is a `float64`, and render text meant for people (emails, pag
   keeps the order the keys were added.
 - **A filter error renders nothing**: `{{ 1 | divided_by: 0 }}`, an invalid `base64_decode`, `map`
   over integers and a filter given too many or too few arguments render an empty string instead of
-  `Liquid error: ...`, and the error is recorded in `Result.Errors` (with strict filters it is
-  raised, as in Ruby); a `truncate` or `truncatewords` length that is not an integer keeps the
+  `Liquid error: ...`, and the error is recorded in `Result.Errors` (with strict filters or
+  `RaiseErrors` it is raised, as in Ruby); a `truncate` or `truncatewords` length that is not an integer keeps the
   input.
 - **Template-controlled sizes are bounded**: a `date` directive wider than 1024 (`%5000d`) is
   copied as written, a `round` precision beyond ±400 digits is not computed, and a filter builds

@@ -421,11 +421,12 @@ func (c *Context) invokeFilter(method string, fn FilterFunc, obj interface{}, ar
 		result = obj
 	}
 	if err != nil {
-		// An error of a filter is raised with strict filters; otherwise it
-		// is recorded and the filter gives nil, so that no error text is
-		// written (a deliberate divergence from Ruby).
+		// An error of a filter is raised with strict filters, and with
+		// RaiseErrors as Ruby's render! raises it; otherwise it is recorded
+		// and the filter gives nil, so that no error text is written (a
+		// deliberate divergence from Ruby).
 		err = asLiquidError(err)
-		if c.strictFilters {
+		if c.strictFilters || c.rethrowErrors {
 			panic(err)
 		}
 		c.recordError(err)
