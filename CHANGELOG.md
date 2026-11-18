@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## [5.14.0-port.7]
+
+### Changed (a filter error under RaiseErrors)
+- **With `RaiseErrors`, a filter error ends the render**, as Ruby's `render!` raises it:
+  `{{ 1 | divided_by: 0 }}`, a filter given too few or too many arguments, or a Go error a filter
+  returns, now make `Render` return the error, recorded once, instead of rendering nothing while
+  the render went on. `RaiseErrors` did this for every other recorded error, as its documentation
+  says. Without it, a filter error is still recorded and writes nothing.
+
+### Tests
+- `TestRaiseErrorsEndsTheRenderOnAFilterError`, `TestAFilterErrorWithoutRaiseErrorsIsRecorded`:
+  the error, recorded once inside enclosing blocks, for a standard filter, an arity error and a
+  custom filter's Go error; unchanged without `RaiseErrors`.
+- `TestFilterKeywordArguments`: a call with too many arguments renders nothing without
+  `RaiseErrors`, and ends the render with Ruby's `wrong number of arguments` with it.
+- Five Shopify conformance cases now match Ruby (`modulo: 0`, and `divided_by: 0.0` followed by
+  `round`, `ceil` or `floor`): their entries leave `known_divergences.json`.
+
 ## [5.14.0-port.6]
 
 ### Fixed (no lax quirk is left: malformed markup renders as in Ruby)
