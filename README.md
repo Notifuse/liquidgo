@@ -126,7 +126,7 @@ The context bounds the time: past its deadline, the render stops at its next nod
 
 In lax mode, as in Ruby, an error writes its message in place of its tag and the render goes on;
 every error is in `res.Errors`. A filter error writes nothing (see the
-[differences](docs/differences-from-shopify.md)). `Render` returns an error only when the render
+[differences](docs/differences-from-shopify.md)), and with `RaiseErrors` ends the render as any other. `Render` returns an error only when the render
 could not complete: a `*liquid.MemoryError` past a limit, a `*liquid.CanceledError` past the
 deadline, a `*liquid.PanicError` when Go code panicked (a bug, with its stack), or the first error
 with `RaiseErrors`.
@@ -205,7 +205,7 @@ A few behaviours differ on purpose, for Go data decoded from JSON and text read 
 
 - an empty string is false in a condition, so `{% if contact.first_name %}` skips an empty name;
 - a whole float renders without `.0` (`{{ 2.0 }}` gives `2`);
-- a filter error writes nothing, and is recorded in `res.Errors`;
+- a filter error writes nothing, and is recorded in `res.Errors` (with `RaiseErrors`, it ends the render);
 - a render keeps its assigns to itself, and an `increment` counter starts at 0, never at a value
   of the data of the same name.
 

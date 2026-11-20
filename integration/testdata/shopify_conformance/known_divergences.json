@@ -58,45 +58,5 @@
    "strict/ruby": "output: 2",
    "strict2/ruby": "output: 2"
   }
- },
- "test/integration/standard_filter_test.rb:774": {
-  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
- "test/integration/standard_filter_test.rb:783": {
-  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
- "test/integration/standard_filter_test.rb:794": {
-  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
- "test/integration/standard_filter_test.rb:805": {
-  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
- },
- "test/integration/standard_filter_test.rb:815": {
-  "reason": "deliberate: a filter error renders empty instead of raising (decided for Notifuse: no error text in emails)",
-  "actual": {
-   "lax/ruby": "output: ",
-   "strict/ruby": "output: ",
-   "strict2/ruby": "output: "
-  }
  }
 }
