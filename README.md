@@ -7,6 +7,8 @@ own does, and 7 times faster than Shopify's. Every difference from Shopify is li
 It renders the emails and blog pages of [Notifuse](https://www.notifuse.com/), the open-source
 emailing platform, where every template is written by its users.
 
+For responsive email layouts, use [safe-mjml](https://github.com/Notifuse/safe-mjml), Notifuse's pure Go MJML compiler. See [how to use both libraries](#responsive-emails-with-safe-mjml).
+
 [![Tests](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml/badge.svg)](https://github.com/Notifuse/liquidgo/actions/workflows/test.yml)
 [![Coverage](https://codecov.io/github/notifuse/liquidgo/graph/badge.svg?token=3ATZBZSIYR)](https://codecov.io/github/notifuse/liquidgo)
 [![Go Reference](https://pkg.go.dev/badge/github.com/Notifuse/liquidgo/v5.svg)](https://pkg.go.dev/github.com/Notifuse/liquidgo/v5)
@@ -88,6 +90,16 @@ func main() {
     fmt.Println(res.Output) // Hello Ann! Pen
 }
 ```
+
+## Responsive emails with safe-mjml
+
+[safe-mjml](https://github.com/Notifuse/safe-mjml) compiles MJML into responsive email HTML. Render your MJML template with liquidgo first to fill in recipient data and evaluate filters, conditions and loops. Pass `res.Output` to safe-mjml's `mjml.Render` for the email layout. Both steps run in Go, without Node.js.
+
+For a personalized greeting, put `{{ contact.first_name | escape }}` inside `mj-text`. Use the `escape` filter for data inserted into HTML text or quoted attributes.
+
+If Liquid controls MJML widths, padding or CSS rules, resolve it before compilation so safe-mjml can calculate the layout from the final values.
+
+See [safe-mjml's installation and API](https://github.com/Notifuse/safe-mjml#install).
 
 ## API
 
